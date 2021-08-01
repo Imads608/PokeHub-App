@@ -1,0 +1,264 @@
+/*body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}*/
+body {
+  margin: 0;
+  font-size: 0;
+  padding: 0;
+}
+html, body, #root {
+  height: 100vh;
+}
+
+#logo {
+  max-width: 40px;
+  max-height: 40px;
+  margin-right: 5px;
+}
+
+.header {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 5px;
+}
+
+.font-theme {
+  font-family: 'Orbitron', sans-serif !important;
+}
+
+/* Navbar */
+.userMenu {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.userMenu:hover {
+  background-color: pink;
+}
+
+/* Drawer */
+.full-drawer-open {
+  margin-right: 240px
+}
+
+/* Landing Page */
+.landing {
+  position: relative;
+  /*background-image: url('./img/landing-page.png');*/
+  background: url('./img/landing-page.png') no-repeat center center/cover;
+  height: 100vh;
+}
+
+.trainer-card-background {
+  position: relative;
+  /*background-image: url('./img/landing-page.png');*/
+  background: url('./img/default-card_background.jpeg') no-repeat center center/cover;
+}
+
+.landing-inner {
+  color: #fff;
+  height: 100%;
+  width: 80%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Overlay */
+.dark-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Text Styles*/
+.x-large {
+  font-size: 4rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: rgb(179, 174, 174);
+}
+
+.lead {
+  font-size: 1rem;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.link {
+  text-decoration: none; 
+  font-weight: bold;
+}
+
+.nav-link {
+  margin: 0px 10px;
+  font-family: 'Orbitron', sans-serif;
+  color: white;
+}
+
+/**** Drawer Styles *****/
+
+
+/*** Others ***/
+/*
+.chat-header {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.chat-rooms-header {
+  color: grey;
+  margin-left: 5px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.chat-hashtag {
+  color: grey;
+  text-decoration: bold; 
+  font-size: large;
+}
+
+.chat-name {
+  color: grey;
+  font-weight: 500;
+  text-decoration: bold;
+  margin-left: 5px;
+}
+
+.chat-room {
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  font-size: 120%;
+  text-align: left;
+  border-radius: 5px;
+  padding: 5px;
+  width: 95%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.chat-room-open {
+  background-color: rgb(224, 224, 224);
+}
+
+.chat-room:hover {
+  background-color: rgb(224, 224, 224)
+}
+
+.chat-window-popper {
+  margin-top: 70px;
+  /*float: right;
+  width: 67%*/
+/*}
+
+.chat-window-header {
+  font-size: large;
+  
+}
+
+.chat-window {
+  height: 100vh;
+  display: flex;
+  width: 100vh;
+}
+
+.chat-room-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 0.25; 
+  background-color: rgb(199, 0, 57);
+}
+
+.chat-room-image {
+  max-height: 200px;
+  object-fit: cover;
+}
+
+.chat-room-header {
+  width: 100%;
+  text-align: center;
+  border-bottom: 1px solid darkgrey;
+  line-height: 0.1em; 
+  margin: 20px 0 20px;
+}
+
+.chat-room-header > span {
+  padding: 0 10px;
+  background: rgb(199, 0, 57);
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+}*/
+
+.window-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+}
+
+.empty-search-results {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-format {
+  font-size: x-large;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard {
+  height: 100vh
+}
+
+.backdrop {
+  background-color: grey;
+}
+
+.theme-text {
+  font-family: 'Orbitron' !important;
+  color: white !important;
+}
+
+.theme-text-whitebkg {
+  font-family: 'Orbitron', sans-serif;
+  color: rgb(199, 0, 57);
+}
+
+.overworld {
+  background: transparent url(https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png?v5) no-repeat scroll -40px -0px !important;
+  height: 30px;
+  width: 40px;
+  border: none;
+}

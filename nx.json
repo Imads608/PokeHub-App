@@ -29,6 +29,19 @@
   "projects": {
     "api-gateway": {
       "tags": []
+    },
+    "auth-service": {
+      "tags": []
+    },
+    "react-app": {
+      "tags": []
+    },
+    "react-app-e2e": {
+      "tags": [],
+      "implicitDependencies": ["react-app"]
+    },
+    "user-service": {
+      "tags": []
     }
   }
 }

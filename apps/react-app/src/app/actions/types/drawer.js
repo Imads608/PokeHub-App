@@ -1,0 +1,6 @@
+export const OPEN_DRAWER = 'OPEN_DRAWER';
+export const CLOSE_DRAWER = 'CLOSE_DRAWER';
+export const OPEN_CHATROOMS_MENU = 'OPEN_CHATROOMS_MENU';
+export const CLOSE_CHATROOMS_MENU = 'CLOSE_CHATROOMS_MENU';
+export const OPEN_DMS = 'OPEN_DMS';
+export const CLOSE_DMS = 'CLOSE_DMS';

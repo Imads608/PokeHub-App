@@ -1,0 +1,32 @@
+.trainer-card-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.trainer-card-user {
+    margin-left: 10px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: 40%;
+}
+
+.trainer-card-user>h3 {
+    padding: 5px;
+    background-color: pink;
+    border-radius: 5px;
+    width: 95%;
+}
+
+.trainer-card-avatar {
+    margin-right: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+}
+
+.trainer-card-content {
+    display: flex;
+    flex-direction: column;
+}
