@@ -30,6 +30,9 @@
     "api-gateway": {
       "tags": []
     },
+    "auth": {
+      "tags": []
+    },
     "auth-service": {
       "tags": []
     },
@@ -39,6 +42,9 @@
     "react-app-e2e": {
       "tags": [],
       "implicitDependencies": ["react-app"]
+    },
+    "user": {
+      "tags": []
     },
     "user-service": {
       "tags": []
