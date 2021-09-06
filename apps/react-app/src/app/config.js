@@ -1,5 +1,5 @@
 const appConfig = {
-    apiGateway: 'http://localhost:3004',
+    apiGateway: 'http://localhost:3015',
     chatService: 'http://localhost:3002'
 };
 

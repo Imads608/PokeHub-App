@@ -18,13 +18,16 @@ export class User {
     @Column({ nullable: true })
     lastName?: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: false })
     @Length(6)
     password?: string;
 
     @Column({ unique: true })
     @IsEmail()
     email: string;
+
+    @Column({ default: false })
+    emailVerified: Boolean;
 
     @Column({
         type: 'enum',

@@ -11,6 +11,7 @@ import chatReducer from './reducers/chat';
 import drawerReducer from './reducers/drawer';
 import notificationReducer from './reducers/notification';
 import userReducer from './reducers/user';
+import { authMiddleware } from './middleware/auth';
 
 const initialState = {};
 
@@ -23,7 +24,7 @@ const store = configureStore({
         user: userReducer,
         notification: notificationReducer
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }).concat(connectWebSocketMiddleware)
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }).concat(authMiddleware, connectWebSocketMiddleware)
 })
 /*
 const middleWare = [thunk, connectWebSocketMiddleware ];

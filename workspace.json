@@ -122,6 +122,56 @@
         }
       }
     },
+    "chat-service": {
+      "root": "apps/chat-service",
+      "sourceRoot": "apps/chat-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/chat-service",
+            "main": "apps/chat-service/src/main.ts",
+            "tsConfig": "apps/chat-service/tsconfig.app.json",
+            "assets": ["apps/chat-service/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/chat-service/src/environments/environment.ts",
+                  "with": "apps/chat-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "chat-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/chat-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/chat-service"],
+          "options": {
+            "jestConfig": "apps/chat-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "react-app": {
       "root": "apps/react-app",
       "sourceRoot": "apps/react-app/src",
@@ -220,6 +270,77 @@
           "executor": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": ["apps/react-app-e2e/**/*.js"]
+          }
+        }
+      }
+    },
+    "room": {
+      "root": "libs/room",
+      "sourceRoot": "libs/room/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/room/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room"],
+          "options": {
+            "jestConfig": "libs/room/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "socket-service": {
+      "root": "apps/socket-service",
+      "sourceRoot": "apps/socket-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/socket-service",
+            "main": "apps/socket-service/src/main.ts",
+            "tsConfig": "apps/socket-service/tsconfig.app.json",
+            "assets": ["apps/socket-service/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/socket-service/src/environments/environment.ts",
+                  "with": "apps/socket-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "socket-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/socket-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/socket-service"],
+          "options": {
+            "jestConfig": "apps/socket-service/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }

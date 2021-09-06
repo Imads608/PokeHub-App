@@ -9,8 +9,9 @@ import Button from '@material-ui/core/Button';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import SettingsIcon from '@material-ui/icons/Settings';
 import PersonIcon from '@material-ui/icons/Person';
-import { logoutUser } from '../../middleware-thunks/auth';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
+import { loggedOut } from '../../actions/auth';
+import { useQueryClient } from 'react-query';
 
 const StyledMenu = withStyles({
     paper: {
@@ -32,16 +33,25 @@ const StyledMenu = withStyles({
     />
   ));
   
-const UserMenu = ({ user, logoutUser }) => {
+const UserMenu = ({ user }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
+    const queryClient = useQueryClient();
+    const dispatch = useDispatch();
+
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
       };
     
-      const handleClose = () => {
-        setAnchorEl(null);
-      };
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const logoutUser = () => {
+      queryClient.removeQueries("user-login");
+      queryClient.removeQueries('user-signup');
+      dispatch(loggedOut());
+    }
     return (
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button onClick={handleClick} style={{ textTransform: 'none' }}>
@@ -78,4 +88,4 @@ const UserMenu = ({ user, logoutUser }) => {
     )
 }
 
-export default connect(null, { logoutUser })(UserMenu);
+export default UserMenu;

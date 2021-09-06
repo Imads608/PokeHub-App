@@ -22,12 +22,39 @@ import { connect } from 'react-redux';
 import { getDrawerToggle } from './selectors/drawer';
 import NewDM from './components/chat/dm/NewDM';
 import DM from './components/chat/dm/DM';
+import useLoadUser from './hooks/useLoadUser';
+import LoginNew from './components/auth/LoginNew';
+import RegisterNew from './components/auth/RegisterNew';
+
+
+const MainApp = ({ matches, drawerToggle }) => {
+  const res = useLoadUser(localStorage.getItem('pokehub-refresh-token'));
+  return (
+    <main
+      className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}
+    >
+      <AlertNotification />
+
+      <Switch>
+        <Route exact path='/' component={Landing} />
+        <Route path='/login' component={LoginNew} />
+        <Route path='/register' component={RegisterNew} />
+        <PrivateRoute exact path='/dashboard' component={Dashboard} />
+        <PrivateRoute exact path='/chatrooms' component={ChatRooms} />
+        <PrivateRoute path='/chatrooms/:id' component={ChatRoom} />
+        <PrivateRoute exact path='/dms' component={NewDM} />
+        <PrivateRoute path='/dms/:id' component={DM} />
+        <PrivateRoute path='/dex' component={Pokedex} />
+      </Switch>
+    </main>
+  )
+}
 
 
 const App = ({ loadUser, drawerToggle }) => {
-  useEffect(() => {
+  /*useEffect(() => {
     loadUser();//store.dispatch(loadUser());
-  }, []);
+  }, []);*/
 
 
   const theme = useTheme();
@@ -40,16 +67,7 @@ const App = ({ loadUser, drawerToggle }) => {
             <div>
               <Navbar navbarRef={navbarRef}/>
               <AppDrawer navbarRef={navbarRef} />
-              <main 
-                className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}>
-                <AlertNotification />
-
-                <Switch>
-                  <Route exact path='/' component={Landing} />
-                  <Route path='/login' component={Login} />
-                  <Route path='/register' component={Register} />
-                </Switch>
-              </main>
+              <MainApp matches={matches} drawerToggle={drawerToggle} />
             </div>
           </QueryClientProvider>
         </Router>

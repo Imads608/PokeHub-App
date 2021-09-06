@@ -13,7 +13,6 @@ const firebaseConfig = {
     measurementId: process.env.NX_APP_FIREBASE_MEASUREMENT_ID
 };
 
-console.log('Firebase API KEY', process.env.NX_APP_FIREBASE_API_KEY);
 export const provider = new firebase.auth.GoogleAuthProvider();
 
 const firebaseApp = firebase.initializeApp(firebaseConfig);

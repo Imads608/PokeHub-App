@@ -4,10 +4,11 @@ import { UserController } from './user.controller';
 import { CommonModule } from '../common/common.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ChatCommonModule } from '../chat/common/chat-common.module';
 
 @Module({
   imports: [
-    CommonModule,
+    CommonModule, ChatCommonModule,
     ClientsModule.registerAsync([
         {
             name: 'UserMicroservice',

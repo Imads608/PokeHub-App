@@ -11,10 +11,10 @@ export let socket = null;
 export const connectWebSocketMiddleware = (store) => (next) => (action) => {
     switch (action.type) {
         case LOGIN_SUCCESS: 
-            socket = io(`${appConfig.apiGateway}`, { transports: ['websocket'], upgrade: false});
+            socket = io(`${appConfig.chatService}`, { transports: ['websocket'], upgrade: false});
             socket.on("connect", () => {
                 console.log('Connected to Websocket');
-                socket.emit(SEND_CLIENT_DETAILS, { uid: action.payload.user.uid, publicRooms: action.payload.user.joinedRooms, privateRooms: null/*action.payload.userData.privateRooms*/ });
+                socket.emit(SEND_CLIENT_DETAILS, { uid: action.payload.user.uid, publicRooms: action.payload.joinedPublicRooms, privateRooms: null/*action.payload.userData.privateRooms*/ });
             });
             store.dispatch(registerMessagesEventHandler(socket));
             store.dispatch(registerUserNotificationEventHandler(socket));

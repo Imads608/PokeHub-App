@@ -1,4 +1,4 @@
-import { JOIN_CHAT_ROOM, LEAVE_CHAT_ROOM } from "./types/user"
+import { JOIN_CHAT_ROOM, LEAVE_CHAT_ROOM, USER_LOADED } from "./types/user"
 
 export const joinedChatRoom = (joinedRooms) => {
     return {

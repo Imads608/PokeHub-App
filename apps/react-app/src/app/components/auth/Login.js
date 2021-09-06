@@ -18,6 +18,8 @@ import PropTypes from 'prop-types';
 import {Redirect} from 'react-router-dom';
 import { getIsAuthenticated } from '../../selectors/auth';
 import { Link as RouterLink } from 'react-router-dom';
+import GoogleLogin from 'react-google-login';
+import GoogleOAuth from './GoogleOAuth';
 
 function Copyright() {
   return (
@@ -132,6 +134,7 @@ class Login extends React.Component {
 
     render() {
         const { classes } = this.props;
+        console.log('Google Client Id', process.env.NX_GOOGLE_CLIENT_ID);
 
         return (
             <Container component="main" maxWidth="xs">
@@ -198,6 +201,7 @@ class Login extends React.Component {
                         >
                             Sign In with Google
                         </Button>
+                        <GoogleOAuth />
                         <Grid container>
                             <Grid item xs>
                             <Link href="#" variant="body2">

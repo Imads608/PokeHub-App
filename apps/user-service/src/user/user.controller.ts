@@ -20,9 +20,27 @@ export class UserController {
     return data;
   }
 
+  @MessagePattern({ cmd: 'google-oauth-login' }, Transport.TCP)
+  async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserData> {
+      this.logger.log('Got request to login user with Google');
+      return await this.userService.createOrFindGoogleOAuthUser(createUser);
+  }
+
   @MessagePattern({ cmd: 'find-user' }, Transport.TCP)
-  async findUser(username: string): Promise<User> {
-    this.logger.log('Got request to find user');
-    return this.userService.findUser(username);
+  async findUser(uid: string): Promise<User> {
+    this.logger.log('Got request to find user', JSON.stringify(uid));
+    return this.userService.findUser(uid);
+  }
+
+  @MessagePattern({ cmd: 'find-user-email' }, Transport.TCP)
+  async findUserByEmail(email: string): Promise<User> {
+      this.logger.log('Got request to find user by email ' + email);
+      return this.userService.findUserByEmail(email);
+  }
+
+  @MessagePattern({ cmd: 'find-user-username' }, Transport.TCP)
+  async findUserByUsername(username: string): Promise<User> {
+      this.logger.log('Got request to find user by username ' + username);
+      return this.userService.findUserByUsername(username);
   }
 }

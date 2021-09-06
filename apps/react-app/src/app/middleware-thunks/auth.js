@@ -7,7 +7,9 @@ import { getRequestHeaderWithToken, getAPIRequestHeader, setAuthToken } from '..
 import appConfig from '../config';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { getCurrentUserData, createUser as createUserData } from '../api/auth';
+import { useInterceptors } from '../axios';
+import { getCurrentUserData, createUser as createUserData, getNewAccessToken, loadUser as loadUserAPI } from '../api/auth';
+import { PermCameraMic } from "@material-ui/icons";
 
 let shouldCreateUser = false;
 
@@ -65,6 +67,28 @@ const createUserDataAndDispatchLoginState = async (dispatch, user, username, ema
 
 export const loadUser = () => async dispatch => {
     try {
+        if (!localStorage.getItem('pokehub-refresh-token')) {
+            dispatch(appLoaded());
+            dispatch(setAuthLoaded());
+        } else {
+            const refreshToken = localStorage.getItem('pokehub-refresh-token');
+            console.log('Refresh token: ', typeof(refreshToken));
+            const accessToken = await getNewAccessToken(refreshToken);
+            console.log('Received access token:', accessToken);
+            const userData = await loadUserAPI(accessToken);
+            dispatch(loggedIn({
+                token: accessToken,
+                user: userData
+            }))
+        }
+    } catch (err) {
+        console.log("Got error loading user: ", err);
+        dispatch(authFailure(err));
+    }
+}
+
+export const loadUserOld = () => async dispatch => {
+    try {
         auth.onAuthStateChanged(async function(user) {
             console.log('In')
             if (user) {
@@ -115,6 +139,11 @@ export const defaultLogIn = (email, password) => async dispatch => {
 }
 
 export const logoutUser = () => async dispatch => {
+    console.log('Logging out user');
+    dispatch(loggedOut());
+}
+
+export const logoutUserOld = () => async dispatch => {
     console.log('Logging out user')
     try {
         await auth.signOut();

@@ -5,7 +5,7 @@ export const ChatroomPropTypes = PropTypes.shape({
     name: PropTypes.string.isRequired,
     type: PropTypes.string,
     description: PropTypes.string,
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     state: PropTypes.shape({
         url: PropTypes.shape({
             pathname: PropTypes.string.isRequired,

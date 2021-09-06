@@ -65,7 +65,7 @@ export const getChatRoomMembers = (offset, limit, search) => new Promise((resolv
 ));
 
 export const getChatRooms = async () => {
-    const chatrooms = await axios.get(`${appConfig.apiGateway}/chatrooms`, getAPIRequestHeader());
+    const chatrooms = await axios.get(`${appConfig.apiGateway}/chat/public-rooms`);
     return chatrooms.data;
 }
 

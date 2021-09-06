@@ -6,25 +6,26 @@ const initialState = {
     uid: null,
     email: null,
     name: null,
-    first_name: null, 
-    last_name: null,
+    firstName: null, 
+    lastName: null,
     username: null,
     emailVerified: null,
-    joinedRooms: null
+    joinedPublicRooms: null
 };
 
 export default createReducer(initialState, (builder) => {
     builder
         .addCase(LOGIN_SUCCESS, (state, action) => {
-            const { uid, email, name, first_name, last_name, username, emailVerified, joinedRooms } = action.payload.user;
+            const { uid, email, name, firstName, lastName, username, emailVerified } = action.payload.user;
+            console.log('Action Payload is', action.payload);
             state.uid = uid
             state.email = email;
             state.name = name;
-            state.first_name = first_name;
-            state.last_name = last_name;
+            state.firstName = firstName;
+            state.lastName = lastName;
             state.username = username;
             state.emailVerified = emailVerified;
-            state.joinedRooms = joinedRooms;
+            state.joinedPublicRooms = action.payload.joinedPublicRooms;
         })
         .addCase(LOGOUT, (state, action) => {
             state.uid = null; state.email = null; state.name = null; state.first_name = null; state.last_name = null; state.username = null;

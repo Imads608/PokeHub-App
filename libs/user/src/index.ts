@@ -7,3 +7,5 @@ export * from './lib/type-account.enum';
 export * from './lib/user.entity';
 export * from './lib/user-data-token.model';
 export * from './lib/user-data.model';
+export * from './lib/user-public-profile.model';
+export * from './lib/user-public-profile-with-token.model';

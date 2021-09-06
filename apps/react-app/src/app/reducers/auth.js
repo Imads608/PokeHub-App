@@ -4,6 +4,8 @@ import { createReducer } from '@reduxjs/toolkit';
 
 const initialState = {
     token: null,
+    accessToken: null,
+    refreshToken: null,
     isAuthenticated: false,
     error: null,
     loading: true
@@ -17,12 +19,14 @@ export default createReducer(initialState, (builder) => {
         .addCase(LOGIN_SUCCESS, (state, action) => {
             state.loading = false;
             state.isAuthenticated = true;
-            state.token = action.payload.token;
+            state.accessToken = action.payload.accessToken;
+            state.refreshToken = action.payload.refreshToken;
         })
         .addCase(LOGOUT, (state, action) => {
             state.loading = false;
             state.isAuthenticated = false;
-            state.token = null;
+            state.accessToken = null;
+            state.refreshToken = null;
         })
         .addCase(AUTH_FAILURE, (state, action) => {
             state.error = action.payload;
