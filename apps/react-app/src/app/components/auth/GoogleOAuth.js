@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { GoogleLogin } from 'react-google-login';
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
+import { authFailure } from '../../actions/auth';
 import { useGoogleOAuthLogin } from '../../hooks/useGoogleOAuthLogin';
 const GoogleOAuth = ({ classes }) => {
     const mutation = useGoogleOAuthLogin();

@@ -27,7 +27,7 @@ export class User {
     email: string;
 
     @Column({ default: false })
-    emailVerified: Boolean;
+    emailVerified: boolean;
 
     @Column({
         type: 'enum',

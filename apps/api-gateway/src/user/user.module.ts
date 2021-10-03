@@ -18,8 +18,8 @@ import { ChatCommonModule } from '../chat/common/chat-common.module';
                 name: 'UserMicroservice',
                 transport: Transport.TCP,
                 options: {
-                    host: 'localhost',
-                    port: +configService.get<Number>('USER_MICROSERVICE_PORT')
+                    host: configService.get<string>('userService.host'),
+                    port: +configService.get<number>('userService.port')
                 }
             })
 

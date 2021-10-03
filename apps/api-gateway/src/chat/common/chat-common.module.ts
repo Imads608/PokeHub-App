@@ -18,8 +18,8 @@ import { RoomService } from './room.service';
                 name: 'ChatMicroservice',
                 transport: Transport.TCP,
                 options: {
-                    host: 'localhost',
-                    port: +configService.get<Number>('CHAT_MICROSERVICE_PORT')
+                    host: configService.get<string>('chatService.host'),
+                    port: +configService.get<Number>('chatService.port')
                 }
             })
     

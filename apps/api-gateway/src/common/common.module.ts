@@ -15,8 +15,8 @@ import { AuthService } from './auth.service';
                 name: 'AuthMicroservice',
                 transport: Transport.TCP,
                 options: {
-                    host: 'localhost',
-                    port: +configService.get<Number>('AUTH_MICROSERVICE_PORT')
+                    host: configService.get<string>('authService.host'),
+                    port: +configService.get<Number>('authService.port')
                 }
             })
 

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@pokehub/user';
+import { User, UserStatus } from '@pokehub/user';
 import { UserModule } from '../user/user.module';
 
 import { AppController } from './app.controller';
@@ -20,7 +20,7 @@ import { AppService } from './app.service';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User],
+        entities: [User, UserStatus],
         synchronize: true,
       })
     }),

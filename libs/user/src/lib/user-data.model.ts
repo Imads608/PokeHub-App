@@ -7,9 +7,9 @@ export class UserData {
   firstName: string;
   lastName: string;
   account: TypeAccount;
-  emailVerified: Boolean;
+  emailVerified: boolean;
 
-  constructor(uid: string, email: string, username: string, firstName: string, lastName: string, account: TypeAccount, emailVerified: Boolean) {
+  constructor(uid: string, email: string, username: string, firstName: string, lastName: string, account: TypeAccount, emailVerified: boolean) {
     this.uid = uid;
     this.email = email;
     this.username = username;

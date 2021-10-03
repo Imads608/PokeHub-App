@@ -39,6 +39,9 @@
     "chat-service": {
       "tags": []
     },
+    "events": {
+      "tags": []
+    },
     "react-app": {
       "tags": []
     },

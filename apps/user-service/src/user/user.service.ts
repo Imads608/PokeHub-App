@@ -2,20 +2,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserRequest, User, TypeAccount, UserData } from '@pokehub/user';
+import { CreateUserRequest, User, TypeAccount, UserData, UserStatus } from '@pokehub/user';
 import * as bcrypt from 'bcrypt';
+import { UserStatusService } from './user-status.service';
 
 @Injectable()
 export class UserService {
 
   private readonly logger = new Logger(UserService.name);
 
-  constructor(@InjectRepository(User) private usersRepository: Repository<User>) {}
+  constructor(@InjectRepository(User) private usersRepository: Repository<User>, private userStatusService: UserStatusService) {}
 
   async createUser(userReq: CreateUserRequest): Promise<UserData> {
     const user = this.usersRepository.create();
     this.populateNewUserFromReq(user, userReq);
     const userData: UserData = await this.createUserInternal(user);
+    await this.userStatusService.upsertLastSeen(userData.uid, new Date());
     this.logger.log('Sending newly created user back');
     return userData;
   }

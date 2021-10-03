@@ -8,7 +8,7 @@ import user from "../reducers/user";
 const useLoadUser = (refreshToken) => {
     const dispatch = useDispatch();
 
-    const response = useQuery('user', async () => {
+    const response = useQuery('user-load', async () => {
         if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
             throw new Error('No Refresh Token provided');
         }

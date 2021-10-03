@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getPublicUser } from '../../selectors/user'
 import '../chat/chat.css';
 import debounce from 'lodash/debounce';
-import { socket } from '../../middleware/socket';
+import { socket } from '../../events/socket';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import { PublicUserPropTypes } from '../../types/user';
 import { TYPE_CHAT_CHATROOM } from '../../types/chatroom';

@@ -42,9 +42,3 @@ export const resetAppError = () => {
         payload: null
     }
 }
-
-export const registerUserNotificationEventHandler = (socket) => (dispatch) => {
-    socket.on(USER_NOTIFICATION, (msg) => {
-        console.log('Got notification');
-    })
-}

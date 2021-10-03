@@ -43,7 +43,7 @@ export class AuthService {
         return new UserDataWithToken(userData, tokens.accessToken, tokens.refreshToken);
     }
 
-    async validateAccessToken(accessToken: string): Promise<Boolean> {
+    async validateAccessToken(accessToken: string): Promise<boolean> {
         let res = true;
         try {
             this.logger.log("Validating access token");
@@ -107,7 +107,7 @@ export class AuthService {
         try {
             const user: User = await firstValueFrom(this.clientProxy.send<User>({ cmd: 'find-user-email' }, userCreds.email));
             this.logger.log(`Response received from User Microservice`);
-            const isValidated: Boolean = await this.validateCreds(user, userCreds.password);
+            const isValidated: boolean = await this.validateCreds(user, userCreds.password);
             if (isValidated) {
                 const tokens = await this.generateNewTokens(new JwtTokenBody(user.username, user.email, user.uid));
                 return new UserDataWithToken(new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified), tokens.accessToken, tokens.refreshToken);
@@ -126,7 +126,7 @@ export class AuthService {
         try {
             const user: User = await firstValueFrom(this.clientProxy.send<User>({ cmd: 'find-user-username' }, userCreds.username));
             this.logger.log(`Response received from User Microservice: ${user}`);
-            const isValidated: Boolean = await this.validateCreds(user, userCreds.password);
+            const isValidated: boolean = await this.validateCreds(user, userCreds.password);
             if (isValidated) {
                 const tokens = await this.generateNewTokens(new JwtTokenBody(user.username, user.email, user.uid));
                 return new UserDataWithToken(new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified), tokens.accessToken, tokens.refreshToken);
@@ -167,7 +167,7 @@ export class AuthService {
         }
     }*/
 
-    private async validateCreds(userFromDB: User, passwordUsed: string): Promise<Boolean> {
+    private async validateCreds(userFromDB: User, passwordUsed: string): Promise<boolean> {
         if (userFromDB) {
             const res = await bcrypt.compare(passwordUsed, userFromDB.password);
             if (res) {

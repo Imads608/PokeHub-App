@@ -1,15 +1,16 @@
 import { Controller, Get, Logger, UsePipes } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { CreateUserRequest, User, UserData } from '@pokehub/user';
+import { CreateUserRequest, User, UserData, UserStatus } from '@pokehub/user';
 import { ValidationPipe } from './validation.pipe';
 import { UserService } from './user.service';
+import { UserStatusService } from './user-status.service';
 
 @Controller()
 export class UserController {
 
   private readonly logger = new Logger(UserController.name);
 
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService, private readonly userStatusService: UserStatusService) {}
 
   @UsePipes(new ValidationPipe())
   @MessagePattern({ cmd: 'create-user' }, Transport.TCP)
@@ -42,5 +43,10 @@ export class UserController {
   async findUserByUsername(username: string): Promise<User> {
       this.logger.log('Got request to find user by username ' + username);
       return this.userService.findUserByUsername(username);
+  }
+
+  @MessagePattern({ cmd: 'get-user-status' }, Transport.TCP)
+  async getUserStatus(userId: string): Promise<UserStatus> {
+    return this.userStatusService.getLastSeenOfUser(userId);
   }
 }
