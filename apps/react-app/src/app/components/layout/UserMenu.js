@@ -1,3 +1,4 @@
+/* eslint-disable no-labels */
 import React from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Menu from '@material-ui/core/Menu';
@@ -12,6 +13,9 @@ import PersonIcon from '@material-ui/icons/Person';
 import { connect, useDispatch } from 'react-redux';
 import { loggedOut } from '../../actions/auth';
 import { useQueryClient } from 'react-query';
+import Badge from '@material-ui/core/Badge';
+import { makeStyles } from '@material-ui/styles';
+
 
 const StyledMenu = withStyles({
     paper: {
@@ -33,7 +37,14 @@ const StyledMenu = withStyles({
     />
   ));
   
+  const useStyles = makeStyles((theme) => ({
+    root: {
+      colorPrimary: 'green',
+    }
+  }));
+
 const UserMenu = ({ user }) => {
+    const classes = useStyles();
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
     const queryClient = useQueryClient();
@@ -55,7 +66,11 @@ const UserMenu = ({ user }) => {
     return (
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button onClick={handleClick} style={{ textTransform: 'none' }}>
-                <Avatar style={{ marginLeft: '10px', marginRight: '10px' }} src='/broken-image.jpg' />
+                <div style={{ marginLeft: '10px', marginRight: '10px' }}>
+                  <Badge variant='dot' overlap='circular' color='primary' anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                    <Avatar src='' />
+                  </Badge>  
+                </div>
                 <span style={{ margin: 0 }} className='nav-link'>{user.username}</span>
             </Button>
             <StyledMenu
