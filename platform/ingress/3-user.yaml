@@ -1,0 +1,18 @@
+---
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: wildstar
+  namespace: ambassador
+spec:
+  hostname: pokehub.internal.com
+  selector:
+    matchLabels:
+      hostname: wildcard
+  acmeProvider:
+    authority: none
+  tlsSecret:
+    name: tls-cert
+  requestPolicy:
+    insecure:
+      action: Route
