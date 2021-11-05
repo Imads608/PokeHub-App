@@ -2,10 +2,10 @@
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: wildstar
+  name: samplehost
   namespace: ambassador
 spec:
-  hostname: pokehub.ml
+  hostname: internal.pokehub.ml
   acmeProvider:
     authority: none
   tlsSecret:

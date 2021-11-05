@@ -544,7 +544,7 @@ spec:
         app.kubernetes.io/managed-by: app.getambassador.io
       annotations:
         consul.hashicorp.com/connect-inject: 'false'
-        sidecar.istio.io/inject: 'false'
+        sidecar.istio.io/inject: 'true'
     spec:
       terminationGracePeriodSeconds: 0
       securityContext:
@@ -753,6 +753,7 @@ spec:
   prefix: /
   rewrite: /
   service: sample-app:80
+  hostname: pokehub.ml
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -763,3 +764,15 @@ spec:
   prefix: /backend/
   rewrite: /
   service: sample-app:80
+  hostname: pokehub.ml
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: nginx
+  namespace: default
+spec:
+  prefix: /nginx
+  rewrite: /nginx
+  service: nginx:80
+  hostname: internal.pokehub.ml

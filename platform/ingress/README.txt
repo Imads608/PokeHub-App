@@ -7,6 +7,20 @@ install your configured Ambassador Edge Stack.
 
 ## Install the Ambassador Edge Stack
 
+## You need to have a certificate defined
+You would need a self signed certificate or from a certificate authority. Once obtained run:
+
+kubectl create secret tls tls-cert --cert=cert.pem --key=key.pem
+
+
+## Before Running Instructions, install metallb for a Load Balancer on Prem:
+
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
+kubectl apply -f metallb-configmap.yaml
+
+More instructions at: https://metallb.universe.tf/installation/#installation-by-manifest
+
 Connect to your cluster and then run the following commands:
 
   kubectl apply -f 1-aes-crds.yaml && \

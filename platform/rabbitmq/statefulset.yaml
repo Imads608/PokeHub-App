@@ -35,9 +35,9 @@ spec:
         image: busybox:1.32.0
         volumeMounts:
         - name: rabbitmq-config
-          mountPath: /tmp/rabbitmq
+          mountPath: /Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App/rabbitTmp
         - name: rabbitmq-config-rw
-          mountPath: /etc/rabbitmq
+          mountPath: /Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App/rabbitEtc
         command:
         - sh
         - -c
@@ -81,11 +81,11 @@ spec:
         # mounting rabbitmq.conf and enabled_plugins
         # this should have writeable access, this might be a problem
         - name: rabbitmq-config-rw
-          mountPath: "/etc/rabbitmq"
+          mountPath: /Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App/rabbitEtc"
           # mountPath: "/etc/rabbitmq/conf.d/"
         # rabbitmq data directory
         - name: rabbitmq-data
-          mountPath: "/var/lib/rabbitmq/mnesia"
+          mountPath: "/Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App/rabbitData"
         env:
         - name: RABBITMQ_DEFAULT_PASS
           valueFrom:
