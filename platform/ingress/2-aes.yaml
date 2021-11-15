@@ -545,6 +545,20 @@ spec:
       annotations:
         consul.hashicorp.com/connect-inject: 'false'
         sidecar.istio.io/inject: 'true'
+        traffic.sidecar.istio.io/includeInboundPorts: ""      # do not intercept any inbound ports
+        traffic.sidecar.istio.io/includeOutboundIPRanges: ""  # do not intercept any outbound traffic
+        
+        # We use proxy.istio.io/config to tell the Istio proxy to write newly-generated mTLS certificates
+        # into /etc/istio-certs, which will be mounted below. Though this annotation is placed on the
+        # Emissary-ingress pods, it is interpreted by Istio.
+        proxy.istio.io/config: |
+          proxyMetadata:
+            OUTPUT_CERTS: /etc/istio-certs
+        
+        # We use sidecar.istio.io/userVolumeMount to tell the Istio sidecars to mount the istio-certs
+        # volume at /etc/istio-certs, allowing the sidecars to see the generated certificates. Though
+        # this annotation is placed on the Emissary-ingress pods, it is interpreted by Istio.
+        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-certs"}]' 
     spec:
       terminationGracePeriodSeconds: 0
       securityContext:
@@ -561,6 +575,9 @@ spec:
       - name: ambassador-edge-stack-secrets
         secret:
           secretName: ambassador-edge-stack
+      - name: istio-certs
+        emptyDir:
+          medium: Memory
       containers:
       - name: aes
         image: docker.io/datawire/aes:1.14.2
@@ -593,6 +610,10 @@ spec:
           value: '60'
         - name: AMBASSADOR_KNATIVE_SUPPORT
           value: 'true'
+        - name: AMBASSADOR_ISTIO_SECRET_DIR
+          value: "/etc/istio-certs"
+        - name: AMBASSADOR_ENVOY_BASE_ID
+          value: "1"
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
@@ -615,6 +636,9 @@ spec:
           readOnly: true
         - name: ambassador-edge-stack-secrets
           mountPath: /.config/ambassador
+          readOnly: true
+        - name: istio-certs
+          mountPath: /etc/istio-certs/
           readOnly: true
         resources:
           limits:
@@ -692,7 +716,7 @@ spec:
     metadata:
       annotations:
         consul.hashicorp.com/connect-inject: 'false'
-        sidecar.istio.io/inject: 'false'
+        sidecar.istio.io/inject: 'true'
       labels:
         service: sample-app
     spec:
@@ -754,6 +778,7 @@ spec:
   rewrite: /
   service: sample-app:80
   hostname: pokehub.ml
+  tls: istio-upstream
 ---
 apiVersion: getambassador.io/v2
 kind: Mapping
@@ -769,10 +794,9 @@ spec:
 apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
-  name: nginx
+  name: webapp
   namespace: default
 spec:
-  prefix: /nginx
-  rewrite: /nginx
-  service: nginx:80
-  hostname: internal.pokehub.ml
+  prefix: /webapp
+  rewrite: /
+  service: webapp:5000
