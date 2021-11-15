@@ -1,9 +1,9 @@
 import React from 'react';
-import { useTheme } from '@material-ui/core/styles';
-import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import { useTheme } from '@mui/material/styles';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { connect } from 'react-redux';
 import { closedDrawer } from '../../actions/drawer';
 import PropTypes from 'prop-types';
@@ -24,13 +24,13 @@ const MobileDrawer = ({ drawerToggle, closedDrawer, classes }) => {
             }}
         >
             <div className={classes.drawerHeader}>
-                <IconButton onClick={() => closedDrawer()}>
+                <IconButton onClick={() => closedDrawer()} size="large">
                     {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
                 </IconButton>
             </div>
             <DrawerItems />
         </Drawer>
-    )
+    );
 }
 
 MobileDrawer.propTypes = {

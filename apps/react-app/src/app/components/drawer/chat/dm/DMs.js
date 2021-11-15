@@ -3,15 +3,16 @@ import { connect } from 'react-redux';
 import { getDMsToggle } from '../../../../selectors/drawer';
 import { openedDMs, closedDMs } from '../../../../actions/drawer';
 import PropTypes from 'prop-types';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
-import { List, ListItemText } from '@material-ui/core';
+import { useTheme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import { List, ListItemText } from '@mui/material';
 import { Accordion, AccordionSummary } from '../../../custom/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ChatIcon from '@material-ui/icons/Chat';
-import Popper from '@material-ui/core/Popper';
-import { Grow } from '@material-ui/core';
-import { Hidden } from "@material-ui/core";
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChatIcon from '@mui/icons-material/Chat';
+import Popper from '@mui/material/Popper';
+import { Grow } from '@mui/material';
+import { Hidden } from "@mui/material";
 import NewDM from './NewDM';
 import '../../drawer.css';
 import { getActiveDMs, getOpenedDM, getTotalUnreadDMs } from '../../../../selectors/chat';
@@ -21,7 +22,7 @@ import DM from './DM';
 import { withRouter } from 'react-router-dom';
 import { closedDM } from '../../../../actions/chat';
 import NewDMToggle from './NewDMToggle';
-import Badge from '@material-ui/core/Badge';
+import Badge from '@mui/material/Badge';
 import { DMPropTypes, VIEW_TYPE_LINK, VIEW_TYPE_POPPER } from '../../../../types/dm';
 import { useLocation } from 'react-router-dom';
 
@@ -97,9 +98,9 @@ const DMs = ({ dmsToggle, openedDMs, closedDMs, activeDMs, currentDM, drawerRef,
                     </List>
                 </AccordionDetails>
             </Accordion>
-            <Hidden smDown>
+            <Hidden mdDown>
                 <Popper 
-                    modifiers={{ offset: { enabled: true, offset: '13'}, arrow: { enabled: false, element: childPopper.current} }} 
+                    modifiers={[{ name: 'offset', enabled: true, options: { offset: [13, 25]}}, { name: 'arrow', enabled: false, options: { element: childPopper.current} }]} 
                     open={toggleNewDM && drawerRefAvailable} 
                     anchorEl={drawerRef && drawerRef.current ? drawerRef.current : null} 
                     placement='bottom-end' 
@@ -112,7 +113,7 @@ const DMs = ({ dmsToggle, openedDMs, closedDMs, activeDMs, currentDM, drawerRef,
                     )}
                 </Popper>
                 <Popper 
-                    modifiers={{ offset: { enabled: true, offset: '13'}, arrow: { enabled: false, element: childPopper.current} }}
+                    modifiers={[{ name: 'offset', enabled: true, options: { offset: [13, 25]}}, { name: 'arrow', enabled: false, options: { element: childPopper.current} }]}
                     open={currentDM !== null && drawerRefAvailable && currentDM.state.viewType === VIEW_TYPE_POPPER/*urlDMId !== currentDM.id && !urlDMId.includes('dms')*/} 
                     anchorEl={drawerRef && drawerRef.current ? drawerRef.current : null} 
                     placement='bottom-end' 
@@ -126,7 +127,7 @@ const DMs = ({ dmsToggle, openedDMs, closedDMs, activeDMs, currentDM, drawerRef,
                 </Popper>
             </Hidden>
         </React.Fragment>
-    )
+    );
 }
 
 DMs.propTypes = {

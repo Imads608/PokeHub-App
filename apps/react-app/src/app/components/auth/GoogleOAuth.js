@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core';
+import { Button } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { GoogleLogin } from 'react-google-login';
 import { useQuery } from 'react-query';

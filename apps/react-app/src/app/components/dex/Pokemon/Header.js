@@ -1,5 +1,5 @@
-import { Grid, IconButton } from '@material-ui/core';
-import { ArrowBackIos } from '@material-ui/icons';
+import { Grid, IconButton } from '@mui/material';
+import { ArrowBackIos } from '@mui/icons-material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ const Header = ({ pokemonData }) => {
                     aria-label="open drawer"
                     edge="end"
                     style={{ marginRight: '5px' }}
-                >
+                    size="large">
                     <ArrowBackIos fontSize='small' />
                 </IconButton>
             </Grid>
@@ -25,7 +25,7 @@ const Header = ({ pokemonData }) => {
                 </div>
             </Grid>
         </Grid>
-    )
+    );
 }
 
 export default Header;

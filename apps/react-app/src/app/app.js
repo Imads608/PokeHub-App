@@ -17,8 +17,8 @@ import ChatRooms from './components/chat/room/ChatRooms';
 import AppDrawer from './components/drawer/AppDrawer';
 import Pokedex from './components/dex/Pokedex';
 
-import { useTheme } from '@material-ui/core/styles';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { getDrawerToggle } from './selectors/drawer';
 import NewDM from './components/chat/dm/NewDM';

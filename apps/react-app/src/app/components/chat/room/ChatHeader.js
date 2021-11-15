@@ -1,9 +1,9 @@
 import React from 'react';
 import ChatRoomImage from '../../../img/chat-image.png';
-import { List, ListItemIcon, ListItemText, ListItem } from '@material-ui/core';
-import ChatIcon from '@material-ui/icons/Chat';
-import AssignmentLateIcon from '@material-ui/icons/AssignmentLate';
-import PeopleIcon from '@material-ui/icons/People';
+import { List, ListItemIcon, ListItemText, ListItem } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
+import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
+import PeopleIcon from '@mui/icons-material/People';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import '../chat.css';

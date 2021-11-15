@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import Paper from "@material-ui/core/Paper";
-import InputBase from '@material-ui/core/InputBase';
-import { makeStyles } from '@material-ui/core/styles';
+import Paper from "@mui/material/Paper";
+import InputBase from '@mui/material/InputBase';
+import makeStyles from '@mui/styles/makeStyles';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { sentMessageToChatRoom } from '../../actions/chat'
-import { OpenWithRounded } from '@material-ui/icons';
+import { OpenWithRounded } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import { getPublicUser } from '../../selectors/user'
 import '../chat/chat.css';
 import debounce from 'lodash/debounce';
 import { socket } from '../../events/socket';
-import TextareaAutosize from '@material-ui/core/TextareaAutosize';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
 import { PublicUserPropTypes } from '../../types/user';
 import { TYPE_CHAT_CHATROOM } from '../../types/chatroom';
 import { USER_IS_TYPING, USER_STOPPED_TYPING } from '../../types/chat';
@@ -124,7 +124,7 @@ const ChatInput = ( { recipient, publicUser: { username, uid }, sentMessageToRec
                 : otherUsersTyping.length === 2 ? `${otherUsersTyping[0]} and ${otherUsersTyping[1]} are typing` 
                 : `${otherUsersTyping[0]}, ${otherUsersTyping[1]} and ${otherUsersTyping.length-2} are typing` }</div> : '' }
             <TextareaAutosize
-                rowsMax={5}
+                maxRows={5}
                 className={classes.input}
                 aria-label="maximum height"
                 placeholder={placeholder}
@@ -134,7 +134,7 @@ const ChatInput = ( { recipient, publicUser: { username, uid }, sentMessageToRec
                 disabled={disabled}
             />         
         </div>
-    )
+    );
 }
 
 ChatInput.propTypes = {

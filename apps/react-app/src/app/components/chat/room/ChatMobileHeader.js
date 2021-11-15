@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import ChatRoomSidebar  from './ChatRoomSidebar';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import '../chat.css';
 
 const ChatMobileHeader = ({chatroom, navLinks, location}) => {

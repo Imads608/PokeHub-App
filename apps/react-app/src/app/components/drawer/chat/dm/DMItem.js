@@ -1,15 +1,15 @@
 import React from 'react';
-import { ListItemText, ListItem } from '@material-ui/core';
-import { Hidden } from "@material-ui/core";
+import { ListItemText, ListItem } from '@mui/material';
+import { Hidden } from "@mui/material";
 import '../../drawer.css';
 import { Link } from 'react-router-dom';
-import { Avatar } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Avatar } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import { connect } from 'react-redux';
 import { openedDM, closedDM, setDMInactive } from '../../../../actions/chat';
-import CancelIcon from '@material-ui/icons/Cancel';
+import CancelIcon from '@mui/icons-material/Cancel';
 import PropTypes from 'prop-types';
-import Badge from '@material-ui/core/Badge';
+import Badge from '@mui/material/Badge';
 import { DMPropTypes } from '../../../../types/dm';
 import { setDMToInactive } from '../../../../middleware-thunks/chat';
 import { getUsername } from '../../../../selectors/user';
@@ -88,7 +88,7 @@ const DMItem = ({ dm, openedDM, currentDM, closedDM, setDMInactive, username }) 
 
     return (
         <div>
-            <Hidden smDown>
+            <Hidden mdDown>
                 { dm.state.viewType === 'POPPER' ? <DMNonLink username={username} dm={dm} currentDM={currentDM} setDMtoInactive={setDMtoInactive} classes={classes} openDM={openDM}/>
                 : <DMLink username={username} dm={dm} currentDM={currentDM} setDMtoInactive={setDMtoInactive} classes={classes} openDM={openDM} />
                 }
@@ -97,7 +97,7 @@ const DMItem = ({ dm, openedDM, currentDM, closedDM, setDMInactive, username }) 
                 <DMLink username={username} dm={dm} currentDM={currentDM} setDMtoInactive={setDMtoInactive} classes={classes} openDM={openDM} />
             </Hidden>
         </div>
-    )
+    );
 }
 
 DMItem.propTypes = {

@@ -1,5 +1,6 @@
-import { Avatar, Box, Button, Container, CssBaseline, Grid, makeStyles, TextField, Typography } from "@material-ui/core";
-import { LockOutlined as LockOutlinedIcon } from "@material-ui/icons";
+import { Avatar, Box, Button, Container, CssBaseline, Grid, TextField, Typography } from "@mui/material";
+import makeStyles from '@mui/styles/makeStyles';
+import { LockOutlined as LockOutlinedIcon } from "@mui/icons-material";
 import { useForm } from "react-hook-form";
 import { Link, useHistory } from 'react-router-dom';
 import { useSignupUser } from "../../hooks/useSignupUser";

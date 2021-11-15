@@ -1,20 +1,20 @@
 /* eslint-disable no-labels */
 import React from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import SettingsIcon from '@material-ui/icons/Settings';
-import PersonIcon from '@material-ui/icons/Person';
+import Avatar from '@mui/material/Avatar';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import withStyles from '@mui/styles/withStyles';
+import Button from '@mui/material/Button';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
 import { connect, useDispatch } from 'react-redux';
 import { loggedOut } from '../../actions/auth';
 import { useQueryClient } from 'react-query';
-import Badge from '@material-ui/core/Badge';
-import { makeStyles } from '@material-ui/styles';
+import Badge from '@mui/material/Badge';
+import { makeStyles } from '@mui/styles';
 
 
 const StyledMenu = withStyles({
@@ -24,7 +24,7 @@ const StyledMenu = withStyles({
   })((props) => (
     <Menu
       elevation={0}
-      getContentAnchorEl={null}
+      //getContentAnchorEl={null}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'center',
@@ -67,7 +67,7 @@ const UserMenu = ({ user }) => {
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button onClick={handleClick} style={{ textTransform: 'none' }}>
                 <div style={{ marginLeft: '10px', marginRight: '10px' }}>
-                  <Badge variant='dot' overlap='circular' color='primary' anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                  <Badge variant='dot' overlap='circular' color='success' anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                     <Avatar src='' />
                   </Badge>  
                 </div>

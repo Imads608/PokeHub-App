@@ -1,9 +1,9 @@
-import { CircularProgress, List, Button } from '@material-ui/core';
+import { CircularProgress, List, Button } from '@mui/material';
 import React from 'react';
-import SearchIcon from '@material-ui/icons/Search';
+import SearchIcon from '@mui/icons-material/Search';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import SearchedUser from './SearchedUser';
-import SentimentVeryDissatisfiedIcon from '@material-ui/icons/SentimentVeryDissatisfied';
+import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
 import PropTypes from 'prop-types';
 
 const SearchUserResults = ({ loadingDM, fetched: { results, localLoading, offset, search, isDone }, fetched, getResults, loadDM, error, resetError }) => {

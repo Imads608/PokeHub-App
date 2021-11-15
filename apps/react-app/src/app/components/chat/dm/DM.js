@@ -1,4 +1,4 @@
-import { Avatar, Divider, IconButton } from '@material-ui/core';
+import { Avatar, Divider, IconButton } from '@mui/material';
 import React, { useEffect } from 'react';
 import ChatInput from '../../common/ChatInput';
 import ChatWindow from '../../common/ChatWindow';
@@ -15,9 +15,9 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router';
 import Loading from '../../layout/Loading';
-import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { Link } from 'react-router-dom';
-import Tooltip from '@material-ui/core/Tooltip';
+import Tooltip from '@mui/material/Tooltip';
 import '../chat.css';
 
 
@@ -30,42 +30,40 @@ const DM = ({ recipients, currentDM, sentDM, closedDM, loading, setOpenWindow, c
         !currentDM && error && setErrorNotification('Unable to get DM Details', 'AlertNotification', 'SET_DM_ACTIVE', null);
     }, [currentDM, error]);
     
-    return (
-        currentDM && !loading && currentDM.state.viewType === VIEW_TYPE_POPPER ? <Redirect to='/dashboard' /> :
-        !currentDM && error ? <Redirect to='/dashboard' /> :
-        currentDM && !loading ? (
-            <div className='main-view'>
-                <section className='dm-header'>
-                    <div className='dm-header-left-group'>
-                        <Tooltip title='Start a New DM'>
-                            <IconButton
-                                color="inherit"
-                                component={Link}
-                                to='/dms'
-                                aria-label="open drawer"
-                                edge="end"
-                                onClick={() => closedDM(currentDM.id)}
-                                style={{ marginRight: '5px' }}
-                            >
-                                <ArrowBackIosIcon fontSize='small' />
-                            </IconButton>
-                        </Tooltip>
-                        <Avatar style={{ marginRight: '10px' }} src='/broken-image.jpg' />
-                        <span className='lead'>{recipients[0].username}</span>
-                    </div>
-                </section>
-                <main className='chat-section'>
-                    <ChatWindow chatState={currentDM.state} loading={loading} error={error} reload={reloadConversation} />
-                    <ChatInput 
-                        recipient={{ participants: currentDM.participants, roomId: currentDM.id }} 
-                        sentMessageToRecipient={sentDM} 
-                        typeChat={TYPE_CHAT_DM} 
-                        disabled={error || loading} 
-                    />
-                </main>
-            </div>
-        ) : loading ? <Loading /> : <Redirect to='/dashboard' />
-    )
+    return currentDM && !loading && currentDM.state.viewType === VIEW_TYPE_POPPER ? <Redirect to='/dashboard' /> :
+    !currentDM && error ? <Redirect to='/dashboard' /> :
+    currentDM && !loading ? (
+        <div className='main-view'>
+            <section className='dm-header'>
+                <div className='dm-header-left-group'>
+                    <Tooltip title='Start a New DM'>
+                        <IconButton
+                            color="inherit"
+                            component={Link}
+                            to='/dms'
+                            aria-label="open drawer"
+                            edge="end"
+                            onClick={() => closedDM(currentDM.id)}
+                            style={{ marginRight: '5px' }}
+                            size="large">
+                            <ArrowBackIosIcon fontSize='small' />
+                        </IconButton>
+                    </Tooltip>
+                    <Avatar style={{ marginRight: '10px' }} src='/broken-image.jpg' />
+                    <span className='lead'>{recipients[0].username}</span>
+                </div>
+            </section>
+            <main className='chat-section'>
+                <ChatWindow chatState={currentDM.state} loading={loading} error={error} reload={reloadConversation} />
+                <ChatInput 
+                    recipient={{ participants: currentDM.participants, roomId: currentDM.id }} 
+                    sentMessageToRecipient={sentDM} 
+                    typeChat={TYPE_CHAT_DM} 
+                    disabled={error || loading} 
+                />
+            </main>
+        </div>
+    ) : loading ? <Loading /> : <Redirect to='/dashboard' />;
 }
 
 DM.propTypes = {

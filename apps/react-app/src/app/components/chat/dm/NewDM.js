@@ -11,7 +11,7 @@ import { DMPropTypes, VIEW_TYPE_LINK, VIEW_TYPE_POPPER } from '../../../types/dm
 import { NEW_DM } from '../../../types/app';
 import { PublicUserPropTypes } from '../../../types/user';
 import { Resizable } from 're-resizable';
-import Hidden from '@material-ui/core/Hidden';
+import Hidden from '@mui/material/Hidden';
 import SearchUsers from '../../common/SearchUsers';
 import SearchUserResults from '../../common/SearchUserResults';
 import useInitialLoad from '../../../hooks/useInitialLoad';
@@ -49,7 +49,7 @@ const NewDM = ({ fetched, getResults, searchOnNewFilter, activeDMs, publicUser, 
     return (
         <div className='main-view' style={{ paddingTop: '5px' }}>
             <SearchUsers runOnSearch={searchOnNewFilter} />
-            <Hidden smDown>
+            <Hidden mdDown>
                 <h3 className='theme-text active-dms-header'>Active DMs</h3>
                 <Resizable
                     className='active-dms-section'
@@ -80,7 +80,7 @@ const NewDM = ({ fetched, getResults, searchOnNewFilter, activeDMs, publicUser, 
                 resetError={resetError}    
             />
         </div>
-    )
+    );
 }
 
 NewDM.propTypes = {

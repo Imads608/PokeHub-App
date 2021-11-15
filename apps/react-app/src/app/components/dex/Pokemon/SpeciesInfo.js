@@ -1,4 +1,4 @@
-import { Chip } from '@material-ui/core';
+import { Chip } from '@mui/material';
 import React, { useState } from 'react';
 import SpeciesInfoRow from './SpeciesInfoRow';
 import SpeciesItemDetail from './SpeciesItemDetail';

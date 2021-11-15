@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Paper } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Paper } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import WithResultsSearch from '../../../hoc/WithResultsSearch';
 import { getChatRoomMembers } from '../../../../api/chat';
 import '../../drawer.css';

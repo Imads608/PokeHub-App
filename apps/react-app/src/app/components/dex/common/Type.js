@@ -1,4 +1,4 @@
-import { Button, ListItem, ListItemText } from '@material-ui/core';
+import { Button, ListItem, ListItemText } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../dex.css';

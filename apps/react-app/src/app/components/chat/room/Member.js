@@ -1,12 +1,12 @@
 import React from 'react';
-import Paper from '@material-ui/core/Paper';
-import Avatar from '@material-ui/core/Avatar';
-import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
-import ChatIcon from '@material-ui/icons/Chat';
-import PersonAddIcon from '@material-ui/icons/PersonAdd';
+import Paper from '@mui/material/Paper';
+import Avatar from '@mui/material/Avatar';
+import makeStyles from '@mui/styles/makeStyles';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import ChatIcon from '@mui/icons-material/Chat';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import '../chat.css';
 
 const useStyles = makeStyles(() => ({
@@ -35,21 +35,21 @@ const Member = ({ username, disable }) => {
                 <span className='lead'>{username}</span>
                 <Tooltip title={`Direct Message ${username}`}>
                     <React.Fragment>
-                        <IconButton disabled={disable} color='secondary' >
+                        <IconButton disabled={disable} color='secondary' size="large">
                             <ChatIcon />
                         </IconButton>
                     </React.Fragment>
                 </Tooltip>
                 <Tooltip title={`Send Friend Request`}>
                     <React.Fragment>
-                        <IconButton disabled={disable} color='secondary' >
+                        <IconButton disabled={disable} color='secondary' size="large">
                             <PersonAddIcon />
                         </IconButton>
                     </React.Fragment>
                 </Tooltip>
             </div>
         </Paper>
-    )
+    );
 }
 
 export default Member;

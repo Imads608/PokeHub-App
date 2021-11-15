@@ -1,5 +1,5 @@
-import { Chip, Grid, IconButton, Paper } from '@material-ui/core';
-import { ArrowBackIos } from '@material-ui/icons';
+import { Chip, Grid, IconButton, Paper } from '@mui/material';
+import { ArrowBackIos } from '@mui/icons-material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';

@@ -1,4 +1,4 @@
-import { Divider } from '@material-ui/core';
+import { Divider } from '@mui/material';
 import React, { useRef } from 'react';
 import ChatRooms from './chat/room/ChatRooms';
 import DMs from './chat/dm/DMs';

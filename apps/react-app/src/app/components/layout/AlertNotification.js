@@ -1,11 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Alert, AlertTitle } from '@material-ui/lab';
-import { withStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import Fade from '@material-ui/core/Fade';
-import Box from '@material-ui/core/Box';
+import { Alert, AlertTitle } from '@mui/material';
+import withStyles from '@mui/styles/withStyles';
+import Grid from '@mui/material/Grid';
+import Fade from '@mui/material/Fade';
+import Box from '@mui/material/Box';
 import { getAppLoading } from '../../selectors/app';
 import { getAppNotification } from '../../selectors/notification';
 import { resetNotification } from '../../actions/notification';

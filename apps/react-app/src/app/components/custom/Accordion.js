@@ -1,7 +1,7 @@
 import React from 'react';
-import MuiAccordion from '@material-ui/core/Accordion';
-import MuiAccordionSummary from '@material-ui/core/AccordionSummary';
-import { withStyles } from '@material-ui/core/styles';
+import MuiAccordion from '@mui/material/Accordion';
+import MuiAccordionSummary from '@mui/material/AccordionSummary';
+import withStyles from '@mui/styles/withStyles';
 
 export const Accordion = withStyles({
     root: {

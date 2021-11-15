@@ -1,4 +1,5 @@
-import { InputBase, makeStyles, Paper, Switch } from '@material-ui/core';
+import { InputBase, Paper, Switch } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 

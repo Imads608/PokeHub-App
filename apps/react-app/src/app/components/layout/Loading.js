@@ -1,6 +1,6 @@
 import React from 'react';
 import Backdrop from '../custom/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const Loading = () => {
     return (

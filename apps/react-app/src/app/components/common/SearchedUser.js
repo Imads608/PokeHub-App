@@ -1,8 +1,8 @@
 import React from 'react';
-import { ListItem } from '@material-ui/core';
-import { Hidden } from "@material-ui/core";
+import { ListItem } from '@mui/material';
+import { Hidden } from "@mui/material";
 import { Link } from 'react-router-dom';
-import Avatar from '@material-ui/core/Avatar';
+import Avatar from '@mui/material/Avatar';
 import PropTypes from 'prop-types';
 import '../drawer/drawer.css';
 import { PublicUserPropTypes } from '../../types/user';
@@ -21,7 +21,7 @@ const getHighlightedText = (text, highlight) => {
 const SearchedUser = ({ searchedUser, loadDM, location, searchTerm }) => {
     return (
         <div>
-            <Hidden smDown>
+            <Hidden mdDown>
                 { location.pathname.includes('/dms') ? (
                     <ListItem button onClick={() => loadDM(searchedUser, true) } className='search-result'>
                         <Avatar className='search-result-avatar' src='/broken-image.jpg' />
@@ -41,7 +41,7 @@ const SearchedUser = ({ searchedUser, loadDM, location, searchTerm }) => {
                 </ListItem>
             </Hidden>
         </div>
-    )
+    );
 }
 
 SearchedUser.propTypes = {

@@ -1,5 +1,5 @@
-import { withStyles } from '@material-ui/core';
-import MuiBackdrop from '@material-ui/core/Backdrop';
+import withStyles from '@mui/styles/withStyles';
+import MuiBackdrop from '@mui/material/Backdrop';
 
 export default withStyles({
     root: {

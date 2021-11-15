@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import ChatMessage from './ChatMessage';
 import '../chat/chat.css';
-import { CircularProgress, Button } from '@material-ui/core';
-import { SentimentVeryDissatisfied } from '@material-ui/icons';
+import { CircularProgress, Button } from '@mui/material';
+import { SentimentVeryDissatisfied } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
 const ChatWindow = ({chatState, loading, error, reload}) => {

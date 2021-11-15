@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
-import { makeStyles } from '@material-ui/core/styles';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import makeStyles from '@mui/styles/makeStyles';
 
 import { Link } from 'react-router-dom';
 import logo from './pokehub-logo.png';
@@ -20,7 +20,7 @@ import UserMenu from './UserMenu';
 import UserNotifications from './UserNotifications';
 import { getOpenedDM, getTotalUnreadDMs } from '../../selectors/chat';
 import { resetDMUnreadMessages } from '../../actions/chat';
-import Badge from '@material-ui/core/Badge';
+import Badge from '@mui/material/Badge';
 
 
 const drawerWidth = 240;
@@ -62,43 +62,43 @@ const Navbar = ({ isAuthenticated, loading, drawerToggle, user, authLoading, cur
 
   const classes = useStyles();
   return (
-      <div className={classes.root}>
-        <AppBar position="sticky" className={clsx(classes.appBar, {
-          [classes.appBarShift]: drawerToggle,
-        })}>
-          <Toolbar style={{minHeight: '7vh'}}>
-            <img id='logo' src={logo}/>
-            <Typography variant="h6" className={classes.title}>
-              <Link className='link nav-link' to={`${isAuthenticated ? '/dashboard' : '/'}`}>PokéHub</Link>
-            </Typography>
-            
-            {!isAuthenticated && !authLoading ? (
-              <div>
-                <Link to='/login' className='link nav-link'>Log In</Link>
-                <Link to='/register' className='link nav-link'>Register</Link>
-              </div>
-            ) : !loading ? (
-              <div style={{ display: 'flex'}}>
-                <UserMenu user={user} />
-                <UserNotifications />
-                <IconButton
-                  ref={navbarRef}
-                  color="inherit"
-                  aria-label="open drawer"
-                  edge="end"
-                  onClick={() => openedDrawer()}
-                  className={clsx(drawerToggle && classes.hide)}
-                >
-                  <Badge badgeContent={unreadDMCount} color='primary'>
-                    <MenuIcon />
-                  </Badge>
-                </IconButton>
-              </div>
-            ) : ''}
-            
-          </Toolbar>
-        </AppBar>
-      </div>
+    <div className={classes.root}>
+      <AppBar position="sticky" className={clsx(classes.appBar, {
+        [classes.appBarShift]: drawerToggle,
+      })}>
+        <Toolbar style={{minHeight: '7vh'}}>
+          <img id='logo' src={logo}/>
+          <Typography variant="h6" className={classes.title}>
+            <Link className='link nav-link' to={`${isAuthenticated ? '/dashboard' : '/'}`}>PokéHub</Link>
+          </Typography>
+          
+          {!isAuthenticated && !authLoading ? (
+            <div>
+              <Link to='/login' className='link nav-link'>Log In</Link>
+              <Link to='/register' className='link nav-link'>Register</Link>
+            </div>
+          ) : !loading ? (
+            <div style={{ display: 'flex'}}>
+              <UserMenu user={user} />
+              <UserNotifications />
+              <IconButton
+                ref={navbarRef}
+                color="inherit"
+                aria-label="open drawer"
+                edge="end"
+                onClick={() => openedDrawer()}
+                className={clsx(drawerToggle && classes.hide)}
+                size="large">
+                <Badge badgeContent={unreadDMCount} color='primary'>
+                  <MenuIcon />
+                </Badge>
+              </IconButton>
+            </div>
+          ) : ''}
+          
+        </Toolbar>
+      </AppBar>
+    </div>
   );
 }
 

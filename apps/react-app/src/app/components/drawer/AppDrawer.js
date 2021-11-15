@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
+import makeStyles from '@mui/styles/makeStyles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { connect } from 'react-redux';
-import Hidden from "@material-ui/core/Hidden";
+import Hidden from "@mui/material/Hidden";
 import MobileDrawer from './MobileDrawer';
 import FullDrawer from './FullDrawer';
 import { getDrawerToggle } from '../../selectors/drawer';
@@ -34,20 +34,19 @@ const AppDrawer = ({isAuthenticated, loading, drawerToggle, navbarRef}) => {
 
   console.log('Navbar Ref', navbarRef.current);
 
-  return (
-    isAuthenticated && !loading && (
-    <div className={classes.root}>
-      <CssBaseline />
-      <nav className={classes.drawer}>
-        <Hidden mdUp>
-          <MobileDrawer drawerToggle={drawerToggle} classes={classes} />
-        </Hidden>
-        <Hidden smDown>
-          <FullDrawer drawerToggle={drawerToggle} classes={classes} drawerRef={navbarRef} />
-        </Hidden>
-      </nav>
-    </div>
-  ))
+  return isAuthenticated && !loading && (
+  <div className={classes.root}>
+    <CssBaseline />
+    <nav className={classes.drawer}>
+      <Hidden mdUp>
+        <MobileDrawer drawerToggle={drawerToggle} classes={classes} />
+      </Hidden>
+      <Hidden mdDown>
+        <FullDrawer drawerToggle={drawerToggle} classes={classes} drawerRef={navbarRef} />
+      </Hidden>
+    </nav>
+  </div>
+);
 }
 
 const mapStateToProps = (state) => ({

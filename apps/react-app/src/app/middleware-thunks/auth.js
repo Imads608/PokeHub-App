@@ -9,7 +9,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { useInterceptors } from '../axios';
 import { getCurrentUserData, createUser as createUserData, getNewAccessToken, loadUser as loadUserAPI } from '../api/auth';
-import { PermCameraMic } from "@material-ui/icons";
+import { PermCameraMic } from "@mui/icons-material";
 
 let shouldCreateUser = false;
 

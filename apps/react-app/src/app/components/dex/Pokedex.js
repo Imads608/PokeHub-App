@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import useInitialLoad from '../../hooks/useInitialLoad';
-import SearchIcon from '@material-ui/icons/Search';
+import SearchIcon from '@mui/icons-material/Search';
 import Loading from '../layout/Loading';
 import logo from '../layout/pokehub-logo.png';
 import DexEntries from './DexEntries';
 import NavItem from './NavItem';
 import GenNavbar from './GenNavbar'
-import { Grow, InputBase, makeStyles, Paper, Slide } from '@material-ui/core';
+import { Grow, InputBase, Paper, Slide } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import Pokemon from './Pokemon/Pokemon';
 
 const useStyles = makeStyles((theme) => ({

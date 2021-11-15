@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Paper, Avatar, Divider, IconButton } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
+import { Paper, Avatar, Divider, IconButton } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import '../../drawer.css';
 import ChatWindow from '../../../common/ChatWindow';
 import ChatInput from '../../../common/ChatInput';
@@ -49,44 +49,41 @@ const DM = ({ recipients, currentDM, sentDM, closedDM, drawerToggle, error, load
       loadDirectMessageConversation(currentDM.id);
     }*/
 
-    return (
-      currentDM.state.viewType === VIEW_TYPE_LINK ? '' : 
-      (
-        <Paper className={classes.search} elevation={4}>
-          <section className='dm-header'>
-            <div className='dm-header-left-group'>
-              <Avatar style={{ marginRight: '10px' }} src='/broken-image.jpg' />
-              <span className='lead'>{recipients[0].username}</span>
-            </div>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="end"
-              onClick={() => closedDM(currentDM.id)}
-            >
-              <ArrowForwardIosIcon fontSize='small' />
-            </IconButton>
-          </section>
-          <Divider variant='middle' />
-          <main className='chat-section'>
-            <ChatWindow 
-              chatState={currentDM.state} 
-              loading={loading} 
-              error={error}
-              reload={reloadConversation}        
-            />
-            <ChatInput 
-              recipient={{ participants: currentDM.participants, roomId: currentDM.id }} 
-              sentMessageToRecipient={sentDM} 
-              typeChat={TYPE_CHAT_DM}
-              disabled={error || !currentDM.state.isConversationLoaded}
-              loading={loading}
-            />
-          </main>
-        </Paper>
-      )
-
-    )
+    return currentDM.state.viewType === VIEW_TYPE_LINK ? '' : 
+    (
+      <Paper className={classes.search} elevation={4}>
+        <section className='dm-header'>
+          <div className='dm-header-left-group'>
+            <Avatar style={{ marginRight: '10px' }} src='/broken-image.jpg' />
+            <span className='lead'>{recipients[0].username}</span>
+          </div>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="end"
+            onClick={() => closedDM(currentDM.id)}
+            size="large">
+            <ArrowForwardIosIcon fontSize='small' />
+          </IconButton>
+        </section>
+        <Divider variant='middle' />
+        <main className='chat-section'>
+          <ChatWindow 
+            chatState={currentDM.state} 
+            loading={loading} 
+            error={error}
+            reload={reloadConversation}        
+          />
+          <ChatInput 
+            recipient={{ participants: currentDM.participants, roomId: currentDM.id }} 
+            sentMessageToRecipient={sentDM} 
+            typeChat={TYPE_CHAT_DM}
+            disabled={error || !currentDM.state.isConversationLoaded}
+            loading={loading}
+          />
+        </main>
+      </Paper>
+    );
 }
 
 DM.propTypes = {

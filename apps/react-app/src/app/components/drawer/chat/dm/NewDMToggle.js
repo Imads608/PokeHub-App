@@ -1,15 +1,15 @@
 import React from 'react';
-import { ListItemText, ListItem, Hidden } from '@material-ui/core';
-import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
-import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
-import AddCircleIcon from '@material-ui/icons/AddCircle';
+import { ListItemText, ListItem, Hidden } from '@mui/material';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 const NewDMToggle = ({ toggleNewDM, startNewDM, location}) => {
     return (
         <div>
-            <Hidden smDown>
+            <Hidden mdDown>
                 <ListItem        
                     button
                     onClick={startNewDM}
@@ -46,7 +46,7 @@ const NewDMToggle = ({ toggleNewDM, startNewDM, location}) => {
                 </ListItem>
             </Hidden>
         </div>
-    )
+    );
 }
 
 NewDMToggle.propTypes = {

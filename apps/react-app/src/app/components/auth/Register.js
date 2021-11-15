@@ -1,16 +1,16 @@
 import React from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-//import Link from '@material-ui/core/Link';
-import Grid from '@material-ui/core/Grid';
-import Box from '@material-ui/core/Box';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-import { ErrorOutlineSharp } from '@material-ui/icons';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import TextField from '@mui/material/TextField';
+//import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import withStyles from '@mui/styles/withStyles';
+import Container from '@mui/material/Container';
+import { ErrorOutlineSharp } from '@mui/icons-material';
 //import { signInWithGoogle } from '../../firebase';
 import { connect } from 'react-redux';
 import { googleSignIn, createUser } from '../../middleware-thunks/auth';
@@ -259,7 +259,7 @@ class Register extends React.Component {
                     >
                         Sign Up With Google
                     </Button>
-                    <Grid container justify="flex-start">
+                    <Grid container justifyContent="flex-start">
                         <Grid item>
                             <Link to="/login" style={{ textDecoration: 'none' }}>
                                 Already have an account? Sign in

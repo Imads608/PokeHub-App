@@ -1,8 +1,8 @@
 import React from 'react';
-import { ListItem } from '@material-ui/core';
-import { Hidden } from "@material-ui/core";
+import { ListItem } from '@mui/material';
+import { Hidden } from "@mui/material";
 import { Link } from 'react-router-dom';
-import Avatar from '@material-ui/core/Avatar';
+import Avatar from '@mui/material/Avatar';
 import PropTypes from 'prop-types';
 import '../../drawer.css';
 import { PublicUserPropTypes } from '../../../../types/user';
@@ -10,7 +10,7 @@ import { PublicUserPropTypes } from '../../../../types/user';
 const SearchedUser = ({ searchedUser, loadDM }) => {
     return (
         <div>
-            <Hidden smDown>
+            <Hidden mdDown>
                 <ListItem button onClick={() => loadDM(searchedUser)} className='search-result'>
                     <Avatar className='search-result-avatar' src='/broken-image.jpg' />
                     <span className='lead'>{searchedUser.username}</span>
@@ -23,7 +23,7 @@ const SearchedUser = ({ searchedUser, loadDM }) => {
                 </ListItem>
             </Hidden>
         </div>
-    )
+    );
 }
 
 SearchedUser.propTypes = {

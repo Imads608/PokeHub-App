@@ -7,9 +7,8 @@ import { getChatRoomMembers } from '../../../api/chat';
 import PropTypes from 'prop-types';
 import Loading from '../../layout/Loading';
 import { Redirect } from 'react-router';
-import Grid from '@material-ui/core/Grid';
-import Hidden from '@material-ui/core/Hidden';
-import withWidth from '@material-ui/core/withWidth';
+import Grid from '@mui/material/Grid';
+import Hidden from '@mui/material/Hidden';
 import ChatMobileHeader from './ChatMobileHeader';
 import ChatHeader from './ChatHeader';
 import Introduction from './Introduction';
@@ -26,6 +25,9 @@ import { OpenedWindowPropTypes, CHAT_ROOM } from '../../../types/app';
 import '../chat.css';
 import WithResultsSearch from '../../hoc/WithResultsSearch';
 import useInitialLoad from '../../../hooks/useInitialLoad';
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 const ChatRoom = ({ setChatRoomOpen, openedChatRoom, setOpenWindow, user, isMember, activeChatRooms, currentRoom,
                     currentWindow, location, match, fetched, getResults, searchOnNewFilter, resetFilter, setErrorNotification, notificationMessage }) => {
@@ -54,45 +56,43 @@ const ChatRoom = ({ setChatRoomOpen, openedChatRoom, setOpenWindow, user, isMemb
         } else setErrorNotification(CHAT_ROOM_DOESNT_EXIST, 'AlertNotification', null);
     }
 
-    return (
-        !isLoading && !currentRoom && notificationMessage === CHAT_ROOM_DOESNT_EXIST ? (
-            <Redirect to='/dashboard' />
-        ) : isLoading || currentWindow.type !== CHAT_ROOM ? (
-            <Loading />
-        ) : currentWindow.type === CHAT_ROOM && !currentRoom && activeChatRooms.length > 0 ? (
-            <Redirect to={`/chatrooms/${activeChatRooms[0].id}`} />
-        ) : currentWindow.type === CHAT_ROOM && !currentRoom && activeChatRooms.length === 0 ? (
-            <Redirect to='/dashboard' />
-        ) 
-        : (
-            <Grid container spacing={0}>
-                <Hidden smDown>
-                        <Grid item md={3}>
-                            <ChatHeader roomName={currentRoom.name} location={location} />
-                        </Grid>
-                </Hidden>
-                <Grid item xs={12} md={9}>
-                    <div style={{display: 'flex', height: '93vh', flexDirection: 'column'}}>
-                        <Hidden mdUp>
-                            <ChatMobileHeader chatroom={currentRoom} navLinks={navLinks} location={location} />
-                        </Hidden>
-                        
-                        { location.search === '?view=rules' && parseInt(match.params.id) === currentRoom.id ? <Rules location={location} room={currentRoom} /> 
-                            : location.search === '?view=lobby' && parseInt(match.params.id) === currentWindow.payload.id ? 
-                                <Lobby user={user} isMember={isMember} room={currentRoom} location={location} /> 
-                            : location.search === '?view=members' && parseInt(match.params.id) === currentWindow.payload.id ? 
-                                <Members location={location} user={user} fetched={fetched} roomId={currentRoom.id}
-                                        getResults={getResults} resetFilter={resetFilter} searchOnNewFilter={searchOnNewFilter} 
-                                />
-                            : location.search === '' && parseInt(match.params.id) === currentWindow.payload.id ? 
-                                <Introduction room={currentRoom} location={location} user={user} />
-                            : ''
-                        }
-                    </div>
-                </Grid>
+    return !isLoading && !currentRoom && notificationMessage === CHAT_ROOM_DOESNT_EXIST ? (
+        <Redirect to='/dashboard' />
+    ) : isLoading || currentWindow.type !== CHAT_ROOM ? (
+        <Loading />
+    ) : currentWindow.type === CHAT_ROOM && !currentRoom && activeChatRooms.length > 0 ? (
+        <Redirect to={`/chatrooms/${activeChatRooms[0].id}`} />
+    ) : currentWindow.type === CHAT_ROOM && !currentRoom && activeChatRooms.length === 0 ? (
+        <Redirect to='/dashboard' />
+    ) 
+    : (
+        <Grid container spacing={0}>
+            <Hidden mdDown>
+                    <Grid item md={3}>
+                        <ChatHeader roomName={currentRoom.name} location={location} />
+                    </Grid>
+            </Hidden>
+            <Grid item xs={12} md={9}>
+                <div style={{display: 'flex', height: '93vh', flexDirection: 'column'}}>
+                    <Hidden mdUp>
+                        <ChatMobileHeader chatroom={currentRoom} navLinks={navLinks} location={location} />
+                    </Hidden>
+                    
+                    { location.search === '?view=rules' && parseInt(match.params.id) === currentRoom.id ? <Rules location={location} room={currentRoom} /> 
+                        : location.search === '?view=lobby' && parseInt(match.params.id) === currentWindow.payload.id ? 
+                            <Lobby user={user} isMember={isMember} room={currentRoom} location={location} /> 
+                        : location.search === '?view=members' && parseInt(match.params.id) === currentWindow.payload.id ? 
+                            <Members location={location} user={user} fetched={fetched} roomId={currentRoom.id}
+                                    getResults={getResults} resetFilter={resetFilter} searchOnNewFilter={searchOnNewFilter} 
+                            />
+                        : location.search === '' && parseInt(match.params.id) === currentWindow.payload.id ? 
+                            <Introduction room={currentRoom} location={location} user={user} />
+                        : ''
+                    }
+                </div>
             </Grid>
-        )
-    )
+        </Grid>
+    );
     
 }
 

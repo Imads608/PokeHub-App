@@ -1,5 +1,5 @@
 import React, { useDebugValue, useEffect } from 'react';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { joinChatRoom, leaveChatRoom } from '../../../middleware-thunks/chat';
