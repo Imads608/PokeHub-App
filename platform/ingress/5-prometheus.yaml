@@ -153,6 +153,7 @@ metadata:
 spec:
   prefix: /prometheus/
   rewrite: /prometheus/
+  host: pokehub.ml
   service: prometheus:9090
 ---
 apiVersion: monitoring.coreos.com/v1

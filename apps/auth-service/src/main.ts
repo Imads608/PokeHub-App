@@ -8,19 +8,18 @@ const logger = new Logger('Main');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService: ConfigService = app.get(ConfigService);
+  const configService: ConfigService = app.get<ConfigService>(ConfigService);
 
   const microservice = app.connectMicroservice({
     transport: Transport.TCP,
     options: {
-      host: 'localhost',
-      port: +configService.get<Number>('APPLICATION_PORT')
+      port: +configService.get<number>('appPort')
     }
   })
 
   await app.startAllMicroservices();
-  await app.listen(+configService.get<Number>('APPLICATION_PORT'));
-  logger.log(`Application started on port ${configService.get('APPLICATION_PORT')}`);
+  //await app.listen(+configService.get<number>('appPort'));
+  logger.log(`Application started on port ${configService.get('appPort')}`);
   //await app.listen();
 }
 bootstrap();

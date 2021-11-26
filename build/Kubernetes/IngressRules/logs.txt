@@ -1,0 +1,500 @@
+ 2444  kubectl apply -f chat-service.yaml 
+ 2445  kubectl get pods --namespace backend-system
+ 2446  kubectl get pods --namespace backend-system
+ 2447  kubectl logs --namespace backend-system chat-service-7f4cdf784b-7jr5k -c chat-service
+ 2448  kubectl exec --stdin --tty chat-service-7f4cdf784b-7jr5k --namespace backend-system  -- /bin/bash
+ 2449  kubectl exec --stdin --tty chat-service-7f4cdf784b-7jr5k --namespace backend-system  -- /bin/bash -c chat-service
+ 2450  kubectl get pods --namespace backend-system
+ 2451  kubectl apply -f chat-service.yaml 
+ 2452  kubectl get pods --namespace backend-system
+ 2453  kubectl get pods --namespace backend-system
+ 2454  kubectl exec --stdin --tty chat-service-7f4cdf784b-7jr5k --namespace backend-system  -- /bin/bash -c chat-service
+ 2455  kubectl get pods --namespace backend-system
+ 2456  kubectl get pods --namespace backend-system
+ 2457  cd ..
+ 2458  cd ..
+ 2459  cd ..
+ 2460  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2461  cd build/Kubernetes/Deployments/
+ 2462  kubectl apply -f chat-service.yaml 
+ 2463  kubectl get pods --namespace backend-system
+ 2464  kubectl get pods --namespace backend-system
+ 2465  kubectl get pods --namespace backend-system
+ 2466  kubectl get pods --namespace backend-system
+ 2467  kubectl get pods --namespace backend-system
+ 2468  kubectl get pods --namespace backend-system
+ 2469  kubectl logs --namespace backend-system chat-service-7f4cdf784b-7jr5k -c chat-service
+ 2470  cd ..
+ 2471  cd ..
+ 2472  ls
+ 2473  cd ..
+ 2474  l
+ 2475  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2476  cd build/Kubernetes/Deployments/
+ 2477  kubectl apply -f chat-service.yaml 
+ 2478  kubectl get pods --namespace backend-system
+ 2479  kubectl get pods --namespace backend-system
+ 2480  kubectl get pods --namespace backend-system
+ 2481  kubectl get pods --namespace backend-system
+ 2482  kubectl get pods --namespace backend-system
+ 2483  kubectl get pods --namespace backend-system
+ 2484  kubectl get pods --namespace backend-system
+ 2485  kubectl get pods --namespace backend-system
+ 2486  kubectl get pods --namespace backend-system
+ 2487  kubectl get pods --namespace backend-system
+ 2488  kubectl delete deployment --namespace backend-service chat-service
+ 2489  kubectl get pods --namespace backend-system
+ 2490  kubectl delete deployment --namespace backend-system chat-service
+ 2491  kubectl get pods --namespace backend-system
+ 2492  kubectl get pods --namespace backend-system
+ 2493  kubectl apply -f chat-service.yaml 
+ 2494  kubectl get pods --namespace backend-system
+ 2495  kubectl get pods --namespace backend-system
+ 2496  kubectl logs --namespace backend-system chat-service-569bcf6466-qggvr -c chat-service
+ 2497  kubectl get services --namespace postgres
+ 2498  cd ..
+ 2499  cd ..
+ 2500  cd ..
+ 2501  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2502  cd build/Kubernetes/Deployments/
+ 2503  kubectl apply -f chat-service.yaml 
+ 2504  kubectl get pods --namespace backend-system
+ 2505  kubectl get pods --namespace backend-system
+ 2506  kubectl get pods --namespace backend-system
+ 2507  kubectl delete deployment --namespace backend-system chat-service
+ 2508  kubectl get pods --namespace backend-system
+ 2509  kubectl get pods --namespace backend-system
+ 2510  kubectl apply -f chat-service.yaml 
+ 2511  kubectl get pods --namespace backend-system
+ 2512  kubectl get pods --namespace backend-system
+ 2513  kubectl logs --namespace backend-system chat-service-569bcf6466-75cm2 -c chat-service
+ 2514  kubectl logs --namespace backend-system chat-service-569bcf6466-75cm2 -c chat-service
+ 2515  kubectl rollout restart deployment --namespace backend-system chat-service
+ 2516  kubectl get pods --namespace backend-system
+ 2517  kubectl get pods --namespace backend-system
+ 2518  kubectl get pods --namespace backend-system
+ 2519  kubectl get pods --namespace backend-system
+ 2520  kubectl get pods --namespace backend-system
+ 2521  kubectl get pods --namespace backend-system
+ 2522  kubectl logs --namespace backend-system chat-service-6dccc5b78c-x98lr -c chat-service
+ 2523  kubectl logs --namespace backend-system chat-service-6dccc5b78c-x98lr -c chat-service
+ 2524  kubectl logs --namespace backend-system chat-service-6dccc5b78c-x98lr -c chat-service
+ 2525  cd ..
+ 2526  cd ..
+ 2527  cd ..
+ 2528  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2529  cd build/Kubernetes/Deployments/
+ 2530  ls
+ 2531  kubectl apply -f chat-service.yaml 
+ 2532  kubectl get pods --namespace backend-system
+ 2533  kubectl get pods --namespace backend-system
+ 2534  kubectl logs --namespace backend-system chat-service-5bdcf4c445-dq4vg -c chat-service
+ 2535  kubectl delete deployment --namespace backend-system chat-service
+ 2536  kubectl get pods --namespace backend-system
+ 2537  kubectl get pods --namespace backend-system
+ 2538  kubectl get pods --namespace backend-system
+ 2539  kubectl get pods --namespace backend-system
+ 2540  kubectl get pods --namespace backend-system
+ 2541  kubectl get pods --namespace backend-system
+ 2542  kubectl apply -f chat-service.yaml 
+ 2543  kubectl get pods --namespace backend-system
+ 2544  kubectl get pods --namespace backend-system
+ 2545  kubectl logs --namespace backend-system chat-service-569bcf6466-zqg7b -c chat-service
+ 2546  kubectl exec --stdin --tty chat-service-569bcf6466-zqg7b --namespace backend-system  -- /bin/bash -c chat-service
+ 2547  kubectl exec --stdin --tty chat-service-569bcf6466-zqg7b --namespace backend-system  -- /bin/bash 
+ 2548  kubectl exec --stdin --tty chat-service-569bcf6466-zqg7b --namespace backend-system  -- /bin/sh 
+ 2549  kubectl get pods --namespace backend-system
+ 2550  kubectl exec --stdin --tty chat-service-7f4cdf784b-c2jhw --namespace backend-system  -- /bin/sh 
+ 2551  ls
+ 2552  kubectl exec --stdin --tty chat-service-7f4cdf784b-c2jhw --namespace backend-system  -- /bin/sh 
+ 2553  cd ..
+ 2554  cd ..
+ 2555  cd ..
+ 2556  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2557  cd build/Kubernetes/
+ 2558  l
+ 2559  ls
+ 2560  cd Deployments/
+ 2561  ls
+ 2562  kubectl apply -f chat-service.yaml 
+ 2563  kubectl get pods --namespace backend-system
+ 2564  kubectl logs --namespace backend-system chat-service-5d658d46c5-5wh9s -c chat-service
+ 2565  kubectl delete deployment --namespace backend-system
+ 2566  kubectl delete deployment --namespace backend-system chat-service
+ 2567  kubectl get pods --namespace backend-system
+ 2568  kubectl get pods --namespace backend-system
+ 2569  kubectl apply -f chat-service.yaml 
+ 2570  kubectl get pods --namespace backend-system
+ 2571  kubectl get pods --namespace backend-system
+ 2572  kubectl logs --namespace backend-system chat-service-569bcf6466-dhgg7 -c chat-service
+ 2573  cd ..
+ 2574  cd ..
+ 2575  cd ..
+ 2576  bash build/Docker/Scripts/chat-service-dockerbuild-dev.sh 
+ 2577  cd build/Kubernetes/Deployments/
+ 2578  ls
+ 2579  kubectl delete deployment --namespace backend-system chat-service
+ 2580  kubectl get pods --namespace backend-system
+ 2581  kubectl get pods --namespace backend-system
+ 2582  kubectl get pods --namespace backend-system
+ 2583  kubectl get pods --namespace backend-system
+ 2584  kubectl get pods --namespace backend-system
+ 2585  kubectl get pods --namespace backend-system
+ 2586  kubectl apply -f chat-service.yaml 
+ 2587  kubectl get pods --namespace backend-system
+ 2588  kubectl get pods --namespace backend-system
+ 2589  kubectl logs --namespace backend-system chat-service-569bcf6466-7fs6r -c chat-service
+ 2590  kubectl get pods --namespace backend-system
+ 2591  kubectl get pods --namespace backend-system
+ 2592  ls
+ 2593  cd ..
+ 2594  cd ..
+ 2595  cd Docker/
+ 2596  ls
+ 2597  cd Dockerfiles/
+ 2598  ls
+ 2599  vim user-service-Dockerfile 
+ 2600  cd ..
+ 2601  cd ..
+ 2602  ls
+ 2603  cd ..
+ 2604  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2605  ls
+ 2606  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2607  cd build/Kubernetes/Deployments/
+ 2608  ls
+ 2609  kubectl apply -f user-service.yaml 
+ 2610  kubectl get pods --namespace backend-system
+ 2611  kubectl logs --namespace backend-system user-service-586f86c485-blvmb -c user-service
+ 2612  cd ..
+ 2613  cd ..
+ 2614  cd ..
+ 2615  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2616  cd build/Kubernetes/
+ 2617  ls
+ 2618  cd Deployments/
+ 2619  ls
+ 2620  kubectl delete deployment --namespace backend-system user-service
+ 2621  kubectl get pods --namespace backend-system
+ 2622  kubectl get pods --namespace backend-system
+ 2623  kubectl get pods --namespace backend-system
+ 2624  kubectl apply -f user-service.yaml 
+ 2625  kubectl get pods --namespace backend-system
+ 2626  kubectl logs --namespace backend-system user-service-586f86c485-8cs29 -c user-service
+ 2627  kubectl logs --namespace backend-system user-service-586f86c485-8cs29 -c user-service
+ 2628  kubectl exec --stdin --tty user-service-586f86c485-8cs29 --namespace backend-system  -- /bin/sh 
+ 2629  cd ..
+ 2630  cd ..
+ 2631  cd ..
+ 2632  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2633  cd build/Kubernetes/Deployments/
+ 2634  kubectl delete deployment --namespace backend-system user-service
+ 2635  kubectl apply -f user-service.yaml 
+ 2636  kubectl get pods --namespace backend-system
+ 2637  kubectl logs --namespace backend-system user-service-586f86c485-sq7st -c user-service
+ 2638  kubectl exec --stdin --tty user-service-586f86c485-sq7st --namespace backend-system  -- /bin/sh 
+ 2639  cd ..
+ 2640  cd ..
+ 2641  cd ..
+ 2642  ls
+ 2643  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2644  cd build/Kubernetes/Deployments/
+ 2645  kubectl delete deployment --namespace backend-system user-service
+ 2646  kubectl apply -f user-service.yaml 
+ 2647  kubectl get pods --namespace backend-system
+ 2648  kubectl logs --namespace backend-system user-service-586f86c485-f9wg8 -c user-service
+ 2649  kubectl rollout restart deployment --namespace backend-system chat-service
+ 2650  kubectl get pods --namespace backend-system 
+ 2651  kubectl get pods --namespace backend-system 
+ 2652  kubectl get pods --namespace backend-system 
+ 2653  kubectl get pods --namespace backend-system 
+ 2654  kubectl get pods --namespace backend-system 
+ 2655  kubectl get pods --namespace backend-system 
+ 2656  kubectl get pods --namespace backend-system 
+ 2657  kubectl get pods --namespace backend-system 
+ 2658  kubectl get pods --namespace backend-system 
+ 2659  kubectl logs --namespace backend-system chat-service-77fdf5cb8c-hnrh6  -c chat-service
+ 2660  kubectl get pods --namespace postgres
+ 2661  psql
+ 2662  psql --help
+ 2663  kubectl get pods --namespace postgres
+ 2664  kubectl get all --namespace postgres
+ 2665  kubectl logs --namespace postgres postgres-6d556f565b-6ltmn
+ 2666  kubectl get all --namespace postgres
+ 2667  kubectl rollout restart service --namespace postgres postgres
+ 2668  kubectl rollout restart deployment --namespace postgres postgres
+ 2669  kubectl get all --namespace postgres
+ 2670  kubectl get all --namespace postgres
+ 2671  kubectl get all --namespace postgres
+ 2672  kubectl get all --namespace postgres
+ 2673  kubectl get all --namespace postgres
+ 2674  kubectl logs --namespace postgres postgres-85859cf4b-2s4pp
+ 2675  kubectl get pods --namespace backend-system
+ 2676  kubectl get pods --namespace backend-system
+ 2677  kubectl rollout restart deployment --namespace backend-system chat-service
+ 2678  kubectl rollout restart deployment --namespace backend-system user-service
+ 2679  kubectl get pods --namespace backend-system
+ 2680  kubectl get pods --namespace backend-system
+ 2681  kubectl get pods --namespace backend-system
+ 2682  kubectl get pods --namespace backend-system
+ 2683  kubectl get pods --namespace backend-system
+ 2684  kubectl logs --namespace backend-system chat-service-cbf779798-zz5b2 
+ 2685  kubectl logs --namespace backend-system chat-service-cbf779798-zz5b2 -c chat-service
+ 2686  kubectl logs --namespace backend-system user-service-5b5d6dcd98-n7s97 -c user-service
+ 2687  cd ..
+ 2688  cd ..
+ 2689  cd ..
+ 2690  bash build/Docker/Scripts/user-service-dockerbuild-dev.sh 
+ 2691  cd build/Kubernetes/Deployments/
+ 2692  ls
+ 2693  kubectl delete deployment --namespace backend-system chat-service
+ 2694* kubectl a
+ 2695  kubectl delete deployment --namespace backend-system user-service
+ 2696  kubectl apply -f user-service.yaml 
+ 2697  kubectl get pods --namespace backend-system
+ 2698  kubectl get pods --namespace backend-system
+ 2699  kubectl get pods --namespace backend-system
+ 2700  kubectl get pods --namespace backend-system
+ 2701  kubectl get pods --namespace backend-system
+ 2702  kubectl get pods --namespace backend-system
+ 2703  kubectl get pods --namespace backend-system
+ 2704  kubectl logs --namespace backend-system user-service-586f86c485-26pj9 -c user-service
+ 2705  kubectl logs --namespace backend-system chat-service-569bcf6466-sjphp -c chat-service
+ 2706  ls
+ 2707  ls
+ 2708  kubectl create namespace frontend-system
+ 2709  kubectl get namespaces
+ 2710  kubectl create secret --namespace frontend-system generic app-secrets --from-literal=GOOGLE_CLIENT_ID=490564752077-hlbp1k70hlsqo1quibgmcpetanscrpqu.apps.googleusercontent.com
+ 2711  cd ..
+ 2712  cd ..
+ 2713  ls
+ 2714  cd ..
+ 2715  bash build/Docker/Scripts/react-app-dockerbuild-dev.sh 
+ 2716  cd build/Kubernetes/
+ 2717  ls
+ 2718  cd Deployments/
+ 2719  ls
+ 2720  kubectl apply -f react-app.yaml 
+ 2721  kubectl get pods --namespace frontend-system
+ 2722  kubectl logs --namespace frontend-system react-app-85665959cd-whnsl -c react-app
+ 2723  ls
+ 2724  cd ..
+ 2725  ls
+ 2726  cd IngressRules/
+ 2727  ls
+ 2728  touch pokehub-rules.yaml
+ 2729  kubectl get services --namespace frontend-system
+ 2730  ls
+ 2731  keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass password -validity 360 -keysize 2048
+ 2732  java
+ 2733  javac
+ 2734  brew install java
+ 2735  java
+ 2736  java
+ 2737  keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass password -validity 360 -keysize 2048
+ 2738  keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass password -validity 360 -keysize 2048
+ 2739  ls
+ 2740  openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -subj '/CN=ambassador-cert' -nodes
+ 2741  ls
+ 2742  rm *.pem
+ 2743  openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -subj '/CN=ambassador-cert' -nodes -days 360
+ 2744  ls
+ 2745  cd ..
+ 2746  ls
+ 2747  cd ..
+ 2748  ls
+ 2749  cd Kubernetes
+ 2750  ls
+ 2751  cd ..
+ 2752  cd ..
+ 2753  ls
+ 2754  cd platform
+ 2755  ls
+ 2756  cd ingress
+ 2757  ls
+ 2758  cd ..
+ 2759  ls
+ 2760  mkdir certificates
+ 2761  cd cert
+ 2762  cd certificates/
+ 2763  ls
+ 2764  cp ../../build/Kubernetes/IngressRules/*.pem .
+ 2765  ls
+ 2766  kubectl delete secret tls-cert --namespace ambassador
+ 2767  kubectl create secret tls tls-cert --namespace ambassador --cert=cert.pem --key=key.pem 
+ 2768  ls
+ 2769  cd ..
+ 2770  ls
+ 2771  cd istio/
+ 2772  l
+ 2773  ls
+ 2774  cd ..
+ 2775  cd ..
+ 2776  ls
+ 2777  cd platform
+ 2778  ls
+ 2779  cd ingress
+ 2780  ls
+ 2781  kubectl get TLSContext
+ 2782  kubectl get TLSContext --namespace ambassador
+ 2783  ls
+ 2784  vim tlscontext.yaml 
+ 2785  mv tlscontext.yaml ../istio/
+ 2786  vim listener.yaml 
+ 2787  ls
+ 2788  kubectl rollout restart deployment --namespace ambassador ambassador
+ 2789  kubectl get pods --namespace ambassador
+ 2790  kubectl get pods --namespace ambassador
+ 2791  kubectl get pods --namespace ambassador
+ 2792  kubectl get pods --namespace ambassador
+ 2793  kubectl get pods --namespace ambassador
+ 2794  kubectl get pods --namespace ambassador
+ 2795  cd ..
+ 2796  ls
+ 2797  cd ..
+ 2798  cd ..
+ 2799  cd pokehub/
+ 2800  ls
+ 2801  cd build/Kubernetes/
+ 2802  ls
+ 2803  cd Deployments/
+ 2804  ls
+ 2805  cd ..
+ 2806  ls
+ 2807  cd IngressRules/
+ 2808  ls
+ 2809  vim pokehub-rules.yaml 
+ 2810  kubectl apply -f pokehub-rules.yaml 
+ 2811  vim pokehub-rules.yaml 
+ 2812  kubectl apply -f pokehub-rules.yaml 
+ 2813  kubectl get mappings --namespace frontend-system
+ 2814  kubectl delete mapping --namespace frontend-system grafana
+ 2815  cd ..
+ 2816  ls
+ 2817  ls
+ 2818  cd IngressRules/
+ 2819  ls
+ 2820  vim pokehub-rules.yaml 
+ 2821  ls
+ 2822  ls
+ 2823  mkdir internal
+ 2824  cd internal
+ 2825  openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -subj '/CN=ambassador-cert' -nodes -days 360
+ 2826  ls
+ 2827  kubectl create secret tls tls-cert --cert=cert.pem --key=key.pem
+ 2828  kubectl create secret tls tls-cert-internal --namespace ambassador --cert=cert.pem --key=key.pem
+ 2829  ls
+ 2830  cd ..
+ 2831  cd ..
+ 2832  cd ..
+ 2833  cd ..
+ 2834  cd platform
+ 2835  ls
+ 2836  cd ingress
+ 2837  ls
+ 2838  cd ..
+ 2839  cd grafana/
+ 2840  ls
+ 2841  vim grafana-mapping.yaml 
+ 2842  kubectl apply -f grafana-mapping.yaml 
+ 2843  kubectl get mapping --namespace monitoring
+ 2844  vim grafana-mapping.yaml 
+ 2845  vim grafana-mapping.yaml 
+ 2846  cd ..
+ 2847  ls
+ 2848  cd ingress
+ 2849  vim 2-aes.yaml 
+ 2850  kubectl apply -f 2-aes.yaml 
+ 2851  kubectl get mappings 
+ 2852  ls
+ 2853  vim 2-aes.yaml 
+ 2854  cd ..
+ 2855  ls
+ 2856  cd grafana/
+ 2857  ls
+ 2858  vim grafana-mapping.yaml 
+ 2859  kubectl apply -f grafana-mapping.yaml 
+ 2860  kubectl get mapping --namespace monitoring
+ 2861  cd ..
+ 2862  ls
+ 2863  cd ..
+ 2864  ls
+ 2865  cd build/Kubernetes/
+ 2866  ls
+ 2867  cd IngressRules/
+ 2868  ls
+ 2869  vim pokehub-rules.yaml 
+ 2870  vim pokehub-rules.yaml 
+ 2871  vim pokehub-rules.yaml 
+ 2872  kubectl apply -f pokehub-rules.yaml 
+ 2873  cd ..
+ 2874  ls
+ 2875  cd ..
+ 2876  ls
+ 2877  cd ..
+ 2878  ls
+ 2879  cd build/Docker
+ 2880  ls
+ 2881  cd Dockerfiles/
+ 2882  ls
+ 2883  vim react-app-Dockerfile 
+ 2884  cd ..
+ 2885  cd ..
+ 2886  cd ..
+ 2887  cd dist/apps/react-app/
+ 2888  ls
+ 2889  cd ..
+ 2890  cd ..
+ 2891  cd ..
+ 2892  cd build/Docker/ls
+ 2893  cd build/Docker/Dockerfiles/
+ 2894  ls
+ 2895  cp react-app-Dockerfile react-app-nginx-Dockerfile
+ 2896  vim react-app-nginx-Dockerfile 
+ 2897  cd ..
+ 2898  cd Scripts/
+ 2899  ls
+ 2900  vim react-app-dockerbuild.sh 
+ 2901  cp react-app-dockerbuild-dev.sh react-app-nginx-dockerbuild-dev.sh
+ 2902  vim react-app-nginx-dockerbuild-dev.sh 
+ 2903  cd ..
+ 2904  cd ..
+ 2905  cd ..
+ 2906  bash build/Docker/Scripts/react-app-nginx-dockerbuild-dev.sh 
+ 2907  docker run --name react-app react-app:dev
+ 2908  docker start react-app
+ 2909  docker logs react-app
+ 2910  docker ps
+ 2911  docker stop react-app
+ 2912  docker rm react-app
+ 2913  docker run --name react-app react-app:dev -p 3200:80
+ 2914  docker run --name react-app -p 3200:80  react-app:dev
+ 2915  docker stop react-app
+ 2916  docker rm react-app
+ 2917  docker run --name react-app -p 3200:80  react-app:dev
+ 2918  docker stop react-app
+ 2919  docker rm react-app
+ 2920  docker run --name react-app -p 3200:80  react-app:dev
+ 2921  ls
+ 2922  cd build/Kubernetes/
+ 2923  ls
+ 2924  cd IngressRules/
+ 2925  ls
+ 2926  cd ..
+ 2927  cd Deployments/
+ 2928  ls
+ 2929  kubectl delete -f react-app.yaml 
+ 2930  kubectl apply -f react-app.yaml 
+ 2931  cd ..
+ 2932  ls
+ 2933  cd IngressRules/
+ 2934  ls
+ 2935  vim pokehub-rules.yaml 
+ 2936  kubectl apply -f pokehub-rules.yaml 
+ 2937  kubectl get mapping --namespace frontend-system
+ 2938  vim pokehub-rules.yaml 
+ 2939  kubectl apply -f pokehub-rules.yaml 
+ 2940  kubectl get pods --namespace frontend-system
+ 2941  kubectl logs --namespace frontend-system react-app-cffb6849c-xn6qz
+ 2942  history
+ 2943  history > logs.txt

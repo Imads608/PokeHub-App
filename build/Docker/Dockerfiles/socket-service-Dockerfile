@@ -1,10 +1,10 @@
 FROM app-base-image:latest AS builder
 WORKDIR /app/builder
 COPY . .
-RUN npx nx build chat-service --configuration=production
+RUN npx nx build socket-service --configuration=production
 
 FROM node:lts-alpine3.10
 WORKDIR /app
-COPY --from=builder /app/builder/dist/apps/chat-service .
+COPY --from=builder /app/builder/dist/apps/socket-service .
 RUN npm install --only=production
 CMD ["node", "./main.js"]

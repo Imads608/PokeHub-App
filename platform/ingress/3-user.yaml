@@ -2,7 +2,7 @@
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: wildstar
+  name: maindomain
   namespace: ambassador
 spec:
   hostname: pokehub.ml

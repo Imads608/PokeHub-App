@@ -1,0 +1,13 @@
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  namespace: frontend-system
+  name: react-app
+spec:
+  host: internal.pokehub.ml
+  prefix: /
+  rewrite: /
+  service: react-app:80
+  tls: istio-upstream
+

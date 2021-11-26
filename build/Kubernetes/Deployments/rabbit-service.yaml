@@ -1,0 +1,27 @@
+kind: "Service"
+apiVersion: "v1"
+metadata:
+  name: "rabbit-service"
+  namespace: backend-system
+spec:
+  ports:
+    -
+      name: "rabbit-service"
+      protocol: "TCP"
+      port: 5672
+      targetPort: 5672
+      nodePort: 0
+---
+kind: "Endpoints"
+apiVersion: "v1"
+metadata:
+  name: "rabbit-service"
+subsets:
+  -
+    addresses:
+      -
+        ip: "192.168.1.2"
+    ports:
+      -
+        port: 5672
+        name: "rabbit-service"

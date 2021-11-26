@@ -790,13 +790,16 @@ spec:
   rewrite: /
   service: sample-app:80
   hostname: pokehub.ml
+  tls: istio-upstream
 ---
-apiVersion: getambassador.io/v2
-kind: Mapping
-metadata:
-  name: webapp
-  namespace: default
-spec:
-  prefix: /webapp
-  rewrite: /
-  service: webapp:5000
+#apiVersion: getambassador.io/v2
+#kind: Mapping
+#metadata:
+#  name: webapp
+#  namespace: default
+#spec:
+#  prefix: /
+#  rewrite: /
+#  service: webapp:5000
+#  host: internal.pokehub.ml
+#  tls: istio-upstream

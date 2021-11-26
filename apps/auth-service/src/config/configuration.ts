@@ -4,14 +4,6 @@ export default () => ({
         host: process.env.USER_MICROSERVICE_HOST,
         port: process.env.USER_MICROSERVICE_PORT
     },
-    authService: {
-        host: process.env.AUTH_MICROSERVICE_HOST,
-        port: process.env.AUTH_MICROSERVICE_PORT
-    },
-    chatService: {
-        host: process.env.CHAT_MICROSERVICE_HOST,
-        port: process.env.CHAT_MICROSERVICE_PORT
-    },
     rabbitMQ: {
         host: process.env.RABBITMQ_SERVICE,
         port: process.env.RABBITMQ_PORT,
@@ -22,8 +14,12 @@ export default () => ({
             dmEventsRoutingPattern: 'events.dms.*'
         }
     },
+    tokenDetails: {
+        accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
+        refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
+        accessTokenExpiration: process.env.ACCESS_TOKEN_EXPIRATION_SECONDS
+    },
     googleClientCreds: {
-        id: process.env.GOOGLE_CLIENT_ID,
-        secret: process.env.GOOGLE_CLIENT_SECRET
+        id: process.env.GOOGLE_CLIENT_ID
     }
 });

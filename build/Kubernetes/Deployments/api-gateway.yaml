@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: api-gateway
+  name: api-gateway
+  namespace: backend-system
+  annotations:
+    "sidecar.jaegertracing.io/inject": "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - image: registry.gitlab.com/imadsheriff97/pokehub-app/api-gateway:dev
+          name: api-gateway
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 500Mi
+          env:
+            - name: APPLICATION_PORT
+              value: "3000"
+            - name: USER_MICROSERVICE_HOST
+              value: user-service.backend-system.svc.cluster.local
+            - name: USER_MICROSERVICE_PORT
+              value: "3000"
+            - name: AUTH_MICROSERVICE_HOST
+              value: auth-service.backend-system.svc.cluster.local
+            - name: AUTH_MICROSERVICE_PORT
+              value: "3000"
+            - name: CHAT_MICROSERVICE_HOST
+              value: chat-service.backend-system.svc.cluster.local
+            - name: CHAT_MICROSERVICE_PORT
+              value: "3000"
+            - name: RABBITMQ_SERVICE
+              value: "host.docker.internal"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GOOGLE_CLIENT_SECRET
+            
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: backend-system
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+    - name: http
+      targetPort: 3000
+      port: 3000
+

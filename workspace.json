@@ -13,7 +13,8 @@
             "outputPath": "dist/apps/api-gateway",
             "main": "apps/api-gateway/src/main.ts",
             "tsConfig": "apps/api-gateway/tsconfig.app.json",
-            "assets": ["apps/api-gateway/src/assets"]
+            "assets": ["apps/api-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -84,7 +85,8 @@
             "outputPath": "dist/apps/auth-service",
             "main": "apps/auth-service/src/main.ts",
             "tsConfig": "apps/auth-service/tsconfig.app.json",
-            "assets": ["apps/auth-service/src/assets"]
+            "assets": ["apps/auth-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -134,7 +136,8 @@
             "outputPath": "dist/apps/chat-service",
             "main": "apps/chat-service/src/main.ts",
             "tsConfig": "apps/chat-service/tsconfig.app.json",
-            "assets": ["apps/chat-service/src/assets"]
+            "assets": ["apps/chat-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -213,7 +216,8 @@
             ],
             "styles": ["apps/react-app/src/styles.css"],
             "scripts": [],
-            "webpackConfig": "@nrwl/react/plugins/webpack"
+            "webpackConfig": "@nrwl/react/plugins/webpack",
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -233,8 +237,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "1000kb",
+                  "maximumError": "3mb"
                 }
               ]
             }
@@ -328,7 +332,8 @@
             "outputPath": "dist/apps/socket-service",
             "main": "apps/socket-service/src/main.ts",
             "tsConfig": "apps/socket-service/tsconfig.app.json",
-            "assets": ["apps/socket-service/src/assets"]
+            "assets": ["apps/socket-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -399,7 +404,8 @@
             "outputPath": "dist/apps/user-service",
             "main": "apps/user-service/src/main.ts",
             "tsConfig": "apps/user-service/tsconfig.app.json",
-            "assets": ["apps/user-service/src/assets"]
+            "assets": ["apps/user-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {

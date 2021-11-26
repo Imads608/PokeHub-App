@@ -16,7 +16,7 @@ import { AuthService } from './auth.service';
                 transport: Transport.TCP,
                 options: {
                     host: configService.get<string>('authService.host'),
-                    port: +configService.get<Number>('authService.port')
+                    port: +configService.get<number>('authService.port')
                 }
             })
 

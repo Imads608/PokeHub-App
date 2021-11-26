@@ -6,6 +6,7 @@ import { UserModule } from '../user/user.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import configuration from '../config/configuration';
 
 @Module({
   imports: [
@@ -15,17 +16,18 @@ import { AppService } from './app.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: +configService.get<number>('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
+        host: configService.get('postgresCreds.host'),
+        port: +configService.get<number>('postgresCreds.port'),
+        username: configService.get('postgresCreds.username'),
+        password: configService.get('postgresCreds.password'),
+        database: configService.get('postgresCreds.database'),
         entities: [User, UserStatus],
         synchronize: true,
       })
     }),
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      load: [configuration]
     })
   ],
   controllers: [AppController],

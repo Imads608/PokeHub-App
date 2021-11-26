@@ -2,14 +2,14 @@
 apiVersion: getambassador.io/v2
 kind: Host
 metadata:
-  name: samplehost
+  name: internaldomain
   namespace: ambassador
 spec:
   hostname: internal.pokehub.ml
   acmeProvider:
     authority: none
   tlsSecret:
-    name: tls-cert
+    name: tls-cert-internal
   requestPolicy:
     insecure:
       action: Route

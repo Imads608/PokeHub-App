@@ -1,0 +1,18 @@
+FROM app-base-image:latest AS builder
+WORKDIR /app/builder
+COPY . .
+#WORKDIR /app/builder/apps/api-gateway
+#RUN npm i
+#WORKDIR /app/builder
+RUN npx nx build api-gateway --configuration=production
+
+FROM node:lts-alpine3.10
+WORKDIR /app
+COPY ./apps/api-gateway .
+RUN npm install --only=production
+#RUN npm add tslib@2.0.0
+#WORKDIR /app
+COPY --from=builder /app/builder/dist/apps/api-gateway ./dist
+#ENV NODE_ENV=$NODE_ENV
+
+CMD ["node", "./dist/main.js"]
