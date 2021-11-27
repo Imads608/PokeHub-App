@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
   name: grafana
 spec:
-  host: pokehub.ml
+  host: internal.pokehub.ml
   prefix: /grafana/
     #rewrite: /grafana
   service: grafana:80

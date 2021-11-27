@@ -5,7 +5,7 @@ metadata:
   namespace: frontend-system
   name: react-app
 spec:
-  host: internal.pokehub.ml
+  host: pokehub.ml
   prefix: /
   rewrite: /
   service: react-app:80

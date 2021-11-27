@@ -265,5 +265,5 @@ spec:
   prefix: /jaeger/
   rewrite: /jaeger/
   service: jaeger-query:16686
-  host: pokehub.ml
+  host: internal.pokehub.ml
   tls: istio-upstream
