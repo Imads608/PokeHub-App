@@ -196,6 +196,88 @@
         }
       }
     },
+    "next-app": {
+      "root": "apps/next-app",
+      "sourceRoot": "apps/next-app",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/next:build",
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production",
+          "options": {
+            "root": "apps/next-app",
+            "outputPath": "dist/apps/next-app"
+          },
+          "configurations": {
+            "production": {}
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/next:server",
+          "options": {
+            "buildTarget": "next-app:build",
+            "dev": true
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "next-app:build:production",
+              "dev": false
+            }
+          }
+        },
+        "export": {
+          "executor": "@nrwl/next:export",
+          "options": {
+            "buildTarget": "next-app:build:production"
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/next-app"],
+          "options": {
+            "jestConfig": "apps/next-app/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/next-app/**/*.{ts,tsx,js,jsx}"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "next-app-e2e": {
+      "root": "apps/next-app-e2e",
+      "sourceRoot": "apps/next-app-e2e/src",
+      "projectType": "application",
+      "targets": {
+        "e2e": {
+          "executor": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/next-app-e2e/cypress.json",
+            "devServerTarget": "next-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "next-app:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/next-app-e2e/**/*.{js,ts}"]
+          }
+        }
+      },
+      "tags": [],
+      "implicitDependencies": ["next-app"]
+    },
     "react-app": {
       "root": "apps/react-app",
       "sourceRoot": "apps/react-app/src",
@@ -441,26 +523,6 @@
             "passWithNoTests": true
           }
         }
-      }
-    }
-  },
-  "cli": {
-    "defaultCollection": "@nrwl/nest"
-  },
-  "defaultProject": "api-gateway",
-  "generators": {
-    "@nrwl/react": {
-      "application": {
-        "style": "css",
-        "linter": "eslint",
-        "babel": true
-      },
-      "component": {
-        "style": "css"
-      },
-      "library": {
-        "style": "css",
-        "linter": "eslint"
       }
     }
   }
