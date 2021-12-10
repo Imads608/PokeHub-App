@@ -56,11 +56,11 @@ export class AuthService {
         return await firstValueFrom(this.clientProxy.send<{access_token: string}>({ cmd: 'get-accessToken' }, refreshToken));
     }
 
-    private isEmailLogin(userCreds: any): Boolean {
+    private isEmailLogin(userCreds: any): boolean {
         return userCreds.email !== undefined;
     }
 
-    private isUsernameLogin(userCreds: any): Boolean {
+    private isUsernameLogin(userCreds: any): boolean {
         return userCreds.username !== undefined;
     }
 

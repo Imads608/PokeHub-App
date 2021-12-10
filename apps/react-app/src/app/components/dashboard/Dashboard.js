@@ -7,20 +7,26 @@ import { getUser } from '../../selectors/user';
 import { UserPropTypes } from '../../types/user';
 import { DASHBOARD } from '../../types/app';
 import useInitialLoad from '../../hooks/useInitialLoad';
+import { Button } from '@mui/material';
+import './dashboard.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import UsefulLinks from './UsefulLinks';
+
+
+
 
 const Dashboard = ({ user }) => {
     const { isLoading } = useInitialLoad(DASHBOARD, null);
         
     return (
         isLoading ? <Loading /> :
-        <div style={{backgroundColor: 'pink', height: '93vh', display: 'flex', flexDirection: 'column' }}>
+        <main style={{backgroundColor: 'pink', height: '93vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ margin: '20px' }}>
                 <TrainerCard user={user} />
             </div>
-            <Link to='/chatrooms'>To Chat Rooms</Link>
-            <Link to='/dms'>To DMs</Link>
-            <Link to='/dex'>To Dex</Link>
-        </div>
+            <UsefulLinks />
+        </main>
     )
     
 }
