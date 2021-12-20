@@ -2,7 +2,7 @@ import { IUserPublicProfileWithToken } from "@pokehub/user";
 import axios, { AxiosError } from "axios";
 import { useMutation, UseMutationResult } from "react-query";
 import { useDispatch } from "react-redux"
-import { auth_failure, login_success } from "../../actions/common";
+import { auth_failure, login_success } from "../../store/actions/common";
 import { googleOAuthLogin } from '../../api/auth';
 import { APIError } from '../../types/api';
 

@@ -3,7 +3,7 @@ import { UserSignup } from "../../types/auth";
 import axios, { AxiosError } from "axios";
 import { useMutation } from "react-query";
 import { useDispatch } from "react-redux";
-import { auth_failure, login_success } from "../../actions/common";
+import { auth_failure, login_success } from "../../store/actions/common";
 import { signupUser } from '../../api/auth';
 import { APIError } from '../../types/api';
 

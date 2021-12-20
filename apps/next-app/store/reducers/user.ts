@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UserDetails } from '../types/user';
+import { UserDetails } from '../../types/user';
 import { login_success, logout } from '../actions/common';
 import { UserData } from '@pokehub/user';
 import { HYDRATE } from 'next-redux-wrapper';

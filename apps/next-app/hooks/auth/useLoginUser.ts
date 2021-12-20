@@ -1,7 +1,7 @@
 import { useQuery, UseQueryResult } from "react-query"
 import { useDispatch } from "react-redux"
 //import { authFailure, loggedIn, setAuthLoaded } from "../actions/auth";
-import { login_success, auth_failure } from '../../actions/common';
+import { login_success, auth_failure } from '../../store/actions/common';
 import { loginUser } from "../../api/auth"
 import axios, { AxiosError } from 'axios';
 import { IUserPublicProfileWithToken } from "@pokehub/user";

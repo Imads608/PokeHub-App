@@ -8,7 +8,7 @@ import GoogleOAuth from "../components/auth/googleOAuth";
 import PasswordField from "../components/auth/passwordField";
 import UsernameField from "../components/auth/usernameField";
 import { connect, useSelector } from 'react-redux';
-import { getIsAuthenticated } from "../selectors/auth";
+import { getIsAuthenticated } from "../store/selectors/auth";
 import { useEffect } from "react";
 import { Theme } from '@mui/material/styles';
 import { NextRouter, useRouter } from "next/router";

@@ -11,7 +11,13 @@ import Badge from '@mui/material/Badge';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './navbar.module.scss';
-import { Theme } from '@mui/material';
+import { PaletteMode, Theme } from '@mui/material';
+import ThemeSwitch from './themeSwitch';
+import { toggle_theme } from '../../store/reducers/app';
+import { getAppTheme } from '../../store/selectors/app';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
+import { RootState } from '../../store/store';
 
 const drawerWidth = 240;
 
@@ -45,6 +51,8 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 const Navbar = () => {
   const classes = useStyles();
+  const dispatch: Dispatch = useDispatch();
+  const currMode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
 
   return (
     <div className={classes.root}>
@@ -59,6 +67,7 @@ const Navbar = () => {
                      </Link>
                 </Typography>
                 <div>
+                    <ThemeSwitch checked={currMode === 'dark' } onClick={() => dispatch(toggle_theme())} mode={currMode} />
                     <Link href='/login'>
                         <a className={`link ${styles['nav-link']}`}>Log In</a>
                     </Link>

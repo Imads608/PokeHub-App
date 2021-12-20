@@ -1,3 +1,4 @@
+import { PaletteMode } from '@mui/material';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { HYDRATE } from 'next-redux-wrapper';
 import { request_start, request_failure, auth_failure } from '../actions/common';
@@ -7,7 +8,8 @@ import { join_chatroom, leave_chatroom } from './user';
 export interface AppState {
     loading: boolean,
     error?: any,
-    opened?: OpenedWindow
+    opened?: OpenedWindow,
+    theme: PaletteMode
 }
 
 export interface OpenedWindow {
@@ -17,7 +19,7 @@ export interface OpenedWindow {
 
 const appSlice = createSlice({
     name: 'app-state',
-    initialState: { loading: false, error: null, opened: null } as AppState,
+    initialState: { loading: false, error: null, opened: null, theme: 'dark' } as AppState,
     reducers: {
         open_window: (state: AppState, action: PayloadAction<OpenedWindow>) => {
             state.opened = action.payload;
@@ -25,6 +27,9 @@ const appSlice = createSlice({
         },
         app_loaded: (state: AppState) => {
             state.loading = false;
+        },
+        toggle_theme: (state: AppState) => {
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
         }
     },
     extraReducers: (builder) => {
@@ -57,5 +62,5 @@ const appSlice = createSlice({
     }
 });
 
-export const { open_window, app_loaded } = appSlice.actions;
+export const { open_window, app_loaded, toggle_theme } = appSlice.actions;
 export default appSlice;

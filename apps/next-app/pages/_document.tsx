@@ -1,6 +1,5 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document'
 import * as React from 'react';
-import theme from '../styles/mui/theme';
 import { ServerStyleSheets } from '@mui/styles';
 
 export default class MyDocument extends Document {
@@ -9,7 +8,7 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* PWA primary color */}
-          <meta name="theme-color" content={theme.palette.primary.main} />
+          <meta name="theme-color" content='#f50057' />
           <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet" />
 
         </Head>

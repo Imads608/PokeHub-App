@@ -1,9 +1,9 @@
 import {configureStore } from '@reduxjs/toolkit';
 import {createWrapper } from 'next-redux-wrapper';
-import appSlice from '../reducers/app';
-import authSlice from '../reducers/auth';
-import roomSlice from '../reducers/room';
-import userSlice from '../reducers/user';
+import appSlice from './reducers/app';
+import authSlice from './reducers/auth';
+import roomSlice from './reducers/room';
+import userSlice from './reducers/user';
 
 const makeStore = () =>
     configureStore({

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { GoogleLogin, GoogleLoginResponse } from 'react-google-login';
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
-import { auth_failure } from '../../actions/common';
+import { auth_failure } from '../../store/actions/common';
 import { useGoogleOAuthLogin } from '../../hooks/auth/useGoogleOAuthLogin';
 
 

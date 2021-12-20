@@ -19,7 +19,7 @@ import useLoginUser from '../hooks/auth/useLoginUser';
 import EmailField from '../components/auth/emailField';
 import PasswordField from '../components/auth/passwordField';
 import GoogleOAuth from '../components/auth/googleOAuth';
-import { getIsAuthenticated } from '../selectors/auth';
+import { getIsAuthenticated } from '../store/selectors/auth';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
@@ -30,7 +30,8 @@ import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import { useDispatch } from "react-redux";
-import { reset_auth_failure } from '../reducers/auth';
+import { reset_auth_failure } from '../store/reducers/auth';
+import { toggle_theme } from '../store/reducers/app';
 
 function Copyright() {
     return (
@@ -51,7 +52,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     avatar: {
       margin: theme.spacing(1),
-      backgroundColor: theme.palette.secondary.main,
+      backgroundColor: theme.palette.primary.main,
     },
     form: {
       width: '100%', // Fix IE 11 issue.

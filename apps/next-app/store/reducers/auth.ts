@@ -3,7 +3,7 @@ import { IUserPublicProfileWithToken } from '@pokehub/user';
 //import { app_loaded } from './app';
 import { auth_failure, login_success, logout } from '../actions/common';
 import { HYDRATE } from 'next-redux-wrapper';
-import { APIError } from '../types/api';
+import { APIError } from '../../types/api';
 
 interface AuthState {
     accessToken?: string,

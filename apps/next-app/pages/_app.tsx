@@ -27,25 +27,32 @@ export default CustomApp;
 import React, {FC, useEffect} from 'react';
 import {AppProps} from 'next/app';
 import Head from 'next/head';
-import {wrapper} from '../store/store';
+import {RootState, wrapper} from '../store/store';
 import '../styles/global.scss';
 import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 import Navbar from '../components/nav/navbar';
 import { QueryClientProvider } from 'react-query';
 import queryClient from '../queryClient';
-import theme from '../styles/mui/theme';
+import { getDesignTokens } from '../styles/mui/theme';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import { CacheProvider } from '@emotion/react';
 import { Hydrate } from 'react-query/hydration'
 import useLoadUser from '../hooks/auth/useLoadUser';
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import { PaletteMode } from '@mui/material';
+import { getAppTheme } from '../store/selectors/app';
+import { useSelector } from 'react-redux';
+import { createTheme } from '@mui/material/styles';
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
 const WrappedApp = (props) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  
+  const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
   useEffect(() => {
     // Remove the server-side injected CSS.

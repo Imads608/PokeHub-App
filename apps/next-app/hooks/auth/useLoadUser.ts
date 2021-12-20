@@ -3,8 +3,8 @@ import { useDispatch } from "react-redux";
 import { Dispatch } from "redux";
 import { getNewAccessToken, loadUser } from "../../api/auth";
 import { IUserPublicProfile, IUserPublicProfileWithToken, UserPublicProfileWithToken } from "@pokehub/user";
-import { login_success } from '../../actions/common';
-import { auth_loaded } from '../../reducers/auth';
+import { login_success } from '../../store/actions/common';
+import { auth_loaded } from '../../store/reducers/auth';
 
 const useLoadUser = (refreshToken: string) => {
     const dispatch: Dispatch = useDispatch();
@@ -28,7 +28,7 @@ const useLoadUser = (refreshToken: string) => {
                     refreshToken: localStorage.getItem('pokehub-refresh-token'),
                     joinedPublicRooms: data.joinedPublicRooms
                 }
-                
+
                 dispatch(login_success(dataWithTokens));
             }
         }, 

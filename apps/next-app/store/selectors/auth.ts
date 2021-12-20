@@ -1,6 +1,6 @@
 import { createSelector, OutputSelector } from '@reduxjs/toolkit';
-import { RootState } from '../store/store';
-import { APIError } from '../types/api';
+import { RootState } from '../store';
+import { APIError } from '../../types/api';
 
 const authLoading = (state: RootState) => state['auth-state'].loading;
 //const authToken = (state: RootState) => state['auth-state'].token;

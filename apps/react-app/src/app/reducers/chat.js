@@ -131,5 +131,6 @@ export default createReducer(initialState, (builder) => {
             })
         })
         .addDefaultCase((state, action) => {
+            //
         })
     });
