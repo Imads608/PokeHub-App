@@ -41,14 +41,15 @@ export class AuthController {
 
     @UseInterceptors(LoginInterceptor)
     @Get('access-token')
-    async getAccessToken(@Req() req: Request) {
+    async getAccessToken(@Req() req: Request): Promise<{ access_token: string }> {
         return await this.authService.getNewAccessToken(req.headers["authorization"]);
     }
 
+    /*
     @Get('google')
     @UseGuards(AuthGuard('google'))
     async googleLogin(@Req() req) {
-    }
+    }*/
 
     @Get('redirect')
     @UseGuards(AuthGuard('google'))

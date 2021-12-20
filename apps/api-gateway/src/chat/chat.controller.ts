@@ -5,5 +5,6 @@ import { ChatRoom } from '@pokehub/room';
 export class ChatController {
     private readonly logger = new Logger(ChatController.name);
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor() {}
 }

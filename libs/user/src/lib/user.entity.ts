@@ -1,9 +1,10 @@
 import { IsEmail, Length } from "class-validator";
 import {Entity, PrimaryGeneratedColumn, Column, PrimaryColumn, Unique} from "typeorm";
+import {IUser} from "./interfaces/user.interface";
 import { TypeAccount } from './type-account.enum';
 
 @Entity("user", { schema: 'user-schema'})
-export class User {
+export class User implements IUser {
 
     @PrimaryGeneratedColumn("uuid")
     uid: string;

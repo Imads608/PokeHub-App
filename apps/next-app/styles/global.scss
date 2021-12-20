@@ -1,4 +1,17 @@
-.app {
+body {
+  margin: 0;
+  padding: 0;
+}
+html, body, #root {
+  height: 100vh;
+}
+
+.link {
+  text-decoration: none; 
+  font-weight: bold;
+}
+
+/*.app {
   font-family: sans-serif;
   min-width: 300px;
   max-width: 600px;
@@ -126,3 +139,4 @@
   width: 16px;
   margin-right: 4px;
 }
+*/

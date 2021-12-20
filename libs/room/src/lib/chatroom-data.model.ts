@@ -1,4 +1,6 @@
-export class ChatRoomData {
+import { IChatRoomData } from "./interfaces/chatroom-data.interface";
+
+export class ChatRoomData implements IChatRoomData {
     id: string;
     name: string;
 

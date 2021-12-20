@@ -1,7 +1,8 @@
+import { IUserDataWithToken } from "./interfaces/user-data-token.interface";
 import { TypeAccount } from "./type-account.enum";
 import { UserData } from './user-data.model'
 
-export class UserDataWithToken {
+export class UserDataWithToken implements IUserDataWithToken {
     user: UserData
     accessToken: string;
     refreshToken: string;

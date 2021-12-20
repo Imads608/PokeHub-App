@@ -1,4 +1,6 @@
-export class JwtTokenBody {
+import {IJwtTokenBody} from "./interfaces/token-body.interface";
+
+export class JwtTokenBody implements IJwtTokenBody {
     username: string;
     email: string;
     uid: string;

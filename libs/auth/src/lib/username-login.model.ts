@@ -1,6 +1,7 @@
 import { Length } from 'class-validator';
+import {IUsernameLogin} from './interfaces/username-login.interface';
 
-export class UsernameLogin {
+export class UsernameLogin implements IUsernameLogin {
     username: string;
 
     @Length(6)

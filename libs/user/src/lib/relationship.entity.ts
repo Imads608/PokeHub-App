@@ -1,8 +1,9 @@
 import {Entity, Column, PrimaryColumn } from "typeorm";
 import { RelationshipType } from './relationship-type.enum';
+import { IRelationship } from "./interfaces/relationship.interface";
 
 @Entity("relationship", { schema: 'user-schema'})
-export class Relationship {
+export class Relationship implements IRelationship {
 
     @PrimaryColumn()
     uid: string;

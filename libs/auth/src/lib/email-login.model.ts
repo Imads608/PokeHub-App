@@ -1,6 +1,7 @@
 import { IsEmail, Length } from 'class-validator';
+import {IEmailLogin} from './interfaces/email-login.interface';
 
-export class EmailLogin {
+export class EmailLogin implements IEmailLogin {
 
     @IsEmail()
     email: string;

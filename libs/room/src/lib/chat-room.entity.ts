@@ -1,8 +1,9 @@
 import {Entity, Column, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { RoomType } from "./room-type.enum";
+import { IChatRoom } from "./interfaces/chat-room.interface";
 
 @Entity("room", { schema: 'chat-schema'})
-export class ChatRoom {
+export class ChatRoom implements IChatRoom {
 
     @PrimaryGeneratedColumn("uuid")
     id: string;

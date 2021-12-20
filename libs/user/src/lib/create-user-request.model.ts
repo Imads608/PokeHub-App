@@ -1,5 +1,7 @@
 
-export class CreateUserRequest {
+import { ICreateUserRequest } from './interfaces/create-user-request.interface';
+
+export class CreateUserRequest implements ICreateUserRequest {
     email: string;
     username: string;
     password: string;

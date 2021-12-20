@@ -1,7 +1,8 @@
 import { UserData } from "./user-data.model";
 import { ChatRoom, ChatRoomData } from '@pokehub/room';
+import {IUserPublicProfile} from "./interfaces/user-public-profile.interface";
 
-export class UserPublicProfile {
+export class UserPublicProfile implements IUserPublicProfile {
     user: UserData;
     joinedPublicRooms: ChatRoomData[];
 
@@ -15,7 +16,7 @@ export class UserPublicProfile {
         }
     }
 
-    private isRoomChatRoomDataType(room: any): Boolean {
+    private isRoomChatRoomDataType(room: any): boolean {
         if (room.description) {
             return false;
         } 

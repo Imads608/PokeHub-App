@@ -247,8 +247,7 @@
             "lintFilePatterns": ["apps/next-app/**/*.{ts,tsx,js,jsx}"]
           }
         }
-      },
-      "tags": []
+      }
     },
     "next-app-e2e": {
       "root": "apps/next-app-e2e",
@@ -274,9 +273,7 @@
             "lintFilePatterns": ["apps/next-app-e2e/**/*.{js,ts}"]
           }
         }
-      },
-      "tags": [],
-      "implicitDependencies": ["next-app"]
+      }
     },
     "react-app": {
       "root": "apps/react-app",
@@ -523,6 +520,32 @@
             "passWithNoTests": true
           }
         }
+      }
+    }
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/nest"
+  },
+  "defaultProject": "api-gateway",
+  "generators": {
+    "@nrwl/react": {
+      "application": {
+        "style": "css",
+        "linter": "eslint",
+        "babel": true
+      },
+      "component": {
+        "style": "css"
+      },
+      "library": {
+        "style": "css",
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/next": {
+      "application": {
+        "style": "css",
+        "linter": "eslint"
       }
     }
   }

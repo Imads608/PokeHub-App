@@ -1,6 +1,7 @@
+import { IUserData } from '..';
 import { TypeAccount } from './type-account.enum';
 
-export class UserData {
+export class UserData implements IUserData {
   uid: string;
   email: string;
   username: string;
