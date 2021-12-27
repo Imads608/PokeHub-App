@@ -4,10 +4,13 @@ import configuration from '../config/configuration';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [MailModule, ConfigModule.forRoot({
-    isGlobal: true,
-    load: [configuration]
-})],
+  imports: [
+    MailModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+  ],
   controllers: [],
   providers: [],
 })

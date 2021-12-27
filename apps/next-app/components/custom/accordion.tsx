@@ -4,25 +4,25 @@ import MuiAccordionSummary from '@mui/material/AccordionSummary';
 import withStyles from '@mui/styles/withStyles';
 
 export const Accordion = withStyles({
-    root: {
-        boxShadow: 'none',
-        '&$expanded': {
-            margin: 0,
-        },
+  root: {
+    boxShadow: 'none',
+    '&$expanded': {
+      margin: 0,
     },
-    expanded: {},   
+  },
+  expanded: {},
 })(MuiAccordion);
 
 export const AccordionSummary = withStyles({
-    root: {
-      '&$expanded': {
-        margin: 0,
-      },
+  root: {
+    '&$expanded': {
+      margin: 0,
     },
-    content: {
-      '&$expanded': {
-        margin: '0 0',
-      },
+  },
+  content: {
+    '&$expanded': {
+      margin: '0 0',
     },
-    expanded: {},
+  },
+  expanded: {},
 })(MuiAccordionSummary);

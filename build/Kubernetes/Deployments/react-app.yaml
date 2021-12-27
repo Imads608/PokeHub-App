@@ -6,7 +6,7 @@ metadata:
   name: react-app
   namespace: frontend-system
   annotations:
-    "sidecar.jaegertracing.io/inject": "true"
+    'sidecar.jaegertracing.io/inject': 'true'
 spec:
   replicas: 1
   selector:
@@ -33,7 +33,7 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: GOOGLE_CLIENT_ID
-            
+
 ---
 apiVersion: v1
 kind: Service
@@ -48,4 +48,3 @@ spec:
     - name: http
       targetPort: 80
       port: 80
-

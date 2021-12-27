@@ -6,8 +6,8 @@ metadata:
   name: grafana
 spec:
   host: internal.pokehub.ml
-  prefix: /grafana/
+  prefix:
+    /grafana/
     #rewrite: /grafana
   service: grafana:80
   tls: istio-upstream
-

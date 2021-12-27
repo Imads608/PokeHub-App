@@ -1,5 +1,5 @@
 export interface IParticipant {
-    room: string;
-    uid: string;
-    isActive: boolean;
+  room: string;
+  uid: string;
+  isActive: boolean;
 }

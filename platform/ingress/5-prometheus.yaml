@@ -10,19 +10,19 @@ kind: ClusterRole
 metadata:
   name: prometheus
 rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources:
-  - configmaps
-  verbs: ["get"]
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
+  - apiGroups: ['']
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources:
+      - configmaps
+    verbs: ['get']
+  - nonResourceURLs: ['/metrics']
+    verbs: ['get']
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
@@ -33,9 +33,9 @@ roleRef:
   kind: ClusterRole
   name: prometheus
 subjects:
-- kind: ServiceAccount
-  name: prometheus
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
 ---
 apiVersion: v1
 kind: Service
@@ -123,7 +123,6 @@ spec:
   endpoints:
     - port: metrics
 
-
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -141,8 +140,6 @@ spec:
       app: jaeger
   endpoints:
     - targetPort: 14269
-
-
 
 ---
 apiVersion: getambassador.io/v2

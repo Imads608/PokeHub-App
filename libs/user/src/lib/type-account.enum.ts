@@ -1,4 +1,4 @@
 export enum TypeAccount {
   GOOGLE = 'google',
-  REGULAR = 'regular'
+  REGULAR = 'regular',
 }

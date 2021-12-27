@@ -1,4 +1,4 @@
 export interface IEmailConfirmationRequest {
-    recipientEmail: string;
-    linkValidationToken: string;
+  recipientEmail: string;
+  linkValidationToken: string;
 }

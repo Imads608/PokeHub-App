@@ -10,23 +10,24 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    CommonModule, ChatCommonModule, MailModule,
+    CommonModule,
+    ChatCommonModule,
+    MailModule,
     ClientsModule.registerAsync([
-        {
-            name: 'UserMicroservice',
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                name: 'UserMicroservice',
-                transport: Transport.TCP,
-                options: {
-                    host: configService.get<string>('userService.host'),
-                    port: +configService.get<number>('userService.port')
-                }
-            })
-
-        }
-    ])
+      {
+        name: 'UserMicroservice',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          name: 'UserMicroservice',
+          transport: Transport.TCP,
+          options: {
+            host: configService.get<string>('userService.host'),
+            port: +configService.get<number>('userService.port'),
+          },
+        }),
+      },
+    ]),
   ],
   providers: [{ useClass: UserService, provide: USER_SERVICE }],
   controllers: [UserController],

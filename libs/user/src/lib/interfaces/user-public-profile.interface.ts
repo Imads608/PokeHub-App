@@ -1,7 +1,7 @@
-import { IChatRoomData } from "@pokehub/room";
-import { IUserData } from "./user-data.interface";
+import { IChatRoomData } from '@pokehub/room';
+import { IUserData } from './user-data.interface';
 
 export interface IUserPublicProfile {
-    user: IUserData;
-    joinedPublicRooms: IChatRoomData[];
+  user: IUserData;
+  joinedPublicRooms: IChatRoomData[];
 }

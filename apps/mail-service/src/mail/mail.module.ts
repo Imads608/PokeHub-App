@@ -33,7 +33,8 @@ import { MAIL_SERVICE } from './mail-service.interface';
           },
         },
       }),
-    }), LoggerModule
+    }),
+    LoggerModule,
   ],
   providers: [{ useClass: MailService, provide: MAIL_SERVICE }],
   controllers: [MailController],

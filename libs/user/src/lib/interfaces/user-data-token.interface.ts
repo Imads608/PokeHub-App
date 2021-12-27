@@ -1,7 +1,7 @@
-import {IUserData} from "./user-data.interface";
+import { IUserData } from './user-data.interface';
 
 export interface IUserDataWithToken {
-    user: IUserData
-    accessToken: string;
-    refreshToken: string;
+  user: IUserData;
+  accessToken: string;
+  refreshToken: string;
 }

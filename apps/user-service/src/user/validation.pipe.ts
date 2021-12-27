@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { ArgumentMetadata, BadRequestException, Injectable, Logger, PipeTransform } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  BadRequestException,
+  Injectable,
+  Logger,
+  PipeTransform,
+} from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { plainToClass } from 'class-transformer';
 import { validate, validateOrReject } from 'class-validator';
@@ -16,7 +22,7 @@ export class ValidationPipe implements PipeTransform<any> {
 
     const object = plainToClass(metatype, value);
     const errors = await validate(object);
-    
+
     if (errors.length > 0) {
       throw new RpcException('Validation failed');
     }

@@ -1,7 +1,7 @@
-import { RelationshipType } from "../relationship-type.enum";
+import { RelationshipType } from '../relationship-type.enum';
 
 export interface IRelationship {
-    uid: string;
-    refUid: string;
-    relType: RelationshipType
+  uid: string;
+  refUid: string;
+  relType: RelationshipType;
 }

@@ -6,14 +6,9 @@ import { RootState } from '../../store/store';
 import { useEffect } from 'react';
 
 const UserActivation = () => {
+  const router: NextRouter = useRouter();
 
-    const router: NextRouter = useRouter();
-
-    return (
-        <div>
-            Your account has been activated.
-        </div>        
-    )
-}
+  return <div>Your account has been activated.</div>;
+};
 
 export default UserActivation;

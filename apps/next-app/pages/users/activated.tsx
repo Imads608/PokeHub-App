@@ -6,19 +6,14 @@ import { RootState } from '../../store/store';
 import { useEffect } from 'react';
 
 const UserActivation = () => {
+  const router: NextRouter = useRouter();
+  const user: IUserData = useSelector<RootState, IUserData>(getUser);
 
-    const router: NextRouter = useRouter();
-    const user: IUserData = useSelector<RootState, IUserData>(getUser);
+  useEffect(() => {
+    user.emailVerified && router.push('/');
+  }, [user]);
 
-    useEffect(() => {
-        user.emailVerified && router.push('/');
-    }, [user]);
-
-    return (
-        <div>
-            Your account has been activated.
-        </div>        
-    )
-}
+  return <div>Your account has been activated.</div>;
+};
 
 export default UserActivation;

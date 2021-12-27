@@ -12,10 +12,12 @@ async function bootstrap() {
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useLogger(await app.resolve(AppLogger));
   app.enableCors();
-  
+
   const configService: ConfigService = app.get<ConfigService>(ConfigService);
   await app.listen(+configService.get<number>('appPort'));
 
-  logger.log(`Application started on port ${+configService.get<number>('appPort')}`);
+  logger.log(
+    `Application started on port ${+configService.get<number>('appPort')}`
+  );
 }
 bootstrap();

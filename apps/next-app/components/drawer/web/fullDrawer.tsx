@@ -12,14 +12,16 @@ import { getDrawerToggle } from '../../../store/selectors/drawer';
 import DrawerItems from '../items/drawerItems';
 
 interface FullDrawerProps {
-    classes: any,
-    drawerRef: any
+  classes: any;
+  drawerRef: any;
 }
 
 const FullDrawer = ({ classes, drawerRef }: FullDrawerProps) => {
   const theme = useTheme();
   const dispatch: Dispatch = useDispatch();
-  const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle)
+  const drawerToggle: boolean = useSelector<RootState, boolean>(
+    getDrawerToggle
+  );
   //const drawerRef = useRef(null);
 
   return (
@@ -34,13 +36,16 @@ const FullDrawer = ({ classes, drawerRef }: FullDrawerProps) => {
     >
       <div className={classes.drawerHeader}>
         <IconButton onClick={() => dispatch(drawer_closed())} size="large">
-          {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          {theme.direction === 'rtl' ? (
+            <ChevronLeftIcon />
+          ) : (
+            <ChevronRightIcon />
+          )}
         </IconButton>
       </div>
       <DrawerItems drawerRef={drawerRef} />
     </Drawer>
   );
-}
-
+};
 
 export default FullDrawer;

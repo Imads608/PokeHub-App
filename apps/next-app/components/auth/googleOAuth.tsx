@@ -12,47 +12,54 @@ import { APIError } from '../../types/api';
 import { getAppTheme } from '../../store/selectors/app';
 import { RootState } from '../../store/store';
 
-
 interface GoogleOAuthProps {
-    classes: ClassNameMap<"paper" | "avatar" | "form" | "submit">,
-    notificationClose: () => void
+  classes: ClassNameMap<'paper' | 'avatar' | 'form' | 'submit'>;
+  notificationClose: () => void;
 }
 
 const GoogleOAuth = ({ classes, notificationClose }: GoogleOAuthProps) => {
-    const mutation = useGoogleOAuthLogin();
-    const dispatch = useDispatch();
-    const error = mutation.error as AxiosError<APIError>;
-    const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const mutation = useGoogleOAuthLogin();
+  const dispatch = useDispatch();
+  const error = mutation.error as AxiosError<APIError>;
+  const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
 
-    useEffect(() => {
-        error && toast.error(error.response?.data.statusCode === 401 ? 'Invalid Credentials' 
-                             : error.response?.data.message, { position: toast.POSITION.TOP_CENTER, onClose: notificationClose, theme });
-    }, [error])
+  useEffect(() => {
+    error &&
+      toast.error(
+        error.response?.data.statusCode === 401
+          ? 'Invalid Credentials'
+          : error.response?.data.message,
+        {
+          position: toast.POSITION.TOP_CENTER,
+          onClose: notificationClose,
+          theme,
+        }
+      );
+  }, [error]);
 
-    return (
-        <GoogleLogin 
-            clientId={process.env.NX_APP_GOOGLE_CLIENT_ID}
-            render={(renderProps) => (
-                <Button
-                    fullWidth
-                    variant="contained"
-                    color="secondary"
-                    className={classes.submit}
-                    onClick={renderProps.onClick}
-                >
-                    Sign In with Google
-                </Button>
-            )}
-            buttonText='Login with Google'
-            onSuccess={(data) => {
-                console.log('Got data:', data);
-                mutation.mutate((data as GoogleLoginResponse).tokenId);
-            }}
-            onFailure={(err) => dispatch(auth_failure(err))}
-            cookiePolicy={'single_host_origin'}
-        />
-    )
-
-}
+  return (
+    <GoogleLogin
+      clientId={process.env.NX_APP_GOOGLE_CLIENT_ID}
+      render={(renderProps) => (
+        <Button
+          fullWidth
+          variant="contained"
+          color="secondary"
+          className={classes.submit}
+          onClick={renderProps.onClick}
+        >
+          Sign In with Google
+        </Button>
+      )}
+      buttonText="Login with Google"
+      onSuccess={(data) => {
+        console.log('Got data:', data);
+        mutation.mutate((data as GoogleLoginResponse).tokenId);
+      }}
+      onFailure={(err) => dispatch(auth_failure(err))}
+      cookiePolicy={'single_host_origin'}
+    />
+  );
+};
 
 export default GoogleOAuth;

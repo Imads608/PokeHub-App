@@ -1,4 +1,4 @@
 export class UserNotificationEvent {
-    shouldReceive: boolean;
-    subscribedUserUid: string;
+  shouldReceive: boolean;
+  subscribedUserUid: string;
 }

@@ -1,25 +1,31 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-const appNotification = state => state.notification.appNotification;
-const appNotificationType = state => state.notification.appNotification.type;
-const appNotificationMessage = state => state.notification.appNotification.message;
+const appNotification = (state) => state.notification.appNotification;
+const appNotificationType = (state) => state.notification.appNotification.type;
+const appNotificationMessage = (state) =>
+  state.notification.appNotification.message;
 
 export const getAppNotification = createSelector(
-    [appNotification], notification => notification
+  [appNotification],
+  (notification) => notification
 );
 
 export const getAppNotificationType = createSelector(
-    [appNotificationType], notificationType => notificationType
+  [appNotificationType],
+  (notificationType) => notificationType
 );
 
 export const getAppNotificationMessage = createSelector(
-    [appNotificationMessage], notificationMessage => notificationMessage
+  [appNotificationMessage],
+  (notificationMessage) => notificationMessage
 );
 
 export const getAppNotificationComponent = createSelector(
-    [appNotification], notification => notification.component
+  [appNotification],
+  (notification) => notification.component
 );
 
 export const getAppNotificationDesiredState = createSelector(
-    [appNotification], notification => notification.desiredState
+  [appNotification],
+  (notification) => notification.desiredState
 );

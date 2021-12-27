@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   //app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useLogger(await app.resolve(AppLogger));
-  
+
   const configService: ConfigService = app.get<ConfigService>(ConfigService);
 
   const microservice = app.connectMicroservice({
@@ -20,9 +20,9 @@ async function bootstrap() {
     options: {
       port: +configService.get<number>('appPort'),
       retryAttempts: 2,
-      retryDelay: 200
-    }
-  })
+      retryDelay: 200,
+    },
+  });
 
   await app.startAllMicroservices();
   //await app.listen(+configService.get<number>('appPort'));

@@ -16,16 +16,20 @@ import { authMiddleware } from './middleware/auth';
 const initialState = {};
 
 const store = configureStore({
-    reducer: {
-        app: appReducer,
-        auth: authReducer,
-        chat: chatReducer,
-        drawer: drawerReducer,
-        user: userReducer,
-        notification: notificationReducer
-    },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }).concat(authMiddleware, connectWebSocketMiddleware)
-})
+  reducer: {
+    app: appReducer,
+    auth: authReducer,
+    chat: chatReducer,
+    drawer: drawerReducer,
+    user: userReducer,
+    notification: notificationReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({ serializableCheck: false }).concat(
+      authMiddleware,
+      connectWebSocketMiddleware
+    ),
+});
 /*
 const middleWare = [thunk, connectWebSocketMiddleware ];
 const composeEnhancers = composeWithDevTools({ actionCreators, trace: true, traceLimit: 25 })

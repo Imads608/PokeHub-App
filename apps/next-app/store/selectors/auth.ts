@@ -8,16 +8,19 @@ const authenticated = (state: RootState) => state['auth-state'].isAuthenticated;
 const authError = (state: RootState) => state['auth-state'].error;
 
 export const getAuthLoading = createSelector(
-    [authLoading], authLoading => authLoading
+  [authLoading],
+  (authLoading) => authLoading
 );
 
 export const getIsAuthenticated = createSelector(
-    [authenticated], authenticated => authenticated
-)
+  [authenticated],
+  (authenticated) => authenticated
+);
 
 export const getIsEmailVerified = createSelector(
-    [emailVerified], emailVerified => emailVerified
-)
+  [emailVerified],
+  (emailVerified) => emailVerified
+);
 
 /*export const getAuthUserAndLoading = createSelector(
     [getUserAuth, getAuthLoading], (user, loading) => ({ user, loading})
@@ -28,5 +31,6 @@ export const getUidAndLoading = createSelector(
 );*/
 
 export const getAuthError = createSelector(
-    [authError], authError => authError
+  [authError],
+  (authError) => authError
 );

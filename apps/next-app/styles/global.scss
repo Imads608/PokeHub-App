@@ -2,19 +2,20 @@ body {
   margin: 0;
   padding: 0;
 }
-html, body, #root {
+html,
+body,
+#root {
   height: 100vh;
 }
 
 .link {
-  text-decoration: none; 
+  text-decoration: none;
   font-weight: bold;
 }
 
 .full-drawer-open {
   margin-right: 240px;
-  transition: ease-in-out .2s; /* Animation */
-
+  transition: ease-in-out 0.2s; /* Animation */
 }
 
 .dashboard {

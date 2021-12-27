@@ -8,9 +8,8 @@ import { Module } from '@nestjs/common';
 import { ChatCommonModule } from '../common/chat-common.module';
 
 @Module({
-    imports: [ChatCommonModule],
-    controllers: [
-        DirectMessageController,],
-    providers: [],
+  imports: [ChatCommonModule],
+  controllers: [DirectMessageController],
+  providers: [],
 })
-export class DirectMessageModule { }
+export class DirectMessageModule {}

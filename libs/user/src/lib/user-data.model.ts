@@ -12,8 +12,17 @@ export class UserData implements IUserData {
   password?: string;
   countUsernameChanged: number;
 
-
-  constructor(uid: string, email: string, username: string, firstName: string, lastName: string, account: TypeAccount, emailVerified: boolean, countUsernameChanged = 0, password = null) {
+  constructor(
+    uid: string,
+    email: string,
+    username: string,
+    firstName: string,
+    lastName: string,
+    account: TypeAccount,
+    emailVerified: boolean,
+    countUsernameChanged = 0,
+    password = null
+  ) {
     this.uid = uid;
     this.email = email;
     this.username = username;

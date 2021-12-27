@@ -17,9 +17,9 @@ async function bootstrap() {
   const microservice = app.connectMicroservice({
     transport: Transport.TCP,
     options: {
-      port: +configService.get<number>('appPort')
-    }
-  })
+      port: +configService.get<number>('appPort'),
+    },
+  });
 
   await app.startAllMicroservices();
   //await app.listen(+configService.get<Number>('APPLICATION_PORT'));

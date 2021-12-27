@@ -21,13 +21,13 @@ import { LoggerModule } from '@pokehub/logger';
         database: configService.get('postgresCreds.database'),
         entities: [User, UserStatus],
         synchronize: true,
-      })
+      }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration]
+      load: [configuration],
     }),
-    LoggerModule
+    LoggerModule,
   ],
   controllers: [],
   providers: [],

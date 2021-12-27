@@ -25,22 +25,26 @@ const FullDrawer = ({ drawerToggle, closedDrawer, classes, drawerRef }) => {
     >
       <div className={classes.drawerHeader}>
         <IconButton onClick={() => closedDrawer()} size="large">
-          {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          {theme.direction === 'rtl' ? (
+            <ChevronLeftIcon />
+          ) : (
+            <ChevronRightIcon />
+          )}
         </IconButton>
       </div>
       <DrawerItems drawerRef={drawerRef} />
     </Drawer>
   );
-}
+};
 
 FullDrawer.propTypes = {
   drawerToggle: PropTypes.bool.isRequired,
   closedDrawer: PropTypes.func.isRequired,
-  classes: PropTypes.object.isRequired
-}
+  classes: PropTypes.object.isRequired,
+};
 
 const mapStateToProps = (state) => ({
-  drawerToggle: state.app.drawerToggle
-})
+  drawerToggle: state.app.drawerToggle,
+});
 
 export default connect(null, { closedDrawer })(FullDrawer);

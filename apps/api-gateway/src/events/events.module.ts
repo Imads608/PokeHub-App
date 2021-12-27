@@ -4,7 +4,7 @@ import { MessagingModule } from '../messaging/messaging.module';
 import { EventsGateway } from './events.gateway';
 
 @Module({
-    imports: [MessagingModule, CommonModule],
-    providers: [EventsGateway]
+  imports: [MessagingModule, CommonModule],
+  providers: [EventsGateway],
 })
 export class EventsModule {}

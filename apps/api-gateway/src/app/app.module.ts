@@ -19,15 +19,15 @@ import { MailModule } from '../mail/mail.module';
 const routes: Routes = [
   {
     path: '/auth',
-    module: AuthModule
+    module: AuthModule,
   },
   {
     path: '/users',
-    module: UserModule
+    module: UserModule,
   },
   {
     path: '/mail',
-    module: MailModule
+    module: MailModule,
   },
   {
     path: '/chat',
@@ -35,22 +35,32 @@ const routes: Routes = [
     children: [
       {
         path: '/public-rooms',
-        module: RoomModule
+        module: RoomModule,
       },
       {
         path: '/direct-message',
-        module: DirectMessageModule
-      }
-    ]
-  }
-]
-
+        module: DirectMessageModule,
+      },
+    ],
+  },
+];
 
 @Module({
-  imports: [MailModule, UserModule, AuthModule, CommonModule, ChatModule, EventsModule, MessagingModule, EventEmitterModule.forRoot(), ConfigModule.forRoot({
-    isGlobal: true,
-    load: [configuration]
-  }), RouterModule.register(routes)],
+  imports: [
+    MailModule,
+    UserModule,
+    AuthModule,
+    CommonModule,
+    ChatModule,
+    EventsModule,
+    MessagingModule,
+    EventEmitterModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    RouterModule.register(routes),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

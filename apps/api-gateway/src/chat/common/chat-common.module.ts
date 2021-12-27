@@ -11,24 +11,32 @@ import { ROOM_SERVICE } from './room-service.interface';
 import { RoomService } from './room.service';
 
 @Module({
-    imports: [ClientsModule.registerAsync([
-        {
-            name: 'ChatMicroservice',
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                name: 'ChatMicroservice',
-                transport: Transport.TCP,
-                options: {
-                    host: configService.get<string>('chatService.host'),
-                    port: +configService.get<number>('chatService.port')
-                }
-            })
-    
-        }
-    ]), CommonModule],
-    controllers: [],
-    providers: [{ useClass: RoomService, provide: ROOM_SERVICE }, DirectMessageService],
-    exports: [{ useClass: RoomService, provide: ROOM_SERVICE }, DirectMessageService]
+  imports: [
+    ClientsModule.registerAsync([
+      {
+        name: 'ChatMicroservice',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          name: 'ChatMicroservice',
+          transport: Transport.TCP,
+          options: {
+            host: configService.get<string>('chatService.host'),
+            port: +configService.get<number>('chatService.port'),
+          },
+        }),
+      },
+    ]),
+    CommonModule,
+  ],
+  controllers: [],
+  providers: [
+    { useClass: RoomService, provide: ROOM_SERVICE },
+    DirectMessageService,
+  ],
+  exports: [
+    { useClass: RoomService, provide: ROOM_SERVICE },
+    DirectMessageService,
+  ],
 })
 export class ChatCommonModule {}

@@ -11,7 +11,10 @@ import { USER_STATUS_SERVICE } from './user-status-service.interface';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, UserStatus]), LoggerModule],
-  providers: [{ useClass: UserService, provide: USER_SERVICE }, { useClass: UserStatusService, provide: USER_STATUS_SERVICE }],
+  providers: [
+    { useClass: UserService, provide: USER_SERVICE },
+    { useClass: UserStatusService, provide: USER_STATUS_SERVICE },
+  ],
   controllers: [UserController],
 })
 export class UserModule {}

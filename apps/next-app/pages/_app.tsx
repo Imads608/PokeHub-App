@@ -10,7 +10,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
       </Head>
       <div className="app">
         <header className="flex">
-          {/* eslint-disable-next-line @next/next/no-img-element *//*}
+          {/* eslint-disable-next-line @next/next/no-img-element */ /*}
           <img src="/nx-logo-white.svg" alt="Nx logo" width="75" height="50" />
           <h1>Welcome to next-app!</h1>
         </header>
@@ -24,10 +24,10 @@ function CustomApp({ Component, pageProps }: AppProps) {
 
 export default CustomApp;
 */
-import React, {FC, useEffect, useRef} from 'react';
-import {AppProps} from 'next/app';
+import React, { FC, useEffect, useRef } from 'react';
+import { AppProps } from 'next/app';
 import Head from 'next/head';
-import {RootState, wrapper} from '../store/store';
+import { RootState, wrapper } from '../store/store';
 import '../styles/global.scss';
 import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 import Navbar from '../components/nav/navbar';
@@ -36,10 +36,10 @@ import queryClient from '../queryClient';
 import { getDesignTokens } from '../styles/mui/theme';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import { CacheProvider } from '@emotion/react';
-import { Hydrate } from 'react-query/hydration'
+import { Hydrate } from 'react-query/hydration';
 import useLoadUser from '../hooks/auth/useLoadUser';
 import { ToastContainer } from 'react-toastify';
-import "react-toastify/dist/ReactToastify.css";
+import 'react-toastify/dist/ReactToastify.css';
 import { CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
 import { getAppTheme } from '../store/selectors/app';
 import { useSelector } from 'react-redux';
@@ -63,7 +63,7 @@ Router.events.on('routeChangeComplete', () => {
 
 Router.events.on('routeChangeError', () => {
   NProgress.done();
-})
+});
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -71,7 +71,7 @@ const clientSideEmotionCache = createEmotionCache();
 const WrappedApp = (props) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
-  
+
   const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
   useEffect(() => {
@@ -82,24 +82,33 @@ const WrappedApp = (props) => {
     }
   }, []);
 
-
   return (
     <CacheProvider value={emotionCache}>
-        <ThemeProvider theme={theme}>
-          <QueryClientProvider client={queryClient}>
-            <Hydrate state={pageProps.dehydratedState}>
-              <MainApp Component={Component} pageProps={pageProps} theme={theme} />
-            </Hydrate>
-          </QueryClientProvider>
-        </ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <Hydrate state={pageProps.dehydratedState}>
+            <MainApp
+              Component={Component}
+              pageProps={pageProps}
+              theme={theme}
+            />
+          </Hydrate>
+        </QueryClientProvider>
+      </ThemeProvider>
     </CacheProvider>
   );
-}
+};
 
 const MainApp = ({ Component, pageProps, theme }) => {
-  const res = useLoadUser(typeof window !== 'undefined' ? localStorage.getItem('pokehub-refresh-token') : null);
+  const res = useLoadUser(
+    typeof window !== 'undefined'
+      ? localStorage.getItem('pokehub-refresh-token')
+      : null
+  );
   const navRef = useRef(null);
-  const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
+  const drawerToggle: boolean = useSelector<RootState, boolean>(
+    getDrawerToggle
+  );
   const matches = useMediaQuery(theme.breakpoints.up('md'));
 
   return (
@@ -107,8 +116,8 @@ const MainApp = ({ Component, pageProps, theme }) => {
       <CssBaseline />
       <Navbar navRef={navRef} />
       <MainDrawer navRef={navRef} />
-      <ToastContainer 
-        position='top-center'
+      <ToastContainer
+        position="top-center"
         autoClose={8000}
         hideProgressBar={false}
         newestOnTop={true}
@@ -119,7 +128,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
         <Component {...pageProps} />
       </RouteGuard>
     </main>
-  )
-} 
+  );
+};
 
 export default wrapper.withRedux(WrappedApp);

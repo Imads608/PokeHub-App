@@ -8,8 +8,8 @@ import { ChatCommonModule } from '../common/chat-common.module';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-    imports: [CommonModule, ChatCommonModule],
-    controllers: [RoomController],
-    providers: [],
+  imports: [CommonModule, ChatCommonModule],
+  controllers: [RoomController],
+  providers: [],
 })
-export class RoomModule { }
+export class RoomModule {}

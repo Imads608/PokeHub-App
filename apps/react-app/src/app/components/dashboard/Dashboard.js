@@ -9,34 +9,38 @@ import { DASHBOARD } from '../../types/app';
 import useInitialLoad from '../../hooks/useInitialLoad';
 import { Button } from '@mui/material';
 import './dashboard.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import UsefulLinks from './UsefulLinks';
 
-
-
-
 const Dashboard = ({ user }) => {
-    const { isLoading } = useInitialLoad(DASHBOARD, null);
-        
-    return (
-        isLoading ? <Loading /> :
-        <main style={{backgroundColor: 'pink', height: '93vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ margin: '20px' }}>
-                <TrainerCard user={user} />
-            </div>
-            <UsefulLinks />
-        </main>
-    )
-    
-}
+  const { isLoading } = useInitialLoad(DASHBOARD, null);
+
+  return isLoading ? (
+    <Loading />
+  ) : (
+    <main
+      style={{
+        backgroundColor: 'pink',
+        height: '93vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ margin: '20px' }}>
+        <TrainerCard user={user} />
+      </div>
+      <UsefulLinks />
+    </main>
+  );
+};
 
 Dashboard.propTypes = {
-    user: UserPropTypes.isRequired
-}
+  user: UserPropTypes.isRequired,
+};
 
 const mapStateToProps = (state) => ({
-    user: getUser(state)
-})
+  user: getUser(state),
+});
 
 export default connect(mapStateToProps, null)(Dashboard);

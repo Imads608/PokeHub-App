@@ -3,7 +3,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build react-app --configuration=production
 
-FROM nginx:1.17
+FROM nginx:1.17 as final
 #WORKDIR /app
 #COPY --from=builder /app/builder/apps/react-app/package.json .
 COPY --from=builder /app/builder/dist/apps/react-app ./usr/share/nginx/html

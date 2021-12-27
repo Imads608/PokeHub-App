@@ -10,15 +10,17 @@ import { useQuery } from 'react-query';
 import useChatRoomsLoad from './useChatRoomsLoad';
 
 const useInitialLoad = (type, payload) => {
-    const currentWindow = useSelector(getCurrentOpenedWindow);
-    const dispatch = useDispatch();
-    const { data, error, isLoading } = useChatRoomsLoad(true);
+  const currentWindow = useSelector(getCurrentOpenedWindow);
+  const dispatch = useDispatch();
+  const { data, error, isLoading } = useChatRoomsLoad(true);
 
-    useEffect(() => {
-        type && (!currentWindow || currentWindow && currentWindow.type !== type) && dispatch(setOpenWindow({ type, payload }));
-    }, [data]);
+  useEffect(() => {
+    type &&
+      (!currentWindow || (currentWindow && currentWindow.type !== type)) &&
+      dispatch(setOpenWindow({ type, payload }));
+  }, [data]);
 
-    return { isLoading, data, error };
-}
+  return { isLoading, data, error };
+};
 
 export default useInitialLoad;

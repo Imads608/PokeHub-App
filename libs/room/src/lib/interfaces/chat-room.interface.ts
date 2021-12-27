@@ -1,8 +1,8 @@
-import { RoomType } from "../room-type.enum";
+import { RoomType } from '../room-type.enum';
 
 export interface IChatRoom {
-    id: string;
-    name?: string;
-    description?: string;
-    roomType: RoomType;
+  id: string;
+  name?: string;
+  description?: string;
+  roomType: RoomType;
 }

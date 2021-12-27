@@ -1,5 +1,5 @@
 export interface IJwtTokenBody {
-    username: string;
-    email: string;
-    uid: string;
+  username: string;
+  email: string;
+  uid: string;
 }

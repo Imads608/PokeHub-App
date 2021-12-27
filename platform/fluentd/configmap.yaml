@@ -5,7 +5,7 @@ metadata:
   namespace: fluentd
   labels:
     app: fluentd-logging
-data: 
+data:
   fluent.conf: |
     <source>
       @type tail
@@ -50,7 +50,7 @@ data:
         container ${ record.dig("kubernetes", "container_name") }
       </record>
     </filter>
-    
+
     <match kubernetes.var.log.containers.**>
       @type copy
       <store>
@@ -66,4 +66,3 @@ data:
         @type stdout
       </store>
     </match>
-

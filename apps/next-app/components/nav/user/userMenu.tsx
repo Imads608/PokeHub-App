@@ -19,87 +19,94 @@ import { IUserData } from '@pokehub/user';
 import styles from '../navbar.module.scss';
 
 const StyledMenu: any = withStyles({
-    paper: {
-      border: '1px solid #d3d4d5',
-    },
-  })((props) => (
-    <Menu
-      open={false}
-      elevation={0}
-      //getContentAnchorEl={null}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'center',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'center',
-      }}
-      {...props}
-    />
+  paper: {
+    border: '1px solid #d3d4d5',
+  },
+})((props) => (
+  <Menu
+    open={false}
+    elevation={0}
+    //getContentAnchorEl={null}
+    anchorOrigin={{
+      vertical: 'bottom',
+      horizontal: 'center',
+    }}
+    transformOrigin={{
+      vertical: 'top',
+      horizontal: 'center',
+    }}
+    {...props}
+  />
 ));
 
 interface UserMenuProps {
-  user: IUserData
+  user: IUserData;
 }
 
 const UserMenu = ({ user }: UserMenuProps) => {
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const open = Boolean(anchorEl);
-    const queryClient = useQueryClient();
-    const dispatch = useDispatch();
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
 
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-      };
-    
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-    const logoutUser = () => {
-      queryClient.removeQueries("user-login");
-      queryClient.removeQueries('user-signup');
-      dispatch(logout());
-    }
-    return (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Button onClick={handleClick} style={{ textTransform: 'none' }}>
-                <div style={{ marginLeft: '10px', marginRight: '10px' }}>
-                  <Badge variant='dot' overlap='circular' color='success' anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-                    <Avatar src='' />
-                  </Badge>  
-                </div>
-                <span style={{ margin: 0 }} className={`${styles['nav-link']}`}>{user.username}</span>
-            </Button>
-            <StyledMenu
-                id="customized-menu"
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-            >
-                <MenuItem onClick={() => logoutUser()}>
-                    <ListItemIcon style={{ minWidth: '30px' }}>
-                        <ExitToAppIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Logout" />
-                </MenuItem>
-                <MenuItem>
-                    <ListItemIcon style={{ minWidth: '30px' }}>
-                        <SettingsIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Preferences" />
-                </MenuItem>
-                <MenuItem>
-                    <ListItemIcon style={{ minWidth: '30px' }}>
-                        <PersonIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Profile" />
-                </MenuItem>
-        </StyledMenu>
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const logoutUser = () => {
+    queryClient.removeQueries('user-login');
+    queryClient.removeQueries('user-signup');
+    dispatch(logout());
+  };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Button onClick={handleClick} style={{ textTransform: 'none' }}>
+        <div style={{ marginLeft: '10px', marginRight: '10px' }}>
+          <Badge
+            variant="dot"
+            overlap="circular"
+            color="success"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Avatar src="" />
+          </Badge>
         </div>
-    )
-}
+        <span style={{ margin: 0 }} className={`${styles['nav-link']}`}>
+          {user.username}
+        </span>
+      </Button>
+      <StyledMenu
+        id="customized-menu"
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={() => logoutUser()}>
+          <ListItemIcon style={{ minWidth: '30px' }}>
+            <ExitToAppIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </MenuItem>
+        <MenuItem>
+          <ListItemIcon style={{ minWidth: '30px' }}>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Preferences" />
+        </MenuItem>
+        <MenuItem>
+          <ListItemIcon style={{ minWidth: '30px' }}>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Profile" />
+        </MenuItem>
+      </StyledMenu>
+    </div>
+  );
+};
 
 export default UserMenu;

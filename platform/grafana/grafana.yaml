@@ -77,4 +77,3 @@ spec:
   selector:
     app: grafana
     component: core
-

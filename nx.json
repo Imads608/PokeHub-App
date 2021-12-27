@@ -26,58 +26,6 @@
       }
     ]
   },
-  "projects": {
-    "api-gateway": {
-      "tags": []
-    },
-    "auth": {
-      "tags": []
-    },
-    "auth-service": {
-      "tags": []
-    },
-    "chat-service": {
-      "tags": []
-    },
-    "events": {
-      "tags": []
-    },
-    "logger": {
-      "tags": []
-    },
-    "mail": {
-      "tags": []
-    },
-    "mail-service": {
-      "tags": []
-    },
-    "next-app": {
-      "tags": []
-    },
-    "next-app-e2e": {
-      "tags": [],
-      "implicitDependencies": ["next-app"]
-    },
-    "react-app": {
-      "tags": []
-    },
-    "react-app-e2e": {
-      "tags": [],
-      "implicitDependencies": ["react-app"]
-    },
-    "room": {
-      "tags": []
-    },
-    "socket-service": {
-      "tags": []
-    },
-    "user": {
-      "tags": []
-    },
-    "user-service": {
-      "tags": []
-    }
-  },
   "cli": {
     "defaultCollection": "@nrwl/nest"
   },

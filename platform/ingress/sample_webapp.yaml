@@ -12,11 +12,11 @@ spec:
         app: webapp
     spec:
       containers:
-      - name: webapp
-        image: mmumshad/simple-webapp
-        ports:
-        - name: http
-          containerPort: 5000
+        - name: webapp
+          image: mmumshad/simple-webapp
+          ports:
+            - name: http
+              containerPort: 5000
 ---
 apiVersion: v1
 kind: Service
