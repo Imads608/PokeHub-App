@@ -4,6 +4,8 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Transport, ClientsModule } from '@nestjs/microservices';
+import { AUTH_SERVICE } from './auth-service.interface';
+import { LoggerModule } from '@pokehub/logger'
 
 @Module({
   imports: [
@@ -30,9 +32,10 @@ import { Transport, ClientsModule } from '@nestjs/microservices';
             })
 
         }
-    ])
+    ]),
+    LoggerModule
   ],
-  providers: [AuthService],
+  providers: [{ useClass: AuthService, provide: AUTH_SERVICE }],
   controllers: [AuthController],
 })
 export class AuthModule {}

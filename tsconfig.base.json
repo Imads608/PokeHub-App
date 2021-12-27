@@ -17,6 +17,8 @@
     "paths": {
       "@pokehub/auth": ["libs/auth/src/index.ts"],
       "@pokehub/events": ["libs/events/src/index.ts"],
+      "@pokehub/logger": ["libs/logger/src/index.ts"],
+      "@pokehub/mail": ["libs/mail/src/index.ts"],
       "@pokehub/room": ["libs/room/src/index.ts"],
       "@pokehub/user": ["libs/user/src/index.ts"]
     }

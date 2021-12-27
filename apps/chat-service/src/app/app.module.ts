@@ -3,9 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatRoom, Participant } from '@pokehub/room';
 import { RoomModule } from '../room/room.module';
-
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import configuration from '../config/configuration';
 
 @Module({

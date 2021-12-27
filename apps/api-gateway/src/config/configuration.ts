@@ -1,5 +1,6 @@
 export default () => ({
     appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
+    appName: process.env.APPLICATION_NAME,
     userService: {
         host: process.env.USER_MICROSERVICE_HOST,
         port: process.env.USER_MICROSERVICE_PORT
@@ -11,6 +12,10 @@ export default () => ({
     chatService: {
         host: process.env.CHAT_MICROSERVICE_HOST,
         port: process.env.CHAT_MICROSERVICE_PORT
+    },
+    mailService: {
+        host: process.env.MAIL_MICROSERVICE_HOST,
+        port: process.env.MAIL_MICROSERVICE_PORT
     },
     rabbitMQ: {
         host: process.env.RABBITMQ_SERVICE,

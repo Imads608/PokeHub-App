@@ -12,3 +12,5 @@ export * from './lib/room-type.enum';
 
 export * from './lib/chatroom-data.model';
 export * from './lib/interfaces/chatroom-data.interface';
+
+export * from './lib/endpoints.enum';

@@ -1,15 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IUserPublicProfileWithToken } from '@pokehub/user';
 //import { app_loaded } from './app';
-import { auth_failure, login_success, logout } from '../actions/common';
+import { auth_failure, login_success, logout, login_success_verification_needed } from '../actions/common';
 import { HYDRATE } from 'next-redux-wrapper';
 import { APIError } from '../../types/api';
 
 interface AuthState {
-    accessToken?: string,
-    refreshToken?: string,
+    accessToken: string | null,
+    refreshToken: string | null,
     isAuthenticated: boolean,
-    error?: APIError,
+    isEmailVerified: boolean,
+    error: APIError | null,
     loading: boolean
 }
 
@@ -17,23 +18,15 @@ const authSlice = createSlice({
     name: 'auth-state',
     initialState: { accessToken: null, refreshToken: null, isAuthenticated: false, error: null, loading: true } as AuthState,
     reducers: {
-        /*login_success: (state: AuthState, action: PayloadAction<UserDetails>) => {
-            state.loading = false;
-            state.isAuthenticated = true;
-            state.accessToken = action.payload.accessToken;
-            state.refreshToken = action.payload.refreshToken;
-        },
-        logout: (state: AuthState) => {
-            state.loading = false;
-            state.isAuthenticated = false;
-            state.accessToken = null;
-            state.refreshToken = null;
-        },*/
         reset_auth_failure: (state: AuthState) => {
             state.loading = false;
+            state.error = null;
         },
         auth_loaded: (state: AuthState) => {
             state.loading = false;
+        },
+        auth_loading: (state: AuthState) => {
+            state.loading = true;
         }
     },
     extraReducers: (builder) => {
@@ -47,6 +40,7 @@ const authSlice = createSlice({
             .addCase(login_success, (state: AuthState, action: PayloadAction<IUserPublicProfileWithToken>) => {
                 state.loading = false;
                 state.isAuthenticated = true;
+                state.isEmailVerified = false;
                 state.accessToken = action.payload.accessToken;
                 state.refreshToken = action.payload.refreshToken;
             })
@@ -61,8 +55,12 @@ const authSlice = createSlice({
                 state.accessToken = null;
                 state.refreshToken = null;
             })
+            .addCase(login_success_verification_needed, (state: AuthState) => {
+                state.loading = false;
+                state.isEmailVerified = false;
+            })
     }
 });
 
-export const { reset_auth_failure, auth_loaded } = authSlice.actions;
+export const { reset_auth_failure, auth_loaded, auth_loading } = authSlice.actions;
 export default authSlice;

@@ -14,6 +14,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MailModule } from '../mail/mail.module';
 
 const routes: Routes = [
   {
@@ -23,6 +24,10 @@ const routes: Routes = [
   {
     path: '/users',
     module: UserModule
+  },
+  {
+    path: '/mail',
+    module: MailModule
   },
   {
     path: '/chat',
@@ -42,7 +47,7 @@ const routes: Routes = [
 
 
 @Module({
-  imports: [UserModule, AuthModule, CommonModule, ChatModule, EventsModule, MessagingModule, EventEmitterModule.forRoot(), ConfigModule.forRoot({
+  imports: [MailModule, UserModule, AuthModule, CommonModule, ChatModule, EventsModule, MessagingModule, EventEmitterModule.forRoot(), ConfigModule.forRoot({
     isGlobal: true,
     load: [configuration]
   }), RouterModule.register(routes)],

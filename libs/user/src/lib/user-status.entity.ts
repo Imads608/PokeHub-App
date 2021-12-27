@@ -14,7 +14,7 @@ export class UserStatus {
         enum: Status,
         default: Status.ONLINE
     })
-    status: boolean;
+    status: Status;
     
     @Column()
     lastSeen: Date;

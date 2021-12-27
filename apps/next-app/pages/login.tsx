@@ -10,6 +10,7 @@ import {
     FormControlLabel,
     Checkbox,
     Link,
+    PaletteMode,
 } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined } from '@mui/icons-material';
@@ -19,7 +20,7 @@ import useLoginUser from '../hooks/auth/useLoginUser';
 import EmailField from '../components/auth/emailField';
 import PasswordField from '../components/auth/passwordField';
 import GoogleOAuth from '../components/auth/googleOAuth';
-import { getIsAuthenticated } from '../store/selectors/auth';
+import { getIsAuthenticated, getIsEmailVerified } from '../store/selectors/auth';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
@@ -31,7 +32,11 @@ import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import { useDispatch } from "react-redux";
 import { reset_auth_failure } from '../store/reducers/auth';
-import { toggle_theme } from '../store/reducers/app';
+import { getUser } from '../store/selectors/user';
+import { IUserData } from '@pokehub/user';
+import { getAppTheme } from '../store/selectors/app';
+import EmailVerificationNotification from '../components/auth/emailVerificationNotification';
+import { QueryClient, useQueryClient } from 'react-query';
 
 function Copyright() {
     return (
@@ -67,19 +72,21 @@ const useStyles = makeStyles((theme: Theme) => ({
 const Login = () => {
     const classes = useStyles();
     const [loginEnable, setLoginEnable] = useState<boolean>(false);
+    const [rememberMe, setRememberMe] = useState<boolean>(false);
     const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
+    const isEmailVerified: boolean = useSelector<RootState, boolean>(getIsEmailVerified);
+    const user: IUserData = useSelector<RootState, IUserData>(getUser);
     const router: NextRouter = useRouter();
+    const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
     const dispatch: Dispatch = useDispatch();
+    const queryClient: QueryClient = useQueryClient();
     const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
-    const result = useLoginUser(getValues('email'), getValues('password'), loginEnable);
+    const result = useLoginUser(getValues('email'), getValues('password'), rememberMe, loginEnable);
     const error: AxiosError<APIError> = result.error as AxiosError<APIError>;
 
+    console.log('Login Enable is', loginEnable);
     const redirectToPrivatePage = () => {
-        //Router.push({
-        //    pathname: '/login',
-        //    query: { from: {router.pathname} },
-        //}))
-        if (router.query && router.query.from) {
+        if (user.emailVerified && router.query && router.query.from) {
             router.push(router.query.from as string);
         } else {
             router.push('/dashboard');
@@ -90,12 +97,17 @@ const Login = () => {
         dispatch(reset_auth_failure());
     }
 
+
+
     useEffect(() => {
-        !isAuthenticated && setLoginEnable(false);
+        console.log('Login UseEffect');
+        !isAuthenticated && isEmailVerified && setLoginEnable(false);
+        !isAuthenticated && !isEmailVerified && queryClient.removeQueries('user-login');
         isAuthenticated && redirectToPrivatePage();
+        //result.isSuccess && !isEmailVerified && toast.info('We have ')
         error && toast.error(error.response?.data.statusCode === 401 ? 'Invalid Credentials' 
-                             : error.response?.data.message, { position: toast.POSITION.TOP_CENTER, onClose: notificationClose });
-    }, [error, isAuthenticated])
+                             : error.response?.data.message, { position: toast.POSITION.TOP_CENTER, onClose: notificationClose, theme });
+    }, [error, isAuthenticated, result.isSuccess])
 
     useEffect(() => {
         setLoginEnable(false);
@@ -103,8 +115,8 @@ const Login = () => {
 
     return (
         <div>
+            <EmailVerificationNotification />
             <Container component="main" maxWidth="xs">
-                <CssBaseline />
                 <div className={classes.paper}>
                     <Avatar className={classes.avatar}>
                         <LockOutlined />
@@ -116,7 +128,7 @@ const Login = () => {
                         <EmailField control={control} />
                         <PasswordField control={control} />
                         <FormControlLabel
-                            control={<Checkbox value="remember" color="primary" />}
+                            control={<Checkbox value="remember" color="primary" onChange={() => setRememberMe(!rememberMe)} />}
                             label="Remember me"
                         />
                         <Button
@@ -124,11 +136,12 @@ const Login = () => {
                             fullWidth
                             variant="contained"
                             color="primary"
+                            disabled={result.isLoading}
                             className={classes.submit}
                         >
                             Sign In
                         </Button>
-                        <GoogleOAuth classes={classes} />
+                        <GoogleOAuth classes={classes} notificationClose={notificationClose} />
                         <Grid container>
                             <Grid item xs>
                             <Link href="#" variant="body2">

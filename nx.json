@@ -42,6 +42,15 @@
     "events": {
       "tags": []
     },
+    "logger": {
+      "tags": []
+    },
+    "mail": {
+      "tags": []
+    },
+    "mail-service": {
+      "tags": []
+    },
     "next-app": {
       "tags": []
     },

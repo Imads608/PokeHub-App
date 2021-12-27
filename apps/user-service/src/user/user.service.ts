@@ -1,90 +1,139 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserRequest, User, TypeAccount, UserData, UserStatus } from '@pokehub/user';
+import { CreateUserRequest, User, TypeAccount, UserData } from '@pokehub/user';
 import * as bcrypt from 'bcrypt';
-import { UserStatusService } from './user-status.service';
+import { AppLogger } from '@pokehub/logger';
+import { IUserService } from './user-service.interface';
+import { IUserStatusService, USER_STATUS_SERVICE } from './user-status-service.interface';
 
 @Injectable()
-export class UserService {
+export class UserService implements IUserService {
 
-  private readonly logger = new Logger(UserService.name);
+  constructor(@InjectRepository(User) private usersRepository: Repository<User>, @Inject(USER_STATUS_SERVICE) private userStatusService: IUserStatusService,
+              private readonly logger: AppLogger) {
+    this.logger.setContext(UserService.name);
+  }
 
-  constructor(@InjectRepository(User) private usersRepository: Repository<User>, private userStatusService: UserStatusService) {}
+  async validateUserEmail(userId: string): Promise<UserData> {
+    try {
+      const user: User = await this.usersRepository.save({
+        uid: userId,
+        emailVerified: true
+      });
+
+      return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified,
+                          user.countUsernameChanged);
+    } catch (err) {
+      this.logger.error(`validateUserEmail: Got error updating Email Validation of User ${userId}: ${JSON.stringify(err)}`);
+      throw err;
+    }
+  }
 
   async createUser(userReq: CreateUserRequest): Promise<UserData> {
+    
     const user = this.usersRepository.create();
     this.populateNewUserFromReq(user, userReq);
+    
     const userData: UserData = await this.createUserInternal(user);
     await this.userStatusService.upsertLastSeen(userData.uid, new Date());
-    this.logger.log('Sending newly created user back');
+
+    this.logger.log('createUser: Sending newly created user back');
     return userData;
   }
 
   async createOrFindGoogleOAuthUser(userReq: CreateUserRequest): Promise<UserData> {
-      const user = this.usersRepository.create();
-      this.logger.log("Trying to find user: ", userReq.email);
-      user.username = `user-${user.uid}`;
-      this.populateNewGoogleOAuthUserFromReq(user, userReq);
-      const userDB: User = await this.findUserByEmail(user.email);
-      this.logger.debug("Google User from DB: " + JSON.stringify(userDB));
-      if (userDB && userDB.account === TypeAccount.GOOGLE) {
-          const userData = new UserData(userDB.uid, userDB.email, userDB.username, userDB.firstName, userDB.lastName, userDB.account, userDB.emailVerified);
-          return userData;
-      }
-      else if (userDB && userDB.account === TypeAccount.REGULAR) throw new RpcException('An account with this already exists. Please login with your account credentials');
-      
-      return await this.createUserInternal(user);
+    // Initialize new User
+    const user = this.usersRepository.create();
+
+    // Check if User already exists
+    this.logger.log(`createOrFindGoogleOAuthUser: Trying to find user with email ${userReq.email}`);
+    user.username = `user-${user.uid}`;
+    this.populateNewGoogleOAuthUserFromReq(user, userReq);
+    const userDB: User = await this.findUserByEmail(user.email);
+
+    // Return User if Account Type is Google otherwise throw and error
+    if (userDB && userDB.account === TypeAccount.GOOGLE) {
+        const userData = new UserData(userDB.uid, userDB.email, userDB.username, userDB.firstName, userDB.lastName, userDB.account, 
+                                      userDB.emailVerified, userDB.countUsernameChanged);
+        return userData;
+    }
+    else if (userDB && userDB.account === TypeAccount.REGULAR) throw new RpcException('An account with this already exists. Please login with your account credentials');
+    
+    // Create and Return User if not existing
+    return await this.createUserInternal(user);
   }
 
   async findUser(uid: string): Promise<UserData> {
-      try {
-          const user: User = await this.usersRepository.findOne(uid);
-          return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified);
-      } catch (err) {
-        throw new RpcException("Internal Server Error");
-      }
+    try {
+        this.logger.log(`findUser: Finding user with uid ${uid}`);
+        const user: User = await this.usersRepository.findOne(uid);
+        if (user) {
+          this.logger.log(`findUser: Successfully found user with uid ${uid}`);
+          return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified,
+                              user.countUsernameChanged, user.password);
+        }
+        this.logger.log(`findUser: No User found with uid ${uid}`);
+        return null;
+    } catch (err) {
+      this.logger.error(`findUser: Got error while trying to find user with uid ${uid}: ${err}`);
+      throw new RpcException("Internal Server Error");
+    }
   }
 
-  async findUserByEmail(email: string): Promise<User> {
-      try {
-          const user = await this.usersRepository.createQueryBuilder("user")
-            .where("email = :email", { email })
-            .getOne();
-          this.logger.log('Fetched user: ' + JSON.stringify(user));
-          this.logger.debug('Fetched User UID: ' + user.uid);
-          return user;
-      } catch (err) {
-          this.logger.error(`Received error: ${err}`);
-          throw new RpcException('Internal Server Error');
+  async findUserByEmail(email: string): Promise<UserData> {
+    try {
+      this.logger.log(`findUserByEmail: Finding user with email: ${email}`);
+      const user = await this.usersRepository.createQueryBuilder("user")
+        .where("email = :email", { email })
+        .getOne();
+      if (user) {
+        this.logger.log(`findUserByEmail: Successfully found user with email ${email}`);
+        return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified,
+                          user.countUsernameChanged, user.password);
       }
+      this.logger.log(`findUserByEmail: No User found with email ${email}`);
+      return null;
+    } catch (err) {
+      this.logger.error(`findUserByEmail: Got error while trying to find user with email ${email}: ${err}`);
+      throw new RpcException('Internal Server Error');
+    }
   }
 
-  async findUserByUsername(username: string): Promise<User> {
+  async findUserByUsername(username: string): Promise<UserData> {
       try {
+        this.logger.log(`findUserByUsername: Finding user with username: ${username}`);
           const user = await this.usersRepository.createQueryBuilder("user")
             .where("username = :username", { username })
-            .getOne()
-          this.logger.log('Fetched user: ' + JSON.stringify(user));
-          return user;
+            .getOne();
+          if (user) {
+            this.logger.log(`findUserByUsername: Successfully found user with username ${username}`);
+            return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified, user.countUsernameChanged, user.password);
+          }
+          this.logger.log(`findUserByUsername: No User found with username ${username}`);
+          return null;
       } catch (err) {
-          this.logger.error(`Received error: ${err}`);
-          throw new RpcException('Internal Server Error');
+        this.logger.error(`findUserByUsername: Got error while trying to find user with username ${username}: ${err}`);
+        throw new RpcException('Internal Server Error');
       }
   }
 
   private async createUserInternal(user: User): Promise<UserData> {
+    // Initialize Variables
     let response: UserData = null;
     const salt = await bcrypt.genSalt();
-    this.logger.log('User is ' + JSON.stringify(user));
-    this.logger.log('Salt is ' + salt);
+
+    this.logger.log(`createUserInternal: Creating new user with username ${user.username} and account type ${user.account}`);
     user.password = await bcrypt.hash(user.password, salt);
+    
+    // Create User
     try {
       const result = await this.usersRepository.insert(user);
-      this.logger.log(`Got result from createUser: ${result}`);
-      response = new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified);
+      this.logger.log(`createUserInternal: Got result from createUser: ${result}`);
+      response = new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified, user.countUsernameChanged, user.password);
     } catch (err) {
+      this.logger.error(`createUserInternal: Got error while trying to insert new user: ${err}`);
       if (err.message.includes('duplicate key')) {
         if (err.detail.includes('email')) throw new RpcException('This email already exists');
         else if (err.detail.includes('username')) throw new RpcException('This username already exists');
@@ -92,7 +141,7 @@ export class UserService {
       }
       throw new RpcException(err.message);
     }
-    this.logger.log('Sending newly created user back');
+    this.logger.log('createUserInternal: Successfully created new user');
     return response;
   }
 
@@ -100,8 +149,8 @@ export class UserService {
     user.email = userReq.email;
     user.username = userReq.username;
     user.password = userReq.password;
-    user.firstName = user.firstName;
-    user.lastName = user.lastName;
+    user.firstName = userReq.firstName;
+    user.lastName = userReq.lastName;
     user.account = TypeAccount.REGULAR;
   }
 

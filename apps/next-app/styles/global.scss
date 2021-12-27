@@ -11,6 +11,16 @@ html, body, #root {
   font-weight: bold;
 }
 
+.full-drawer-open {
+  margin-right: 240px;
+  transition: ease-in-out .2s; /* Animation */
+
+}
+
+.dashboard {
+  width: calc(100% - 240px);
+}
+
 /*.app {
   font-family: sans-serif;
   min-width: 300px;

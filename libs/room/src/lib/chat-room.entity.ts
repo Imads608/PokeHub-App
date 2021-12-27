@@ -1,6 +1,7 @@
-import {Entity, Column, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import {Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { RoomType } from "./room-type.enum";
 import { IChatRoom } from "./interfaces/chat-room.interface";
+import { Participant } from "..";
 
 @Entity("room", { schema: 'chat-schema'})
 export class ChatRoom implements IChatRoom {
@@ -9,10 +10,10 @@ export class ChatRoom implements IChatRoom {
     id: string;
 
     @Column({ nullable: true })
-    name: string;
+    name?: string;
 
     @Column({ nullable: true })
-    description: string;
+    description?: string;
 
     @Column({
         type: 'enum',
@@ -20,4 +21,7 @@ export class ChatRoom implements IChatRoom {
         default: RoomType.DM
     })
     roomType: RoomType;
+
+    @OneToMany(() => Participant, participant => participant.uid)
+    participants: Participant[]
 }

@@ -1,47 +1,88 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, Observable } from 'rxjs';
-import { AuthService } from 'apps/api-gateway/src/common/auth.service';
-import { CreateUserRequest, UserDataWithToken, User, UserData, UserPublicProfile } from '@pokehub/user';
+import { firstValueFrom } from 'rxjs';
+import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, TCPEndpoints } from '@pokehub/user';
 import { AuthTokens, JwtTokenBody } from '@pokehub/auth';
-import { RoomService } from '../chat/common/room.service';
 import { ChatRoom } from '@pokehub/room';
+import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
+import { IRoomService, ROOM_SERVICE } from '../chat/common/room-service.interface';
+import { AppLogger } from '@pokehub/logger';
+import { IUserService } from './user-service.interface';
 
 @Injectable()
-export class UserService {
-    private readonly logger = new Logger(UserService.name);
+export class UserService implements IUserService {
 
     constructor(@Inject("UserMicroservice") private readonly clientProxy: ClientProxy,
-                private readonly authService: AuthService, private readonly roomService: RoomService) {}
-
-    async createUserOld(data: CreateUserRequest): Promise<UserDataWithToken> {
-        const user = await firstValueFrom(this.clientProxy.send<User>({ cmd: 'create-user' }, data));
-        //const tokens: { access_token: string, refresh_token: string } = await this.authService.login(user);
-        //const response = new UserDataWithToken(new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account), tokens.access_token, tokens.refresh_token)
-        return null;//return response;
+                @Inject(AUTH_SERVICE) private readonly authService: IAuthService,
+                @Inject(ROOM_SERVICE) private readonly roomService: IRoomService,
+                private readonly logger: AppLogger) {
+        logger.setContext(UserService.name);
     }
-
     
     async loadUser(uid: string): Promise<UserPublicProfile> {
-        return await this.getUserData(uid);
-    }
-
-    async googleOAuthLogin() {
-        
+        try {
+            this.logger.log(`loadUser: Loading User with uid ${uid}`);
+            return await this.getUserData(uid);
+        } catch (err) {
+            this.logger.error(`loadUser: Got error while trying to load User with uid ${uid}: ${err}`);
+            throw err;
+        }
     }
 
     async createUser(data: CreateUserRequest): Promise<UserDataWithToken> {
-        this.logger.debug('Got request to create new user. Sending to User Microservice: ' + JSON.stringify(data));
-        const user: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: 'create-user' }, data));
-        this.logger.log(`Got user from User Service: ${JSON.stringify(user)}`);
+        try {
+        // Create User
+        this.logger.log(`createUser: Sending request to User Microservice to create User with email ${data.email}`);
+        const user: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: TCPEndpoints.CREATE_USER }, data));
+        if (!user)
+            throw new InternalServerErrorException();
+            
+        this.logger.log(`createUser: Successfully created User with email ${data.email}. Going to create tokens through Auth Microservice`);
+
+        // Create Tokens
         const tokens: AuthTokens = await this.authService.generateNewTokens(new JwtTokenBody(user.username, user.email, user.uid));
+        if (!tokens)
+            throw new InternalServerErrorException();
+        
+        this.logger.log(`createUser: Successfully created tokens. Sending back User Data and Access and Refresh Tokens`);
+
+        // Send back User and Tokens
         const response = new UserDataWithToken(user, tokens.accessToken, tokens.refreshToken);
         return response;
+        } catch (err) {
+            this.logger.error(`createUser: Got error while trying to create user with email ${data.email}: ${err}`);
+            throw err;
+        }
+    }
+
+    async activateUser(activationToken: string): Promise<UserData> {
+        try {
+            // Validate Activation Token
+            this.logger.log(`activateUser: Going to validate Activation Token`);
+            const data: JwtTokenBody = await this.authService.validateEmailConfirmationToken(activationToken);
+            if (!data)
+                throw new InternalServerErrorException();
+
+            // Update Email Verification Status of User
+            this.logger.log(`activateUser: Successfully decoded token into User Data: ${JSON.stringify(data)}`);
+            const userData: UserData = await firstValueFrom(this.clientProxy.send({ cmd: TCPEndpoints.VERIFY_USER_EMAIL }, data.uid));
+            if (!userData)
+                throw new InternalServerErrorException();
+
+            // Return User Data
+            this.logger.log(`activateUser: Successfully updaed Email Verification Status of User ${userData.uid}`);
+            return userData;
+        } catch (err) {
+            this.logger.error(`activateUser: Got error while trying to activate user: ${JSON.stringify(err)}`);
+            throw err;
+        }
     }
 
     private async getUserData(uid: string): Promise<UserPublicProfile> {
         // Get User Details
-        const userData: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: 'find-user' }, uid));
+        const userData: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: TCPEndpoints.FIND_USER }, uid));
+        if (!userData)
+            throw new InternalServerErrorException();
 
         // Get Joined Public Rooms
         const rooms: ChatRoom[] = await this.roomService.getJoinedPublicRoomsForUser(uid);

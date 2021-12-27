@@ -1,12 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UserDetails } from '../../types/user';
-import { login_success, logout } from '../actions/common';
-import { UserData } from '@pokehub/user';
+import { login_success, login_success_verification_needed, logout } from '../actions/common';
+import { IUserData, IUserPublicProfileWithToken } from '@pokehub/user';
 import { HYDRATE } from 'next-redux-wrapper';
 
 export interface UserState {
-    userDetails?: UserData,
-    joinedPublicRooms?: any[]
+    userDetails: IUserData | null,
+    joinedPublicRooms: any[] | null
 }
 
 const userSlice = createSlice({
@@ -22,10 +21,12 @@ const userSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(login_success, (state: UserState, action: PayloadAction<UserDetails>) => {
-                //TODO
+            .addCase(login_success, (state: UserState, action: PayloadAction<IUserPublicProfileWithToken>) => {
                 state.userDetails = action.payload.user;
                 state.joinedPublicRooms = action.payload.joinedPublicRooms;
+            })
+            .addCase(login_success_verification_needed, (state: UserState, action: PayloadAction<IUserPublicProfileWithToken>) => {
+                state.userDetails = action.payload.user;
             })
             .addCase(logout, (state: UserState) => {
                 state.userDetails = null;

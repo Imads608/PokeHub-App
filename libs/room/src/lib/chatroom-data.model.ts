@@ -1,3 +1,4 @@
+import { Participant, RoomType } from "..";
 import { IChatRoomData } from "./interfaces/chatroom-data.interface";
 
 export class ChatRoomData implements IChatRoomData {

@@ -3,10 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User, UserStatus } from '@pokehub/user';
 import { UserModule } from '../user/user.module';
-
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import configuration from '../config/configuration';
+import { LoggerModule } from '@pokehub/logger';
 
 @Module({
   imports: [
@@ -28,9 +26,10 @@ import configuration from '../config/configuration';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration]
-    })
+    }),
+    LoggerModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

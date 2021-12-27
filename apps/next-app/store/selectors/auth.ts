@@ -3,16 +3,20 @@ import { RootState } from '../store';
 import { APIError } from '../../types/api';
 
 const authLoading = (state: RootState) => state['auth-state'].loading;
-//const authToken = (state: RootState) => state['auth-state'].token;
+const emailVerified = (state: RootState) => state['auth-state'].isEmailVerified;
 const authenticated = (state: RootState) => state['auth-state'].isAuthenticated;
 const authError = (state: RootState) => state['auth-state'].error;
 
 export const getAuthLoading = createSelector(
-    [authLoading], loading => loading
+    [authLoading], authLoading => authLoading
 );
 
 export const getIsAuthenticated = createSelector(
-    [authenticated], isAuthenticated => isAuthenticated
+    [authenticated], authenticated => authenticated
+)
+
+export const getIsEmailVerified = createSelector(
+    [emailVerified], emailVerified => emailVerified
 )
 
 /*export const getAuthUserAndLoading = createSelector(
@@ -24,5 +28,5 @@ export const getUidAndLoading = createSelector(
 );*/
 
 export const getAuthError = createSelector(
-    [authError], error => error
+    [authError], authError => authError
 );

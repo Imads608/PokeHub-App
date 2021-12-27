@@ -1,41 +1,55 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ChatRoom, Participant, RoomType } from '@pokehub/room'
+import { Injectable } from '@nestjs/common';
+import { ChatRoom, Participant } from '@pokehub/room'
 import { InjectRepository } from '@nestjs/typeorm';
-import { createQueryBuilder, InsertResult, Repository } from 'typeorm';
-import { UserData } from '@pokehub/user';
+import { Repository } from 'typeorm';
+import { AppLogger } from '@pokehub/logger';
+import { IRoomService } from './room-service.interface';
 
 @Injectable()
-export class RoomService {
-    private readonly logger = new Logger(RoomService.name);
+export class RoomService implements IRoomService {
 
     constructor(@InjectRepository(ChatRoom) private chatRoomRepository: Repository<ChatRoom>,
-                @InjectRepository(Participant) private participantRepository: Repository<Participant>) {}
+                @InjectRepository(Participant) private participantRepository: Repository<Participant>,
+                private readonly logger: AppLogger) {
+        logger.setContext(RoomService.name);
+    }
     
     async getAllPublicRooms(): Promise<ChatRoom[]> {
-        this.logger.log('Getting all Chat Rooms');
-
+        this.logger.log(`getAllPublicRooms: Retrieving all Chat Rooms`);
         try {
             const rooms: ChatRoom[] = await this.chatRoomRepository.find();
-            return rooms;
+            if (rooms) {
+                this.logger.log(`getAllPublicRooms: Successfully retrieved all Chat Rooms`);
+                return rooms;
+            }
+            this.logger.log(`getAllPublicRooms: No Rooms found`);
+            return null;
         } catch (err) {
-            this.logger.error(`Got error trying to fetch all Public Rooms: ${err}`);
+            this.logger.error(`getAllPublicRooms: Got error trying to fetch all Public Rooms: ${err}`);
             throw err;
         }
     }
 
-    async getPublicRoomById(roomId: string) {
-        this.logger.log('Fetching Chatroom Data with Id: ' + roomId);
+    async getPublicRoomById(roomId: string, includeParticipants?: boolean): Promise<ChatRoom> {
+        this.logger.log(`getPublicRoomById: Retrieving Public Room Data for Room ${roomId} with Participant Flag: ${includeParticipants}`);
         try {
-            const room: ChatRoom = await this.chatRoomRepository.findOne(roomId);
-            return room;
+            const room: ChatRoom = includeParticipants ? await this.chatRoomRepository.findOne(roomId, { relations: ['participants'] }):
+                                                         await this.chatRoomRepository.findOne(roomId);
+            
+            if (room) {
+                this.logger.log(`getPublicRoomById: Successfully retrieved data for Room ${roomId} with Participant Flag ${includeParticipants}`);
+                return room;
+            }
+            this.logger.log(`getPublicRoomById: No Public Room found with id ${roomId}`);
+            return null;
         } catch (err) {
-            this.logger.error(`Got error fetching chat room with id ${roomId}: ${err}`);
+            this.logger.error(`getPublicRoomById: Got error fetching chat room with id ${roomId}: ${err}`);
             throw err;
         }
     }
 
     async getUserJoinedRooms(userId: string): Promise<ChatRoom[]> {
-        this.logger.log(`Getting all chat rooms user ${userId} has joined`);
+        this.logger.log(`getUserJoinedRooms: Getting all chat rooms user ${userId} has joined`);
         try {
             /*const rooms = await this.participantRepository.createQueryBuilder("participant")
                 .leftJoinAndSelect("participant.roomId", "room", "room.id = participant.roomId")
@@ -46,39 +60,52 @@ export class RoomService {
                 .innerJoinAndSelect(Participant, 'participant', 'participant.roomId = room.id')
                 .where(`participant.uid = '${userId}'`)
                 .getMany();
-            this.logger.log('Result: ' + JSON.stringify(rooms));
-            return rooms;
-
+            if (rooms) {
+                this.logger.log(`Successfully retrieved all chat rooms User ${userId} has joined`);
+                return rooms;
+            }
+            this.logger.log(`getUserJoinedRooms: No Joined Public Rooms found for user ${userId}`);
+            return null;
         } catch (err) {
-            this.logger.error(`Got error trying to fetch all Public Rooms: ${err}`)
+            this.logger.error(`getUserJoinedRooms: Got error trying to fetch all joined Rooms for user ${userId}: ${err}`);
+            throw err;
         }
     }
     
     async addNewParticipant(userId: string, roomId: string): Promise<Participant> {
-        this.logger.log(`Adding User ${userId} to Participant List for ${roomId}`);
+        this.logger.log(`addNewParticipant: Adding User ${userId} to Participant List for ${roomId}`);
         try {
+            // Create new Participant
             const newParticipant = this.participantRepository.create();
             newParticipant.room = roomId;
             newParticipant.uid = userId;
 
-            const res: InsertResult = await this.participantRepository.insert(newParticipant)
+            // Insert created Participant
+            await this.participantRepository.insert(newParticipant);
+
+            // Return inserted Participant
+            this.logger.log(`addNewParticipant: Successfully added user ${userId} to Participant List for ${roomId}`);
             return newParticipant;
         } catch (err) {
-            this.logger.error(`Got error trying to add new participant to room ${roomId}: ${err}`);
+            this.logger.error(`addNewParticipant: Got error trying to add user ${userId} to room ${roomId}: ${err}`);
             throw err;
         }
     }
 
     async getChatRoomParticipants(roomId: string): Promise<Participant[]> {
-        this.logger.log(`Getting all participants of Chat Room ${roomId}`);
+        this.logger.log(`getChatRoomParticipants: Getting all participants of Chat Room ${roomId}`);
         try {
             const participants: Participant[] = await this.participantRepository.createQueryBuilder("room")
                 .where("roomId = :roomId", { roomId }).getMany();
-            return participants;
+            if (participants) {
+                this.logger.log(`getChatRoomParticipants: Successfully retrieved all participants of Chat Room ${roomId}`);
+                return participants;
+            }
+            this.logger.log(`getChatRoomParticipants: No Participants found for ChatRoom ${roomId}`);
+            return null;
         } catch (err) {
-            this.logger.error(`Got error getting all participants of Chat Room ${roomId}: ${err}`);
+            this.logger.error(`getChatRoomParticipants: Got error getting all participants of Chat Room ${roomId}: ${err}`);
             throw err;
         }
     }
-    
 }

@@ -7,23 +7,31 @@ import { join_chatroom, leave_chatroom } from './user';
 
 export interface AppState {
     loading: boolean,
-    error?: any,
-    opened?: OpenedWindow,
+    error: any,
+    opened: OpenedWindow | null,
     theme: PaletteMode
 }
 
 export interface OpenedWindow {
-    type: string,
-    payload?: any
+    type: WindowTypes,
+    payload: ChatRoomPayload | null
+}
+
+export enum WindowTypes {
+    NONE,
+    CHAT_ROOM
+}
+
+export interface ChatRoomPayload {
+    id: string
 }
 
 const appSlice = createSlice({
     name: 'app-state',
-    initialState: { loading: false, error: null, opened: null, theme: 'dark' } as AppState,
+    initialState: { loading: false, error: null, opened: null, theme: 'light' } as AppState,
     reducers: {
         open_window: (state: AppState, action: PayloadAction<OpenedWindow>) => {
             state.opened = action.payload;
-            //return state;
         },
         app_loaded: (state: AppState) => {
             state.loading = false;

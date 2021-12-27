@@ -8,9 +8,9 @@ export class UserPublicProfile implements IUserPublicProfile {
 
     constructor(userData: UserData, rooms: ChatRoomData[] | ChatRoom[]) {
         this.user = userData;
-        if (rooms.length > 0 && this.isRoomChatRoomDataType(rooms[0])) {
-            this.joinedPublicRooms = rooms;
-        } else {
+        if (rooms && rooms.length > 0 && this.isRoomChatRoomDataType(rooms[0])) {
+            this.joinedPublicRooms = rooms as ChatRoomData[];
+        } else if (rooms) {
             this.setDataFromChatRooms(rooms as ChatRoom[]);
 
         }

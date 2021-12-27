@@ -30,6 +30,9 @@ export class User implements IUser {
     @Column({ default: false })
     emailVerified: boolean;
 
+    @Column({ default: 0 })
+    countUsernameChanged: number;
+
     @Column({
         type: 'enum',
         enum: TypeAccount,

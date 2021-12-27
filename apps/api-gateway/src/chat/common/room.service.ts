@@ -2,35 +2,67 @@
 https://docs.nestjs.com/providers#services
 */
 
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ChatRoom } from '@pokehub/room';
+import { AppLogger } from '@pokehub/logger';
+import { ChatRoom, TCPEndpoints } from '@pokehub/room';
 import { UserData } from '@pokehub/user';
+import { timeStamp } from 'console';
 import { firstValueFrom } from 'rxjs';
+import { IRoomService } from './room-service.interface';
 
 @Injectable()
-export class RoomService { 
-    private readonly logger = new Logger(RoomService.name);
+export class RoomService implements IRoomService { 
 
-    constructor(@Inject("ChatMicroservice") private readonly clientProxy: ClientProxy) {}
+    constructor(@Inject("ChatMicroservice") private readonly clientProxy: ClientProxy, private readonly logger: AppLogger) {
+        logger.setContext(RoomService.name);
+    }
 
     async getAllPublicRooms(): Promise<ChatRoom[]> {
-        const chatrooms: ChatRoom[] = await firstValueFrom(this.clientProxy.send<ChatRoom[]>({ cmd: 'get-public-chatrooms' }, ''));
-        return chatrooms;
+        try {
+            this.logger.log(`getAllPublicRooms: Retrieving all Public Chat Rooms from Chat Service`);
+            const chatrooms: ChatRoom[] = await firstValueFrom(this.clientProxy.send<ChatRoom[]>({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOMS }, ''));
+            this.logger.log(`getAllPublicRooms: Successfully retrieved all Public Chat Rooms from Chat Service`);
+            return chatrooms;
+        } catch (err) {
+            this.logger.error(`getAllPublicRooms: Got error while retrieving all Public Chat Rooms: ${err}`);
+            throw err;
+        }
     }
 
     async getPublicRoomFromId(roomId: string): Promise<ChatRoom> {
-        const chatroom: ChatRoom = await firstValueFrom(this.clientProxy.send<ChatRoom>({ cmd: 'get-public-chatroom' }, roomId));
-        return chatroom;
+        try {
+            this.logger.log(`getPublicRoomFromId: Retrieving Public Chat Room Data for Room ${roomId}`);
+            const chatroom: ChatRoom = await firstValueFrom(this.clientProxy.send<ChatRoom>({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOM }, roomId));
+            this.logger.log(`getPublicRoomFromId: Succesfully retrieved Data for Room ${roomId}`);
+            return chatroom;
+        } catch (err) {
+            this.logger.error(`getPublicRoomFromId: Got error while retrieving Public Chat Room data for Id ${roomId}: ${err}`);
+            throw err;
+        }
     }
 
     async getPublicRoomUsers(roomId: string): Promise<UserData[]> {
-        const users: UserData[] = await firstValueFrom(this.clientProxy.send<UserData[]>({ cmd: 'get-public-chatroom-users'}, roomId));
-        return users;
+        try {
+            this.logger.log(`getPublicRoomUsers: Retrieving Users for Public Chat Room ${roomId}`);
+            const users: UserData[] = await firstValueFrom(this.clientProxy.send<UserData[]>({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOM_USERS }, roomId));
+            this.logger.log(`getPublicRoomUsers: Successfully retrieved Users for Public Chat Room ${roomId}`);
+            return users;
+        } catch (err) {
+            this.logger.error(`getPublicRoomUsers: Got error while retrieving Users from Public Room ${roomId}: ${err}`);
+            throw err;
+        }
     }
 
     async getJoinedPublicRoomsForUser(userId: string): Promise<ChatRoom[]> {
-        const chatrooms: ChatRoom[] = await firstValueFrom(this.clientProxy.send<ChatRoom[]>({ cmd: 'get-joined-public-chatrooms' }, userId));
-        return chatrooms;
+        try {
+            this.logger.log(`getJoinedPublicRoomsForUser: Retrieving Public Chat Rooms User ${userId} has joined`);
+            const chatrooms: ChatRoom[] = await firstValueFrom(this.clientProxy.send<ChatRoom[]>({ cmd: TCPEndpoints.USER_JOINED_CHATROOMS }, userId));
+            this.logger.log(`getJoinedPublicRoomsForUser: Successfully retrieved Public Chat Rooms User ${userId} has joined`);
+            return chatrooms;
+        } catch (err) {
+            this.logger.error(`getJoinedPublicRoomsForUser: Got error while retrieving Public Chat Rooms User ${userId} has joined: ${err}`);
+            throw err;
+        }
     }
 }

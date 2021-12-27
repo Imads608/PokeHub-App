@@ -1,4 +1,4 @@
-import { TypeAccount } from "@pokehub/user";
+import { TypeAccount } from "../type-account.enum";
 
 export interface IUser {
     uid: string;
@@ -8,5 +8,6 @@ export interface IUser {
     password?: string;
     email: string;
     emailVerified: boolean;
+    countUsernameChanged: number;
     account: TypeAccount;
 }

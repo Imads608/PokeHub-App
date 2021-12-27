@@ -2,6 +2,8 @@
 export * from './lib/type-account.enum';
 export * from './lib/user-data-token.model';
 export * from './lib/user-data.model';*/
+export * from './lib/endpoints.enum';
+
 export * from './lib/create-user-request.model';
 export * from './lib/interfaces/create-user-request.interface';
 
@@ -26,3 +28,6 @@ export * from './lib/user-status.entity';
 
 export * from './lib/user-socket.model';
 export * from './lib/interfaces/user-socket.interface';
+
+export * from './lib/user-status-data.model';
+export * from './lib/interfaces/user-status-data.interface';

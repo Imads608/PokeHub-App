@@ -1,7 +1,7 @@
-import { UserData } from "@pokehub/user";
+import { UserData, IUserData } from "@pokehub/user";
 
 export interface UserDetails {
-    user: UserData,
+    user: IUserData,
     accessToken: string,
     refreshToken: string,
     joinedPublicRooms: any[]

@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { getAPIRequestHeader } from './utils';
 import appConfig from '../config';
 import { useInterceptors } from '../axios';
-import { IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserData, IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user';
 
 export const getCurrentUserData = async (uid) => {
     const userServiceRes = await axios.get(`${appConfig.apiGateway}/users/${uid}`, getAPIRequestHeader());
@@ -45,4 +45,9 @@ export const googleOAuthLogin = async (googleTokenId: string) => {
     }});
 
     return response.data;
+}
+
+export const activateUser = async (verificationToken: string) => {
+    const resp: AxiosResponse<IUserData> = await axios.get(`${appConfig.apiGateway}/users/activate`, { headers: { Authorization: verificationToken } })
+    return resp.data;
 }

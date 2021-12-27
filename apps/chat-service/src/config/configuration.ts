@@ -1,5 +1,6 @@
 export default () => ({
     appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
+    appName: process.env.APPLICATION_NAME,
     postgresCreds: {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,

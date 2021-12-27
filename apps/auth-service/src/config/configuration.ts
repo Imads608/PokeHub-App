@@ -1,5 +1,6 @@
 export default () => ({
     appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
+    appName: process.env.APPLICATION_NAME,
     userService: {
         host: process.env.USER_MICROSERVICE_HOST,
         port: process.env.USER_MICROSERVICE_PORT
@@ -20,6 +21,7 @@ export default () => ({
         accessTokenExpiration: process.env.ACCESS_TOKEN_EXPIRATION_SECONDS
     },
     googleClientCreds: {
-        id: process.env.GOOGLE_CLIENT_ID
+        id: process.env.GOOGLE_CLIENT_ID,
+        secret: process.env.GOOGLE_CLIENT_SECRET
     }
 });

@@ -35,6 +35,7 @@ const PasswordField = ({ control }: PasswordFieldProps) => {
             type='password'
             error={!!isTouched && invalid}
             helperText={error && error.message}
+            color='secondary'
         />
     )
 }

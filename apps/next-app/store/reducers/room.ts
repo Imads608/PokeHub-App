@@ -1,22 +1,28 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { HYDRATE } from 'next-redux-wrapper';
+import { ParsedUrlQuery } from 'querystring';
 
 export interface RoomState {
-    publicRooms?: PublicRoomData[]
+    publicRooms: PublicRoomData[] | null
 }
 
 export interface PublicRoomData {
-    state?: InternalRoomState,
+    state: InternalRoomState,
     id: string,
     name: string
 }
 
 export interface InternalRoomState {
-    url: string,
+    url: UrlPath | null,
     isActive: boolean,
     isOpened: boolean,
-    messages?: any[],
+    messages: any[],
     isConversationLoaded: boolean
+}
+
+export interface UrlPath {
+    pathname: string,
+    query: ParsedUrlQuery | null
 }
 
 const roomSlice = createSlice({
@@ -26,8 +32,8 @@ const roomSlice = createSlice({
         get_chatrooms_success: (state: RoomState, action: PayloadAction<PublicRoomData[]>) => {
             state.publicRooms = action.payload;
         },
-        chat_opened: (state: RoomState, action: PayloadAction<{ id: string, url: string }>) => {
-            state.publicRooms = state.publicRooms?.map(room => {
+        chatroom_opened: (state: RoomState, action: PayloadAction<{ id: string, url: UrlPath }>) => {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
                 if (room.id === action.payload.id) {
                     room.state.url = action.payload.url;
                     room.state.isActive = true;
@@ -38,8 +44,8 @@ const roomSlice = createSlice({
                 return room;
             })
         },
-        chat_closed: (state: RoomState, action: PayloadAction<string>) => {
-            state.publicRooms = state.publicRooms.map(room => {
+        chatroom_closed: (state: RoomState, action: PayloadAction<string>) => {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
                 if (room.id === action.payload) {
                     room.state = { url: null, isActive: false, isOpened: false, messages: [], isConversationLoaded: false }; 
                 }
@@ -47,7 +53,7 @@ const roomSlice = createSlice({
             })
         },
         set_chatroom_state: (state: RoomState, action: PayloadAction<PublicRoomData> ) => {
-            state.publicRooms = state.publicRooms.map(room => {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
                 if (room.id === action.payload.id) {
                     room.state = {...room.state, ...action.payload.state };
                 }
@@ -55,7 +61,7 @@ const roomSlice = createSlice({
             })
         },
         load_chatroom_conversation: (state: RoomState, action: PayloadAction<{ id: string, messages: any[] }>) => {
-            state.publicRooms = state.publicRooms.map(room => {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
                 if (room.id === action.payload.id) {
                     room.state.messages = action.payload.messages;
                     room.state.isConversationLoaded = true;
@@ -64,8 +70,8 @@ const roomSlice = createSlice({
             })
         },
         chatroom_message_sent: (state: RoomState, action: PayloadAction<{ to: string, id: string, time: string }>) => {
-            state.publicRooms = state.publicRooms.map(room => {
-                if (room.name === action.payload.to && !room.state.messages.find(message => message.id === action.payload.id)) {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
+                if (room.name === action.payload.to && (!room.state.messages.find(message => message.id === action.payload.id))) {
                     action.payload.time = JSON.stringify(action.payload.time);
                     room.state.messages.push(action.payload);
                 }
@@ -73,7 +79,7 @@ const roomSlice = createSlice({
             });
         },
         chatroom_mesage_received: (state: RoomState, action: PayloadAction<{ to: string, id: string, time: string }>) => {
-            state.publicRooms = state.publicRooms.map(room => {
+            state.publicRooms = state.publicRooms && state.publicRooms.map(room => {
                 if (room.name === action.payload.to && !room.state.messages.find(message => message.id === action.payload.id)) {
                     action.payload.time = JSON.stringify(action.payload.time);
                     room.state.messages.push(action.payload);
@@ -90,5 +96,5 @@ const roomSlice = createSlice({
     }
 });
 
-export const { get_chatrooms_success, chat_opened, chat_closed, set_chatroom_state, load_chatroom_conversation, chatroom_mesage_received, chatroom_message_sent } = roomSlice.actions;
+export const { get_chatrooms_success, chatroom_opened, chatroom_closed, set_chatroom_state, load_chatroom_conversation, chatroom_mesage_received, chatroom_message_sent } = roomSlice.actions;
 export default roomSlice;

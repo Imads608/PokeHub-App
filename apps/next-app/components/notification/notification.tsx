@@ -1,7 +1,7 @@
 const Notification = () => {
     return (
         <div>
-
+            Loading
         </div>
     )
 }

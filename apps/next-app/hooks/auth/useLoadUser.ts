@@ -10,8 +10,12 @@ const useLoadUser = (refreshToken: string) => {
     const dispatch: Dispatch = useDispatch();
 
     const response = useQuery('user-load', async () => {
+        const rememberMe = localStorage['pokehub-rememberme'];
+
         if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
             throw new Error('No Refresh Token provided');
+        } else if (!rememberMe) {
+            throw new Error('Remember Me is not set to true');
         }
         //dispatch(requestStarted());
         const accessToken: string = await getNewAccessToken(refreshToken);
@@ -33,6 +37,7 @@ const useLoadUser = (refreshToken: string) => {
             }
         }, 
         onError: () => {
+            console.log('loaded');
             //dispatch(appLoaded());
             dispatch(auth_loaded());
         },

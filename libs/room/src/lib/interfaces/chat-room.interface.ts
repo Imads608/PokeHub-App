@@ -1,8 +1,8 @@
-import { RoomType } from "@pokehub/room";
+import { RoomType } from "../room-type.enum";
 
 export interface IChatRoom {
     id: string;
-    name: string;
-    description: string;
+    name?: string;
+    description?: string;
     roomType: RoomType;
 }

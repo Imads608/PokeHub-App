@@ -8,12 +8,12 @@ import { APIError } from '../../types/api';
 
 export const useGoogleOAuthLogin = () => {
     const dispatch = useDispatch();
-    const mutation: UseMutationResult<IUserPublicProfileWithToken, Error | AxiosError> = useMutation('google-oauth', (tokenId: string) => googleOAuthLogin(tokenId), {
+    const mutation: UseMutationResult<IUserPublicProfileWithToken, Error | AxiosError<APIError>> = useMutation('google-oauth', (tokenId: string) => googleOAuthLogin(tokenId), {
         onSuccess: (data: IUserPublicProfileWithToken) => {
             console.log('Got successful response from api:', data);
             data && dispatch(login_success(data))
         },
-        onError: (err: Error | AxiosError) => {
+        onError: (err: Error | AxiosError<APIError>) => {
             if (err && axios.isAxiosError(err)) {
                 const apiError = err as AxiosError<APIError>;
                 dispatch(auth_failure(apiError.response?.data));

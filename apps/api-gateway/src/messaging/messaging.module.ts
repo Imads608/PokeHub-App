@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserEventsMessageService } from './user-events-message.service';
+import { CommonModule } from '../common/common.module';
 //import { MessagingService } from './messaging.service';
 
 @Module({
@@ -19,7 +20,7 @@ import { UserEventsMessageService } from './user-events-message.service';
                 }],
                 uri: `amqp://${configService.get<string>('rabbitMQ.host')}:${configService.get<number>('rabbitMQ.port')}`,
             })
-          })
+          }), CommonModule
     ],
     providers: [UserEventsMessageService],
     exports: [UserEventsMessageService]

@@ -24,7 +24,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
 
 export default CustomApp;
 */
-import React, {FC, useEffect} from 'react';
+import React, {FC, useEffect, useRef} from 'react';
 import {AppProps} from 'next/app';
 import Head from 'next/head';
 import {RootState, wrapper} from '../store/store';
@@ -40,10 +40,30 @@ import { Hydrate } from 'react-query/hydration'
 import useLoadUser from '../hooks/auth/useLoadUser';
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
-import { PaletteMode } from '@mui/material';
+import { CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
 import { getAppTheme } from '../store/selectors/app';
 import { useSelector } from 'react-redux';
 import { createTheme } from '@mui/material/styles';
+import Router from 'next/router';
+import NProgress from 'nprogress';
+import RouteGuard from '../components/auth/routeGuard';
+import MainDrawer from '../components/drawer/mainDrawer';
+import { getDrawerToggle } from '../store/selectors/drawer';
+
+// Router Page Navigation Progress Bar
+NProgress.configure({ showSpinner: false });
+
+Router.events.on('routeChangeStart', () => {
+  NProgress.start();
+});
+
+Router.events.on('routeChangeComplete', () => {
+  NProgress.done();
+});
+
+Router.events.on('routeChangeError', () => {
+  NProgress.done();
+})
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -68,7 +88,7 @@ const WrappedApp = (props) => {
         <ThemeProvider theme={theme}>
           <QueryClientProvider client={queryClient}>
             <Hydrate state={pageProps.dehydratedState}>
-              <MainApp Component={Component} pageProps={pageProps} />
+              <MainApp Component={Component} pageProps={pageProps} theme={theme} />
             </Hydrate>
           </QueryClientProvider>
         </ThemeProvider>
@@ -76,12 +96,17 @@ const WrappedApp = (props) => {
   );
 }
 
-const MainApp = ({ Component, pageProps }) => {
+const MainApp = ({ Component, pageProps, theme }) => {
   const res = useLoadUser(typeof window !== 'undefined' ? localStorage.getItem('pokehub-refresh-token') : null);
+  const navRef = useRef(null);
+  const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
+  const matches = useMediaQuery(theme.breakpoints.up('md'));
 
   return (
-    <main>
-      <Navbar />
+    <main className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}>
+      <CssBaseline />
+      <Navbar navRef={navRef} />
+      <MainDrawer navRef={navRef} />
       <ToastContainer 
         position='top-center'
         autoClose={8000}
@@ -90,7 +115,9 @@ const MainApp = ({ Component, pageProps }) => {
         draggable={false}
         closeOnClick
       />
-      <Component {...pageProps} />
+      <RouteGuard>
+        <Component {...pageProps} />
+      </RouteGuard>
     </main>
   )
 } 

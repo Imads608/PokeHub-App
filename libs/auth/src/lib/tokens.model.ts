@@ -1,4 +1,6 @@
-export class AuthTokens {
+import { IAuthTokens } from './interfaces/tokens.interface';
+
+export class AuthTokens implements IAuthTokens {
     accessToken: string;
     refreshToken: string;
 

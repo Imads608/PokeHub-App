@@ -1,20 +1,20 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from '@nestjs/passport';
+import { AppLogger } from "@pokehub/logger";
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-    private logger = new Logger(GoogleStrategy.name);
 
-    constructor(private readonly configService: ConfigService) {
+    constructor(private readonly configService: ConfigService, private readonly logger: AppLogger) {
         super({
-            clientID: '490564752077-hlbp1k70hlsqo1quibgmcpetanscrpqu.apps.googleusercontent.com',
-            clientSecret: 'y3rJ2dMtlx7g3m-BD03LmVjZ',
+            clientID: configService.get<string>('googleClientCreds.id'),
+            clientSecret: configService.get<string>('googleClientCreds.secret'),
             callbackURL: 'http://localhost:3015/auth/redirect',
             scope: ['email', 'profile']
         });
-        this.logger.log(`Client ID: ${configService.get('GOOGLE_CLIENT_ID')}`);
+        logger.setContext(GoogleStrategy.name);
     }
 
     async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback): Promise<any> {

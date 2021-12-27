@@ -16,8 +16,15 @@ import ThemeSwitch from './themeSwitch';
 import { toggle_theme } from '../../store/reducers/app';
 import { getAppTheme } from '../../store/selectors/app';
 import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import { Dispatch } from '@reduxjs/toolkit';
 import { RootState } from '../../store/store';
+import { getUser } from '../../store/selectors/user'
+import { getIsAuthenticated } from '../../store/selectors/auth';
+import { IUserData } from '@pokehub/user';
+import UserMenu from './user/userMenu';
+import UserNotifications from './user/userNotifications';
+import { drawer_opened } from '../../store/reducers/drawer';
+import { getDrawerToggle } from '../../store/selectors/drawer';
 
 const drawerWidth = 240;
 
@@ -49,10 +56,17 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-const Navbar = () => {
-  const classes = useStyles();
+interface NavbarProps {
+    navRef: any
+};
+
+const Navbar = ({ navRef }: NavbarProps) => {
+  const classes: any = useStyles();
   const dispatch: Dispatch = useDispatch();
   const currMode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const user: IUserData = useSelector<RootState, IUserData>(getUser);
+  const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
+  const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
 
   return (
     <div className={classes.root}>
@@ -66,15 +80,34 @@ const Navbar = () => {
                         <a className={`link ${styles['nav-link']}`}>PokéHub</a>
                      </Link>
                 </Typography>
-                <div>
-                    <ThemeSwitch checked={currMode === 'dark' } onClick={() => dispatch(toggle_theme())} mode={currMode} />
-                    <Link href='/login'>
-                        <a className={`link ${styles['nav-link']}`}>Log In</a>
-                    </Link>
-                    <Link href='/register'>
-                        <a className={`link ${styles['nav-link']}`}>Register</a>
-                    </Link>
-                </div>
+                <ThemeSwitch checked={currMode === 'dark' } onClick={() => dispatch(toggle_theme())} mode={currMode} />
+                { !isAuthenticated ? (
+                    <div>
+                        <Link href='/login'>
+                            <a className={`link ${styles['nav-link']}`}>Log In</a>
+                        </Link>
+                        <Link href='/register'>
+                            <a className={`link ${styles['nav-link']}`}>Register</a>
+                        </Link>
+                    </div>
+                ) : (
+                    <>
+                        <UserMenu user={user} />
+                        <UserNotifications />
+                        <IconButton
+                            ref={navRef}
+                            color="inherit"
+                            aria-label="open drawer"
+                            edge="end"
+                            onClick={() => dispatch(drawer_opened())}
+                            className={clsx(drawerToggle && classes.hide)}
+                            size="large">
+                        {/*<Badge badgeContent={unreadDMCount} color='primary'>*/}
+                            <MenuIcon />
+                        {/*</Badge>*/}
+                        </IconButton>
+                    </>
+                )}
             </Toolbar>
         </AppBar>
     </div>

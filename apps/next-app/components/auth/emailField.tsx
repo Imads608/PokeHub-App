@@ -35,6 +35,7 @@ const EmailField = ({ control }: EmailFieldProps) => {
             error={!!isTouched && invalid}
             type='email'
             helperText={error && error.message}
+            color='secondary'
         />
     )
 }
