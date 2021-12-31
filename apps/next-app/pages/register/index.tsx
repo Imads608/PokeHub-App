@@ -12,27 +12,13 @@ import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import { useSignupUser } from '../../hooks/auth/useSignupUser';
-import EmailField from '../../components/auth/emailField';
-import GoogleOAuth from '../../components/auth/googleOAuth';
-import PasswordField from '../../components/auth/passwordField';
-import UsernameField from '../../components/auth/usernameField';
-import { connect, useSelector } from 'react-redux';
-import { getIsAuthenticated } from '../../store/selectors/auth';
-import { useEffect } from 'react';
+import EmailField from '../../components/auth/fields/emailField';
+import GoogleOAuth from '../../components/auth/oauth/googleOAuth';
+import PasswordField from '../../components/auth/fields/passwordField';
+import UsernameField from '../../components/auth/fields/usernameField';
 import { Theme } from '@mui/material/styles';
-import { NextRouter, useRouter } from 'next/router';
-import { RootState } from '../../store/store';
 import NextLink from 'next/link';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © PokeHub '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+import Copyright from '../../components/common/copyright';
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -57,25 +43,8 @@ const useStyles = makeStyles((theme: Theme) => ({
 const Register = () => {
   const classes = useStyles();
   const mutation = useSignupUser();
-  const isAuthenticated: boolean = useSelector<RootState, boolean>(
-    getIsAuthenticated
-  );
-  const router: NextRouter = useRouter();
 
-  const {
-    handleSubmit,
-    getValues,
-    control,
-    formState: { errors },
-  } = useForm({ mode: 'onChange' });
-
-  const redirectToPrivatePage = () => {
-    router.push('/dashboard');
-  };
-
-  useEffect(() => {
-    isAuthenticated && redirectToPrivatePage();
-  }, [isAuthenticated]);
+  const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
 
   return (
     <Container component="main" maxWidth="xs">

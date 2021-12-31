@@ -7,6 +7,7 @@ import {
   IUserPublicProfile,
   IUserPublicProfileWithToken,
 } from '@pokehub/user';
+import { TokenTypes } from '@pokehub/auth';
 
 export const getCurrentUserData = async (uid) => {
   const userServiceRes = await axios.get(
@@ -86,8 +87,23 @@ export const googleOAuthLogin = async (googleTokenId: string) => {
 
 export const activateUser = async (verificationToken: string) => {
   const resp: AxiosResponse<IUserData> = await axios.get(
-    `${appConfig.apiGateway}/users/activate`,
+    `${appConfig.apiGateway}/users/auth/activate`,
     { headers: { Authorization: verificationToken } }
   );
   return resp.data;
 };
+
+export const resetPassword = async (resetToken: string, newPassword: string) => {
+    const resp: AxiosResponse<IUserData> = await axios.post(
+      `${appConfig.apiGateway}/users/auth/password-reset`, { password: newPassword },
+      { headers: { Authorization: resetToken } }
+    );
+    return resp.data;
+};
+
+export const validateToken = async (token: string, tokenType: TokenTypes) => {
+    const headers = getAPIRequestHeader();
+    const resp: AxiosResponse<boolean> = await axios.get(
+        `${appConfig.apiGateway}/auth/token-validation`, { ...headers, params: { token: token, tokenType: tokenType }});
+    return resp.data;
+}

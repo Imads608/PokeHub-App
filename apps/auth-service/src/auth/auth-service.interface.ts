@@ -1,9 +1,4 @@
-import {
-  AuthTokens,
-  EmailLogin,
-  JwtTokenBody,
-  UsernameLogin,
-} from '@pokehub/auth';
+import { AuthTokens, EmailLogin, JwtTokenBody, UsernameLogin, } from '@pokehub/auth';
 import { UserDataWithToken } from '@pokehub/user';
 
 export const AUTH_SERVICE = 'AUTH_SERVICE';
@@ -25,12 +20,17 @@ export interface IAuthService {
 
   /**
    * Validates the Given Token and returns the User Data embedded in the Token
-   * @param verificationToken The Token to use for validation
+   * @param verificationToken The Token to use for activating the User's account
    * @returns the User Data embedded in the Token
    */
-  validateEmailVerificationToken(
-    verificationToken: string
-  ): Promise<JwtTokenBody>;
+  validateEmailVerificationToken( verificationToken: string ): Promise<JwtTokenBody>;
+
+  /**
+   * Validates the provided Password Reset Token and returns the Email address embedded in the Token
+   * @param passwordResetToken The Token to use to validate for Resetting a User's Password
+   * @returns An Object containing The Email Address embedded in the Token
+   */
+  validatePasswordResetToken(passwordResetToken: string): Promise<{ email: string }>
 
   /**
    * Decodes the Access Token and returns the User Data
@@ -51,9 +51,14 @@ export interface IAuthService {
    * @param user The Public User Data to encode in the created token
    * @returns An Object representing the created Token.
    */
-  getNewEmailVerificationToken(
-    user: JwtTokenBody
-  ): Promise<{ email_verification_token: string }>;
+  getNewEmailVerificationToken( user: JwtTokenBody ): Promise<{ email_verification_token: string }>;
+
+  /**
+   * Creates a Token that can be used for Resetting a User's password.
+   * @param user An Object containing the Email Address of the User
+   * @returns An Object containing the Token to use for resetting the User's password
+   */
+  getNewPasswordResetToken(user: { email: string }): Promise<{ password_reset_token: string }>
 
   /**
    * Authenticate a User using their email address and password

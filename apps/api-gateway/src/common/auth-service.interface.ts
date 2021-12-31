@@ -1,10 +1,5 @@
 import { UserDataWithToken } from '@pokehub/user';
-import {
-  EmailLogin,
-  UsernameLogin,
-  JwtTokenBody,
-  AuthTokens,
-} from '@pokehub/auth';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, } from '@pokehub/auth';
 
 export const AUTH_SERVICE = 'AUTH SERVICE';
 
@@ -35,9 +30,14 @@ export interface IAuthService {
    * @param verificationToken The Token to validate and to extract data from
    * @returns the Data contained in the Token
    */
-  validateEmailConfirmationToken(
-    verificationToken: string
-  ): Promise<JwtTokenBody>;
+  validateEmailConfirmationToken( verificationToken: string ): Promise<JwtTokenBody>;
+
+  /**
+   * Validates and Decodes the provided Password Reset Token and returns the User Data associated with it
+   * @param resetToken The Token to use validate a User's Request to reset their password
+   * @returns An Object containing the User's email address
+   */
+   validatePasswordResetToken( resetToken: string ): Promise<{ email: string }>
 
   /**
    * Validates and Decodes the provided Access Token and returns the User Data associated with it.
@@ -58,7 +58,12 @@ export interface IAuthService {
    * @param userData The User Data to encode in the Token
    * @returns The Token to use for Email Verification
    */
-  generateEmailVerficationToken(
-    userData: JwtTokenBody
-  ): Promise<{ email_verification_token: string }>;
+  generateEmailVerficationToken( userData: JwtTokenBody ): Promise<{ email_verification_token: string }>;
+
+  /**
+   * Generates a new Token that can be used for resetting a User's password.
+   * @param userData An Object containing the User's email address
+   * @returns An Object containing the Token to use for Resetting the User's password
+   */
+  generatePasswordResetToken( userData: { email: string } ): Promise<{ password_reset_token: string }>
 }

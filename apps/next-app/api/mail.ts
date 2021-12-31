@@ -11,3 +11,9 @@ export const sendAccountActivationEmail = async (userData: IJwtTokenBody) => {
   );
   return resp.data;
 };
+
+export const sendPasswordResetEmail = async (email: string) => {
+    const resp: AxiosResponse<void> = await axios.post(`${appConfig.apiGateway}/mail/password-reset`, { email }, getAPIRequestHeader());
+    return resp.data;
+  };
+

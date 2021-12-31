@@ -11,3 +11,5 @@ export * from './lib/username-login.model';
 export * from './lib/interfaces/username-login.interface';
 
 export * from './lib/endpoints.enum';
+
+export * from './lib/token-types.enum';

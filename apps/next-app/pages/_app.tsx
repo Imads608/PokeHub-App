@@ -46,7 +46,7 @@ import { useSelector } from 'react-redux';
 import { createTheme } from '@mui/material/styles';
 import Router from 'next/router';
 import NProgress from 'nprogress';
-import RouteGuard from '../components/auth/routeGuard';
+import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
 
@@ -106,26 +106,26 @@ const MainApp = ({ Component, pageProps, theme }) => {
       : null
   );
   const navRef = useRef(null);
-  const drawerToggle: boolean = useSelector<RootState, boolean>(
-    getDrawerToggle
-  );
+  const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
 
   return (
     <main className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}>
       <CssBaseline />
-      <Navbar navRef={navRef} />
-      <MainDrawer navRef={navRef} />
-      <ToastContainer
-        position="top-center"
-        autoClose={8000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        draggable={false}
-        closeOnClick
-      />
       <RouteGuard>
-        <Component {...pageProps} />
+        <>
+          <Navbar navRef={navRef} />
+          <MainDrawer navRef={navRef} />
+          <ToastContainer
+            position="top-center"
+            autoClose={8000}
+            hideProgressBar={false}
+            newestOnTop={true}
+            draggable={false}
+            closeOnClick
+          />
+          <Component {...pageProps} />
+        </>
       </RouteGuard>
     </main>
   );

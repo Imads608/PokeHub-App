@@ -1,55 +1,29 @@
-import {
-  Avatar,
-  Box,
-  Container,
-  CssBaseline,
-  Grid,
-  TextField,
-  Typography,
-  Button,
-  FormControlLabel,
-  Checkbox,
-  Link,
-  PaletteMode,
-} from '@mui/material';
+import { Avatar, Box, Container, CssBaseline, Grid, TextField, Typography, Button, FormControlLabel, Checkbox, Link, PaletteMode, } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import useLoginUser from '../hooks/auth/useLoginUser';
-import EmailField from '../components/auth/emailField';
-import PasswordField from '../components/auth/passwordField';
-import GoogleOAuth from '../components/auth/googleOAuth';
-import {
-  getIsAuthenticated,
-  getIsEmailVerified,
-} from '../store/selectors/auth';
+import useLoginUser from '../../hooks/auth/useLoginUser';
+import EmailField from '../../components/auth/fields/emailField';
+import PasswordField from '../../components/auth/fields/passwordField';
+import GoogleOAuth from '../../components/auth/oauth/googleOAuth';
+import { getIsAuthenticated, getIsEmailVerified, } from '../../store/selectors/auth';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
-import { NextRouter, useRouter } from 'next/router';
+import { RootState } from '../../store/store';
 import NextLink from 'next/link';
-import { APIError } from '../types/api';
+import { APIError } from '../../types/api';
 import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import { useDispatch } from 'react-redux';
-import { reset_auth_failure } from '../store/reducers/auth';
-import { getUser } from '../store/selectors/user';
+import { reset_auth_failure } from '../../store/reducers/auth';
+import { getUser } from '../../store/selectors/user';
 import { IUserData } from '@pokehub/user';
-import { getAppTheme } from '../store/selectors/app';
-import EmailVerificationNotification from '../components/auth/emailVerificationNotification';
+import { getAppTheme } from '../../store/selectors/app';
+import EmailVerificationNotification from '../../components/auth/notifications/emailVerificationNotification';
 import { QueryClient, useQueryClient } from 'react-query';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © PokeHub '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+import Copyright from '../../components/common/copyright';
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -72,60 +46,34 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 const Login = () => {
+  const localStorageRememberMe: string = localStorage['pokehub-rememberme'];
   const classes = useStyles();
   const [loginEnable, setLoginEnable] = useState<boolean>(false);
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const isAuthenticated: boolean = useSelector<RootState, boolean>(
-    getIsAuthenticated
-  );
-  const isEmailVerified: boolean = useSelector<RootState, boolean>(
-    getIsEmailVerified
-  );
+  const [rememberMe, setRememberMe] = useState<boolean>(!localStorageRememberMe || localStorageRememberMe === 'undefined' || localStorageRememberMe === 'false' ? false : true);
+  const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
+  const isEmailVerified: boolean = useSelector<RootState, boolean>(getIsEmailVerified);
   const user: IUserData = useSelector<RootState, IUserData>(getUser);
-  const router: NextRouter = useRouter();
   const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
   const dispatch: Dispatch = useDispatch();
   const queryClient: QueryClient = useQueryClient();
-  const {
-    handleSubmit,
-    getValues,
-    control,
-    formState: { errors },
-  } = useForm({ mode: 'onChange' });
-  const result = useLoginUser(
-    getValues('email'),
-    getValues('password'),
-    rememberMe,
-    loginEnable
-  );
+  const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
+  const result = useLoginUser(getValues('email'), getValues('password'), rememberMe, loginEnable);
   const error: AxiosError<APIError> = result.error as AxiosError<APIError>;
-
-  console.log('Login Enable is', loginEnable);
-  const redirectToPrivatePage = () => {
-    if (user.emailVerified && router.query && router.query.from) {
-      router.push(router.query.from as string);
-    } else {
-      router.push('/dashboard');
-    }
-  };
 
   const notificationClose = () => {
     dispatch(reset_auth_failure());
   };
 
+  const enableUserLogin = () => {
+    queryClient.removeQueries('user-login');
+    setLoginEnable(true);
+  }
+
   useEffect(() => {
-    console.log('Login UseEffect');
+    result.isError && setLoginEnable(false);
     !isAuthenticated && isEmailVerified && setLoginEnable(false);
-    !isAuthenticated &&
-      !isEmailVerified &&
-      queryClient.removeQueries('user-login');
-    isAuthenticated && redirectToPrivatePage();
-    //result.isSuccess && !isEmailVerified && toast.info('We have ')
-    error &&
-      toast.error(
-        error.response?.data.statusCode === 401
-          ? 'Invalid Credentials'
-          : error.response?.data.message,
+    //!isAuthenticated && !isEmailVerified && queryClient.removeQueries('user-login');
+    error && toast.error(error.response?.data.statusCode === 401 ? 'Invalid Credentials' : error.response?.data.message,
         {
           position: toast.POSITION.TOP_CENTER,
           onClose: notificationClose,
@@ -151,18 +99,11 @@ const Login = () => {
           </Typography>
           <form
             className={classes.form}
-            onSubmit={handleSubmit((data) => setLoginEnable(true))}
+            onSubmit={handleSubmit((data) => enableUserLogin())}
           >
             <EmailField control={control} />
             <PasswordField control={control} />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  value="remember"
-                  color="primary"
-                  onChange={() => setRememberMe(!rememberMe)}
-                />
-              }
+            <FormControlLabel checked={rememberMe} control={ <Checkbox value="remember" color="primary" onChange={() => setRememberMe(!rememberMe)} /> }
               label="Remember me"
             />
             <Button
@@ -175,13 +116,10 @@ const Login = () => {
             >
               Sign In
             </Button>
-            <GoogleOAuth
-              classes={classes}
-              notificationClose={notificationClose}
-            />
+            <GoogleOAuth classes={classes} notificationClose={notificationClose} />
             <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2">
+                <Link href="/login/password-reset" variant="body2">
                   Forgot password?
                 </Link>
               </Grid>

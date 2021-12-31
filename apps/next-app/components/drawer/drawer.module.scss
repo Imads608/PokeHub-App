@@ -1,41 +1,46 @@
-.drawer-header {
-  color: grey !important;
-  font-family: 'Orbitron', sans-serif !important;
-}
+@use '../../styles/common/themes.scss';
 
-.drawer-header-expanded {
-  color: red;
-  font-family: 'Orbitron', sans-serif;
+$drawer_color: darkcyan;
+
+.drawer-header {
+  color: $drawer_color !important;
+  font-family: themes.$font_family;
+
+  &-expanded {
+    @extend .drawer-header;
+    color: red !important;
+  }
+
+  &-text {
+    font-family: themes.$font_family;
+    padding-left: 0;
+    margin-left: 5px;  
+  }
 }
 
 .drawer-icon {
   padding-right: 0;
 }
 
-.drawer-header-text {
-  padding-left: 0;
-  margin-left: 5px;
-}
-
 .drawer-accordion-details {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   margin-left: 5px !important;
-}
 
-.drawer-expanded-list {
-  padding: 0 !important;
-}
+  .drawer-expanded-list {
+    padding: 0 !important;
 
-.drawer-expanded-list-item {
-  padding-top: 0 !important;
-  border-radius: 5px !important;
-  width: 100vh !important;
-}
+    &-item {
+      padding-top: 0 !important;
+      border-radius: 5px !important;
+      width: 100vh !important;
 
-.drawer-expanded-list-item-text {
-  margin-top: 0;
-  margin-bottom: 0;
+      &-text {
+        margin-top: 0;
+        margin-bottom: 0;    
+      }
+    }
+  }
 }
 
 .newDM-search-row {

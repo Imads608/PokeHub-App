@@ -3,15 +3,18 @@ import { Control, FieldValues, useController } from 'react-hook-form';
 
 interface PasswordFieldProps {
   control: Control<FieldValues>;
+  name?: string
+  id?: string,
+  label?: string
 }
 
-const PasswordField = ({ control }: PasswordFieldProps) => {
+const PasswordField = ({ control, name, id, label }: PasswordFieldProps) => {
   const {
     field: { ref, ...inputProps },
     fieldState: { invalid, isTouched, isDirty, error },
     formState: { touchedFields, dirtyFields },
   } = useController({
-    name: 'password',
+    name: name ? name : 'password',
     control,
     rules: {
       required: { value: true, message: 'This field is required' },
@@ -34,9 +37,9 @@ const PasswordField = ({ control }: PasswordFieldProps) => {
       inputRef={ref}
       variant="outlined"
       fullWidth
-      id="password"
-      name="password"
-      label="Password"
+      id={id ? id : 'password'}
+      name={name ? name : 'password'}
+      label={label ? label : 'Password'}
       autoComplete="password"
       type="password"
       error={!!isTouched && invalid}

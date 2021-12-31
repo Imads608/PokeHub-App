@@ -1,7 +1,7 @@
-import { useSendAccountActivation } from '../../hooks/auth/useSendAccountActivation';
+import { useSendAccountActivation } from '../../../hooks/auth/useSendAccountActivation';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
-import { getUser } from '../../store/selectors/user';
+import { RootState } from '../../../store/store';
+import { getUser } from '../../../store/selectors/user';
 import { IUserData } from '@pokehub/user';
 import { Alert, Button, Collapse } from '@mui/material';
 import { IJwtTokenBody } from '@pokehub/auth';
@@ -19,12 +19,7 @@ const EmailVerificationNotification: () => JSX.Element = () => {
 
   return (
     <Box
-      style={{
-        marginLeft: '25%',
-        marginTop: '10px',
-        display: 'flex',
-        justifySelf: 'center',
-      }}
+      style={{ marginLeft: '25%', marginTop: '10px', display: 'flex', justifySelf: 'center' }}
       sx={{ width: '75%' }}
     >
       <Collapse in={open}>

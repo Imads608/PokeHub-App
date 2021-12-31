@@ -4,13 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { GoogleLogin, GoogleLoginResponse } from 'react-google-login';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
-import { auth_failure } from '../../store/actions/common';
-import { useGoogleOAuthLogin } from '../../hooks/auth/useGoogleOAuthLogin';
+import { auth_failure } from '../../../store/actions/common';
+import { useGoogleOAuthLogin } from '../../../hooks/auth/useGoogleOAuthLogin';
 import { toast } from 'react-toastify';
 import { AxiosError } from 'axios';
-import { APIError } from '../../types/api';
-import { getAppTheme } from '../../store/selectors/app';
-import { RootState } from '../../store/store';
+import { APIError } from '../../../types/api';
+import { getAppTheme } from '../../../store/selectors/app';
+import { RootState } from '../../../store/store';
 
 interface GoogleOAuthProps {
   classes: ClassNameMap<'paper' | 'avatar' | 'form' | 'submit'>;

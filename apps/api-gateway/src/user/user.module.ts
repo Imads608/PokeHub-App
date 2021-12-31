@@ -6,13 +6,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatCommonModule } from '../chat/common/chat-common.module';
 import { USER_SERVICE } from './user-service.interface';
-import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     CommonModule,
     ChatCommonModule,
-    MailModule,
     ClientsModule.registerAsync([
       {
         name: 'UserMicroservice',
@@ -31,5 +29,6 @@ import { MailModule } from '../mail/mail.module';
   ],
   providers: [{ useClass: UserService, provide: USER_SERVICE }],
   controllers: [UserController],
+  exports: [{ useClass: UserService, provide: USER_SERVICE }]
 })
 export class UserModule {}

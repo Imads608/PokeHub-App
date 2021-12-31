@@ -12,17 +12,9 @@ import { IUserPublicProfileWithToken } from '@pokehub/user';
 import { APIError } from '../../types/api';
 import { Dispatch } from '@reduxjs/toolkit';
 
-const useLoginUser = (
-  userId: string,
-  password: string,
-  rememberMe: boolean,
-  enable: boolean
-) => {
+const useLoginUser = ( userId: string, password: string, rememberMe: boolean, enable: boolean ) => {
   const dispatch: Dispatch = useDispatch();
-  const res: UseQueryResult<
-    IUserPublicProfileWithToken,
-    Error | AxiosError<APIError>
-  > = useQuery('user-login', async () => await loginUser(userId, password), {
+  const res: UseQueryResult< IUserPublicProfileWithToken, Error | AxiosError<APIError> > = useQuery('user-login', async () => await loginUser(userId, password), {
     onSuccess: (userData: IUserPublicProfileWithToken) => {
       console.log('Success on Login:', userData);
       localStorage['pokehub-rememberme'] = true;

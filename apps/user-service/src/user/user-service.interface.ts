@@ -11,6 +11,21 @@ export interface IUserService {
   validateUserEmail(userId: string): Promise<UserData>;
 
   /**
+   * Updates A User's password given their email address
+   * @param email The email address of the User whose password needs to be updated
+   * @param newPassword The new password associated with the User Account
+   * @returns The User Data Object after updating the password
+   */
+  updatePassword(email: string, newPassword: string): Promise<UserData>
+
+  /**
+   * Checks if an Email Address exists in the User's table.
+   * @param email The Email Id that needs to be checked
+   * @returns A Boolean indicating whether the Email Address exists.
+   */
+  doesEmailExist(email: string): Promise<boolean>
+
+  /**
    * Creates a new User in the User Table given the Data
    * @param userReq The New User to insert into the User Table
    * @returns The User Data Object in the table after insertion
