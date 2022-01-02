@@ -11,9 +11,7 @@ export const useGoogleOAuthLogin = () => {
   const mutation: UseMutationResult<
     IUserPublicProfileWithToken,
     Error | AxiosError<APIError>
-  > = useMutation(
-    'google-oauth',
-    (tokenId: string) => googleOAuthLogin(tokenId),
+  > = useMutation((tokenId: string) => googleOAuthLogin(tokenId),
     {
       onSuccess: (data: IUserPublicProfileWithToken) => {
         console.log('Got successful response from api:', data);

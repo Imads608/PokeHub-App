@@ -1,11 +1,5 @@
 import { IsEmail, Length } from 'class-validator';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  PrimaryColumn,
-  Unique,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, } from 'typeorm';
 import { IUser } from './interfaces/user.interface';
 import { TypeAccount } from './type-account.enum';
 

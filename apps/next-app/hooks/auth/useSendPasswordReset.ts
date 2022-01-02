@@ -4,9 +4,7 @@ import { AxiosError } from 'axios';
 import { APIError } from '../../types/api';
 
 export const useSendPasswordReset = () => {
-  const mutation = useMutation(
-    'send-password-reset',
-    (email: string) => sendPasswordResetEmail(email),
+  const mutation = useMutation((email: string) => sendPasswordResetEmail(email),
     {
       onSuccess: (data) => {
         console.log('useSendPasswordReset: Got success response');

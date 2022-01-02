@@ -26,8 +26,7 @@ export * from './lib/interfaces/user-public-profile-with-token.interface';
 
 export * from './lib/user-status.entity';
 
-export * from './lib/user-socket.model';
-export * from './lib/interfaces/user-socket.interface';
-
 export * from './lib/user-status-data.model';
 export * from './lib/interfaces/user-status-data.interface';
+
+export * from './lib/interfaces/user-id-types.enum';

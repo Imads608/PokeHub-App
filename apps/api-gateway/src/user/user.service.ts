@@ -1,7 +1,7 @@
 import { Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, TCPEndpoints, } from '@pokehub/user';
+import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, TCPEndpoints, UserIdTypes, } from '@pokehub/user';
 import { AuthTokens, EmailLogin, JwtTokenBody } from '@pokehub/auth';
 import { ChatRoom } from '@pokehub/room';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
@@ -29,7 +29,19 @@ export class UserService implements IUserService {
     }
   }
 
-  async doesUserExist(email: string): Promise<boolean> {
+  async doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> {
+    try {
+      this.logger.log(`doesUserExist: Checking if User with Id ${id} exists`);
+      const exists = await firstValueFrom(this.clientProxy.send<boolean>({ cmd: TCPEndpoints.CHECK_USER_EXISTS }, { userId: id, idType }));
+      this.logger.log(`doesUserExist: Got response from User Microservice if User with Id ${id} exists: ${exists}`);
+      return exists;
+    } catch (err) {
+      this.logger.error(`doesUserExist: Got error while trying to check if User with id ${id} exists: ${JSON.stringify(err)}`);
+      throw err;
+    }
+  }
+
+  async doesUserEmailExist(email: string): Promise<boolean> {
       try {
           this.logger.log(`doesUserExist: Checking if User with Email Exists Exists`);
           const exists = await firstValueFrom( this.clientProxy.send<boolean>({ cmd: TCPEndpoints.CHECK_EMAIL_EXISTS }, email) );

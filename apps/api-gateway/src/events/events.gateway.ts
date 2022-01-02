@@ -1,29 +1,16 @@
-import { Logger } from '@nestjs/common';
-import {
-  ConnectedSocket,
-  MessageBody,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-  WsResponse,
-} from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsResponse, } from '@nestjs/websockets';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 //import { MessagingService } from '../messaging/messaging.service';
-import {
-  UserEventMessage,
-  EventUserTopics,
-  SocketUserEvents,
-  UserNotificationEvent,
-} from '@pokehub/events';
+//import { UserEventMessage, EventUserTopics, SocketUserEvents, UserNotificationEvent, } from '@pokehub/events';
 import { EventEmitter2 } from 'eventemitter2';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserEventsMessageService } from '../messaging/user-events-message.service';
 import { ConfigService } from '@nestjs/config';
-import { UserStatus } from '@pokehub/user';
 import { AppLogger } from '@pokehub/logger';
+import { IChatRoomData } from '@pokehub/room';
+import { UserEventMessage, UserEventTopics, UserNotificationEvent, UserSocketEvents } from '@pokehub/event/user';
 
 @WebSocketGateway({ cors: true })
 export class EventsGateway implements OnGatewayDisconnect {
@@ -31,109 +18,58 @@ export class EventsGateway implements OnGatewayDisconnect {
   server: Server;
 
   constructor(
-    private eventEmitter: EventEmitter2,
-    private eventMessageService: UserEventsMessageService,
-    private configService: ConfigService,
-    private readonly logger: AppLogger
-  ) {
+    private eventEmitter: EventEmitter2, private eventMessageService: UserEventsMessageService, private configService: ConfigService, 
+    private readonly logger: AppLogger) {
     logger.setContext(EventsGateway.name);
   }
 
-  @OnEvent(SocketUserEvents.USER_STATUS)
+  @OnEvent(UserSocketEvents.USER_STATUS)
   handleUserStatus(message: UserEventMessage) {
-    this.logger.log(
-      `handleUserStatus: Received Event: ${JSON.stringify(message)}`
-    );
-    this.server
-      .to(message.from.uid)
-      .emit(SocketUserEvents.USER_STATUS, message);
+    this.logger.log( `handleUserStatus: Received Event: ${JSON.stringify(message)}` );
+    this.server.to(message.from.uid).emit(UserSocketEvents.USER_STATUS, message);
   }
 
-  @OnEvent(SocketUserEvents.USER_NOTIFICATIONS)
+  @OnEvent(UserSocketEvents.USER_NOTIFICATIONS)
   handleUserNotifications(message: UserEventMessage) {
-    this.logger.log(
-      `handleUserNotifications: Received Event: ${JSON.stringify(message)}`
-    );
-    this.server
-      .to(`${message.from.uid}-circle`)
-      .emit(SocketUserEvents.USER_NOTIFICATIONS);
+    this.logger.log( `handleUserNotifications: Received Event: ${JSON.stringify(message)}` );
+    this.server.to(`${message.from.uid}-circle`) .emit(UserSocketEvents.USER_NOTIFICATIONS);
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`handleDisconnect: Client ${client.id} Disconnected`);
   }
 
-  @SubscribeMessage('events')
-  findAll(@MessageBody() data: any): Observable<WsResponse<number>> {
-    return from([1, 2, 3]).pipe(
-      map((item) => ({ event: 'events', data: item }))
-    );
-  }
-
-  @SubscribeMessage('identity')
-  async identity(
-    @MessageBody() data: number,
-    @ConnectedSocket() client: Socket
-  ): Promise<number> {
-    return data;
-  }
-
-  @SubscribeMessage(SocketUserEvents.USER_NOTIFICATIONS)
-  async onUserNotification(
-    @MessageBody() message: UserEventMessage,
-    @ConnectedSocket() client: Socket
-  ) {
-    this.logger.log(
-      `onUserNotification: Received message: ${JSON.stringify(message)}`
-    );
+  @SubscribeMessage(UserSocketEvents.USER_NOTIFICATIONS)
+  async onUserNotification( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+    this.logger.log( `onUserNotification: Received message: ${JSON.stringify(message)}` );
     const data = message.data as UserNotificationEvent;
     if (data.shouldReceive) {
-      this.logger.log(
-        `onUserNotification: Client ${client.id} joining ${data.subscribedUserUid}-circle`
-      );
+      this.logger.log( `onUserNotification: Client ${client.id} joining ${data.subscribedUserUid}-circle` );
       client.join(`${data.subscribedUserUid}-circle`);
     } else {
-      this.logger.log(
-        `onUserNotification: Client ${client.id} leaving ${data.subscribedUserUid}-circle`
-      );
+      this.logger.log( `onUserNotification: Client ${client.id} leaving ${data.subscribedUserUid}-circle` );
       client.leave(`${data.subscribedUserUid}-circle`);
     }
     this.logger.log(`onUserNotification: Publishing Event to Message Bus`);
-    this.eventMessageService.publishEvent(
-      message,
-      `${this.configService.get<string>(
-        'rabbitMQ.eventsExchange.userEventsRoutingPattern'
-      )}.${EventUserTopics.USER_NOTIFICATIONS}`
-    );
+    this.eventMessageService.publishEvent( message, 
+    `${this.configService.get<string>( 'rabbitMQ.eventsExchange.userEventsRoutingPattern' )}.${UserEventTopics.USER_NOTIFICATIONS}` );
   }
 
-  @SubscribeMessage(SocketUserEvents.USER_STATUS)
-  async onUserStatus(
-    @MessageBody() message: UserEventMessage,
-    @ConnectedSocket() client: Socket
-  ) {
-    this.logger.log(
-      `onUserStatus: Received message: ${JSON.stringify(message)}`
-    );
-    this.server
-      .to(`${message.from.uid}-circle`)
-      .emit(SocketUserEvents.USER_STATUS, message);
+  @SubscribeMessage(UserSocketEvents.USER_STATUS)
+  async onUserStatus( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+    this.logger.log( `onUserStatus: Received message: ${JSON.stringify(message)}` );
+    this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
     this.logger.log(`onUserStatus: Publishing User Status to Message Bus`);
     this.eventMessageService.publishUserStatus(message);
   }
 
-  @SubscribeMessage(SocketUserEvents.CLIENT_DETAILS)
-  async onClientDetails(
-    @MessageBody() message: UserEventMessage,
-    @ConnectedSocket() client: Socket
-  ) {
-    this.logger.log(
-      `onClientDetails: Received message ${JSON.stringify(message)}`
-    );
-    const data = message.data as { publicRooms: string[]; privateRooms: [] };
+  @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)
+  async onClientDetails( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+    this.logger.log( `onClientDetails: Received message ${JSON.stringify(message)}` );
+    const data = message.data as { publicRooms: IChatRoomData[] };
 
-    data.publicRooms && data.publicRooms.forEach((room) => client.join(room));
-    data.privateRooms && data.privateRooms.forEach((room) => client.join(room));
+    data.publicRooms && data.publicRooms.forEach((room) => client.join(room.id));
+    //data.privateRooms && data.privateRooms.forEach((room) => client.join(room.id));
     client.join(message.from.uid);
     client.join(`${message.from.uid}-circle`);
   }

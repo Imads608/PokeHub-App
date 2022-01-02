@@ -4,9 +4,7 @@ import { IJwtTokenBody } from '@pokehub/auth';
 import { AxiosError } from 'axios';
 
 export const useSendAccountActivation = () => {
-  const mutation = useMutation(
-    'send-account-activation',
-    (userData: IJwtTokenBody) => sendAccountActivationEmail(userData),
+  const mutation = useMutation((userData: IJwtTokenBody) => sendAccountActivationEmail(userData),
     {
       onSuccess: (data) => {
         console.log('useSignupUser: Got success response');

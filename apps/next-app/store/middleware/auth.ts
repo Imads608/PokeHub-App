@@ -2,7 +2,7 @@ import { login_success, logout } from '../actions/common';
 import { useInterceptors } from '../../axios';
 
 export const authMiddleware = (store) => (next) => (action) => {
-  console.log('Action Type: ', login_success.toString());
+  console.log('In Auth Middleware');
   switch (action.type) {
     case login_success.toString():
       console.log('In Login Success');

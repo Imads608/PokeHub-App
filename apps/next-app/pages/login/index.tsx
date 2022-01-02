@@ -65,8 +65,14 @@ const Login = () => {
   };
 
   const enableUserLogin = () => {
-    queryClient.removeQueries('user-login');
+    //queryClient.removeQueries('user-login');
     setLoginEnable(true);
+  }
+
+  const toggleRememberMe = () => {
+    console.log('toggleRememberMe login');
+    localStorage['pokehub-rememberme'] = rememberMe ? 'false' : 'true';
+    setRememberMe(!rememberMe);
   }
 
   useEffect(() => {
@@ -103,7 +109,7 @@ const Login = () => {
           >
             <EmailField control={control} />
             <PasswordField control={control} />
-            <FormControlLabel checked={rememberMe} control={ <Checkbox value="remember" color="primary" onChange={() => setRememberMe(!rememberMe)} /> }
+            <FormControlLabel checked={rememberMe} control={ <Checkbox value="remember" color="primary" onChange={() => toggleRememberMe()} /> }
               label="Remember me"
             />
             <Button

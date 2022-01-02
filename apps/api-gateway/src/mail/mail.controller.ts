@@ -34,7 +34,7 @@ export class MailController {
         this.logger.log(`sendPasswordResetEmail: Sending Password Reset Email to ${reqBody.email}`);
 
         // Check if Email Address already exists
-        const exists = await this.userService.doesUserExist(reqBody.email);
+        const exists = await this.userService.doesUserEmailExist(reqBody.email);
         if (!exists) {
             this.logger.log(`sendPasswordResetEmail: Not sending email due to user not existing...`);
             return;

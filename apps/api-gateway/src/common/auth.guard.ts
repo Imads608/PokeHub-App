@@ -2,12 +2,7 @@
 https://docs.nestjs.com/guards#guards
 */
 
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Inject, } from '@nestjs/common';
 import { JwtTokenBody } from '@pokehub/auth';
 import { AppLogger } from '@pokehub/logger';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
@@ -15,10 +10,7 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    @Inject(AUTH_SERVICE) private authService: IAuthService,
-    private readonly logger: AppLogger
-  ) {
+  constructor( @Inject(AUTH_SERVICE) private authService: IAuthService, private readonly logger: AppLogger ) {
     logger.setContext(AuthGuard.name);
   }
 
@@ -27,21 +19,11 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     try {
-      this.logger.log(
-        `canActivate: Authenticating user with Request Headers: ${JSON.stringify(
-          request.headers
-        )}`
-      );
+      this.logger.log( `canActivate: Authenticating user with Request Headers: ${JSON.stringify( request.headers )}` );
 
       // Decode Token to User Object
-      const user: JwtTokenBody = await this.authService.decodeToken(
-        request.headers['authorization']
-      );
-      this.logger.log(
-        `canActivate: Successfully authenticated decoded token into ${JSON.stringify(
-          user
-        )}`
-      );
+      const user: JwtTokenBody = await this.authService.decodeToken( request.headers['authorization'] );
+      this.logger.log( `canActivate: Successfully authenticated decoded token into ${JSON.stringify( user )}` );
 
       // Set User in Request Object to be used in the Controller
       if (user) {

@@ -7,5 +7,6 @@ export enum TCPEndpoints {
   GET_USER_STATUS = 'get-user-status',
   VERIFY_USER_EMAIL = 'verify-user-email',
   RESET_PASSWORD = 'reset-password',
-  CHECK_EMAIL_EXISTS = 'check-email-exists'
+  CHECK_EMAIL_EXISTS = 'check-email-exists',
+  CHECK_USER_EXISTS = 'check-user-exists'
 }

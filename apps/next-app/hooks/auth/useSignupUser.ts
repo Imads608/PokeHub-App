@@ -13,9 +13,7 @@ import { APIError } from '../../types/api';
 
 export const useSignupUser = () => {
   const dispatch = useDispatch();
-  const mutation = useMutation(
-    'user-signup',
-    (userCreds: UserSignup) =>
+  const mutation = useMutation((userCreds: UserSignup) =>
       signupUser(userCreds.email, userCreds.username, userCreds.password),
     {
       onSuccess: (data: IUserPublicProfileWithToken) => {

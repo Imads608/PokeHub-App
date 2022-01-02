@@ -14,31 +14,32 @@ import { Dispatch } from '@reduxjs/toolkit';
 
 const useLoginUser = ( userId: string, password: string, rememberMe: boolean, enable: boolean ) => {
   const dispatch: Dispatch = useDispatch();
-  const res: UseQueryResult< IUserPublicProfileWithToken, Error | AxiosError<APIError> > = useQuery('user-login', async () => await loginUser(userId, password), {
-    onSuccess: (userData: IUserPublicProfileWithToken) => {
-      console.log('Success on Login:', userData);
-      localStorage['pokehub-rememberme'] = true;
-      if (userData && userData.user.emailVerified)
-        dispatch(login_success(userData));
-      else dispatch(login_success_verification_needed(userData));
-    },
-    onError: (err: Error | AxiosError<APIError>) => {
-      console.log('Got error: ', err);
-      if (err && axios.isAxiosError(err)) {
-        const apiError = err as AxiosError<APIError>;
-        dispatch(auth_failure(apiError.response?.data));
-      } else {
-        dispatch(auth_failure({ statusCode: 500, message: err.message }));
-      }
-    },
-
-    enabled: enable ? true : false,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    staleTime: Infinity,
-  });
-
+  const res: UseQueryResult< IUserPublicProfileWithToken, Error | AxiosError<APIError> > = useQuery(['users', 'login', { id: userId, password }], 
+    async () => await loginUser(userId, password), 
+    {
+      onSuccess: (userData: IUserPublicProfileWithToken) => {
+        console.log('Success on Login:', userData);
+        //localStorage['pokehub-rememberme'] = true;
+        if (userData && userData.user.emailVerified)
+          dispatch(login_success(userData));
+        else dispatch(login_success_verification_needed(userData));
+      },
+      onError: (err: Error | AxiosError<APIError>) => {
+        console.log('Got error: ', err);
+        if (err && axios.isAxiosError(err)) {
+          const apiError = err as AxiosError<APIError>;
+          dispatch(auth_failure(apiError.response?.data));
+        } else {
+          dispatch(auth_failure({ statusCode: 500, message: err.message }));
+        }
+      },
+      enabled: enable ? true : false,
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      staleTime: Infinity,
+    });
+    
   return res;
 };
 

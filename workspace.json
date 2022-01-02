@@ -175,26 +175,28 @@
         }
       }
     },
-    "events": {
-      "root": "libs/events",
-      "sourceRoot": "libs/events/src",
+    "event-user": {
+      "root": "libs/event/user",
+      "sourceRoot": "libs/event/user/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/events/**/*.ts"]
+            "lintFilePatterns": ["libs/event/user/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/events"],
+          "outputs": ["coverage/libs/event/user"],
           "options": {
-            "jestConfig": "libs/events/jest.config.js",
+            "jestConfig": "libs/event/user/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "logger": {
       "root": "libs/logger",

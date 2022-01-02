@@ -3,6 +3,7 @@ import {
   CreateUserRequest,
   UserData,
   UserDataWithToken,
+  UserIdTypes,
   UserPublicProfile,
 } from '@pokehub/user';
 
@@ -17,11 +18,19 @@ export interface IUserService {
   loadUser(uid: string): Promise<UserPublicProfile>;
 
   /**
+   * Checks if a User exists through either UID, Username or Email Address
+   * @param id The id of the User. Can be the uid, Username, or Email address
+   * @param idType The Type of Id to which id value is associated with
+   * @returns A Boolean signifying if a User Exists
+   */
+  doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> 
+
+  /**
    * Checks if a User Exists through their Email Address
    * @param email The User's Email Address to check if they exist
    * @returns A Boolean indicating if the User exists
    */
-  doesUserExist(email: string): Promise<boolean>
+  doesUserEmailExist(email: string): Promise<boolean>
 
   /**
    * Creates a new User in the Database by calling the User Microservice

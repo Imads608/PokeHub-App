@@ -33,7 +33,7 @@ import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 import Navbar from '../components/nav/navbar';
 import { QueryClientProvider } from 'react-query';
 import queryClient from '../queryClient';
-import { getDesignTokens } from '../styles/mui/theme';
+import { getDesignTokens } from '../styles/mui/themes/theme';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import { CacheProvider } from '@emotion/react';
 import { Hydrate } from 'react-query/hydration';

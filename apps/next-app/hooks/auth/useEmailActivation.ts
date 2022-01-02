@@ -5,7 +5,8 @@ import { IUserPublicProfileWithToken } from '@pokehub/user';
 import { APIError } from '../../types/api';
 
 export const useEmailActivation = (validationToken: string) => {
-  const res: UseQueryResult<IUserPublicProfileWithToken, Error | AxiosError<APIError>> = useQuery('activate-user', async () => await activateUser(validationToken),
+  const res: UseQueryResult<IUserPublicProfileWithToken, Error | AxiosError<APIError>> = useQuery(['users', 'activate', { activationToken: validationToken }], 
+    async () => await activateUser(validationToken),
     {
       onSuccess: (userData: IUserPublicProfileWithToken) => {
         console.log('useEmailActivation: Success on Account Activation:', userData);

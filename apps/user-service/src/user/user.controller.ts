@@ -1,6 +1,6 @@
 import { Controller, Inject, UsePipes } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { CreateUserRequest, User, UserData, UserStatus, TCPEndpoints, } from '@pokehub/user';
+import { CreateUserRequest, User, UserData, UserStatus, TCPEndpoints, UserIdTypes, } from '@pokehub/user';
 import { ValidationPipe } from './validation.pipe';
 import { AppLogger } from '@pokehub/logger';
 import { IUserService, USER_SERVICE } from './user-service.interface';
@@ -66,6 +66,22 @@ export class UserController {
   async checkEmailExists(email: string): Promise<boolean> {
     this.logger.log( `checkEmailExists: Got request to check if Email ${email} exists`);
     return this.userService.doesEmailExist(email);
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.CHECK_USER_EXISTS }, Transport.TCP)
+  async checkUserExists(user: { userId: string, idType: UserIdTypes}): Promise<boolean> {
+    this.logger.log( `checkEmailExists: Got request to check if User with id exists: ${user.userId}`);
+    if (user.idType === UserIdTypes.EMAIL) {
+      return await this.userService.doesEmailExist(user.userId);
+    } else if (user.idType === UserIdTypes.UID) {
+      const data = await this.userService.findUser(user.userId);
+      if (!data) return false;
+      return true;
+    }
+
+    const data = await this.userService.findUserByUsername(user.userId);
+    if (!data) return false;
+    return true;
   }
 
   @MessagePattern({ cmd: TCPEndpoints.RESET_PASSWORD }, Transport.TCP)

@@ -1,5 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Inject, Post, Req, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
-import { CreateUserRequest, UserData, UserDataWithToken, UserPublicProfile, UserPublicProfileWithToken, } from '@pokehub/user';
+import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { CreateUserRequest, UserData, UserDataWithToken, UserIdTypes, UserPublicProfile, UserPublicProfileWithToken, } from '@pokehub/user';
 import { CreateUserInterceptor } from './create-user.interceptor';
 import { User } from '../common/user.decorator';
 import { AuthGuard } from '../common/auth.guard';
@@ -63,5 +63,14 @@ export class UserController {
     else if (!token) throw new UnauthorizedException();
     this.logger.log(`passwordReset: Got request to reset Password of User`);
     return await this.userService.resetPassword(token, reqBody.password);
+  }
+
+  @HttpCode(204)
+  @Head(':userId')
+  async checkUserExists(@Param('userId') userId: string, @Query('typeId') typeId: UserIdTypes): Promise<void> {
+    if (!typeId) typeId = UserIdTypes.UID;
+    
+    const exists = await this.userService.doesUserExist(userId, typeId);
+    if (!exists) throw new NotFoundException();
   }
 }

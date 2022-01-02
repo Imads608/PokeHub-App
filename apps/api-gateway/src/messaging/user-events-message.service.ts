@@ -4,12 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ConsumeMessage } from 'amqplib';
 import { EventEmitter2 } from 'eventemitter2';
-import {
-  EventUserTopics,
-  UserEventMessage,
-  SocketEvents,
-} from '@pokehub/events';
 import { Socket } from 'socket.io';
+import { UserEventMessage, UserEventTopics } from '@pokehub/event/user';
 
 @Injectable()
 export class UserEventsMessageService {
@@ -72,13 +68,8 @@ export class UserEventsMessageService {
   }
 
   async publishUserStatus(message: any): Promise<void> {
-    await this.amqpConnection.publish(
-      'events-exchange',
-      `${this.configService.get<string>(
-        'rabbitMQ.eventsExchange.userEventsRoutingPattern'
-      )}.${EventUserTopics.USER_STATUS}`,
-      message
-    );
+    await this.amqpConnection.publish('events-exchange', 
+        `${this.configService.get<string>( 'rabbitMQ.eventsExchange.userEventsRoutingPattern' )}.${UserEventTopics.USER_STATUS}`, message );
     return;
   }
 

@@ -13,7 +13,7 @@ import { auth_loaded } from '../../store/reducers/auth';
 const useLoadUser = (refreshToken: string) => {
   const dispatch: Dispatch = useDispatch();
 
-  const response = useQuery('user-load',
+  const response = useQuery(['users', 'load', { refreshToken }],
     async () => {
       const rememberMe = localStorage['pokehub-rememberme'] == 'undefined' || localStorage['pokehub-rememberme'] === 'null' ? null : localStorage['pokehub-rememberme'];
 

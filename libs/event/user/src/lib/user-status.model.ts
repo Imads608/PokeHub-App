@@ -1,4 +1,6 @@
-export class UserStatusData {
+import { IUserStatus } from "./interfaces/user-status.interface";
+
+export class UserStatusData implements IUserStatus {
   userUid: string;
   sentTime: Date;
   isAway: boolean;

@@ -1,4 +1,6 @@
-export class UserSocket {
+import { IUserSocket } from "./interfaces/user-socket.interface";
+
+export class UserSocket implements IUserSocket {
   uid: string;
   username: string;
   socketClient: string;

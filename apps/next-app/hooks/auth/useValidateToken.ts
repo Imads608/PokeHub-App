@@ -5,7 +5,7 @@ import { APIError } from '../../types/api';
 import { TokenTypes } from '@pokehub/auth';
 
 const useValidateToken = ( token: string, tokenType: TokenTypes, enable: boolean ) => {
-  const res: UseQueryResult<boolean, Error | AxiosError<APIError>> = useQuery('validate-token', async () => await validateToken(token, tokenType), {
+  const res: UseQueryResult<boolean, Error | AxiosError<APIError>> = useQuery(['tokens', 'validation', tokenType, { token }], async () => await validateToken(token, tokenType), {
     onSuccess: (data: boolean) => {
       console.log('useValidateToken Result:', data, token);
     },
