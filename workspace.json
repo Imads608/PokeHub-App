@@ -52,26 +52,51 @@
         }
       }
     },
-    "auth": {
-      "root": "libs/auth",
-      "sourceRoot": "libs/auth/src",
+    "auth-interfaces": {
+      "root": "libs/auth/interfaces",
+      "sourceRoot": "libs/auth/interfaces/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/auth/**/*.ts"]
+            "lintFilePatterns": ["libs/auth/interfaces/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/auth"],
+          "outputs": ["coverage/libs/auth/interfaces"],
           "options": {
-            "jestConfig": "libs/auth/jest.config.js",
+            "jestConfig": "libs/auth/interfaces/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
+    },
+    "auth-models": {
+      "root": "libs/auth/models",
+      "sourceRoot": "libs/auth/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/auth/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/auth/models"],
+          "options": {
+            "jestConfig": "libs/auth/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "auth-service": {
       "root": "apps/auth-service",
@@ -175,6 +200,75 @@
         }
       }
     },
+    "common-logger": {
+      "root": "libs/common/logger",
+      "sourceRoot": "libs/common/logger/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/common/logger/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/common/logger"],
+          "options": {
+            "jestConfig": "libs/common/logger/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "common-object-store": {
+      "root": "libs/common/object-store",
+      "sourceRoot": "libs/common/object-store/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/common/object-store/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/common/object-store"],
+          "options": {
+            "jestConfig": "libs/common/object-store/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "common-object-store-models": {
+      "root": "libs/common/object-store/models",
+      "sourceRoot": "libs/common/object-store/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/common/object-store/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/common/object-store/models"],
+          "options": {
+            "jestConfig": "libs/common/object-store/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "event-user": {
       "root": "libs/event/user",
       "sourceRoot": "libs/event/user/src",
@@ -198,47 +292,51 @@
       },
       "tags": []
     },
-    "logger": {
-      "root": "libs/logger",
-      "sourceRoot": "libs/logger/src",
+    "mail-interfaces": {
+      "root": "libs/mail/interfaces",
+      "sourceRoot": "libs/mail/interfaces/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/logger/**/*.ts"]
+            "lintFilePatterns": ["libs/mail/interfaces/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/logger"],
+          "outputs": ["coverage/libs/mail/interfaces"],
           "options": {
-            "jestConfig": "libs/logger/jest.config.js",
+            "jestConfig": "libs/mail/interfaces/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
-    "mail": {
-      "root": "libs/mail",
-      "sourceRoot": "libs/mail/src",
+    "mail-models": {
+      "root": "libs/mail/models",
+      "sourceRoot": "libs/mail/models/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/mail/**/*.ts"]
+            "lintFilePatterns": ["libs/mail/models/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/mail"],
+          "outputs": ["coverage/libs/mail/models"],
           "options": {
-            "jestConfig": "libs/mail/jest.config.js",
+            "jestConfig": "libs/mail/models/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "mail-service": {
       "root": "apps/mail-service",
@@ -472,26 +570,74 @@
         }
       }
     },
-    "room": {
-      "root": "libs/room",
-      "sourceRoot": "libs/room/src",
+    "room-database": {
+      "root": "libs/room/database",
+      "sourceRoot": "libs/room/database/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/**/*.ts"]
+            "lintFilePatterns": ["libs/room/database/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room"],
+          "outputs": ["coverage/libs/room/database"],
           "options": {
-            "jestConfig": "libs/room/jest.config.js",
+            "jestConfig": "libs/room/database/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
+    },
+    "room-interfaces": {
+      "root": "libs/room/interfaces",
+      "sourceRoot": "libs/room/interfaces/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/room/interfaces/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room/interfaces"],
+          "options": {
+            "jestConfig": "libs/room/interfaces/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "room-models": {
+      "root": "libs/room/models",
+      "sourceRoot": "libs/room/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/room/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room/models"],
+          "options": {
+            "jestConfig": "libs/room/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "socket-service": {
       "root": "apps/socket-service",
@@ -544,26 +690,74 @@
         }
       }
     },
-    "user": {
-      "root": "libs/user",
-      "sourceRoot": "libs/user/src",
+    "user-database": {
+      "root": "libs/user/database",
+      "sourceRoot": "libs/user/database/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/user/**/*.ts"]
+            "lintFilePatterns": ["libs/user/database/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/user"],
+          "outputs": ["coverage/libs/user/database"],
           "options": {
-            "jestConfig": "libs/user/jest.config.js",
+            "jestConfig": "libs/user/database/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
+    },
+    "user-interfaces": {
+      "root": "libs/user/interfaces",
+      "sourceRoot": "libs/user/interfaces/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/interfaces/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/interfaces"],
+          "options": {
+            "jestConfig": "libs/user/interfaces/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-models": {
+      "root": "libs/user/models",
+      "sourceRoot": "libs/user/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/models"],
+          "options": {
+            "jestConfig": "libs/user/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "user-service": {
       "root": "apps/user-service",
