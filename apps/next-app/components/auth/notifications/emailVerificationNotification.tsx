@@ -2,9 +2,9 @@ import { useSendAccountActivation } from '../../../hooks/auth/useSendAccountActi
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { getUser } from '../../../store/selectors/user';
-import { IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 import { Alert, Button, Collapse } from '@mui/material';
-import { IJwtTokenBody } from '@pokehub/auth';
+import { IJwtTokenBody } from '@pokehub/auth/interfaces';
 import { useState, useEffect } from 'react';
 import { Box } from '@mui/system';
 

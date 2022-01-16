@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { AppModule } from './app/app.module';
 
 const logger = new Logger('Main');

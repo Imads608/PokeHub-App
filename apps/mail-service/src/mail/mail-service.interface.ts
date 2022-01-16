@@ -1,4 +1,4 @@
-import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail';
+import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail/models';
 
 export const MAIL_SERVICE = 'MAIL SERVICE';
 

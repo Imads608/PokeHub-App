@@ -1,6 +1,6 @@
 import { useMutation } from 'react-query';
 import { sendAccountActivationEmail } from '../../api/mail';
-import { IJwtTokenBody } from '@pokehub/auth';
+import { IJwtTokenBody } from '@pokehub/auth/interfaces';
 import { AxiosError } from 'axios';
 
 export const useSendAccountActivation = () => {

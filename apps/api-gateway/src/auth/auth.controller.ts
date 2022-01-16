@@ -1,13 +1,14 @@
 import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { AuthService } from '../common/auth.service';
 import { LoginInterceptor } from './login.interceptor';
-import { UsernameLogin, EmailLogin, JwtTokenBody, TokenTypes } from '@pokehub/auth';
+import { UsernameLogin, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
+import { TokenTypes } from '@pokehub/auth/interfaces';
 import { AuthGuard } from '@nestjs/passport';
-import { UserDataWithToken, UserPublicProfileWithToken } from '@pokehub/user';
+import { UserDataWithToken, UserPublicProfileWithToken } from '@pokehub/user/models';
 import { OauthInterceptor } from './oauth.interceptor';
 import { RoomService } from '../chat/common/room.service';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interface';
 import { MAIL_SERVICE, IMailService } from '../common/mail-service.interface';
 import { TokenValidatorInterceptor } from './token-validator.interceptor';

@@ -1,9 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 import appConfig from '../config';
 import { DefaultEventsMap } from 'socket.io-client/build/typed-events';
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { UserSocketEvents, UserEventMessage, UserSocket } from '@pokehub/event/user';
+import { IChatRoomData } from '@pokehub/room/interfaces';
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
@@ -17,7 +18,7 @@ export const connectWebSocket = (action: PayloadAction<IUserPublicProfileWithTok
     console.log('connectWebSocket: Successfully estabished connection with Server');
 
     // Register Client with server
-    const messageEvent = new UserEventMessage(UserSocketEvents.CLIENT_DETAILS, 
+    const messageEvent = new UserEventMessage<{ publicRooms: IChatRoomData[] }>(UserSocketEvents.CLIENT_DETAILS, 
                             new UserSocket(action.payload.user.uid, action.payload.user.username, socket.id), 
                             { publicRooms: action.payload.joinedPublicRooms });
 

@@ -1,5 +1,5 @@
 import { PaletteMode } from '@mui/material';
-import { IAuthTokens } from '@pokehub/auth';
+import { IAuthTokens } from '@pokehub/auth/interfaces';
 
 export interface Preferences {
     rememberMe?: boolean,

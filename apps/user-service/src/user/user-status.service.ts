@@ -4,10 +4,12 @@ https://docs.nestjs.com/providers#services
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AppLogger } from '@pokehub/logger';
-import { IUserStatusData, UserStatus, UserStatusData } from '@pokehub/user';
+import { AppLogger } from '@pokehub/common/logger';
+import { UserStatusData } from '@pokehub/user/models';
+import { IUserStatusData } from '@pokehub/user/interfaces'
 import { Repository } from 'typeorm';
 import { IUserStatusService } from './user-status-service.interface';
+import { UserStatus } from '@pokehub/user/database';
 
 @Injectable()
 export class UserStatusService implements IUserStatusService {

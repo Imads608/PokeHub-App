@@ -6,8 +6,8 @@ import {
   IUserData,
   IUserPublicProfile,
   IUserPublicProfileWithToken,
-} from '@pokehub/user';
-import { TokenTypes } from '@pokehub/auth';
+} from '@pokehub/user/interfaces';
+import { TokenTypes } from '@pokehub/auth/interfaces';
 
 export const getCurrentUserData = async (uid) => {
   const userServiceRes = await axios.get(

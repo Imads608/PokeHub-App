@@ -49,6 +49,7 @@ import NProgress from 'nprogress';
 import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
+import { getIsAuthenticated } from '../store/selectors/auth';
 
 // Router Page Navigation Progress Bar
 NProgress.configure({ showSpinner: false });
@@ -100,14 +101,13 @@ const WrappedApp = (props) => {
 };
 
 const MainApp = ({ Component, pageProps, theme }) => {
-  const res = useLoadUser(
-    typeof window !== 'undefined'
-      ? localStorage.getItem('pokehub-refresh-token')
-      : null
-  );
   const navRef = useRef(null);
   const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
+  const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
+
+  const res = useLoadUser(typeof window != 'undefined' ? localStorage.getItem('pokehub-refresh-token') : null, 
+                          !isAuthenticated);
 
   return (
     <main className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}>

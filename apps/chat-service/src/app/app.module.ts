@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChatRoom, Participant } from '@pokehub/room';
+import { ChatRoom, Participant } from '@pokehub/room/database';
 import { RoomModule } from '../room/room.module';
 import configuration from '../config/configuration';
 

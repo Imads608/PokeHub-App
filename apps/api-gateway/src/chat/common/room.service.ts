@@ -4,9 +4,10 @@ https://docs.nestjs.com/providers#services
 
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AppLogger } from '@pokehub/logger';
-import { ChatRoom, TCPEndpoints } from '@pokehub/room';
-import { UserData } from '@pokehub/user';
+import { AppLogger } from '@pokehub/common/logger';
+import { ChatRoom } from '@pokehub/room/database';
+import { TCPEndpoints } from '@pokehub/room/interfaces';
+import { UserData } from '@pokehub/user/models';
 import { timeStamp } from 'console';
 import { firstValueFrom } from 'rxjs';
 import { IRoomService } from './room-service.interface';

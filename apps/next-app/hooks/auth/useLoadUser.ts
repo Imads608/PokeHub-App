@@ -5,12 +5,11 @@ import { getNewAccessToken, loadUser } from '../../api/auth';
 import {
   IUserPublicProfile,
   IUserPublicProfileWithToken,
-  UserPublicProfileWithToken,
-} from '@pokehub/user';
+} from '@pokehub/user/interfaces';
 import { login_success } from '../../store/actions/common';
 import { auth_loaded } from '../../store/reducers/auth';
 
-const useLoadUser = (refreshToken: string) => {
+const useLoadUser = (refreshToken: string, enable: boolean) => {
   const dispatch: Dispatch = useDispatch();
 
   const response = useQuery(['users', 'load', { refreshToken }],
@@ -45,12 +44,11 @@ const useLoadUser = (refreshToken: string) => {
           dispatch(login_success(dataWithTokens));
         }
       },
-      onError: () => {
-        console.log('loaded');
-        //dispatch(appLoaded());
-        dispatch(auth_loaded());
+      onError: (err) => {
+        console.log('loaded: ', err);
+        dispatch(auth_loaded(false));
       },
-      enabled: true, //refreshToken && refreshToken !== 'undefined' ? true : false,
+      enabled: enable, //refreshToken && refreshToken !== 'undefined' ? true : false,
       retry: false,
       refetchOnWindowFocus: false,
       refetchOnMount: false,

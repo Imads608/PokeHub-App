@@ -19,7 +19,7 @@ import { Dispatch } from 'redux';
 import { useDispatch } from 'react-redux';
 import { reset_auth_failure } from '../../store/reducers/auth';
 import { getUser } from '../../store/selectors/user';
-import { IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 import { getAppTheme } from '../../store/selectors/app';
 import EmailVerificationNotification from '../../components/auth/notifications/emailVerificationNotification';
 import { QueryClient, useQueryClient } from 'react-query';

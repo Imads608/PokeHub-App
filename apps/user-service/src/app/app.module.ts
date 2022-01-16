@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, UserStatus } from '@pokehub/user';
+import { User, UserStatus } from '@pokehub/user/database';
 import { UserModule } from '../user/user.module';
 import configuration from '../config/configuration';
-import { LoggerModule } from '@pokehub/logger';
+import { LoggerModule } from '@pokehub/common/logger';
 
 @Module({
   imports: [

@@ -1,4 +1,4 @@
-import { UserData, IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 
 export interface UserDetails {
   user: IUserData;

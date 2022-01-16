@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Inject, Post, } from '@nestjs/common';
-import { JwtTokenBody } from '@pokehub/auth';
-import { AppLogger } from '@pokehub/logger';
+import { JwtTokenBody } from '@pokehub/auth/models';
+import { AppLogger } from '@pokehub/common/logger';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 import { IMailService, MAIL_SERVICE } from '../common/mail-service.interface';
 import { IUserService, USER_SERVICE } from '../user/user-service.interface';

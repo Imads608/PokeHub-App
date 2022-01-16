@@ -1,8 +1,9 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { TCPEndpoints, EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail';
-import { AppLogger } from '@pokehub/logger';
+import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail/models';
+import { AppLogger } from '@pokehub/common/logger';
 import { IMailService, MAIL_SERVICE } from './mail-service.interface';
+import { TCPEndpoints } from '@pokehub/mail/interfaces';
 
 @Controller()
 export class MailController {

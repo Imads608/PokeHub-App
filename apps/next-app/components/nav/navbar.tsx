@@ -20,7 +20,7 @@ import { Dispatch } from '@reduxjs/toolkit';
 import { RootState } from '../../store/store';
 import { getUser } from '../../store/selectors/user';
 import { getIsAuthenticated } from '../../store/selectors/auth';
-import { IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 import UserMenu from './user/userMenu';
 import UserNotifications from './user/userNotifications';
 import { drawer_opened } from '../../store/reducers/drawer';

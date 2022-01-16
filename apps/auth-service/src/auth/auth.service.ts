@@ -3,13 +3,13 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserRequest, IUserData, TypeAccount, User, UserData, UserDataWithToken, } from '@pokehub/user';
-import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, } from '@pokehub/auth';
+import { CreateUserRequest, UserData, UserDataWithToken, } from '@pokehub/user/models';
+import { IUserData, TypeAccount, TCPEndpoints } from '@pokehub/user/interfaces';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/auth/models';
 import { ConfigService } from '@nestjs/config';
 import { LoginTicket, OAuth2Client, TokenPayload } from 'google-auth-library';
 import { IAuthService } from './auth-service.interface';
-import { AppLogger } from '@pokehub/logger';
-import { TCPEndpoints } from '@pokehub/user';
+import { AppLogger } from '@pokehub/common/logger';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -112,17 +112,18 @@ export class AuthService implements IAuthService {
     async getNewAccessToken( refreshToken: string ): Promise<{ access_token: string }> {
         try {
             // Decode Refresh Token to User Data
-            const user: { username: string; uid: string; email: string } = await this.jwtService.verifyAsync(refreshToken, { secret: this.configService.get<string>('tokenDetails.refreshTokenSecret'), });
+            this.logger.log(`getNewAccessToken: Decoding Refresh Token: ${refreshToken}`);
+            const user: JwtTokenBody = await this.jwtService.verifyAsync(refreshToken, { secret: this.configService.get<string>('tokenDetails.refreshTokenSecret'), });
+            this.logger.log(`getNewAccessToken: Successfully decoded Refresh Token: ${JSON.stringify(user)}`);
 
             // Create new Access Token from Decoded Data
             const accessToken = this.jwtService.sign( { username: user.username, uid: user.uid, email: user.email }, { secret: this.configService.get<string>('tokenDetails.accessTokenSecret'), expiresIn: `${this.configService.get<string>( 'tokenDetails.accessTokenExpiration' )}s`, } );
-
             this.logger.log( `getNewAccessToken: Successfully created New Access Token from provided Refresh Token` );
 
             // Return New Access Token
             return { access_token: accessToken };
         } catch (err) {
-            this.logger.error( `getNewAccessToken: Got error creating new Access Token: ${err}` );
+            this.logger.error( `getNewAccessToken: Got error creating new Access Token: ${JSON.stringify(err)}` );
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             throw new RpcException('Internal Server Error');

@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import axios, { AxiosError } from 'axios';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useDispatch } from 'react-redux';

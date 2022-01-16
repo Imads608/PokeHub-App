@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { AppLogger } from '@pokehub/logger';
-import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail';
+import { AppLogger } from '@pokehub/common/logger';
+import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail/models';
 import { ConfigService } from '@nestjs/config';
 import { IMailService } from './mail-service.interface';
 

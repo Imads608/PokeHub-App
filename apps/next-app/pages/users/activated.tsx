@@ -1,4 +1,4 @@
-import { IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 import { NextRouter, useRouter } from 'next/router';
 import { getUser } from '../../store/selectors/user';
 import { useSelector } from 'react-redux';

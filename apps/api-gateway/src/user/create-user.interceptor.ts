@@ -7,7 +7,7 @@ import {
   Logger,
   NestInterceptor,
 } from '@nestjs/common';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { catchError, Observable } from 'rxjs';
 
 @Injectable()

@@ -1,21 +1,35 @@
-import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
-import { CreateUserRequest, UserData, UserDataWithToken, UserIdTypes, UserPublicProfile, UserPublicProfileWithToken, } from '@pokehub/user';
+import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Put, Query, Redirect, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { CreateUserRequest, UserData, UserDataWithToken, UserPublicProfile, UserPublicProfileWithToken, } from '@pokehub/user/models';
 import { CreateUserInterceptor } from './create-user.interceptor';
 import { User } from '../common/user.decorator';
 import { AuthGuard } from '../common/auth.guard';
 import { LoginInterceptor } from '../auth/login.interceptor';
 import { IUserService, USER_SERVICE } from './user-service.interface';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { IMailService, MAIL_SERVICE } from '../common/mail-service.interface';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
-import { EmailLogin, JwtTokenBody } from '@pokehub/auth';
+import { EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
 import { ActivateUserInterceptor } from './activate-user.interceptor';
+import { UserIdTypes } from '@pokehub/user/interfaces';
+import { ResourceInterceptor } from '../common/resource.interceptor';
+import { Express, Response, Request } from 'express';
+import { Multer } from 'multer';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { createReadStream, unlinkSync } from 'fs';
+import * as FormData  from 'form-data';
+import { Readable } from 'stream';
+import axios from 'axios';
+import path = require('path');
 
 @Controller()
 export class UserController {
   constructor(@Inject(USER_SERVICE) private readonly userService: IUserService,
               @Inject(MAIL_SERVICE) private readonly mailService: IMailService, @Inject(AUTH_SERVICE) private readonly authService: IAuthService,
-              private readonly logger: AppLogger) {
+              private readonly httpService: HttpService,
+              private readonly configService: ConfigService, private readonly logger: AppLogger) {
     logger.setContext(UserController.name);
   }
 
@@ -41,7 +55,7 @@ export class UserController {
   @UseInterceptors(LoginInterceptor)
   @UseGuards(AuthGuard)
   @Get('auth')
-  loadUser(@Req() req: Request, @User() user): Promise<UserPublicProfile> {
+  loadUser(@Req() req: Request, @User() user: JwtTokenBody): Promise<UserPublicProfile> {
     this.logger.log(`loadUser: Got request to load user with uid ${user.uid}`);
     return this.userService.loadUser(user.uid);
   }
@@ -63,6 +77,51 @@ export class UserController {
     else if (!token) throw new UnauthorizedException();
     this.logger.log(`passwordReset: Got request to reset Password of User`);
     return await this.userService.resetPassword(token, reqBody.password);
+  }
+
+  @UseInterceptors(ResourceInterceptor)
+  @UseGuards(AuthGuard)
+  @Put(':userId')
+  async updateUser(@Body('user') userData: UserData, @User() user: JwtTokenBody, @Param('userId') userId: string): Promise<UserData> {
+    if (user.uid != userId)
+      throw new UnauthorizedException();
+    else if (!userData)
+      throw new BadRequestException();
+
+    this.logger.log(`updateUser: Got request to update User Data with uid ${user.uid}`);
+    return await this.userService.updateUserData(userData);
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ResourceInterceptor)
+  @UseInterceptors(FileInterceptor('avatar', { 
+    dest: './upload',
+    fileFilter: (req, file, callback) => {
+      console.log('herrre')
+      const ext = path.extname(file.originalname);
+        if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+            return callback(new Error('Only images are allowed'), false);
+        }
+        callback(null, true)
+    } 
+  }))
+  @Post(':userId/avatar')
+  async updateUserAvatar(@UploadedFile() avatar: Express.Multer.File, @Param('userId') userId: string): Promise<UserData> {
+    // Creating Payload
+    this.logger.log(`updateUserAvatar: Sending file: ${avatar.path}`);
+    const formData = new FormData();
+    formData.append('avatar', createReadStream(avatar.path), { filename: avatar.filename });
+
+    // Send Data
+    const data = await firstValueFrom(this.httpService.post<UserData>(`http://${this.configService.get<string>('userService.host')}:${this.configService.get<string>('userService.portHttp')}/${userId}/avatar`,
+                            formData, { headers: { ...formData.getHeaders() }}));
+    
+    this.logger.log(`Successfully uploaded new avatar for user ${userId}. Deleting temporary file`);
+    // Delete Temporary Image File
+    unlinkSync(avatar.path);
+
+    this.logger.log(`Sending data ${JSON.stringify(data.data)}`);
+    return data.data;
   }
 
   @HttpCode(204)

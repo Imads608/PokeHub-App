@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { NextRouter, useRouter } from 'next/router';
 import { useEmailActivation } from '../../hooks/auth/useEmailActivation';
 import { UseQueryResult } from 'react-query';

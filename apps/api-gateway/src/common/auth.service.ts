@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { UserDataWithToken } from '@pokehub/user';
-import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody, TCPEndpoints, } from '@pokehub/auth';
-import { AppLogger } from '@pokehub/logger';
+import { UserDataWithToken } from '@pokehub/user/models';
+import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody } from '@pokehub/auth/models';
+import { TCPEndpoints } from '@pokehub/auth/interfaces';
+import { AppLogger } from '@pokehub/common/logger';
 import { IAuthService } from './auth-service.interface';
 
 @Injectable()
@@ -95,7 +96,7 @@ export class AuthService implements IAuthService {
     }
 
     async decodeToken(accessToken: string): Promise<JwtTokenBody> {
-        this.logger.log( `decodeToken: Sending Access Token Validation Request to Auth Service` );
+        this.logger.log( `decodeToken: Sending Access Token Validation Request to Auth Service: ${accessToken}` );
 
         try {
             const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: TCPEndpoints.DECODE_TOKEN }, accessToken ) );
@@ -110,7 +111,7 @@ export class AuthService implements IAuthService {
     }
 
     async getNewAccessToken( refreshToken: string ): Promise<{ access_token: string }> {
-        this.logger.log( `getNewAccessToken: Sending Request for New Access Token to Auth Service` );
+        this.logger.log( `getNewAccessToken: Sending Request for New Access Token to Auth Service: ${refreshToken}` );
         try {
             const token = await firstValueFrom( this.clientProxy.send<{ access_token: string }>( { cmd: TCPEndpoints.GET_ACCESS_TOKEN }, refreshToken ) );
             if (!token) throw new InternalServerErrorException();

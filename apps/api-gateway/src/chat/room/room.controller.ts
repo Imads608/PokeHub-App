@@ -10,9 +10,9 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { AppLogger } from '@pokehub/logger';
-import { ChatRoom } from '@pokehub/room';
-import { UserData } from '@pokehub/user';
+import { AppLogger } from '@pokehub/common/logger';
+import { ChatRoom } from '@pokehub/room/database';
+import { UserData } from '@pokehub/user/models';
 import { AuthGuard } from '../../common/auth.guard';
 import { IRoomService, ROOM_SERVICE } from '../common/room-service.interface';
 

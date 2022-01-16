@@ -1,7 +1,7 @@
 import { useQuery, UseQueryResult } from 'react-query';
 import { activateUser } from '../../api/auth';
 import { AxiosError } from 'axios';
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { APIError } from '../../types/api';
 
 export const useEmailActivation = (validationToken: string) => {

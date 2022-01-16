@@ -4,6 +4,7 @@ export default () => ({
   userService: {
     host: process.env.USER_MICROSERVICE_HOST,
     port: process.env.USER_MICROSERVICE_PORT,
+    portHttp: process.env.USER_MICROSERVICE_HTTPPORT
   },
   authService: {
     host: process.env.AUTH_MICROSERVICE_HOST,

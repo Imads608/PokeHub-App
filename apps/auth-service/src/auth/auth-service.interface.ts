@@ -1,5 +1,5 @@
-import { AuthTokens, EmailLogin, JwtTokenBody, UsernameLogin, } from '@pokehub/auth';
-import { UserDataWithToken } from '@pokehub/user';
+import { AuthTokens, EmailLogin, JwtTokenBody, UsernameLogin, } from '@pokehub/auth/models';
+import { UserDataWithToken } from '@pokehub/user/models';
 
 export const AUTH_SERVICE = 'AUTH_SERVICE';
 

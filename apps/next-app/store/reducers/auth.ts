@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 //import { app_loaded } from './app';
 import {
   auth_failure,
@@ -33,8 +33,15 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    auth_loaded: (state: AuthState) => {
+    auth_loaded: (state: AuthState, action?: PayloadAction<boolean>) => {
       state.loading = false;
+      if (action && action?.payload == false) {
+        state.accessToken = null;
+        state.refreshToken = null;
+        state.isAuthenticated = false;
+        state.isEmailVerified = false;
+        state.error = null;
+      }
     },
     auth_loading: (state: AuthState) => {
       state.loading = true;

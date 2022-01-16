@@ -5,7 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Transport, ClientsModule } from '@nestjs/microservices';
 import { AUTH_SERVICE } from './auth-service.interface';
-import { LoggerModule } from '@pokehub/logger';
+import { LoggerModule } from '@pokehub/common/logger';
 
 @Module({
   imports: [

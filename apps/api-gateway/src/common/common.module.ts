@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { LoggerModule } from '@pokehub/logger';
+import { LoggerModule } from '@pokehub/common/logger';
 import { AUTH_SERVICE } from './auth-service.interface';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';

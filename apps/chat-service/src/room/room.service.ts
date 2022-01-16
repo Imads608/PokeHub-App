@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ChatRoom, Participant } from '@pokehub/room';
+import { ChatRoom, Participant } from '@pokehub/room/database';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { IRoomService } from './room-service.interface';
 
 @Injectable()

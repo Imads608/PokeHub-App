@@ -50,5 +50,6 @@ declare module '@mui/material/styles' {
       palette: CustomPaletteOptions
     }
     
+    export function useTheme(): CustomTheme;
     export function createTheme(options?: CustomThemeOptions): CustomTheme;
 }

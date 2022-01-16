@@ -1,13 +1,14 @@
 import { Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, TCPEndpoints, UserIdTypes, } from '@pokehub/user';
-import { AuthTokens, EmailLogin, JwtTokenBody } from '@pokehub/auth';
-import { ChatRoom } from '@pokehub/room';
+import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile } from '@pokehub/user/models';
+import { AuthTokens, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
+import { ChatRoom } from '@pokehub/room/database';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interface';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { IUserService } from './user-service.interface';
+import { TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -22,11 +23,21 @@ export class UserService implements IUserService {
       this.logger.log(`loadUser: Loading User with uid ${uid}`);
       return await this.getUserData(uid);
     } catch (err) {
-      this.logger.error(
-        `loadUser: Got error while trying to load User with uid ${uid}: ${err}`
-      );
+      this.logger.error( `loadUser: Got error while trying to load User with uid ${uid}: ${err}` ); throw err;
+    }
+  }
+
+  async updateUserData(userData: UserData): Promise<UserData> {
+    try {
+      this.logger.log(`updateUserData: Updating user data with uid ${userData.uid}`);
+      const updatedData: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: TCPEndpoints.UPDATE_USER_DATA }, userData));
+      this.logger.log(`updateUserData: Successfully got updated data for uid ${userData.uid} from the User Microservice`);
+      return updatedData;
+    } catch (err) {
+      this.logger.error(`updateUserData: Got error while trying to load User with uid ${userData.uid}: ${err}`)
       throw err;
     }
+
   }
 
   async doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> {

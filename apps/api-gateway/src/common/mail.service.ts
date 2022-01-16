@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AppLogger } from '@pokehub/logger';
-import { TCPEndpoints, EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail';
+import { AppLogger } from '@pokehub/common/logger';
+import { EmailConfirmationRequest, PasswordResetRequest } from '@pokehub/mail/models';
+import { TCPEndpoints } from '@pokehub/mail/interfaces';
 import { firstValueFrom } from 'rxjs';
 import { IMailService } from './mail-service.interface';
 

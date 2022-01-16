@@ -4,7 +4,7 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LoggerModule } from '@pokehub/logger';
+import { LoggerModule } from '@pokehub/common/logger';
 import { MAIL_SERVICE } from './mail-service.interface';
 
 @Module({

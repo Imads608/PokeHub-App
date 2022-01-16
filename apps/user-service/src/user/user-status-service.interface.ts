@@ -1,4 +1,4 @@
-import { IUserStatusData } from '@pokehub/user';
+import { IUserStatusData } from '@pokehub/user/interfaces';
 
 export const USER_STATUS_SERVICE = 'USER STATUS SERVICE';
 

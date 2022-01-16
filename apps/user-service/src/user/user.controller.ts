@@ -1,21 +1,57 @@
-import { Controller, Inject, UsePipes } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Inject, InternalServerErrorException, Param, Post, Res, UploadedFile, UseInterceptors, UsePipes } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { CreateUserRequest, User, UserData, UserStatus, TCPEndpoints, UserIdTypes, } from '@pokehub/user';
+import { User, UserStatus, } from '@pokehub/user/database';
 import { ValidationPipe } from './validation.pipe';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 import { IUserService, USER_SERVICE } from './user-service.interface';
 import { IUserStatusService, USER_STATUS_SERVICE, } from './user-status-service.interface';
-import { EmailLogin } from '@pokehub/auth';
+import { EmailLogin } from '@pokehub/auth/models';
+import { IUserData, TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
+import { CreateUserRequest, UserData } from '@pokehub/user/models';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
+import { Multer } from 'multer';
+import { S3_SERVICE, IS3Service } from '@pokehub/common/object-store'
+import { BucketDetails, PutObjectRequest, ObjectImageUrlRequest } from '@pokehub/common/object-store/models';
+import { ConfigService } from '@nestjs/config';
+import { ImageContentTypes } from '@pokehub/common/object-store/models';
+import path = require('path');
 
-@Controller()
+@Controller('')
 export class UserController {
   constructor(
     @Inject(USER_SERVICE) private readonly userService: IUserService,
-    @Inject(USER_STATUS_SERVICE)
-    private readonly userStatusService: IUserStatusService,
+    @Inject(USER_STATUS_SERVICE) private readonly userStatusService: IUserStatusService,
+    @Inject(S3_SERVICE) private readonly objectStoreService: IS3Service, private readonly configService: ConfigService,
     private readonly logger: AppLogger
   ) {
     this.logger.setContext(UserController.name);
+  }
+
+  @UseInterceptors(FileInterceptor('avatar'))
+  @Post(':userId/avatar')
+  async updateUserAvatar(@UploadedFile() avatar: Express.Multer.File, @Param('userId') userId: string): Promise<UserData> {
+    if (!userId || !avatar)
+      throw new BadRequestException();
+    try {
+      // Save Avatar Image to Object Store
+      this.logger.log(`updateUserAvatar: Got request to upload and save User avatar for ${userId}`);
+      const putRequest = new PutObjectRequest(new BucketDetails(this.configService.get<string>('awsConfig.userBucketName'), 
+                                              `${userId}/avatar`), 'avatar.png', avatar.buffer, ImageContentTypes.IMAGE_JPEG);
+      await this.objectStoreService.putObject(putRequest);
+      
+      // Save Avatar Bucket Path to Database
+      this.logger.log(`updateUserAvatar: Successfully updated the avatar in object store for user ${userId}`);
+      putRequest.bucketInfo.objectPath += '/avatar.png';
+      const user = await this.userService.updateAvatar(userId, putRequest.bucketInfo);
+      
+      // Populate URL and send back User Data
+      this.populateAvatarURL(user);
+      return user;
+    } catch (err) {
+      this.logger.error(`updateUserAvatar: Got error while updating User's avatar to Object Store and Database: ${JSON.stringify(err)}`);
+      throw new InternalServerErrorException();
+    }
   }
 
   @UsePipes(new ValidationPipe())
@@ -29,25 +65,33 @@ export class UserController {
   @MessagePattern({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, Transport.TCP)
   async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserData> {
     this.logger.log('googleOAuthLogin: Got request to login user with Google');
-    return await this.userService.createOrFindGoogleOAuthUser(createUser);
+    const user = await this.userService.createOrFindGoogleOAuthUser(createUser);
+    this.populateAvatarURL(user);
+    return user;
   }
 
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER }, Transport.TCP)
   async findUser(uid: string): Promise<UserData> {
     this.logger.log(`findUser: Got request to find user ${uid}`);
-    return this.userService.findUser(uid);
+    const user = await this.userService.findUser(uid);
+    this.populateAvatarURL(user);
+    return user;
   }
 
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER_EMAIL }, Transport.TCP)
-  async findUserByEmail(email: string): Promise<User> {
+  async findUserByEmail(email: string): Promise<UserData> {
     this.logger.log( `findUserByEmail: Got request to find user with email ${email}` );
-    return this.userService.findUserByEmail(email);
+    const user = await this.userService.findUserByEmail(email);
+    this.populateAvatarURL(user);
+    return user;
   }
 
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER_USERNAME }, Transport.TCP)
-  async findUserByUsername(username: string): Promise<User> {
+  async findUserByUsername(username: string): Promise<UserData> {
     this.logger.log( `findUserByUsername: Got request to find user by username ${username}` );
-    return this.userService.findUserByUsername(username);
+    const user = await this.userService.findUserByUsername(username);
+    this.populateAvatarURL(user);
+    return user;
   }
 
   @MessagePattern({ cmd: TCPEndpoints.GET_USER_STATUS }, Transport.TCP)
@@ -88,5 +132,22 @@ export class UserController {
   async updatePassword(userData: EmailLogin): Promise<UserData> {
     this.logger.log( `updatePassword: Got request to update password for user with email ${userData.email}`);
     return await this.userService.updatePassword(userData.email, userData.password);
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.UPDATE_USER_DATA }, Transport.TCP)
+  async updateUserData(userData: UserData): Promise<UserData> {
+    this.logger.log(`updateUserData: Got request to update User Data for user with uid ${userData.uid}`);
+    const user = await this.userService.updateUserData(userData);
+    this.populateAvatarURL(user);
+    return user;
+  }
+
+  private populateAvatarURL(user: UserData): void {
+    if (user.avatar != null) {
+      const fileName = user.avatar.objectPath.substring(user.avatar.objectPath.lastIndexOf('/')+1);
+      const objectPath = path.dirname(user.avatar.objectPath);
+      user.avatarUrl = this.objectStoreService.getUrlForImageObject(new ObjectImageUrlRequest(new BucketDetails(user.avatar.bucketName, objectPath)
+                                                                    , fileName, 900));
+    }
   }
 }

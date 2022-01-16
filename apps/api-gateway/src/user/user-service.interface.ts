@@ -1,11 +1,6 @@
-import { EmailLogin } from '@pokehub/auth';
-import {
-  CreateUserRequest,
-  UserData,
-  UserDataWithToken,
-  UserIdTypes,
-  UserPublicProfile,
-} from '@pokehub/user';
+import { EmailLogin } from '@pokehub/auth/models';
+import { UserIdTypes } from '@pokehub/user/interfaces';
+import { CreateUserRequest, UserData, UserDataWithToken, UserPublicProfile, } from '@pokehub/user/models';
 
 export const USER_SERVICE = 'USER SERVICE';
 
@@ -16,6 +11,13 @@ export interface IUserService {
    * @returns The Public Profile Data of the User
    */
   loadUser(uid: string): Promise<UserPublicProfile>;
+
+  /**
+   * Updates the Database with the provided User Data
+   * @param userData The Object containing the Updated User Data to save
+   * @returns The User Data Object after saving to the database
+   */
+  updateUserData(userData: UserData): Promise<UserData>
 
   /**
    * Checks if a User exists through either UID, Username or Email Address

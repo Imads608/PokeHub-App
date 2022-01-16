@@ -2,7 +2,7 @@ import { useQuery, UseQueryResult } from 'react-query';
 import { isUsernameAvailable } from '../../api/user';
 import { AxiosError } from 'axios';
 import { APIError } from '../../types/api';
-import { UserIdTypes } from '@pokehub/user';
+import { UserIdTypes } from '@pokehub/user/interfaces';
 
 export const useUsernameAvailability = (username: string, enable: boolean) => {
   const res: UseQueryResult<boolean, Error | AxiosError<APIError>> = useQuery(['users', 'availability', { id: username, type: UserIdTypes.USERNAME }], 

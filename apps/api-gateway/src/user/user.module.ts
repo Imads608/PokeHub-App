@@ -6,9 +6,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatCommonModule } from '../chat/common/chat-common.module';
 import { USER_SERVICE } from './user-service.interface';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    HttpModule,
     CommonModule,
     ChatCommonModule,
     ClientsModule.registerAsync([

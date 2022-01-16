@@ -3,8 +3,8 @@ https://docs.nestjs.com/guards#guards
 */
 
 import { Injectable, CanActivate, ExecutionContext, Inject, } from '@nestjs/common';
-import { JwtTokenBody } from '@pokehub/auth';
-import { AppLogger } from '@pokehub/logger';
+import { JwtTokenBody } from '@pokehub/auth/models';
+import { AppLogger } from '@pokehub/common/logger';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
 import { AuthService } from './auth.service';
 

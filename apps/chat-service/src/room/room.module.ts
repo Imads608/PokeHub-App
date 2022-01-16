@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { RoomController } from './room.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChatRoom, Participant } from '@pokehub/room';
-import { LoggerModule } from '@pokehub/logger';
+import { ChatRoom, Participant } from '@pokehub/room/database';
+import { LoggerModule } from '@pokehub/common/logger';
 import { ROOM_SERVICE } from './room-service.interface';
 
 @Module({

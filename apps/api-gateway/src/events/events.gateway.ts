@@ -8,8 +8,8 @@ import { EventEmitter2 } from 'eventemitter2';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserEventsMessageService } from '../messaging/user-events-message.service';
 import { ConfigService } from '@nestjs/config';
-import { AppLogger } from '@pokehub/logger';
-import { IChatRoomData } from '@pokehub/room';
+import { AppLogger } from '@pokehub/common/logger';
+import { IChatRoomData } from '@pokehub/room/interfaces';
 import { UserEventMessage, UserEventTopics, UserNotificationEvent, UserSocketEvents } from '@pokehub/event/user';
 
 @WebSocketGateway({ cors: true })
@@ -24,13 +24,13 @@ export class EventsGateway implements OnGatewayDisconnect {
   }
 
   @OnEvent(UserSocketEvents.USER_STATUS)
-  handleUserStatus(message: UserEventMessage) {
+  handleUserStatus(message: UserEventMessage<any>) {
     this.logger.log( `handleUserStatus: Received Event: ${JSON.stringify(message)}` );
     this.server.to(message.from.uid).emit(UserSocketEvents.USER_STATUS, message);
   }
 
   @OnEvent(UserSocketEvents.USER_NOTIFICATIONS)
-  handleUserNotifications(message: UserEventMessage) {
+  handleUserNotifications(message: UserEventMessage<any>) {
     this.logger.log( `handleUserNotifications: Received Event: ${JSON.stringify(message)}` );
     this.server.to(`${message.from.uid}-circle`) .emit(UserSocketEvents.USER_NOTIFICATIONS);
   }
@@ -40,7 +40,7 @@ export class EventsGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage(UserSocketEvents.USER_NOTIFICATIONS)
-  async onUserNotification( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+  async onUserNotification( @MessageBody() message: UserEventMessage<any>, @ConnectedSocket() client: Socket ) {
     this.logger.log( `onUserNotification: Received message: ${JSON.stringify(message)}` );
     const data = message.data as UserNotificationEvent;
     if (data.shouldReceive) {
@@ -56,7 +56,7 @@ export class EventsGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage(UserSocketEvents.USER_STATUS)
-  async onUserStatus( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+  async onUserStatus( @MessageBody() message: UserEventMessage<any>, @ConnectedSocket() client: Socket ) {
     this.logger.log( `onUserStatus: Received message: ${JSON.stringify(message)}` );
     this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
     this.logger.log(`onUserStatus: Publishing User Status to Message Bus`);
@@ -64,11 +64,9 @@ export class EventsGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)
-  async onClientDetails( @MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket ) {
+  async onClientDetails( @MessageBody() message: UserEventMessage<{ publicRooms: IChatRoomData[] }>, @ConnectedSocket() client: Socket ) {
     this.logger.log( `onClientDetails: Received message ${JSON.stringify(message)}` );
-    const data = message.data as { publicRooms: IChatRoomData[] };
-
-    data.publicRooms && data.publicRooms.forEach((room) => client.join(room.id));
+    message.data.publicRooms && message.data.publicRooms.forEach((room) => client.join(room.id));
     //data.privateRooms && data.privateRooms.forEach((room) => client.join(room.id));
     client.join(message.from.uid);
     client.join(`${message.from.uid}-circle`);

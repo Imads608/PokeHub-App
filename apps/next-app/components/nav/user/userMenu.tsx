@@ -15,7 +15,7 @@ import { logout } from '../../../store/actions/common';
 import { useQueryClient } from 'react-query';
 import Badge from '@mui/material/Badge';
 import { makeStyles } from '@mui/styles';
-import { IUserData } from '@pokehub/user';
+import { IUserData } from '@pokehub/user/interfaces';
 import styles from '../navbar.module.scss';
 
 const StyledMenu: any = withStyles({
@@ -72,7 +72,7 @@ const UserMenu = ({ user }: UserMenuProps) => {
             color="success"
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
-            <Avatar src="" />
+            <Avatar src={user.avatarUrl} alt='Avatar' />
           </Badge>
         </div>
         <span style={{ margin: 0 }} className={`${styles['nav-link']}`}>

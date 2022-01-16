@@ -1,5 +1,5 @@
-import { ChatRoom } from '@pokehub/room';
-import { UserData } from '@pokehub/user';
+import { ChatRoom } from '@pokehub/room/database';
+import { UserData } from '@pokehub/user/models';
 
 export const ROOM_SERVICE = 'ROOM SERVICE';
 

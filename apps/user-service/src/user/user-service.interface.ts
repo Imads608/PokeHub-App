@@ -1,4 +1,5 @@
-import { CreateUserRequest, UserData } from '@pokehub/user';
+import { BucketDetails } from '@pokehub/common/object-store/models';
+import { CreateUserRequest, UserData } from '@pokehub/user/models';
 
 export const USER_SERVICE = 'USER SERVICE';
 
@@ -9,6 +10,21 @@ export interface IUserService {
    * @returns The Data of the User after saving the changes
    */
   validateUserEmail(userId: string): Promise<UserData>;
+
+  /**
+   * Updates a User's Data to the table given the data itself.
+   * @param userData THe User Data that needs to be updated in the table
+   * @returns The updated User Information from the table.
+   */
+  updateUserData(userData: UserData): Promise<UserData>
+
+  /**
+   * Updates an Avatar for a User to the database given their Id and Object Store Path to the Avatar Image.
+   * @param userId The Id of the User
+   * @param avatar The Object Path Details of the Avatar Image
+   * @returns The Updated User Data including the Avatar
+   */
+  updateAvatar(userId: string, avatar: BucketDetails): Promise<UserData>
 
   /**
    * Updates A User's password given their email address

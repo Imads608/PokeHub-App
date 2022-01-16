@@ -14,7 +14,7 @@ import Copyright from '../../../components/common/copyright';
 import { usePasswordReset } from '../../../hooks/auth/usePasswordReset';
 import { NextRouter, useRouter } from 'next/router';
 import useValidateToken from '../../../hooks/auth/useValidateToken';
-import { TokenTypes } from '@pokehub/auth';
+import { TokenTypes } from '@pokehub/auth/interfaces';
 import SentimentVeryDissatisfied from '@mui/icons-material/SentimentVeryDissatisfied';
 import Link from 'next/link';
 import styles from '../../../styles/password-reset-edit.module.scss';

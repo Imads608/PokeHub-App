@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { createAction } from '@reduxjs/toolkit';
 import { APIError } from '../../types/api';
 

@@ -4,22 +4,26 @@ import {
   login_success_verification_needed,
   logout,
 } from '../actions/common';
-import { IUserData, IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserData, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
+import { IChatRoomData } from '@pokehub/room/interfaces';
 
 export interface UserState {
   userDetails: IUserData | null;
-  joinedPublicRooms: any[] | null;
+  joinedPublicRooms: IChatRoomData[] | null;
 }
 
 const userSlice = createSlice({
   name: 'user-state',
   initialState: { userDetails: null, joinedPublicRooms: null } as UserState,
   reducers: {
-    join_chatroom: (state: UserState, action: PayloadAction<any[]>) => {
+    user_data_update: (state: UserState, action: PayloadAction<IUserData>) => {
+      state.userDetails = action.payload;
+    },
+    join_chatroom: (state: UserState, action: PayloadAction<IChatRoomData[]>) => {
       state.joinedPublicRooms = action.payload;
     },
-    leave_chatroom: (state: UserState, action: PayloadAction<any[]>) => {
+    leave_chatroom: (state: UserState, action: PayloadAction<IChatRoomData[]>) => {
       state.joinedPublicRooms = action.payload;
     },
   },
@@ -54,5 +58,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { join_chatroom, leave_chatroom } = userSlice.actions;
+export const { join_chatroom, leave_chatroom, user_data_update } = userSlice.actions;
 export default userSlice;

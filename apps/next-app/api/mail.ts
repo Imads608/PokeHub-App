@@ -1,4 +1,4 @@
-import { IJwtTokenBody } from '@pokehub/auth';
+import { IJwtTokenBody } from '@pokehub/auth/interfaces';
 import axios, { AxiosResponse } from 'axios';
 import appConfig from '../config';
 import { getAPIRequestHeader } from './utils';

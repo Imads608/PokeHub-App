@@ -1,9 +1,10 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { UserDataWithToken } from '@pokehub/user';
-import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, TCPEndpoints, } from '@pokehub/auth';
+import { UserDataWithToken } from '@pokehub/user/models';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/auth/models';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
+import { TCPEndpoints } from '@pokehub/auth/interfaces';
 
 @Controller()
 export class AuthController {

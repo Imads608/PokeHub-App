@@ -56,7 +56,7 @@ export const getDashboardDesignTokens = (mode: PaletteMode) => ({
           },
           fontTextOptions: {
             primary: {
-              fontFamily: "'Orbitron', sans-serif;"
+              fontFamily: "'Orbitron', sans-serif"
             }
           }
         }
@@ -70,7 +70,7 @@ export const getDashboardDesignTokens = (mode: PaletteMode) => ({
             main: '#363637', //'#363637'
           },
           background: {
-            default: 'black',
+            default: '#121212',
             paper: '#1e1e25'
           },
           backgroundOptions: {
@@ -83,7 +83,7 @@ export const getDashboardDesignTokens = (mode: PaletteMode) => ({
           },
           fontTextOptions: {
             primary: {
-              fontFamily: "'Orbitron', sans-serif;"
+              fontFamily: "'Orbitron', sans-serif"
             }
           }
         }),

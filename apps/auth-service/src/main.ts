@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app/app.module';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { AppLogger } from '@pokehub/logger';
+import { AppLogger } from '@pokehub/common/logger';
 
 const logger = new Logger();
 

@@ -8,7 +8,7 @@ import {
 } from '../../store/actions/common';
 import { loginUser } from '../../api/auth';
 import axios, { AxiosError } from 'axios';
-import { IUserPublicProfileWithToken } from '@pokehub/user';
+import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { APIError } from '../../types/api';
 import { Dispatch } from '@reduxjs/toolkit';
 

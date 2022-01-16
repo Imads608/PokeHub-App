@@ -36,10 +36,7 @@ export class UserEventsMessageService {
     queue: '',
     routingKey: 'events.user.*',
   })
-  public async userEventsMessageHandler(
-    msg: UserEventMessage,
-    amqpMsg: ConsumeMessage
-  ) {
+  public async userEventsMessageHandler( msg: UserEventMessage<any>, amqpMsg: ConsumeMessage ) {
     this.logger.log('Got msg from events-exchange');
     this.eventEmitter.emit(msg.messageType, msg);
   }
@@ -49,10 +46,7 @@ export class UserEventsMessageService {
     queue: '',
     routingKey: 'events.publicRooms.*',
   })
-  public async publicRoomEventsMessageHandler(
-    msg: any,
-    amqpMsg: ConsumeMessage
-  ) {
+  public async publicRoomEventsMessageHandler( msg: any, amqpMsg: ConsumeMessage ) {
     this.logger.log('Got msg from public room events');
     this.eventEmitter.emit(msg.messageType, msg);
   }
