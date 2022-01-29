@@ -42,7 +42,8 @@ export class AuthService implements IAuthService {
                 userData = await firstValueFrom( this.clientProxy.send<UserDataWithToken>( { cmd: TCPEndpoints.USERNAME_LOGIN }, userCreds ) );
             }
             if (!userData) throw new InternalServerErrorException();
-
+            userData.user.password = undefined;
+            
             this.logger.log(`loginUser: Successfully validated user credentials`);
             return userData;
         } catch (err) {

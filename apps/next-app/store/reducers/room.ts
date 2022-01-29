@@ -135,8 +135,8 @@ const roomSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(HYDRATE, (state: RoomState) => {
-      return { ...state };
+    builder.addCase(HYDRATE, (state: RoomState, action: any) => {
+      return { ...state,  ...action.payload['room-state'] };
     });
   },
 });

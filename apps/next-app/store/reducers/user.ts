@@ -4,7 +4,7 @@ import {
   login_success_verification_needed,
   logout,
 } from '../actions/common';
-import { IUserData, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserData, IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
 import { IChatRoomData } from '@pokehub/room/interfaces';
 
@@ -29,22 +29,12 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(
-        login_success,
-        (
-          state: UserState,
-          action: PayloadAction<IUserPublicProfileWithToken>
-        ) => {
+      .addCase( login_success, ( state: UserState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
           state.userDetails = action.payload.user;
           state.joinedPublicRooms = action.payload.joinedPublicRooms;
         }
       )
-      .addCase(
-        login_success_verification_needed,
-        (
-          state: UserState,
-          action: PayloadAction<IUserPublicProfileWithToken>
-        ) => {
+      .addCase( login_success_verification_needed, ( state: UserState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
           state.userDetails = action.payload.user;
         }
       )
@@ -52,8 +42,11 @@ const userSlice = createSlice({
         state.userDetails = null;
         state.joinedPublicRooms = null;
       })
-      .addCase(HYDRATE, (state: UserState) => {
-        return { ...state };
+      .addCase(HYDRATE, (state: UserState, action: any) => {
+        return {
+          ...state,
+          ...action.payload['user-state']
+        }
       });
   },
 });

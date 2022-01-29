@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
 //import { app_loaded } from './app';
 import {
   auth_failure,
@@ -10,7 +11,7 @@ import {
 import { HYDRATE } from 'next-redux-wrapper';
 import { APIError } from '../../types/api';
 
-interface AuthState {
+export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
@@ -49,28 +50,22 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(HYDRATE, (state: AuthState) => {
-        return { ...state };
+      .addCase(HYDRATE, (state: AuthState, action: any) => {
+        return {
+          ...state,
+          ...action.payload['auth-state']
+        }
       })
-      /*.addCase(app_loaded, (state) => {
-                state.loading = true;
-            })*/
-      .addCase(
-        login_success,
-        (
-          state: AuthState,
-          action: PayloadAction<IUserPublicProfileWithToken>
-        ) => {
+      .addCase( login_success, ( state: AuthState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
+          console.log('In Login Success')
           state.loading = false;
           state.isAuthenticated = true;
           state.isEmailVerified = false;
-          state.accessToken = action.payload.accessToken;
-          state.refreshToken = action.payload.refreshToken;
+          //state.accessToken = action.payload.accessToken;
+          //state.refreshToken = action.payload.refreshToken;
         }
       )
-      .addCase(
-        auth_failure,
-        (state: AuthState, action: PayloadAction<APIError>) => {
+      .addCase( auth_failure, (state: AuthState, action: PayloadAction<APIError>) => {
           console.log('Action in auth_failure:', action);
           state.error = action.payload;
           state.loading = false;

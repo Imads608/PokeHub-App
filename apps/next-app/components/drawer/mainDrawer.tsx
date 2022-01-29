@@ -8,12 +8,12 @@ import FullDrawer from './web/fullDrawer';
 import { getIsAuthenticated } from '../../store/selectors/auth';
 import { getDrawerToggle } from '../../store/selectors/drawer';
 import { getAppLoading } from '../../store/selectors/app';
-import { Theme } from '@mui/material';
+import { CustomTheme, Theme } from '@mui/material';
 import { RootState } from '../../store/store';
 
 const drawerWidth = 240;
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles((theme: CustomTheme) => ({
   drawer: {
     width: drawerWidth,
     flexShrink: 0,

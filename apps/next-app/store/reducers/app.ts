@@ -51,20 +51,19 @@ const appSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(HYDRATE, (state: AppState) => {
-        console.log('HYDRATE');
-        return { ...state };
+      .addCase(HYDRATE, (state: AppState, action: any) => {
+        return {
+          ...state,
+          ...action.payload['app-state']
+        }
       })
       .addCase(request_start, (state: AppState) => {
         state.loading = true;
       })
-      .addCase(
-        request_failure,
-        (state: AppState, action: PayloadAction<any>) => {
+      .addCase( request_failure, (state: AppState, action: PayloadAction<any>) => {
           state.loading = false;
           state.error = action.payload;
-        }
-      )
+      })
       .addCase(auth_failure, (state) => {
         state.loading = false;
       })

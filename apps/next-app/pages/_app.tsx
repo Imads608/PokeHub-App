@@ -33,7 +33,7 @@ import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 import Navbar from '../components/nav/navbar';
 import { QueryClientProvider } from 'react-query';
 import queryClient from '../queryClient';
-import { getDesignTokens } from '../styles/mui/themes/theme';
+import { getRootDesignTokens, getMainAppDesignTokens } from '../styles/mui/themes/theme';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import { CacheProvider } from '@emotion/react';
 import { Hydrate } from 'react-query/hydration';
@@ -44,12 +44,13 @@ import { CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
 import { getAppTheme } from '../store/selectors/app';
 import { useSelector } from 'react-redux';
 import { createTheme } from '@mui/material/styles';
+import { CustomTheme } from '@mui/material';
 import Router from 'next/router';
 import NProgress from 'nprogress';
 import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
-import { getIsAuthenticated } from '../store/selectors/auth';
+import { getIsAuthenticated, getAuthLoading } from '../store/selectors/auth';
 
 // Router Page Navigation Progress Bar
 NProgress.configure({ showSpinner: false });
@@ -73,7 +74,7 @@ const WrappedApp = (props) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
 
-  const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+  const theme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getRootDesignTokens(mode)), [mode]);
 
   useEffect(() => {
     // Remove the server-side injected CSS.
@@ -104,10 +105,13 @@ const MainApp = ({ Component, pageProps, theme }) => {
   const navRef = useRef(null);
   const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
   const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
+  const authLoading: boolean = useSelector<RootState, boolean>(getAuthLoading);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
 
-  const res = useLoadUser(typeof window != 'undefined' ? localStorage.getItem('pokehub-refresh-token') : null, 
-                          !isAuthenticated);
+  //const res = useLoadUser(null, false);
+  const res = useLoadUser(null, !isAuthenticated && authLoading)
+  //const res = useLoadUser(typeof window != 'undefined' ? localStorage.getItem('pokehub-refresh-token') : null, 
+  //                        !isAuthenticated);
 
   return (
     <main className={`${matches && drawerToggle ? 'full-drawer-open' : ''}`}>

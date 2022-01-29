@@ -2,7 +2,7 @@
 https://docs.nestjs.com/guards#guards
 */
 
-import { Injectable, CanActivate, ExecutionContext, Inject, } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtTokenBody } from '@pokehub/auth/models';
 import { AppLogger } from '@pokehub/common/logger';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
@@ -20,6 +20,9 @@ export class AuthGuard implements CanActivate {
 
     try {
       this.logger.log( `canActivate: Authenticating user with Request Headers: ${JSON.stringify( request.headers )}` );
+
+      if (!request.headers['authorization'] || request.headers['authorization'] === 'null' || request.headers['authorization'] === 'undefined')
+        throw new UnauthorizedException('Token is not provided');
 
       // Decode Token to User Object
       const user: JwtTokenBody = await this.authService.decodeToken( request.headers['authorization'] );

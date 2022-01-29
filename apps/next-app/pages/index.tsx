@@ -4,13 +4,20 @@ import makeStyles from '@mui/styles/makeStyles';
 import { connect } from 'react-redux';
 import Link from 'next/link';
 import { Theme } from '@mui/material/styles';
+import { CustomTheme } from '@mui/material';
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles((theme: CustomTheme) => ({
   root: {
     '& > *': {
       margin: theme.spacing(1),
     },
   },
+  signupText: {
+    color: theme.palette.secondary.main
+  },
+  loginText: {
+    color: theme.palette.primary.main
+  }
 }));
 
 export function Index() {
@@ -32,14 +39,14 @@ export function Index() {
           <div className={classes.root}>
             <Button variant="contained" color="primary">
               <Link href="/register">
-                <a style={{ color: 'red' }} className="link">
+                <a className={`link ${classes.signupText}`}>
                   Sign Up
                 </a>
               </Link>
             </Button>
             <Button variant="contained" color="secondary">
               <Link href="/login">
-                <a style={{ color: 'navy' }} className="link">
+                <a className={`link ${classes.loginText}`}>
                   Login
                 </a>
               </Link>

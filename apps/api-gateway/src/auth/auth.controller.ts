@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, Res, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { AuthService } from '../common/auth.service';
 import { LoginInterceptor } from './login.interceptor';
 import { UsernameLogin, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
@@ -12,6 +12,7 @@ import { AppLogger } from '@pokehub/common/logger';
 import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interface';
 import { MAIL_SERVICE, IMailService } from '../common/mail-service.interface';
 import { TokenValidatorInterceptor } from './token-validator.interceptor';
+import { Response, Request } from 'express';
 
 @Controller()
 export class AuthController {
@@ -22,7 +23,7 @@ export class AuthController {
 
   @UseInterceptors(LoginInterceptor)
   @Post('login')
-  async login( @Body() loginCreds: UsernameLogin | EmailLogin ): Promise<UserPublicProfileWithToken> {
+  async login( @Body() loginCreds: UsernameLogin | EmailLogin, @Res() res: Response ): Promise<Response<UserPublicProfileWithToken>> {
     // Validate Credentials
     this.logger.log(`login: Got request to login user`);
     const userWithToken = await this.authService.loginUser(loginCreds);
@@ -32,20 +33,28 @@ export class AuthController {
       const token = await this.authService.generateEmailVerficationToken(new JwtTokenBody( userWithToken.user.username, userWithToken.user.email, userWithToken.user.uid));
       await this.mailService.sendEmailConfirmation(userWithToken.user.email, token.email_verification_token);
       this.logger.log( `login: Successfully generated Verification Token and Sent email to activate account` );
-      return new UserPublicProfileWithToken( userWithToken.user, null, null, null );
+      return res.send(new UserPublicProfileWithToken( userWithToken.user, null, null ));
     }
 
     // Retrieve Rooms User has joined
     this.logger.log( `login: Successfully authenticated user. Retrieving Rooms user has joined` );
     const joinedRooms = await this.roomService.getJoinedPublicRoomsForUser( userWithToken.user.uid );
 
-    // Return User Data
-    return new UserPublicProfileWithToken( userWithToken.user, userWithToken.accessToken, userWithToken.refreshToken, joinedRooms );
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true
+    }).cookie('refreshToken', userWithToken.refreshToken.token, {
+      maxAge: userWithToken.refreshToken.expirySeconds*1000,
+      httpOnly: true,
+      sameSite: true
+    });
+    
+    return res.send(new UserPublicProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
   }
 
   @UseInterceptors(OauthInterceptor)
   @Post('oauth-google')
-  async googleOAuthLogin( @Req() req: Request ): Promise<UserPublicProfileWithToken> {
+  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<Response<UserPublicProfileWithToken>>  {
     // Validate OAuth Credentials
     this.logger.log( `googleOAuthLogin: Got request to login user through Google OAuth` );
     const userWithToken: UserDataWithToken = await this.authService.googleOAuthLogin(req.headers['authorization']);
@@ -55,14 +64,38 @@ export class AuthController {
     const joinedRooms = await this.roomService.getJoinedPublicRoomsForUser( userWithToken.user.uid );
 
     // Return User Data
-    return new UserPublicProfileWithToken( userWithToken.user, userWithToken.accessToken, userWithToken.refreshToken, joinedRooms );
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true
+    }).cookie('refreshToken', userWithToken.refreshToken.token, {
+      maxAge: userWithToken.refreshToken.expirySeconds*1000,
+      httpOnly: true,
+      sameSite: true
+    });
+    
+    return res.send(new UserPublicProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
+  }
+
+  @Post('logout')
+  logoutUser(@Res() res: Response): Response<{ message: string }> {
+    // Return User Data
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true
+    }).cookie('refreshToken', null, {
+      expires: new Date(),
+      httpOnly: true,
+      sameSite: true
+    });
+
+    return res.send({ message: 'Logged Out' });
   }
 
   @UseInterceptors(LoginInterceptor)
   @Get('access-token')
   async getAccessToken(@Req() req: Request): Promise<{ access_token: string }> {
     this.logger.log( `getAccessToken: Got request to generate Access Token for user` );
-    return await this.authService.getNewAccessToken( req.headers['authorization'] );
+    return await this.authService.getNewAccessToken( req.cookies['refreshToken']);
   }
 
   @UseInterceptors(TokenValidatorInterceptor)

@@ -102,7 +102,7 @@ const TrainerCard = ({ user }: TrainerCardProps) => {
                     </span>
                 </div>
                 <div className={classes.body}>
-                    <Avatar className={classes.avatar} src={user.avatarUrl} alt='User Avatar' />
+                    <Avatar className={classes.avatar} src={user.avatarUrl ? user.avatarUrl : '#'} alt='User Avatar' />
                     <h4 style={{ marginBottom: 0 }}>
                         USERNAME
                     </h4>

@@ -3,6 +3,7 @@ import appConfig from '../config';
 import { IUserData, UserIdTypes } from '@pokehub/user/interfaces';
 import { APIError } from '../types/api';
 import { getAPIRequestHeader } from './utils';
+import http from '../axios';
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -10,7 +11,7 @@ function getRandomInt(max) {
 
 export const isUsernameAvailable = async (username: string) => {
     try {
-        await axios.head(`${appConfig.apiGateway}/users/${username}`, { params: { typeId: UserIdTypes.USERNAME }});
+        await http.head(`${appConfig.apiGateway}/users/${username}`, { params: { typeId: UserIdTypes.USERNAME }});
     } catch (err) {
         const apiError = err as AxiosError<APIError>;
         if (apiError.response.status === 404)
@@ -21,12 +22,12 @@ export const isUsernameAvailable = async (username: string) => {
 };
 
 export const updateUser = async (user: IUserData) => {
-    const resp: AxiosResponse<IUserData> = await axios.put(`${appConfig.apiGateway}/users/${user.uid}`, { user }, getAPIRequestHeader())
+    const resp: AxiosResponse<IUserData> = await http.put(`${appConfig.apiGateway}/users/${user.uid}`, { user }, getAPIRequestHeader())
     return resp.data;
 }
 
 export const setProfileAvatar = async (userId: string, avatar: FormData) => {
-    const resp: AxiosResponse<IUserData> = await axios.post(`${appConfig.apiGateway}/users/${userId}/avatar`, avatar, { headers: { 'Content-Type': 'multipart/form-data' } });
+    const resp: AxiosResponse<IUserData> = await http.post(`${appConfig.apiGateway}/users/${userId}/avatar`, avatar, { headers: { 'Content-Type': 'multipart/form-data' } });
     return resp.data;
 }
 

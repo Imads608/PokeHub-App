@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserRequest, UserData, UserDataWithToken, } from '@pokehub/user/models';
 import { IUserData, TypeAccount, TCPEndpoints } from '@pokehub/user/interfaces';
-import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/auth/models';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, RefreshToken } from '@pokehub/auth/models';
 import { ConfigService } from '@nestjs/config';
 import { LoginTicket, OAuth2Client, TokenPayload } from 'google-auth-library';
 import { IAuthService } from './auth-service.interface';
@@ -246,7 +246,7 @@ export class AuthService implements IAuthService {
         });
 
         this.logger.log( `generateNewTokens: Successfulyy created Access and Refresh Tokens for user with uid ${userJwt.uid}` );
-        return new AuthTokens(accessToken, refreshToken);
+        return new AuthTokens(accessToken, new RefreshToken(refreshToken, 60*60*24*2));
     }
 
     private async validateCreds( userFromDB: UserData, passwordUsed: string ): Promise<boolean> {

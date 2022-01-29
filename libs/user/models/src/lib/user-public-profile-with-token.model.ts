@@ -10,10 +10,9 @@ export class UserPublicProfileWithToken extends UserDataWithToken implements IUs
   constructor(
     userData: UserData,
     accessToken: string,
-    refreshToken: string,
     rooms: ChatRoomData[] | ChatRoom[]
   ) {
-    super(userData, accessToken, refreshToken);
+    super(userData, accessToken);
     this.joinedPublicRooms = [];
     if (rooms && rooms.length > 0 && this.isRoomChatRoomDataType(rooms[0])) {
       this.setDataFromChatRooms(rooms as ChatRoom[]);

@@ -134,6 +134,8 @@ export class UserService implements IUserService {
   private async getUserData(uid: string): Promise<UserPublicProfile> {
     // Get User Details
     const userData: UserData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.FIND_USER }, uid) );
+    userData.password = undefined;
+
     if (!userData) throw new InternalServerErrorException();
 
     // Get Joined Public Rooms

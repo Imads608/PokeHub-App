@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
-import { getNewAccessToken, loadUser } from '../../api/auth';
+import { getNewAccessToken, loadUserProxy } from '../../api/auth';
 import {
   IUserPublicProfile,
   IUserPublicProfileWithToken,
@@ -14,20 +14,20 @@ const useLoadUser = (refreshToken: string, enable: boolean) => {
 
   const response = useQuery(['users', 'load', { refreshToken }],
     async () => {
-      const rememberMe = localStorage['pokehub-rememberme'] == 'undefined' || localStorage['pokehub-rememberme'] === 'null' ? null : localStorage['pokehub-rememberme'];
+      //const rememberMe = localStorage['pokehub-rememberme'] == 'undefined' || localStorage['pokehub-rememberme'] === 'null' ? null : localStorage['pokehub-rememberme'];
 
-      console.log('Remember Me is: ', rememberMe);
+      //console.log('Remember Me is: ', rememberMe);
       
-      if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
+      /*if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
         throw new Error('No Refresh Token provided');
       } else if (!rememberMe) {
         throw new Error('Remember Me is not set to true');
-      }
+      }*/
 
       //dispatch(requestStarted());
-      const accessToken: string = await getNewAccessToken(refreshToken);
-      localStorage.setItem('pokehub-access-token', accessToken);
-      const user: IUserPublicProfile = await loadUser(accessToken);
+      //const accessToken: string = await getNewAccessToken(refreshToken);
+      //localStorage.setItem('pokehub-access-token', accessToken);
+      const user: IUserPublicProfile = await loadUserProxy();
       return user;
     },
     {
@@ -37,7 +37,7 @@ const useLoadUser = (refreshToken: string, enable: boolean) => {
           const dataWithTokens: IUserPublicProfileWithToken = {
             user: data.user,
             accessToken: localStorage.getItem('pokehub-access-token'),
-            refreshToken: localStorage.getItem('pokehub-refresh-token'),
+            //refreshToken: localStorage.getItem('pokehub-refresh-token'),
             joinedPublicRooms: data.joinedPublicRooms,
           };
 

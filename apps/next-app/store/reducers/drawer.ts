@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { logout } from '../actions/common';
 import { HYDRATE } from 'next-redux-wrapper';
 
-interface DrawerState {
+export interface DrawerState {
   drawerToggle: boolean;
   chatroomsToggle: boolean;
   dmsToggle: boolean;
@@ -38,8 +38,11 @@ const drawerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(HYDRATE, (state: DrawerState) => {
-        return { ...state };
+      .addCase(HYDRATE, (state: DrawerState, action: any) => {
+        return { 
+          ...state,
+          ...action.payload['drawer-state']
+        };
       })
       .addCase(logout, (state: DrawerState) => {
         state.drawerToggle = false;

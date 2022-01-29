@@ -49,7 +49,7 @@ export class UserController {
     this.logger.log( `create: Successfully sent Email Confirmation Link for User: ${userWithToken.user.uid}` );
 
     // Returns The User Data
-    return new UserPublicProfileWithToken( userWithToken.user, userWithToken.accessToken, userWithToken.refreshToken, null );
+    return new UserPublicProfileWithToken( userWithToken.user, userWithToken.accessToken, null );
   }
 
   @UseInterceptors(LoginInterceptor)
@@ -62,7 +62,7 @@ export class UserController {
 
   @UseInterceptors(ActivateUserInterceptor)
   @Get('auth/activate')
-  async activateUser(@Req() req: Request) {
+  async activateUser(@Req() req: Request): Promise<UserData> {
     const token = req.headers['authorization'];
     if (!token) throw new UnauthorizedException();
     this.logger.log(`activateUser: Got request to activate user with token ${token}`);

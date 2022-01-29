@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Avatar, Box, Container, CssBaseline, Grid, TextField, Typography, Button, FormControlLabel, Checkbox, Link, PaletteMode, } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined } from '@mui/icons-material';
@@ -10,7 +11,7 @@ import GoogleOAuth from '../../components/auth/oauth/googleOAuth';
 import { getIsAuthenticated, getIsEmailVerified, } from '../../store/selectors/auth';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { RootState, wrapper } from '../../store/store';
 import NextLink from 'next/link';
 import { APIError } from '../../types/api';
 import { toast } from 'react-toastify';
@@ -24,6 +25,8 @@ import { getAppTheme } from '../../store/selectors/app';
 import EmailVerificationNotification from '../../components/auth/notifications/emailVerificationNotification';
 import { QueryClient, useQueryClient } from 'react-query';
 import Copyright from '../../components/common/copyright';
+import withLoadUser from '../../hoc/auth/withLoadUser';
+import { GetServerSideProps } from 'next';
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -44,6 +47,15 @@ const useStyles = makeStyles((theme: Theme) => ({
     margin: theme.spacing(3, 0, 2),
   },
 }));
+
+
+export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
+  await withLoadUser.isAuth({ req, res, store});
+  return {
+    props: {
+    }
+  }
+})
 
 const Login = () => {
   const localStorageRememberMe: string = localStorage['pokehub-rememberme'];
@@ -147,4 +159,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default withLoadUser(Login);

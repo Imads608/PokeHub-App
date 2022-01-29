@@ -19,6 +19,18 @@ import UsernameField from '../../components/auth/fields/usernameField';
 import { Theme } from '@mui/material/styles';
 import NextLink from 'next/link';
 import Copyright from '../../components/common/copyright';
+import withLoadUser from '../../hoc/auth/withLoadUser';
+import { wrapper } from '../../store/store';
+import { GetServerSideProps } from 'next';
+
+export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
+  if (!store.getState()['auth-state'].isAuthenticated)
+    await withLoadUser.isAuth({ req, res, store});
+  return {
+    props: {
+    }
+  }
+})
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -97,4 +109,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default withLoadUser(Register);

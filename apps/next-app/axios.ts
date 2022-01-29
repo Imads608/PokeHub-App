@@ -1,6 +1,24 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import appConfig from './config';
 
+import createAuthRefreshInterceptor from 'axios-auth-refresh';
+
+const http = axios.create({
+  baseURL: `http://${appConfig.apiGateway}`,
+  withCredentials: true,
+});
+
+createAuthRefreshInterceptor(http, (failedRequest => http.get(`${appConfig.apiGateway}/auth/access-token`).then(resp => {
+  const { access_token } = resp.data;
+  //const bearer = `Bearer ${accessToken}`;
+  http.defaults.headers.Authorization = access_token;
+  failedRequest.response.config.headers.Authorization = access_token;//bearer;
+  return Promise.resolve();
+})));
+
+export default http;
+
+
 export const useInterceptors = () => {
   //request interceptor to add the auth token header to requests
   axios.interceptors.request.use(

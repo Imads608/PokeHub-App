@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { createWrapper } from 'next-redux-wrapper';
-import { authMiddleware } from './middleware/auth';
+//import { authMiddleware } from './middleware/auth';
 import { connectWebSocketMiddleware } from './middleware/socket';
 import appSlice from './reducers/app';
 import authSlice from './reducers/auth';
@@ -19,7 +19,7 @@ const makeStore = () =>
     },
     devTools: true,
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ serializableCheck: false }).concat(authMiddleware, connectWebSocketMiddleware),
+      getDefaultMiddleware({ serializableCheck: false }).concat(/*authMiddleware, */connectWebSocketMiddleware),
   });
 
 export type RootStore = ReturnType<typeof makeStore>;

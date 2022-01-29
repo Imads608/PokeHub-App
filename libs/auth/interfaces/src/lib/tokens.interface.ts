@@ -1,4 +1,6 @@
+import { IRefreshToken } from "..";
+
 export interface IAuthTokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: IRefreshToken;
 }

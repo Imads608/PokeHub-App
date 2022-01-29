@@ -17,6 +17,7 @@ const RouteGuard = ({ children }: { children: JSX.Element }) => {
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
+        console.log('RouteGuard: Checking auth');
         authCheck(router.asPath);
         // on route change start - hide page content by setting authorized to false
         const hideContent = () => setAuthorized(false);

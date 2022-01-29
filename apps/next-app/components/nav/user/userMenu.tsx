@@ -1,5 +1,5 @@
 /* eslint-disable no-labels */
-import React from 'react';
+import React, { useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,13 +10,18 @@ import Button from '@mui/material/Button';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PersonIcon from '@mui/icons-material/Person';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../store/actions/common';
 import { useQueryClient } from 'react-query';
 import Badge from '@mui/material/Badge';
 import { makeStyles } from '@mui/styles';
 import { IUserData } from '@pokehub/user/interfaces';
 import styles from '../navbar.module.scss';
+import { useLogoutUser } from '../../../hooks/auth/useLogoutUser';
+import { toast } from 'react-toastify';
+import { getAppTheme } from '../../../store/selectors/app';
+import { RootState } from '../../../store/store';
+import { PaletteMode } from '@mui/material';
 
 const StyledMenu: any = withStyles({
   paper: {
@@ -48,6 +53,19 @@ const UserMenu = ({ user }: UserMenuProps) => {
   const open = Boolean(anchorEl);
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
+  const [enableLogout, setEnableLogout] = React.useState<boolean>(false);
+  const result = useLogoutUser(user.uid, enableLogout);
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+
+  useEffect(() => {
+    result.error && toast.error('Looks like something went wrong. Please try again',
+        {
+          position: toast.POSITION.TOP_CENTER,
+          theme: mode,
+          onClose: () => setEnableLogout(false)
+        }
+      );
+  }, [result.error, result.isSuccess]);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -58,10 +76,11 @@ const UserMenu = ({ user }: UserMenuProps) => {
   };
 
   const logoutUser = () => {
-    queryClient.removeQueries('user-login');
-    queryClient.removeQueries('user-signup');
-    dispatch(logout());
+    queryClient.removeQueries(['users', 'logout', { id: user.uid }]);
+    setEnableLogout(true);
+    //dispatch(logout());
   };
+
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Button onClick={handleClick} style={{ textTransform: 'none' }}>
@@ -72,7 +91,7 @@ const UserMenu = ({ user }: UserMenuProps) => {
             color="success"
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
-            <Avatar src={user.avatarUrl} alt='Avatar' />
+            <Avatar src={user.avatarUrl ? user.avatarUrl : '#'} alt='Avatar' />
           </Badge>
         </div>
         <span style={{ margin: 0 }} className={`${styles['nav-link']}`}>
