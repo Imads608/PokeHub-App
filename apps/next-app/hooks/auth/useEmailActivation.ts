@@ -1,14 +1,14 @@
 import { useQuery, UseQueryResult } from 'react-query';
 import { activateUser } from '../../api/auth';
 import { AxiosError } from 'axios';
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { APIError } from '../../types/api';
 
 export const useEmailActivation = (validationToken: string) => {
-  const res: UseQueryResult<IUserPublicProfileWithToken, Error | AxiosError<APIError>> = useQuery(['users', 'activate', { activationToken: validationToken }], 
+  const res: UseQueryResult<IUserProfileWithToken, Error | AxiosError<APIError>> = useQuery(['users', 'activate', { activationToken: validationToken }], 
     async () => await activateUser(validationToken),
     {
-      onSuccess: (userData: IUserPublicProfileWithToken) => {
+      onSuccess: (userData: IUserProfileWithToken) => {
         console.log('useEmailActivation: Success on Account Activation:', userData);
       },
       onError: (err: Error | AxiosError<APIError>) => {

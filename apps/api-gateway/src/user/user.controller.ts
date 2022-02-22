@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Put, Query, Redirect, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, } from '@nestjs/common';
-import { CreateUserRequest, UserData, UserDataWithToken, UserPublicProfile, UserPublicProfileWithToken, } from '@pokehub/user/models';
+import { CreateUserRequest, UserData, UserDataWithToken, UserProfile, UserProfileWithToken, UserPublicProfile, } from '@pokehub/user/models';
 import { CreateUserInterceptor } from './create-user.interceptor';
 import { User } from '../common/user.decorator';
 import { AuthGuard } from '../common/auth.guard';
@@ -35,7 +35,7 @@ export class UserController {
 
   @UseInterceptors(CreateUserInterceptor)
   @Post()
-  async create( @Body() createUserData: CreateUserRequest ): Promise<UserPublicProfileWithToken> {
+  async create( @Body() createUserData: CreateUserRequest ): Promise<UserProfileWithToken> {
     // Creates the User
     this.logger.log( `create: Got request to create new User with username ${createUserData.username}` );
     const userWithToken: UserDataWithToken = await this.userService.createUser( createUserData );
@@ -49,13 +49,13 @@ export class UserController {
     this.logger.log( `create: Successfully sent Email Confirmation Link for User: ${userWithToken.user.uid}` );
 
     // Returns The User Data
-    return new UserPublicProfileWithToken( userWithToken.user, userWithToken.accessToken, null );
+    return new UserProfileWithToken( userWithToken.user, userWithToken.accessToken, null, null );
   }
 
   @UseInterceptors(LoginInterceptor)
   @UseGuards(AuthGuard)
   @Get('auth')
-  loadUser(@Req() req: Request, @User() user: JwtTokenBody): Promise<UserPublicProfile> {
+  loadUser(@Req() req: Request, @User() user: JwtTokenBody): Promise<UserProfile> {
     this.logger.log(`loadUser: Got request to load user with uid ${user.uid}`);
     return this.userService.loadUser(user.uid);
   }
@@ -131,5 +131,15 @@ export class UserController {
     
     const exists = await this.userService.doesUserExist(userId, typeId);
     if (!exists) throw new NotFoundException();
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ResourceInterceptor)
+  @Get(':userId')
+  async getUser(@Param('userId') userId: string, @User() user: JwtTokenBody): Promise<UserPublicProfile | UserProfile> {
+    this.logger.log(`getUser: Got request to get user: ${userId}`);
+    if (user.uid === userId)
+      return this.userService.loadUser(userId);
+    return this.userService.getUserPublicProfile(userId);
   }
 }

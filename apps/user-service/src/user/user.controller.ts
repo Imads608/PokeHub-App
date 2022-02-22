@@ -6,8 +6,8 @@ import { AppLogger } from '@pokehub/common/logger';
 import { IUserService, USER_SERVICE } from './user-service.interface';
 import { IUserStatusService, USER_STATUS_SERVICE, } from './user-status-service.interface';
 import { EmailLogin } from '@pokehub/auth/models';
-import { IUserData, TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
-import { CreateUserRequest, UserData } from '@pokehub/user/models';
+import { IUserData, Status, TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
+import { CreateUserRequest, UserData, UserDataWithStatus } from '@pokehub/user/models';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { Multer } from 'multer';
@@ -16,6 +16,7 @@ import { BucketDetails, PutObjectRequest, ObjectImageUrlRequest } from '@pokehub
 import { ConfigService } from '@nestjs/config';
 import { ImageContentTypes } from '@pokehub/common/object-store/models';
 import path = require('path');
+import { UserPublicData } from '@pokehub/user/models';
 
 @Controller('')
 export class UserController {
@@ -63,11 +64,22 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, Transport.TCP)
-  async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserData> {
+  async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserDataWithStatus> {
     this.logger.log('googleOAuthLogin: Got request to login user with Google');
     const user = await this.userService.createOrFindGoogleOAuthUser(createUser);
     this.populateAvatarURL(user);
-    return user;
+    const status = await this.userStatusService.getUserStatus(user.uid);
+    return new UserDataWithStatus(user, status);
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_USER })
+  async getPublicUser(uid: string): Promise<UserDataWithStatus> {
+    this.logger.log(`getPublicUser: Got request to retrieve Public Details of User ${uid}`);
+    const userData = await this.userService.findUser(uid);
+    this.populateAvatarURL(userData);
+    const status = await this.userStatusService.getUserStatus(userData.uid);
+    return new UserDataWithStatus(userData, status);
+    //return new UserPublicData(uid, userData.username, userData.emailVerified, userData.avatarUrl);
   }
 
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER }, Transport.TCP)
@@ -76,6 +88,33 @@ export class UserController {
     const user = await this.userService.findUser(uid);
     this.populateAvatarURL(user);
     return user;
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS}, Transport.TCP)
+  async loadUserWithStatus(uid: string): Promise<UserDataWithStatus> {
+    this.logger.log(`loadUserWithStatus: Got request to load user with uid ${uid}`);
+    const user = await this.userService.findUser(uid);
+    this.populateAvatarURL(user);
+    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
+    return new UserDataWithStatus(user, status);
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_EMAIL}, Transport.TCP)
+  async loadUserWithStatusByEmail(email: string): Promise<UserDataWithStatus> {
+    this.logger.log(`loadUserWithStatusByEmail: Got request to load user with email ${email}`);
+    const user = await this.userService.findUserByEmail(email);
+    this.populateAvatarURL(user);
+    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
+    return new UserDataWithStatus(user, status);
+  }
+
+  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_USERNAME}, Transport.TCP)
+  async loadUserWithStatusByUsername(username: string): Promise<UserDataWithStatus> {
+    this.logger.log(`loadUserWithStatusByUsername: Got request to load user with username ${username}`);
+    const user = await this.userService.findUserByUsername(username);
+    this.populateAvatarURL(user);
+    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
+    return new UserDataWithStatus(user, status);
   }
 
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER_EMAIL }, Transport.TCP)
@@ -97,7 +136,7 @@ export class UserController {
   @MessagePattern({ cmd: TCPEndpoints.GET_USER_STATUS }, Transport.TCP)
   async getUserStatus(userId: string): Promise<UserStatus> {
     this.logger.log( `getUserStatus: Got request to get User Status with id ${userId}` );
-    return this.userStatusService.getLastSeenOfUser(userId);
+    return this.userStatusService.getUserStatus(userId);
   }
 
   @MessagePattern({ cmd: TCPEndpoints.VERIFY_USER_EMAIL }, Transport.TCP)

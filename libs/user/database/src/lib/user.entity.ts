@@ -14,7 +14,7 @@ export class User implements IUser {
   username: string;
 
   @Column({ nullable: true })
-  firstName!: string;
+  firstName: string;
 
   @Column({ nullable: true })
   lastName: string;

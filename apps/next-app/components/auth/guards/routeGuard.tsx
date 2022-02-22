@@ -49,6 +49,7 @@ const RouteGuard = ({ children }: { children: JSX.Element }) => {
 
         console.log('routeGuard: Authenticated:', isAuthenticated, authLoading, path);
         if (!authLoading && !isAuthenticated && !publicPaths.includes(path)) {
+            console.log('routeGuard: Redirecting to login');
             setAuthorized(false);
             router.push({
                 pathname: '/login',

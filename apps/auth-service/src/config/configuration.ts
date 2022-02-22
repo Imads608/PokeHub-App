@@ -1,6 +1,13 @@
 export default () => ({
   appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
+  httpPort: parseInt(process.env.HTTP_PORT, 10) || 3001,
   appName: process.env.APPLICATION_NAME,
+  appServiceName: process.env.APPLICATION_SERVICE_NAME,
+  protocol: process.env.PROTOCOL,
+  callbacks: {
+    host: process.env.CALLBACK_HOST,
+    port: process.env.CALLBACK_PORT
+  },
   userService: {
     host: process.env.USER_MICROSERVICE_HOST,
     port: process.env.USER_MICROSERVICE_PORT,
@@ -25,5 +32,6 @@ export default () => ({
   googleClientCreds: {
     id: process.env.GOOGLE_CLIENT_ID,
     secret: process.env.GOOGLE_CLIENT_SECRET,
+    callback: process.env.GOOGLE_OAUTH_CALLBACK
   },
 });

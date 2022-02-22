@@ -11,4 +11,4 @@ export * from './lib/user-socket.model';
 export * from './lib/interfaces/user-socket.interface';
 
 export * from './lib/user-status.model';
-export * from './lib/interfaces/user-status.interface';
+export * from './lib/interfaces/user-status-event.interface';

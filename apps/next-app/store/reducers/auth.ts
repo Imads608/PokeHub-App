@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserPublicProfile, IUserProfileWithToken } from '@pokehub/user/interfaces';
 //import { app_loaded } from './app';
 import {
   auth_failure,
@@ -56,7 +56,7 @@ const authSlice = createSlice({
           ...action.payload['auth-state']
         }
       })
-      .addCase( login_success, ( state: AuthState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
+      .addCase( login_success, ( state: AuthState, action: PayloadAction<IUserProfileWithToken | IUserPublicProfile> ) => {
           console.log('In Login Success')
           state.loading = false;
           state.isAuthenticated = true;

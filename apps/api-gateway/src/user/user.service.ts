@@ -1,7 +1,7 @@
 import { Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile } from '@pokehub/user/models';
+import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, UserProfile, UserPublicData, UserDataWithStatus } from '@pokehub/user/models';
 import { AuthTokens, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
 import { ChatRoom } from '@pokehub/room/database';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
@@ -17,13 +17,48 @@ export class UserService implements IUserService {
               @Inject(ROOM_SERVICE) private readonly roomService: IRoomService, private readonly logger: AppLogger) {
     logger.setContext(UserService.name);
   }
+  
+  async getUserPublicProfile(uid: string): Promise<UserPublicProfile> {
+    try {
+      this.logger.log(`getUserPublicProfile: Retrieving Public User Details with ${uid}`);
+    
+      // Get User Details
+      const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>({ cmd: TCPEndpoints.GET_PUBLIC_USER }, uid) );
+      if (!userData) throw new InternalServerErrorException();
 
-  async loadUser(uid: string): Promise<UserPublicProfile> {
+      // Get Joined Public Rooms
+      const rooms: ChatRoom[] = await this.roomService.getJoinedPublicRoomsForUser(uid);
+
+      // Get DMs
+      return new UserPublicProfile(userData.user, rooms, userData.status);
+    } catch (err) {
+      this.logger.error(`getUserPublicProfile: Got error while trying to retrieve Public User Data with uid ${uid}: ${err}`);
+      throw err;
+    }
+  }
+
+  async getUserPublicData(uid: string): Promise<UserPublicData> {
+    try {
+      this.logger.log(`getUserPublicData: Retrieving Public User Data with ${uid}`);
+
+      // Get User Data
+      const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>({ cmd: TCPEndpoints.GET_PUBLIC_USER }, uid) );
+      if (!userData) throw new InternalServerErrorException();
+
+      return userData.user as UserPublicData;
+    } catch (err) {
+      this.logger.error(`getUserPublicData: Got error while trying to retrieve Public User Data with uid ${uid}: ${err}`);
+      throw err;
+    }
+  }
+
+  async loadUser(uid: string): Promise<UserProfile> {
     try {
       this.logger.log(`loadUser: Loading User with uid ${uid}`);
-      return await this.getUserData(uid);
+      return await this.getUserProfile(uid);
     } catch (err) {
-      this.logger.error( `loadUser: Got error while trying to load User with uid ${uid}: ${err}` ); throw err;
+      this.logger.error( `loadUser: Got error while trying to load User with uid ${uid}: ${err}` ); 
+      throw err;
     }
   }
 
@@ -131,10 +166,10 @@ export class UserService implements IUserService {
     }
   }
 
-  private async getUserData(uid: string): Promise<UserPublicProfile> {
+  private async getUserProfile(uid: string): Promise<UserProfile> {
     // Get User Details
-    const userData: UserData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.FIND_USER }, uid) );
-    userData.password = undefined;
+    const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS }, uid) );
+    (userData.user as UserData).password = undefined;
 
     if (!userData) throw new InternalServerErrorException();
 
@@ -142,6 +177,6 @@ export class UserService implements IUserService {
     const rooms: ChatRoom[] = await this.roomService.getJoinedPublicRoomsForUser(uid);
 
     // Get DMs
-    return new UserPublicProfile(userData, rooms);
+    return new UserProfile(userData.user as UserData, rooms, userData.status);
   }
 }

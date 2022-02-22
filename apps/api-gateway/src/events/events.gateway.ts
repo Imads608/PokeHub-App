@@ -1,4 +1,4 @@
-import { ConnectedSocket, MessageBody, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsResponse, } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse, } from '@nestjs/websockets';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
@@ -10,29 +10,47 @@ import { UserEventsMessageService } from '../messaging/user-events-message.servi
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/common/logger';
 import { IChatRoomData } from '@pokehub/room/interfaces';
-import { UserEventMessage, UserEventTopics, UserNotificationEvent, UserSocketEvents } from '@pokehub/event/user';
+import { UserEventMessage, UserEventTopics, UserNotificationEvent, UserSocketEvents, UserStatusEvent } from '@pokehub/event/user';
+import { Inject } from '@nestjs/common';
+import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 
 @WebSocketGateway({ cors: true })
-export class EventsGateway implements OnGatewayDisconnect {
+export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
   constructor(
     private eventEmitter: EventEmitter2, private eventMessageService: UserEventsMessageService, private configService: ConfigService, 
-    private readonly logger: AppLogger) {
+    private readonly logger: AppLogger, @Inject(AUTH_SERVICE) private authService: IAuthService) {
     logger.setContext(EventsGateway.name);
   }
 
   @OnEvent(UserSocketEvents.USER_STATUS)
-  handleUserStatus(message: UserEventMessage<any>) {
+  handleUserStatus(message: UserEventMessage<UserStatusEvent>) {
     this.logger.log( `handleUserStatus: Received Event: ${JSON.stringify(message)}` );
-    this.server.to(message.from.uid).emit(UserSocketEvents.USER_STATUS, message);
+    this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
   }
 
   @OnEvent(UserSocketEvents.USER_NOTIFICATIONS)
   handleUserNotifications(message: UserEventMessage<any>) {
     this.logger.log( `handleUserNotifications: Received Event: ${JSON.stringify(message)}` );
-    this.server.to(`${message.from.uid}-circle`) .emit(UserSocketEvents.USER_NOTIFICATIONS);
+    this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_NOTIFICATIONS);
+  }
+
+  async handleConnection(client: Socket, ...args: any[]) {
+    try {
+      this.logger.log(`handleConnection: A new client with id ${client.id} is trying to connect`);
+      if (!client.handshake.query.token) {
+        this.logger.log(`handleConnection: No Authorization Token found while connecting to client with id ${client.id}. Disconnecting`);
+        client.disconnect();
+      }
+
+      await this.authService.decodeToken(client.handshake.query.token as string);
+      this.logger.log(`handleConnection: Client ${client.id} Successfully connected to server`);
+    } catch (err) {
+      this.logger.error(`handleConnection: Got error while trying to connect with client: ${JSON.stringify(err)}. Disconnecting`);
+      client.disconnect();
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -56,7 +74,7 @@ export class EventsGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage(UserSocketEvents.USER_STATUS)
-  async onUserStatus( @MessageBody() message: UserEventMessage<any>, @ConnectedSocket() client: Socket ) {
+  async onUserStatus( @MessageBody() message: UserEventMessage<UserStatusEvent>, @ConnectedSocket() client: Socket ) {
     this.logger.log( `onUserStatus: Received message: ${JSON.stringify(message)}` );
     this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
     this.logger.log(`onUserStatus: Publishing User Status to Message Bus`);

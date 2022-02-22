@@ -6,18 +6,18 @@ import {
   auth_failure,
   login_success_verification_needed,
 } from '../../store/actions/common';
-import { loginUser } from '../../api/auth';
+import { loginUserProxy as loginUser } from '../../api/auth';
 import axios, { AxiosError } from 'axios';
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { APIError } from '../../types/api';
 import { Dispatch } from '@reduxjs/toolkit';
 
 const useLoginUser = ( userId: string, password: string, rememberMe: boolean, enable: boolean ) => {
   const dispatch: Dispatch = useDispatch();
-  const res: UseQueryResult< IUserPublicProfileWithToken, Error | AxiosError<APIError> > = useQuery(['users', 'login', { id: userId, password }], 
+  const res: UseQueryResult< IUserProfileWithToken, Error | AxiosError<APIError> > = useQuery(['users', 'login', { id: userId, password }], 
     async () => await loginUser(userId, password), 
     {
-      onSuccess: (userData: IUserPublicProfileWithToken) => {
+      onSuccess: (userData: IUserProfileWithToken) => {
         console.log('Success on Login:', userData);
         //localStorage['pokehub-rememberme'] = true;
         if (userData && userData.user.emailVerified)

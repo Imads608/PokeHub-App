@@ -4,13 +4,15 @@ import {
   login_success_verification_needed,
   logout,
 } from '../actions/common';
-import { IUserData, IUserPublicProfile, IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserData, IUserProfile, IUserProfileWithToken, IUserStatusData, Status, TypeAccount } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
 import { IChatRoomData } from '@pokehub/room/interfaces';
 
 export interface UserState {
   userDetails: IUserData | null;
   joinedPublicRooms: IChatRoomData[] | null;
+  profileSetup: boolean;
+  status: IUserStatusData;
 }
 
 const userSlice = createSlice({
@@ -26,21 +28,30 @@ const userSlice = createSlice({
     leave_chatroom: (state: UserState, action: PayloadAction<IChatRoomData[]>) => {
       state.joinedPublicRooms = action.payload;
     },
+    status_update: (state: UserState, action: PayloadAction<IUserStatusData>) => {
+      state.status = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
-      .addCase( login_success, ( state: UserState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
+      .addCase( login_success, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
           state.userDetails = action.payload.user;
           state.joinedPublicRooms = action.payload.joinedPublicRooms;
+          state.status = action.payload.status;
+          if (action.payload.user.account === TypeAccount.GOOGLE)
+            state.profileSetup = action.payload.user.avatar && action.payload.user.countUsernameChanged > 0;
+          else 
+            state.profileSetup = !!action.payload.user.avatar;
         }
       )
-      .addCase( login_success_verification_needed, ( state: UserState, action: PayloadAction<IUserPublicProfileWithToken | IUserPublicProfile> ) => {
+      .addCase( login_success_verification_needed, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
           state.userDetails = action.payload.user;
         }
       )
       .addCase(logout, (state: UserState) => {
         state.userDetails = null;
         state.joinedPublicRooms = null;
+        state.status = null;
       })
       .addCase(HYDRATE, (state: UserState, action: any) => {
         return {
@@ -51,5 +62,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { join_chatroom, leave_chatroom, user_data_update } = userSlice.actions;
+export const { join_chatroom, leave_chatroom, user_data_update, status_update } = userSlice.actions;
 export default userSlice;

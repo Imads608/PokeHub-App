@@ -1,7 +1,8 @@
 import { IChatRoomData } from '@pokehub/room/interfaces';
-import { IUserData } from './user-data.interface';
+import { IUserPublicData, IUserStatusData } from '..';
 
 export interface IUserPublicProfile {
-  user: IUserData;
+  user: IUserPublicData;
   joinedPublicRooms: IChatRoomData[];
+  status: IUserStatusData;
 }

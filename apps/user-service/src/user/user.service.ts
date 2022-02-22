@@ -112,6 +112,7 @@ export class UserService implements IUserService {
 
     // Return User if Account Type is Google otherwise throw and error
     if (userData && userData.account === TypeAccount.GOOGLE) {
+      await this.userStatusService.upsertLastSeen(userData.uid, new Date());
       return userData;
     } else if (userData && userData.account === TypeAccount.REGULAR)
       throw new RpcException( 'An account with this already exists. Please login with your account credentials' );

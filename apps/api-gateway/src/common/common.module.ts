@@ -7,6 +7,7 @@ import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { MAIL_SERVICE } from './mail-service.interface';
 import { MailService } from './mail.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MailService } from './mail.service';
       }
     ]),
     LoggerModule,
+    HttpModule
   ],
   providers: [{ useClass: AuthService, provide: AUTH_SERVICE }, { useClass: MailService, provide: MAIL_SERVICE }, AuthGuard],
   exports: [
@@ -46,6 +48,7 @@ import { MailService } from './mail.service';
     { useClass: MailService, provide: MAIL_SERVICE },
     AuthGuard,
     LoggerModule,
+    HttpModule
   ],
 })
 export class CommonModule {}

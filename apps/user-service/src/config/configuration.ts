@@ -12,6 +12,10 @@ export default () => ({
   rabbitMQ: {
     host: process.env.RABBITMQ_SERVICE,
     port: process.env.RABBITMQ_PORT,
+    eventsExchange: {
+      name: 'events-exchange',
+      userEventsRoutingPattern: 'events.user.*',
+    }
   },
   awsConfig: {
     profile: 'pokehub',

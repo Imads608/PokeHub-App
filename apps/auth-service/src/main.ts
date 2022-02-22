@@ -13,20 +13,17 @@ async function bootstrap() {
   //app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.useLogger(await app.resolve(AppLogger));
 
-  const configService: ConfigService = app.get<ConfigService>(ConfigService);
+  const configService: ConfigService = app.get(ConfigService);
 
   const microservice = app.connectMicroservice({
     transport: Transport.TCP,
     options: {
       port: +configService.get<number>('appPort'),
-      retryAttempts: 2,
-      retryDelay: 200,
     },
   });
 
   await app.startAllMicroservices();
-  //await app.listen(+configService.get<number>('appPort'));
-  logger.log(`Application started on port ${configService.get('appPort')}`);
-  //await app.listen();
+  await app.listen(+configService.get<number>('httpPort'));
+  logger.log(`Application started on port ${configService.get('httpPort')}`);
 }
 bootstrap();

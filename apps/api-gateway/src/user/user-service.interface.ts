@@ -1,6 +1,6 @@
 import { EmailLogin } from '@pokehub/auth/models';
 import { UserIdTypes } from '@pokehub/user/interfaces';
-import { CreateUserRequest, UserData, UserDataWithToken, UserPublicProfile, } from '@pokehub/user/models';
+import { CreateUserRequest, UserData, UserDataWithToken, UserProfile, UserPublicData, UserPublicProfile } from '@pokehub/user/models';
 
 export const USER_SERVICE = 'USER SERVICE';
 
@@ -10,7 +10,21 @@ export interface IUserService {
    * @param uid The Id of the User
    * @returns The Public Profile Data of the User
    */
-  loadUser(uid: string): Promise<UserPublicProfile>;
+  loadUser(uid: string): Promise<UserProfile>;
+
+  /**
+   * Retrieves a User's Public Profile
+   * @param uid The Id of the User.
+   * @returns The User Profile Object
+   */
+  getUserPublicProfile(uid: string): Promise<UserPublicProfile>;
+
+  /**
+   * Retrieves a User's Non-sensitive Data
+   * @param uid The Id of the User.
+   * @returns the User Public Data Object
+   */
+  getUserPublicData(uid: string): Promise<UserPublicData>;
 
   /**
    * Updates the Database with the provided User Data

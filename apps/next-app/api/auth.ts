@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { getAPIRequestHeader } from './utils';
 import appConfig from '../config';
 import http from '../axios';
-import { IUserData, IUserPublicProfile, IUserPublicProfileWithToken, } from '@pokehub/user/interfaces';
+import { IUserData, IUserProfile, IUserProfileWithToken, IUserPublicProfile, } from '@pokehub/user/interfaces';
 import { TokenTypes } from '@pokehub/auth/interfaces';
 
 export const getCurrentUserData = async (uid) => {
@@ -13,45 +13,51 @@ export const getCurrentUserData = async (uid) => {
   return userServiceRes.data;
 };
 
-export const loginUser = async (userId: string, password: string) => {
+export const loginUserProxy = async (userId: string, password: string) => {
   console.log('Going to login user');
-  const resp: AxiosResponse<IUserPublicProfileWithToken> = await axios.post(
-    `/api/auth/login`,
+  const resp: AxiosResponse<IUserProfileWithToken> = await axios.post(`/api/auth/login`,
     { email: userId, password }
   );
+  http.defaults.headers.Authorization = resp.data.accessToken;
   return resp.data;
 };
 
 export const signupUser = async ( email: string, username: string, password: string ) => {
-  const resp: AxiosResponse<IUserPublicProfileWithToken> = await http.post( `${appConfig.apiGateway}/users`, { email, username, password },
-              getAPIRequestHeader()
-  );
+  const resp: AxiosResponse<IUserProfileWithToken> = await http.post(`/users`, { email, username, password }, getAPIRequestHeader());
   return resp.data;
 };
 
 export const getNewAccessToken = async () => {
-  const resp: AxiosResponse<{ access_token: string }> = await http.get( `${appConfig.apiGateway}/auth/access-token` );
+  const resp: AxiosResponse<{ access_token: string }> = await http.get( `/auth/access-token` );
   return resp.data.access_token;
 };
 
-export const logoutUser = async () => {
+export const getNewAccessTokenResponse = async () => {
+  const resp: AxiosResponse<{ access_token: string }> = await http.get( `/auth/access-token` );
+  return resp;
+};
+
+export const logoutUserProxy = async () => {
   const resp: AxiosResponse<{ message: string }> = await axios.post('/api/auth/logout');
+  http.defaults.headers.Authorization = null;
   return resp.data;
 }
 
 export const loadUserProxy = async () => {
-  const resp: AxiosResponse<IUserPublicProfile> = await axios.get( `/api/auth/load-user` );
-  return resp.data
+  const resp: AxiosResponse<IUserProfileWithToken> = await axios.get( `/api/auth/load-user` );
+  console.log('Loaded User Proxy result:', resp.data.accessToken);
+  http.defaults.headers.Authorization = resp.data.accessToken;
+  return resp.data as IUserProfile;
 }
 
 export const loadUser = async () => {
-  const resp: AxiosResponse<IUserPublicProfile> = await http.get( `${appConfig.apiGateway}/users/auth`, );
+  const resp: AxiosResponse<IUserProfile> = await http.get('/users/auth');
   return resp.data;
 };
 
 export const googleOAuthLogin = async (googleTokenId: string) => {
   console.log('googleOAuthLogin: Logging in Google OAuth User', googleTokenId);
-  const response: AxiosResponse<IUserPublicProfileWithToken> = await axios.post( `/api/auth/oauth-google`, null,
+  const response: AxiosResponse<IUserProfileWithToken> = await axios.post( `/api/auth/oauth-google`, null,
     {
       headers: {
         Authorization: googleTokenId,
@@ -63,22 +69,19 @@ export const googleOAuthLogin = async (googleTokenId: string) => {
 };
 
 export const activateUser = async (verificationToken: string) => {
-  const resp: AxiosResponse<IUserData> = await http.get( `${appConfig.apiGateway}/users/auth/activate`,
-    { headers: { Authorization: verificationToken } }
-  );
+  const resp: AxiosResponse<IUserData> = await http.get(`/users/auth/activate`, { headers: { Authorization: verificationToken } });
   return resp.data;
 };
 
 export const resetPassword = async (resetToken: string, newPassword: string) => {
-    const resp: AxiosResponse<IUserData> = await http.post( `${appConfig.apiGateway}/users/auth/password-reset`, { password: newPassword },
-      { headers: { Authorization: resetToken } }
-    );
+    const resp: AxiosResponse<IUserData> = await http.post(`/users/auth/password-reset`, { password: newPassword },
+                { headers: { Authorization: resetToken } });
     return resp.data;
 };
 
 export const validateToken = async (token: string, tokenType: TokenTypes) => {
     const headers = getAPIRequestHeader();
-    const resp: AxiosResponse<boolean> = await http.get( `${appConfig.apiGateway}/auth/token-validation`, 
+    const resp: AxiosResponse<boolean> = await http.get( `/auth/token-validation`, 
                 { ...headers, params: { token: token, tokenType: tokenType }});
     return resp.data;
 }

@@ -3,14 +3,19 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { UserDataWithToken } from '@pokehub/user/models';
 import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody } from '@pokehub/auth/models';
-import { TCPEndpoints } from '@pokehub/auth/interfaces';
+import { TCPEndpoints, HTTPEndpoints } from '@pokehub/auth/interfaces';
 import { AppLogger } from '@pokehub/common/logger';
 import { IAuthService } from './auth-service.interface';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AuthService implements IAuthService {
-    constructor(@Inject('AuthMicroservice') private readonly clientProxy: ClientProxy, private readonly logger: AppLogger) {
+    private authMicroserviceURL: string;
+    constructor(@Inject('AuthMicroservice') private readonly clientProxy: ClientProxy, private readonly logger: AppLogger, private readonly configService: ConfigService,
+                private readonly httpService: HttpService) {
         logger.setContext(AuthService.name);
+        this.authMicroserviceURL = `${configService.get<string>('protocol')}://${configService.get<string>('authService.host')}:${configService.get<number>('authService.portHttp')}`;
     }
 
     async googleOAuthLogin(token: string): Promise<UserDataWithToken> {
@@ -30,20 +35,22 @@ export class AuthService implements IAuthService {
     }
 
     async loginUser(userCreds: EmailLogin | UsernameLogin): Promise<UserDataWithToken> {
-        this.logger.log(`loginUser: Validating User Credentials`);
+        this.logger.log(`loginUser: Validating User Credentials: ${this.authMicroserviceURL}/local/login/email`);
         if (!this.isEmailLogin(userCreds) && !this.isUsernameLogin(userCreds))
         throw new BadRequestException();
 
         try {
             let userData: UserDataWithToken = null;
             if (this.isEmailLogin(userCreds)) {
-                userData = await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.EMAIL_LOGIN }, userCreds));
+                //userData = await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.EMAIL_LOGIN }, userCreds));
+                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}/${HTTPEndpoints.EMAIL_LOGIN}`, userCreds))).data;
             } else {
-                userData = await firstValueFrom( this.clientProxy.send<UserDataWithToken>( { cmd: TCPEndpoints.USERNAME_LOGIN }, userCreds ) );
+                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}/${HTTPEndpoints.USERNAME_LOGIN}`, userCreds))).data;
+                //userData = await firstValueFrom( this.clientProxy.send<UserDataWithToken>( { cmd: TCPEndpoints.USERNAME_LOGIN }, userCreds ) );
             }
             if (!userData) throw new InternalServerErrorException();
             userData.user.password = undefined;
-            
+
             this.logger.log(`loginUser: Successfully validated user credentials`);
             return userData;
         } catch (err) {
@@ -100,7 +107,8 @@ export class AuthService implements IAuthService {
         this.logger.log( `decodeToken: Sending Access Token Validation Request to Auth Service: ${accessToken}` );
 
         try {
-            const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: TCPEndpoints.DECODE_TOKEN }, accessToken ) );
+            const userData = (await firstValueFrom( this.httpService.get<JwtTokenBody>(`${this.authMicroserviceURL}/${HTTPEndpoints.AUTHENTICATE_USER}`, { headers: { authorization: accessToken }}))).data;
+            //const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: TCPEndpoints.DECODE_TOKEN }, accessToken ) );
             if (!userData) throw new InternalServerErrorException();
 
             this.logger.log( `decodeToken: Successfully decoded Access Token to User Data` );
@@ -114,7 +122,7 @@ export class AuthService implements IAuthService {
     async getNewAccessToken( refreshToken: string ): Promise<{ access_token: string }> {
         this.logger.log( `getNewAccessToken: Sending Request for New Access Token to Auth Service: ${refreshToken}` );
         try {
-            const token = await firstValueFrom( this.clientProxy.send<{ access_token: string }>( { cmd: TCPEndpoints.GET_ACCESS_TOKEN }, refreshToken ) );
+            const token = (await firstValueFrom( this.httpService.get<{ access_token: string }>(`${this.authMicroserviceURL}/${HTTPEndpoints.GET_ACCESS_TOKEN}`, { headers: { authorization: refreshToken }}))).data;
             if (!token) throw new InternalServerErrorException();
 
             this.logger.log( `getNewAccessToken: Successfully generated Access Token from Refresh Token` );

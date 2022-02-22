@@ -1,13 +1,12 @@
-import { IUserStatus } from "./interfaces/user-status.interface";
+import { UserStatusData } from "@pokehub/user/models";
+import { IUserStatusEvent } from "..";
 
-export class UserStatusData implements IUserStatus {
-  userUid: string;
-  sentTime: Date;
-  isAway: boolean;
+export class UserStatusEvent implements IUserStatusEvent {
+  status: UserStatusData;
+  isHardUpdate: boolean;
 
-  constructor(uid: string, sentTime: Date, isAway: boolean) {
-    this.userUid = uid;
-    this.sentTime = sentTime;
-    this.isAway = isAway;
+  constructor(status: UserStatusData, isHardUpdate: boolean) {
+    this.status = status;
+    this.isHardUpdate = isHardUpdate;
   }
 }

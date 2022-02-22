@@ -2,7 +2,7 @@ import { useQuery, UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
 //import { authFailure, loggedIn, setAuthLoaded } from "../actions/auth";
 import { logout } from '../../store/actions/common';
-import { logoutUser } from '../../api/auth';
+import { logoutUserProxy as logoutUser } from '../../api/auth';
 import { AxiosError } from 'axios';
 import { APIError } from '../../types/api';
 import { Dispatch } from '@reduxjs/toolkit';

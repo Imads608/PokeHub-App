@@ -3,7 +3,7 @@ import { Avatar, Box, Container, CssBaseline, Grid, TextField, Typography, Butto
 import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { FieldValues, UseControllerProps, useForm } from 'react-hook-form';
 import useLoginUser from '../../hooks/auth/useLoginUser';
 import EmailField from '../../components/auth/fields/emailField';
 import PasswordField from '../../components/auth/fields/passwordField';
@@ -47,7 +47,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     margin: theme.spacing(3, 0, 2),
   },
 }));
-
 
 export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
   await withLoadUser.isAuth({ req, res, store});
@@ -103,6 +102,8 @@ const Login = () => {
   useEffect(() => {
     setLoginEnable(false);
   }, []);
+
+  console.log('Result Loading', result.isLoading);
 
   return (
     <div>

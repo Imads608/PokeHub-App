@@ -1,6 +1,7 @@
 export default () => ({
   appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
   appName: process.env.APPLICATION_NAME,
+  protocol: process.env.PROTOCOL || 'http',
   userService: {
     host: process.env.USER_MICROSERVICE_HOST,
     port: process.env.USER_MICROSERVICE_PORT,
@@ -9,6 +10,7 @@ export default () => ({
   authService: {
     host: process.env.AUTH_MICROSERVICE_HOST,
     port: process.env.AUTH_MICROSERVICE_PORT,
+    portHttp: process.env.AUTH_MICROSERVICE_HTTP_PORT
   },
   chatService: {
     host: process.env.CHAT_MICROSERVICE_HOST,

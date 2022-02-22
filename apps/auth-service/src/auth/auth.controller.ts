@@ -5,13 +5,14 @@ import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/au
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
 import { AppLogger } from '@pokehub/common/logger';
 import { TCPEndpoints } from '@pokehub/auth/interfaces';
+import { IJwtAuthService, JWT_AUTH_SERVICE } from '../common/jwt-auth-service.interface';
 
 @Controller()
 export class AuthController {
-    constructor( @Inject(AUTH_SERVICE) private readonly authService: IAuthService, private readonly logger: AppLogger ) {
+    constructor( @Inject(JWT_AUTH_SERVICE) private readonly authService: IJwtAuthService, private readonly logger: AppLogger ) {
         this.logger.setContext(AuthController.name);
     }
-
+    /*
     @MessagePattern({ cmd: TCPEndpoints.EMAIL_LOGIN }, Transport.TCP)
     async emailLogin(user: EmailLogin): Promise<UserDataWithToken> {
         this.logger.log( `emailLogin: Got request to login user with Email ${user.email}` );
@@ -28,7 +29,7 @@ export class AuthController {
     async googleOAuthLogin(token: string) {
         this.logger.log( `googleOAuthLogin: Got request to login user with Google OAuth` );
         return await this.authService.googleOAuthLogin(token);
-    }
+    }*/
 
     @MessagePattern({ cmd: TCPEndpoints.VALIDATE_ACCESS_TOKEN }, Transport.TCP)
     async validateAccessToken(accessToken: string): Promise<boolean> {
@@ -54,12 +55,14 @@ export class AuthController {
         return await this.authService.decodeToken(accessToken);
     }
 
+    /*
     @MessagePattern({ cmd: TCPEndpoints.GENERATE_TOKENS }, Transport.TCP)
     async generateTokens(userInfo: JwtTokenBody): Promise<AuthTokens> {
         this.logger.log( `generateTokens: Got request to generate tokens for user with uid ${userInfo.uid}` );
         return await this.authService.generateNewTokens(userInfo);
     }
-
+    */
+   
     @MessagePattern({ cmd: TCPEndpoints.GET_ACCESS_TOKEN }, Transport.TCP)
     async getNewAccessToken(refreshToken: string): Promise<{ access_token: string }> {
         this.logger.log('getNewAccessToken: Got request to generate access token');

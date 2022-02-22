@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { NextRouter, useRouter } from 'next/router';
 import { useEmailActivation } from '../../hooks/auth/useEmailActivation';
 import { UseQueryResult } from 'react-query';
@@ -12,7 +12,7 @@ import SuccessAuthNotification from '../../components/auth/notifications/success
 const UserActivation = () => {
     const router: NextRouter = useRouter();
     const activationToken = router.query['activation_token'] as string === 'undefined' ? null : router.query['activation_token'] as string;
-    const result: UseQueryResult<IUserPublicProfileWithToken, Error | APIError> = useEmailActivation(activationToken);
+    const result: UseQueryResult<IUserProfileWithToken, Error | APIError> = useEmailActivation(activationToken);
     const error = result.error as AxiosError<APIError>;
 
     return (

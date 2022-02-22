@@ -5,6 +5,8 @@ import { WindowTypes } from '../reducers/app';
 
 const userDetails = (state: RootState) => state['user-state'].userDetails;
 const joinedRooms = (state: RootState) => state['user-state'].joinedPublicRooms;
+const profileSetup = (state: RootState) => state['user-state'].profileSetup;
+const status = (state: RootState) => state['user-state'].status;
 
 export const getUser = createSelector(
   [userDetails],
@@ -26,6 +28,10 @@ export const getJoinedRooms = createSelector(
   (joinedRooms) => joinedRooms
 );
 
+export const getUserStatus = createSelector(
+  [status], (status) => status
+);
+
 export const getPublicUser = createSelector(
   [getUsername, getUid],
   (username, uid) => ({ username, uid })
@@ -45,4 +51,8 @@ export const isUserMemberOfCurrentChatRoom = createSelector(
     )
       ? true
       : false
+);
+
+export const isProfileSetup = createSelector(
+  [profileSetup], (profileSetup) => profileSetup
 );

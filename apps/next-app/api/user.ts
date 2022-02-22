@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import appConfig from '../config';
-import { IUserData, UserIdTypes } from '@pokehub/user/interfaces';
+import { IUserData, IUserPublicProfile, UserIdTypes } from '@pokehub/user/interfaces';
 import { APIError } from '../types/api';
 import { getAPIRequestHeader } from './utils';
 import http from '../axios';
@@ -11,7 +11,7 @@ function getRandomInt(max) {
 
 export const isUsernameAvailable = async (username: string) => {
     try {
-        await http.head(`${appConfig.apiGateway}/users/${username}`, { params: { typeId: UserIdTypes.USERNAME }});
+        await http.head(`/users/${username}`, { params: { typeId: UserIdTypes.USERNAME }});
     } catch (err) {
         const apiError = err as AxiosError<APIError>;
         if (apiError.response.status === 404)
@@ -21,13 +21,33 @@ export const isUsernameAvailable = async (username: string) => {
     return false;
 };
 
+export const isEmailAvailable = async (email: string) => {
+    try {
+        console.log('isEmailAvailable API: Checking if email',  email, 'exists');
+        await http.head(`/users/${email}`, { params: { typeId: UserIdTypes.EMAIL }});
+    } catch (err) {
+        const apiError = err as AxiosError<APIError>;
+        if (apiError.response.status === 404)
+            return true;
+        throw err;
+    }
+
+    return false;
+}
+
+export const getUserPublicProfile = async (uid: string) => {
+    console.log('HTTP Authorization: ', http.defaults.headers.Authorization);
+    const resp: AxiosResponse<IUserPublicProfile> = await http.get(`/users/${uid}`);
+    return resp.data;
+}
+
 export const updateUser = async (user: IUserData) => {
-    const resp: AxiosResponse<IUserData> = await http.put(`${appConfig.apiGateway}/users/${user.uid}`, { user }, getAPIRequestHeader())
+    const resp: AxiosResponse<IUserData> = await http.put(`/users/${user.uid}`, { user }, getAPIRequestHeader())
     return resp.data;
 }
 
 export const setProfileAvatar = async (userId: string, avatar: FormData) => {
-    const resp: AxiosResponse<IUserData> = await http.post(`${appConfig.apiGateway}/users/${userId}/avatar`, avatar, { headers: { 'Content-Type': 'multipart/form-data' } });
+    const resp: AxiosResponse<IUserData> = await http.post(`/users/${userId}/avatar`, avatar, { headers: { 'Content-Type': 'multipart/form-data' } });
     return resp.data;
 }
 

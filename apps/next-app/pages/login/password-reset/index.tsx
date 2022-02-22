@@ -2,7 +2,7 @@ import { Avatar, Box, Container, Typography, Button, PaletteMode, } from '@mui/m
 import makeStyles from '@mui/styles/makeStyles';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { FieldValues, UseControllerProps, useForm } from 'react-hook-form';
 import EmailField from '../../../components/auth/fields/emailField';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';

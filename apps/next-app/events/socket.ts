@@ -1,17 +1,18 @@
 import { io, Socket } from 'socket.io-client';
 import appConfig from '../config';
 import { DefaultEventsMap } from 'socket.io-client/build/typed-events';
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { UserSocketEvents, UserEventMessage, UserSocket } from '@pokehub/event/user';
 import { IChatRoomData } from '@pokehub/room/interfaces';
+import http from '../axios';
 
 export let socket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
-export const connectWebSocket = (action: PayloadAction<IUserPublicProfileWithToken>) => {
+export const connectWebSocket = (action: PayloadAction<IUserProfileWithToken>) => {
   // Create Socket Client
-  socket = io(`${appConfig.apiGateway}`); //, { transports: ['websocket'], upgrade: false});
-  console.log('connectWebSocket: Connecting to server')
+  socket = io(`${appConfig.apiGateway}`, { query: { token: http.defaults.headers.Authorization } }); //, { transports: ['websocket'], upgrade: false});
+  console.log('connectWebSocket: Connecting to server with token', http.defaults.headers.Authorization );
 
   // Connect to Server
   socket.on('connect', () => {

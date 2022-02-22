@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { UserSignup } from '../../types/auth';
 import axios, { AxiosError } from 'axios';
 import { useMutation } from 'react-query';
@@ -16,13 +16,13 @@ export const useSignupUser = () => {
   const mutation = useMutation((userCreds: UserSignup) =>
       signupUser(userCreds.email, userCreds.username, userCreds.password),
     {
-      onSuccess: (data: IUserPublicProfileWithToken) => {
+      onSuccess: (data: IUserProfileWithToken) => {
         console.log('Got successful response from api:', data);
         data && data.user.emailVerified
           ? dispatch(login_success(data))
           : dispatch(login_success_verification_needed(data));
       },
-      onError: (err: Error | AxiosError) => {
+      onError: (err: Error | AxiosError<APIError>) => {
         if (err && axios.isAxiosError(err)) {
           const apiError = err as AxiosError<APIError>;
           dispatch(auth_failure(apiError.response?.data));

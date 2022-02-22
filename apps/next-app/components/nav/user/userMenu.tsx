@@ -22,6 +22,7 @@ import { toast } from 'react-toastify';
 import { getAppTheme } from '../../../store/selectors/app';
 import { RootState } from '../../../store/store';
 import { PaletteMode } from '@mui/material';
+import Link from 'next/link';
 
 const StyledMenu: any = withStyles({
   paper: {
@@ -76,7 +77,8 @@ const UserMenu = ({ user }: UserMenuProps) => {
   };
 
   const logoutUser = () => {
-    queryClient.removeQueries(['users', 'logout', { id: user.uid }]);
+    //queryClient.removeQueries(['users', 'logout', { id: user.uid }]);
+    queryClient.clear()
     setEnableLogout(true);
     //dispatch(logout());
   };
@@ -117,12 +119,14 @@ const UserMenu = ({ user }: UserMenuProps) => {
           </ListItemIcon>
           <ListItemText primary="Preferences" />
         </MenuItem>
-        <MenuItem>
-          <ListItemIcon style={{ minWidth: '30px' }}>
-            <PersonIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Profile" />
-        </MenuItem>
+        <Link href={`/users/${user.uid}`} passHref>
+          <MenuItem>
+            <ListItemIcon style={{ minWidth: '30px' }}>
+              <PersonIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Profile" />
+          </MenuItem>
+        </Link>
       </StyledMenu>
     </div>
   );

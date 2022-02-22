@@ -4,17 +4,18 @@ import appConfig from './config';
 import createAuthRefreshInterceptor from 'axios-auth-refresh';
 
 const http = axios.create({
-  baseURL: `http://${appConfig.apiGateway}`,
-  withCredentials: true,
+  baseURL: `${appConfig.apiGateway}`,
+  withCredentials: false,
 });
 
-createAuthRefreshInterceptor(http, (failedRequest => http.get(`${appConfig.apiGateway}/auth/access-token`).then(resp => {
-  const { access_token } = resp.data;
+createAuthRefreshInterceptor(http, (failedRequest => http.get(`${appConfig.frontend}/api/auth/load-user`).then(resp => {
+  const { accessToken } = resp.data;
+  console.log('Refetching Access Token');
   //const bearer = `Bearer ${accessToken}`;
-  http.defaults.headers.Authorization = access_token;
-  failedRequest.response.config.headers.Authorization = access_token;//bearer;
+  http.defaults.headers.Authorization = accessToken;
+  failedRequest.response.config.headers.Authorization = accessToken;//bearer;
   return Promise.resolve();
-})));
+})), { statusCodes: [401, 403] });
 
 export default http;
 

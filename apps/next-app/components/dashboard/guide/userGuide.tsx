@@ -20,6 +20,7 @@ const useStyles = makeStyles((theme: CustomTheme) => ({
     color: theme.palette.primary.main,
     borderRadius: '5px',
     height: '300px',//20%,
+    width: '75%',
     display: 'flex',
     flexDirection: 'column',
     transition: 'ease-out 1s'

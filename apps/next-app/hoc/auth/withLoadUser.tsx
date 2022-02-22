@@ -28,6 +28,8 @@ withLoadUser.isAuth = async ({ req, res, store } : IsAuthProps) => {
         http.defaults.headers.cookie = req.headers.cookie || "";
         http.defaults.headers.Authorization = req.headers.Authorization || "";
         try {
+            if (!http.defaults.headers.cookie)
+                throw new Error("Unauthorized");
             const accessToken = await getNewAccessToken();
             if (!accessToken) {
                 throw new Error("No Access Token retrieved");

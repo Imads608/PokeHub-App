@@ -1,4 +1,4 @@
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import axios, { AxiosError } from 'axios';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useDispatch } from 'react-redux';
@@ -9,11 +9,11 @@ import { APIError } from '../../types/api';
 export const useGoogleOAuthLogin = () => {
   const dispatch = useDispatch();
   const mutation: UseMutationResult<
-    IUserPublicProfileWithToken,
+    IUserProfileWithToken,
     Error | AxiosError<APIError>
   > = useMutation((tokenId: string) => googleOAuthLogin(tokenId),
     {
-      onSuccess: (data: IUserPublicProfileWithToken) => {
+      onSuccess: (data: IUserProfileWithToken) => {
         console.log('Got successful response from api:', data);
         data && dispatch(login_success(data));
       },

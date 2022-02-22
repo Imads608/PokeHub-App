@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, Res, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { AuthService } from '../common/auth.service';
 import { LoginInterceptor } from './login.interceptor';
 import { UsernameLogin, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
 import { TokenTypes } from '@pokehub/auth/interfaces';
 import { AuthGuard } from '@nestjs/passport';
-import { UserDataWithToken, UserPublicProfileWithToken } from '@pokehub/user/models';
+import { UserDataWithToken, UserProfileWithToken } from '@pokehub/user/models';
 import { OauthInterceptor } from './oauth.interceptor';
 import { RoomService } from '../chat/common/room.service';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
@@ -23,7 +23,7 @@ export class AuthController {
 
   @UseInterceptors(LoginInterceptor)
   @Post('login')
-  async login( @Body() loginCreds: UsernameLogin | EmailLogin, @Res() res: Response ): Promise<Response<UserPublicProfileWithToken>> {
+  async login( @Body() loginCreds: UsernameLogin | EmailLogin, @Res() res: Response ): Promise<Response<UserProfileWithToken>> {
     // Validate Credentials
     this.logger.log(`login: Got request to login user`);
     const userWithToken = await this.authService.loginUser(loginCreds);
@@ -33,7 +33,7 @@ export class AuthController {
       const token = await this.authService.generateEmailVerficationToken(new JwtTokenBody( userWithToken.user.username, userWithToken.user.email, userWithToken.user.uid));
       await this.mailService.sendEmailConfirmation(userWithToken.user.email, token.email_verification_token);
       this.logger.log( `login: Successfully generated Verification Token and Sent email to activate account` );
-      return res.send(new UserPublicProfileWithToken( userWithToken.user, null, null ));
+      return res.send(new UserProfileWithToken( userWithToken.user, null, null, null ));
     }
 
     // Retrieve Rooms User has joined
@@ -49,12 +49,12 @@ export class AuthController {
       sameSite: true
     });
     
-    return res.send(new UserPublicProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
+    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms, userWithToken.status));
   }
 
   @UseInterceptors(OauthInterceptor)
   @Post('oauth-google')
-  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<Response<UserPublicProfileWithToken>>  {
+  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<Response<UserProfileWithToken>>  {
     // Validate OAuth Credentials
     this.logger.log( `googleOAuthLogin: Got request to login user through Google OAuth` );
     const userWithToken: UserDataWithToken = await this.authService.googleOAuthLogin(req.headers['authorization']);
@@ -73,7 +73,7 @@ export class AuthController {
       sameSite: true
     });
     
-    return res.send(new UserPublicProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
+    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms, userWithToken.status));
   }
 
   @Post('logout')
@@ -95,6 +95,9 @@ export class AuthController {
   @Get('access-token')
   async getAccessToken(@Req() req: Request): Promise<{ access_token: string }> {
     this.logger.log( `getAccessToken: Got request to generate Access Token for user` );
+    if (!req.cookies['refreshToken']) {
+      throw new UnauthorizedException();
+    }
     return await this.authService.getNewAccessToken( req.cookies['refreshToken']);
   }
 

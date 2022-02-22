@@ -1,19 +1,22 @@
 import { ChatRoom } from '@pokehub/room/database';
 import { ChatRoomData } from '@pokehub/room/models';
-import { IUserPublicProfileWithToken } from '@pokehub/user/interfaces';
+import { IUserProfileWithToken } from '@pokehub/user/interfaces';
+import { UserStatusData } from '..';
 import { UserDataWithToken } from './user-data-token.model';
 import { UserData } from './user-data.model';
 
-export class UserPublicProfileWithToken extends UserDataWithToken implements IUserPublicProfileWithToken {
+export class UserProfileWithToken extends UserDataWithToken implements IUserProfileWithToken {
   joinedPublicRooms: ChatRoomData[];
 
   constructor(
     userData: UserData,
     accessToken: string,
-    rooms: ChatRoomData[] | ChatRoom[]
+    rooms: ChatRoomData[] | ChatRoom[],
+    status: UserStatusData
   ) {
-    super(userData, accessToken);
+    super(userData, accessToken, status);
     this.joinedPublicRooms = [];
+    
     if (rooms && rooms.length > 0 && this.isRoomChatRoomDataType(rooms[0])) {
       this.setDataFromChatRooms(rooms as ChatRoom[]);
     } else if (rooms) {
