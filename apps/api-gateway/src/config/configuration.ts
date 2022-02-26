@@ -25,9 +25,9 @@ export default () => ({
     port: process.env.RABBITMQ_PORT,
     eventsExchange: {
       name: 'events-exchange',
-      userEventsRoutingPattern: 'events.user.*',
-      publicRoomEventsRoutingPattern: 'events.publicRooms.*',
-      dmEventsRoutingPattern: 'events.dms.*',
+      userEventsRoutingPattern: 'events.user',
+      publicRoomEventsRoutingPattern: 'events.publicRooms',
+      dmEventsRoutingPattern: 'events.dms',
     },
   },
   googleClientCreds: {

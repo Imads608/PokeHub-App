@@ -8,13 +8,13 @@ import { RoomModule } from '../chat/room/room.module';
 import { CommonModule } from '../common/common.module';
 import configuration from '../config/configuration';
 import { EventsModule } from '../events/events.module';
-import { MessagingModule } from '../messaging/messaging.module';
 import { UserModule } from '../user/user.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailModule } from '../mail/mail.module';
+import { PubSubModule } from '../pubsub/pubsub.module';
 
 const routes: Routes = [
   {
@@ -53,7 +53,7 @@ const routes: Routes = [
     CommonModule,
     ChatModule,
     EventsModule,
-    MessagingModule,
+    PubSubModule,
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,

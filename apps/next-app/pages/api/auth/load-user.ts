@@ -15,7 +15,7 @@ const loadUserRequest =  async (req: NextApiRequest, res: NextApiResponse) => {
         http.defaults.headers.Authorization = req.headers.Authorization || "";
 
         if (!http.defaults.headers.cookie) {
-            res.status(400).json({ message: 'Unauthorized' });
+            res.status(401).json({ message: 'Unauthorized' });
             return;
         }
 

@@ -1,27 +1,22 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse, } from '@nestjs/websockets';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
-//import { MessagingService } from '../messaging/messaging.service';
-//import { UserEventMessage, EventUserTopics, SocketUserEvents, UserNotificationEvent, } from '@pokehub/events';
 import { EventEmitter2 } from 'eventemitter2';
 import { OnEvent } from '@nestjs/event-emitter';
-import { UserEventsMessageService } from '../messaging/user-events-message.service';
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/common/logger';
 import { IChatRoomData } from '@pokehub/room/interfaces';
-import { UserEventMessage, UserEventTopics, UserNotificationEvent, UserSocketEvents, UserStatusEvent } from '@pokehub/event/user';
+import { UserEventMessage, UserNotificationEvent, UserSocketEvents, UserStatusEvent } from '@pokehub/event/user';
 import { Inject } from '@nestjs/common';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
+import { IUserEventsPublisherService, USER_EVENTS_PUBLISHER_SERVICE } from '../pubsub/user/user-events-publisher-service.interface';
 
 @WebSocketGateway({ cors: true })
 export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
-  constructor(
-    private eventEmitter: EventEmitter2, private eventMessageService: UserEventsMessageService, private configService: ConfigService, 
-    private readonly logger: AppLogger, @Inject(AUTH_SERVICE) private authService: IAuthService) {
+  constructor(@Inject(USER_EVENTS_PUBLISHER_SERVICE) private readonly userEventsPublisherService: IUserEventsPublisherService, 
+              private readonly logger: AppLogger, @Inject(AUTH_SERVICE) private readonly authService: IAuthService) {
     logger.setContext(EventsGateway.name);
   }
 
@@ -69,8 +64,8 @@ export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
       client.leave(`${data.subscribedUserUid}-circle`);
     }
     this.logger.log(`onUserNotification: Publishing Event to Message Bus`);
-    this.eventMessageService.publishEvent( message, 
-    `${this.configService.get<string>( 'rabbitMQ.eventsExchange.userEventsRoutingPattern' )}.${UserEventTopics.USER_NOTIFICATIONS}` );
+    //this.userEventsPublisherService.publishEvent( message, 
+    //`${this.configService.get<string>( 'rabbitMQ.eventsExchange.userEventsRoutingPattern' )}.${UserEventTopics.USER_NOTIFICATIONS}` );
   }
 
   @SubscribeMessage(UserSocketEvents.USER_STATUS)
@@ -78,7 +73,7 @@ export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
     this.logger.log( `onUserStatus: Received message: ${JSON.stringify(message)}` );
     this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
     this.logger.log(`onUserStatus: Publishing User Status to Message Bus`);
-    this.eventMessageService.publishUserStatus(message);
+    //this.eventMessageService.publishUserStatus(message);
   }
 
   @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)

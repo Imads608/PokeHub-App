@@ -25,7 +25,7 @@ import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
 import { getIsAuthenticated, getAuthLoading } from '../store/selectors/auth';
-import { getUser, getUserStatus } from '../store/selectors/user';
+import { getSocketId, getUser, getUserStatus } from '../store/selectors/user';
 import { IUserData, Status, IUserStatusData } from '@pokehub/user/interfaces';
 import { IUserEventMessage, UserSocketEvents } from '@pokehub/event/user';
 import { sendUserStatusMessage } from '../events/user/user-events';
@@ -89,6 +89,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
   const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
   const authLoading: boolean = useSelector<RootState, boolean>(getAuthLoading);
   const user = useSelector<RootState, IUserData>(getUser);
+  const socketId = useSelector<RootState, string>(getSocketId);
   const userStatus = useSelector<RootState, IUserStatusData>(getUserStatus);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
   const res = useLoadUser(null, !isAuthenticated && authLoading)
@@ -107,7 +108,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
     if (userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
       console.log('onActive: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid }));
+      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid, username: user.username, socketId }));
     }
   }
 
@@ -116,7 +117,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
     if (userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
       console.log('onIdle: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.AWAY, uid: user.uid }));
+      dispatch(status_update({ lastSeen: new Date(), status: Status.AWAY, uid: user.uid, username: user.username, socketId }));
     }
   }
 
@@ -126,7 +127,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
     if (diffMilliseconds >= 1000*60*5 && userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
       console.log('onAction: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid }));
+      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid, username: user.username, socketId }));
     }
   }
 

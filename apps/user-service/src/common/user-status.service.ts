@@ -13,11 +13,9 @@ import { UserStatus } from '@pokehub/user/database';
 
 @Injectable()
 export class UserStatusService implements IUserStatusService {
-  constructor(
-    @InjectRepository(UserStatus)
-    private userStatusRepository: Repository<UserStatus>,
-    private readonly logger: AppLogger
-  ) {}
+  constructor(@InjectRepository(UserStatus) private userStatusRepository: Repository<UserStatus>, private readonly logger: AppLogger) {
+    this.logger.setContext(UserStatusService.name);
+  }
 
   async upsertLastSeen(userId: string, lastSeen: Date): Promise<UserStatusData> {
     try {

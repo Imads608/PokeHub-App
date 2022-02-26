@@ -14,7 +14,7 @@ export default () => ({
     port: process.env.RABBITMQ_PORT,
     eventsExchange: {
       name: 'events-exchange',
-      userEventsRoutingPattern: 'events.user.*',
+      userEventsRoutingPattern: 'events.user',
     }
   },
   awsConfig: {

@@ -5,6 +5,7 @@ import { User, UserStatus } from '@pokehub/user/database';
 import { UserModule } from '../user/user.module';
 import configuration from '../config/configuration';
 import { LoggerModule } from '@pokehub/common/logger';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { LoggerModule } from '@pokehub/common/logger';
       isGlobal: true,
       load: [configuration],
     }),
-    LoggerModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

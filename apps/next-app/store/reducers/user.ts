@@ -7,12 +7,14 @@ import {
 import { IUserData, IUserProfile, IUserProfileWithToken, IUserStatusData, Status, TypeAccount } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
 import { IChatRoomData } from '@pokehub/room/interfaces';
+import { UserStatusUpdate } from '../../types/user';
 
 export interface UserState {
   userDetails: IUserData | null;
   joinedPublicRooms: IChatRoomData[] | null;
   profileSetup: boolean;
   status: IUserStatusData;
+  socketId: string;
 }
 
 const userSlice = createSlice({
@@ -28,8 +30,11 @@ const userSlice = createSlice({
     leave_chatroom: (state: UserState, action: PayloadAction<IChatRoomData[]>) => {
       state.joinedPublicRooms = action.payload;
     },
-    status_update: (state: UserState, action: PayloadAction<IUserStatusData>) => {
+    status_update: (state: UserState, action: PayloadAction<UserStatusUpdate>) => {
       state.status = action.payload;
+    },
+    websocket_connected: (state: UserState, action: PayloadAction<string>) => {
+      state.socketId = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -62,5 +67,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { join_chatroom, leave_chatroom, user_data_update, status_update } = userSlice.actions;
+export const { join_chatroom, leave_chatroom, user_data_update, status_update, websocket_connected } = userSlice.actions;
 export default userSlice;

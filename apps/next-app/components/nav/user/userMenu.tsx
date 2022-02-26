@@ -15,13 +15,14 @@ import { logout } from '../../../store/actions/common';
 import { useQueryClient } from 'react-query';
 import Badge from '@mui/material/Badge';
 import { makeStyles } from '@mui/styles';
-import { IUserData } from '@pokehub/user/interfaces';
+import { IUserData, IUserStatusData, Status } from '@pokehub/user/interfaces';
 import styles from '../navbar.module.scss';
 import { useLogoutUser } from '../../../hooks/auth/useLogoutUser';
 import { toast } from 'react-toastify';
 import { getAppTheme } from '../../../store/selectors/app';
+import { getUserStatus } from '../../../store/selectors/user';
 import { RootState } from '../../../store/store';
-import { PaletteMode } from '@mui/material';
+import { CustomTheme, PaletteMode } from '@mui/material';
 import Link from 'next/link';
 
 const StyledMenu: any = withStyles({
@@ -45,6 +46,18 @@ const StyledMenu: any = withStyles({
   />
 ));
 
+const useStyles = makeStyles<CustomTheme, { userStatus: Status }>((theme: CustomTheme) => ({
+  badge: {
+    fontSize: 'x-large',
+    height: '12px',
+    width: '12px',
+    borderRadius: '10px',
+    backgroundColor: ({userStatus}) => userStatus === Status.ONLINE ? theme.palette.success.main : userStatus === Status.AWAY || userStatus === Status.APPEAR_AWAY ?
+                      theme.palette.warning.main : userStatus === Status.BUSY || userStatus === Status.APPEAR_BUSY ? theme.palette.error.main :
+                      'grey'
+  }
+}));
+
 interface UserMenuProps {
   user: IUserData;
 }
@@ -57,6 +70,8 @@ const UserMenu = ({ user }: UserMenuProps) => {
   const [enableLogout, setEnableLogout] = React.useState<boolean>(false);
   const result = useLogoutUser(user.uid, enableLogout);
   const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const status = useSelector<RootState, IUserStatusData>(getUserStatus)
+  const classes = useStyles({ userStatus: status.status });
 
   useEffect(() => {
     result.error && toast.error('Looks like something went wrong. Please try again',
@@ -90,10 +105,10 @@ const UserMenu = ({ user }: UserMenuProps) => {
           <Badge
             variant="dot"
             overlap="circular"
-            color="success"
+            classes={{ badge: classes.badge }}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
-            <Avatar src={user.avatarUrl ? user.avatarUrl : '#'} alt='Avatar' />
+            <Avatar src={user.avatarUrl ? user.avatarUrl : '#'} alt={user.username} />
           </Badge>
         </div>
         <span style={{ margin: 0 }} className={`${styles['nav-link']}`}>
