@@ -7,9 +7,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import withStyles from '@mui/styles/withStyles';
 import Button from '@mui/material/Button';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PersonIcon from '@mui/icons-material/Person';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../store/actions/common';
 import { useQueryClient } from 'react-query';
@@ -20,31 +17,14 @@ import styles from '../navbar.module.scss';
 import { useLogoutUser } from '../../../hooks/auth/useLogoutUser';
 import { toast } from 'react-toastify';
 import { getAppTheme } from '../../../store/selectors/app';
-import { getUserStatus } from '../../../store/selectors/user';
+import { getUserStatus, getUsersNSClientId } from '../../../store/selectors/user';
 import { RootState } from '../../../store/store';
 import { CustomTheme, PaletteMode } from '@mui/material';
+import { StyledMenu } from '../../common/menu-bar/styledMenu';
+import UserMenuItems from './menu-items/userMenuItems';
+import StatusMenuItems from './menu-items/statusMenuItems';
 import Link from 'next/link';
-
-const StyledMenu: any = withStyles({
-  paper: {
-    border: '1px solid #d3d4d5',
-  },
-})((props) => (
-  <Menu
-    open={false}
-    elevation={0}
-    //getContentAnchorEl={null}
-    anchorOrigin={{
-      vertical: 'bottom',
-      horizontal: 'center',
-    }}
-    transformOrigin={{
-      vertical: 'top',
-      horizontal: 'center',
-    }}
-    {...props}
-  />
-));
+import { status_update } from '../../../store/reducers/user';
 
 const useStyles = makeStyles<CustomTheme, { userStatus: Status }>((theme: CustomTheme) => ({
   badge: {
@@ -68,9 +48,11 @@ const UserMenu = ({ user }: UserMenuProps) => {
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
   const [enableLogout, setEnableLogout] = React.useState<boolean>(false);
+  const [menuType, setMenuType] = React.useState<'main-menu' | 'status-menu'>('main-menu');
   const result = useLogoutUser(user.uid, enableLogout);
   const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
-  const status = useSelector<RootState, IUserStatusData>(getUserStatus)
+  const status = useSelector<RootState, IUserStatusData>(getUserStatus);
+  const socketId = useSelector<RootState, string>(getUsersNSClientId);
   const classes = useStyles({ userStatus: status.status });
 
   useEffect(() => {
@@ -89,6 +71,7 @@ const UserMenu = ({ user }: UserMenuProps) => {
 
   const handleClose = () => {
     setAnchorEl(null);
+    setMenuType('main-menu');
   };
 
   const logoutUser = () => {
@@ -97,6 +80,15 @@ const UserMenu = ({ user }: UserMenuProps) => {
     setEnableLogout(true);
     //dispatch(logout());
   };
+
+  const changeStatus = (newStatus: Status) => {
+    dispatch(status_update({ socketId, username: user.username, uid: user.uid, lastSeen: new Date(), status: newStatus, isHardUpdate: true }));
+  }
+
+  const toggleMenu = (desiredMenu: 'main-menu' | 'status-menu') => {
+    console.log('userMenu: toggling menu type to', desiredMenu);
+    setMenuType(desiredMenu);
+  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -122,26 +114,8 @@ const UserMenu = ({ user }: UserMenuProps) => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={() => logoutUser()}>
-          <ListItemIcon style={{ minWidth: '30px' }}>
-            <ExitToAppIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Logout" />
-        </MenuItem>
-        <MenuItem>
-          <ListItemIcon style={{ minWidth: '30px' }}>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Preferences" />
-        </MenuItem>
-        <Link href={`/users/${user.uid}`} passHref>
-          <MenuItem>
-            <ListItemIcon style={{ minWidth: '30px' }}>
-              <PersonIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary="Profile" />
-          </MenuItem>
-        </Link>
+        { menuType === 'main-menu' ? <UserMenuItems user={user} classes={classes} logoutUser={logoutUser} toggleMenu={toggleMenu} /> :
+          <StatusMenuItems userStatus={status} classes={classes} toggleMenu={toggleMenu} changeStatus={changeStatus} />}
       </StyledMenu>
     </div>
   );

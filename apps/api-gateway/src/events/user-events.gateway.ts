@@ -1,8 +1,6 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse, } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { EventEmitter2 } from 'eventemitter2';
 import { OnEvent } from '@nestjs/event-emitter';
-import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/common/logger';
 import { IChatRoomData } from '@pokehub/room/interfaces';
 import { UserEventMessage, UserNotificationEvent, UserSocketEvents, UserStatusEvent } from '@pokehub/event/user';
@@ -10,14 +8,14 @@ import { Inject } from '@nestjs/common';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 import { IUserEventsPublisherService, USER_EVENTS_PUBLISHER_SERVICE } from '../pubsub/user/user-events-publisher-service.interface';
 
-@WebSocketGateway({ cors: true })
-export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
+@WebSocketGateway({ cors: true, namespace: 'users' })
+export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
   constructor(@Inject(USER_EVENTS_PUBLISHER_SERVICE) private readonly userEventsPublisherService: IUserEventsPublisherService, 
               private readonly logger: AppLogger, @Inject(AUTH_SERVICE) private readonly authService: IAuthService) {
-    logger.setContext(EventsGateway.name);
+    logger.setContext(UserEventsGateway.name);
   }
 
   @OnEvent(UserSocketEvents.USER_STATUS)
@@ -34,17 +32,18 @@ export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
 
   async handleConnection(client: Socket, ...args: any[]) {
     try {
-      this.logger.log(`handleConnection: A new client with id ${client.id} is trying to connect`);
+      this.logger.log(`handleConnection: A new client with id ${client.id} is trying to connect.`);
       if (!client.handshake.query.token) {
-        this.logger.log(`handleConnection: No Authorization Token found while connecting to client with id ${client.id}. Disconnecting`);
+        this.logger.log(`handleConnection: No Authorization Token found while connecting to client with id ${client.id}. Disconnecting...`);
         client.disconnect();
       }
 
       await this.authService.decodeToken(client.handshake.query.token as string);
       this.logger.log(`handleConnection: Client ${client.id} Successfully connected to server`);
     } catch (err) {
-      this.logger.error(`handleConnection: Got error while trying to connect with client: ${JSON.stringify(err)}. Disconnecting`);
-      client.disconnect();
+      this.logger.error(`handleConnection: Got error while trying to connect with client: ${JSON.stringify(err)}. Disconnecting user`);
+      client.disconnect(true);
+      //throw err;
     }
   }
 
@@ -79,58 +78,7 @@ export class EventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
   @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)
   async onClientDetails( @MessageBody() message: UserEventMessage<{ publicRooms: IChatRoomData[] }>, @ConnectedSocket() client: Socket ) {
     this.logger.log( `onClientDetails: Received message ${JSON.stringify(message)}` );
-    message.data.publicRooms && message.data.publicRooms.forEach((room) => client.join(room.id));
-    //data.privateRooms && data.privateRooms.forEach((room) => client.join(room.id));
     client.join(message.from.uid);
     client.join(`${message.from.uid}-circle`);
   }
-
-  /*
-    @SubscribeMessage(SocketEvents.RECEIVE_USER_NOTIFICATIONS)
-    async onReceiveUserNotifications(@MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket) {
-        this.logger.log('Got message in Receive User Notifications Handler');
-        const data = message.data as { userUid: string };
-        client.join(data.userUid);
-        this.eventMessageService.publishEvent(message, `${this.configService.get<string>('rabbitMQ.eventsExchange.userEventsRoutingPattern')}.${EventUserTopics.USER_NOTIFICATIONS}`);        //this.eventEmitter.emit('rabbit.user.receiveNotifications', message);
-    }
-
-    @SubscribeMessage(SocketEvents.STOP_USER_NOTIFICATIONS)
-    async onStopReceivingUserNotifications(@MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket) {
-        this.logger.log('Got messag in Stop Receive User Notifications handler');
-        const data = message.data as { userUid: string };
-        client.leave(data.userUid);
-        this.eventMessageService.publishEvent(message, `${this.configService.get<string>('rabbitMQ.eventsExchange.userEventsRoutingPattern')}.${EventUserTopics.USER_NOTIFICATIONS}`);
-    }
-    
-
-    @SubscribeMessage(SocketEvents.USER_AVAILABLE)
-    async onUserAvailable(@MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket) {
-        this.logger.log('Got message in User Available Handler');
-        this.server.to(message.from.uid).emit(SocketEvents.USER_AVAILABLE, message);
-        this.eventMessageService.publishUserStatus(message);
-        //this.eventEmitter.emit('rabbit.user.available', message);
-    }
-
-    @SubscribeMessage(SocketEvents.USER_AWAY)
-    async onUserAway(@MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket) {
-        this.logger.log('Got message in User Away Handler');
-        this.server.to(message.from.uid).emit(SocketEvents.USER_AWAY, message);
-        this.eventMessageService.publishUserStatus(message);
-        //this.eventEmitter.emit('rabbit.user.away', message);
-    }
-
-    @SubscribeMessage(SocketEvents.CLIENT_DETAILS)
-    async onClientDetails(@MessageBody() message: UserEventMessage, @ConnectedSocket() client: Socket) {
-        this.logger.log('Got client details: ' + JSON.stringify(message));
-        const data = message.data as { publicRooms: string[], privateRooms: []};
-
-        data.publicRooms && data.publicRooms.forEach(room => client.join(room));
-        data.privateRooms && data.privateRooms.forEach(room => client.join(room));
-        client.join(message.from.uid);
-        /*this.logger.log('Got client details: ' + JSON.stringify(data));
-        data.publicRooms && data.publicRooms.forEach(room => client.join(room));
-        data.privateRooms && data.privateRooms.forEach(room => client.join(room));
-        client.join(data.uid);*/
-  //await this.messagingService.publishChatMessage();
-  // return 1;
 }

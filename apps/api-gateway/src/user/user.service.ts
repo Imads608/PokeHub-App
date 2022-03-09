@@ -115,7 +115,7 @@ export class UserService implements IUserService {
       this.logger.log( `createUser: Successfully created tokens. Sending back User Data and Access and Refresh Tokens` );
 
       // Send back User and Tokens
-      const response = new UserDataWithToken( user, tokens.accessToken, tokens.refreshToken );
+      const response = new UserDataWithToken( user, tokens.accessToken, null, tokens.refreshToken );
       return response;
     } catch (err) {
       this.logger.error( `createUser: Got error while trying to create user with email ${data.email}: ${err}` );

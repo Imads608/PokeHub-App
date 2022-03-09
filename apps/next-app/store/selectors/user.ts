@@ -7,7 +7,7 @@ const userDetails = (state: RootState) => state['user-state'].userDetails;
 const joinedRooms = (state: RootState) => state['user-state'].joinedPublicRooms;
 const profileSetup = (state: RootState) => state['user-state'].profileSetup;
 const status = (state: RootState) => state['user-state'].status;
-const socketId = (state: RootState) => state['user-state'].socketId;
+const clientIds = (state: RootState) => state['user-state'].clientIds;
 
 export const getUser = createSelector(
   [userDetails],
@@ -38,8 +38,24 @@ export const getPublicUser = createSelector(
   (username, uid) => ({ username, uid })
 );
 
-export const getSocketId = createSelector(
-  [socketId], (socketId) => socketId
+export const getUsersNSClientId = createSelector(
+  [clientIds], (clientIds) => clientIds?.usersNS
+);
+
+export const getRoomsNSClientId = createSelector(
+  [clientIds], (clientIds) => clientIds?.roomsNS
+);
+
+export const getDMsNSClientId = createSelector(
+  [clientIds], (clientIds) => clientIds?.dmsNS
+);
+
+export const getAllNSClientIds = createSelector(
+  [clientIds], (clientIds) => clientIds
+);
+
+export const getIsRefreshNeeded = createSelector(
+  [clientIds], (clientIds) => clientIds ? clientIds.isRefreshNeeded : false
 );
 
 export const isUserMemberOfCurrentChatRoom = createSelector(

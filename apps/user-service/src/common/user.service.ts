@@ -94,7 +94,7 @@ export class UserService implements IUserService {
     this.populateNewUserFromReq(user, userReq);
 
     const userData: UserData = await this.createUserInternal(user);
-    await this.userStatusService.upsertLastSeen(userData.uid, new Date());
+    await this.userStatusService.createStatusForNewUser(userData.uid);
 
     this.logger.log('createUser: Sending newly created user back');
     return userData;

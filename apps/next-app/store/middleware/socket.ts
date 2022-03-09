@@ -22,7 +22,7 @@ export const connectWebSocketMiddleware = (store) => (next) => (action) => {
       handleLoginSuccess(action, store);
       break;
     case status_update.toString():
-      handleUserStatusUpdate(action as PayloadAction<UserStatusUpdate>, false);
+      handleUserStatusUpdate(action as PayloadAction<UserStatusUpdate>, (action as PayloadAction<UserStatusUpdate>).payload.isHardUpdate);
       break;
   }
 

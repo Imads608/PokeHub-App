@@ -8,13 +8,27 @@ import { IUserData, IUserProfile, IUserProfileWithToken, IUserStatusData, Status
 import { HYDRATE } from 'next-redux-wrapper';
 import { IChatRoomData } from '@pokehub/room/interfaces';
 import { UserStatusUpdate } from '../../types/user';
+import { Socket } from 'socket.io-client';
+
+export interface NamespaceClientIds {
+  usersNS: string;
+  roomsNS: string;
+  dmsNS: string;
+  isRefreshNeeded: boolean;
+}
+
+export enum SocketNamespaces {
+  USERS_NAMESPACE = 'user-namespace',
+  ROOMS_NAMESPACE = 'rooms-namespace',
+  DMS_NAMESPACE = 'dms-namespace'
+}
 
 export interface UserState {
   userDetails: IUserData | null;
   joinedPublicRooms: IChatRoomData[] | null;
   profileSetup: boolean;
   status: IUserStatusData;
-  socketId: string;
+  clientIds?: NamespaceClientIds;
 }
 
 const userSlice = createSlice({
@@ -31,10 +45,16 @@ const userSlice = createSlice({
       state.joinedPublicRooms = action.payload;
     },
     status_update: (state: UserState, action: PayloadAction<UserStatusUpdate>) => {
+      console.log('Status Update:', action.payload);
       state.status = action.payload;
     },
-    websocket_connected: (state: UserState, action: PayloadAction<string>) => {
-      state.socketId = action.payload;
+    websocket_connected: (state: UserState, action: PayloadAction<{ socketId: string, namespace: SocketNamespaces }>) => {
+      if (action.payload.namespace === SocketNamespaces.USERS_NAMESPACE) state.clientIds.usersNS = action.payload.socketId;
+      else if (action.payload.namespace === SocketNamespaces.ROOMS_NAMESPACE) state.clientIds.roomsNS = action.payload.socketId;
+      else if (action.payload.namespace === SocketNamespaces.DMS_NAMESPACE) state.clientIds.dmsNS = action.payload.socketId;
+    },
+    websocket_disconnected: (state: UserState) => {
+      state.clientIds.isRefreshNeeded = true;
     }
   },
   extraReducers: (builder) => {
@@ -43,6 +63,7 @@ const userSlice = createSlice({
           state.userDetails = action.payload.user;
           state.joinedPublicRooms = action.payload.joinedPublicRooms;
           state.status = action.payload.status;
+          state.clientIds = { usersNS: null, roomsNS: null, dmsNS: null, isRefreshNeeded: false };
           if (action.payload.user.account === TypeAccount.GOOGLE)
             state.profileSetup = action.payload.user.avatar && action.payload.user.countUsernameChanged > 0;
           else 
@@ -67,5 +88,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { join_chatroom, leave_chatroom, user_data_update, status_update, websocket_connected } = userSlice.actions;
+export const { join_chatroom, leave_chatroom, user_data_update, status_update, websocket_connected, websocket_disconnected } = userSlice.actions;
 export default userSlice;

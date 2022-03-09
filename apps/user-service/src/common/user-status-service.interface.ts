@@ -9,8 +9,16 @@ export interface IUserStatusService {
    * Saves the Last Seen Date of a User given its Id
    * @param userId The Id associated with the User
    * @param lastSeen The Last Seen Date to save into the User Status Table
+   * @returns The Updated User Status record
    */
   upsertLastSeen(userId: string, lastSeen: Date): Promise<UserStatusData>;
+
+  /**
+   * Creates a New Status Record for the provided User Id
+   * @param userId The User Id the new status entry should be created for.
+   * @returns the Newly created User Status Record
+   */
+  createStatusForNewUser(userId: string): Promise<UserStatusData>
 
   /**
    * Queries the User Status Table for the Last Seen Data of a User given its Id

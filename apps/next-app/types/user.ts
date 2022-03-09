@@ -10,4 +10,5 @@ export interface UserDetails {
 export interface UserStatusUpdate extends IUserStatusData {
   username: string;
   socketId: string;
+  isHardUpdate: boolean;
 }

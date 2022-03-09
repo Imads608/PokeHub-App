@@ -32,15 +32,34 @@ export class UserStatusService implements IUserStatusService {
     }
   }
 
+  async createStatusForNewUser(userId: string): Promise<UserStatusData> {
+    try {
+      this.logger.log(`createStatusForNewUser: Creating Status for new User ${userId}`);
+      const userStatus = this.userStatusRepository.create();
+      userStatus.uid = userId;
+      userStatus.lastSeen = new Date();
+      userStatus.status = Status.ONLINE;
+      await this.userStatusRepository.save(userStatus);
+      this.logger.log(`createStatusForNewUser: Successfully created Status entry for User ${userId}`);
+      return userStatus;
+    } catch (err) {
+      this.logger.error(`createStatusForNewUser: Got error while creating status for user ${userId}: ${JSON.stringify(err)}`);
+      throw err;
+    }
+  }
+
   async updateUserStatus(status: UserStatus): Promise<UserStatusData> {
     try {
       this.logger.log(`updateUserStatus: Starting to update User Status`);
-      await this.userStatusRepository.createQueryBuilder()
+      const updatedStatus: UserStatus = await this.userStatusRepository.createQueryBuilder()
         .update(status)
         .set({ lastSeen: status.lastSeen, status: status.status })
         .where('uid = :id', { id: status.uid})
-        .andWhere('status not in (:...statuses)', { statuses: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] }).execute();
-      const updatedStatus = this.getUserStatus(status.uid);
+        .andWhere('status not in (:...statuses)', { statuses: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] })
+        .returning('*')
+        .execute()
+        .then((res) => res.raw[0]);
+
       return updatedStatus;
     } catch (err) {
       this.logger.error(`updateUserStatus: Got error while trying to update User Status: ${JSON.stringify(err)}`);
