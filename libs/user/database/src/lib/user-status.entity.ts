@@ -15,6 +15,6 @@ export class UserStatus {
   })
   status: Status;
 
-  @Column()
+  @Column({ type: 'timestamptz' })
   lastSeen: Date;
 }
