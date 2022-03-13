@@ -13,9 +13,9 @@ import { loadUserProxy } from '../../api/auth';
 export let usersNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
 export const initUserNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
-    usersNamespaceSocket = io(`${appConfig.apiGateway}/users`, { query: { token: http.defaults.headers.Authorization } });
+    usersNamespaceSocket = io(`${appConfig.userNotifService}`, { query: { token: http.defaults.headers.Authorization } });
 
-    console.log('initUserNamespaceSocket: Connecting to server with token', http.defaults.headers.Authorization );
+    console.log('initUserNamespaceSocket: Connecting to server with token', appConfig.userNotifService, http.defaults.headers.Authorization );
 
     // Connect to Server with User Namespace
     usersNamespaceSocket.on('connect', () => {

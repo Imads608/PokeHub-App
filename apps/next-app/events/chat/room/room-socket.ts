@@ -11,7 +11,7 @@ import { loadUserProxy } from '../../../api/auth';
 export let roomsNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
 export const initRoomNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
-    roomsNamespaceSocket = io(`${appConfig.apiGateway}/dms`, { query: { token: http.defaults.headers.Authorization } });
+    roomsNamespaceSocket = io(`${appConfig.chatNotifService}/rooms`, { query: { token: http.defaults.headers.Authorization } });
 
     console.log('initRoomNamespaceSocket: Connecting to server with token', http.defaults.headers.Authorization );
 
