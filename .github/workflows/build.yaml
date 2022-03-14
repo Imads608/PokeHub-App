@@ -23,11 +23,13 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       
-      #- name: Derive appropriate SHAs for base and head for `nx affected` commands
-      #  uses: nrwl/nx-set-shas@v2
-      #  with:
-      #    main-branch-name: 'dev'
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v2
+        with:
+          main-branch-name: 'dev'
 
       - name: Setup Node
         uses: actions/setup-node@v1
