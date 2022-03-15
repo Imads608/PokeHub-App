@@ -1,3 +1,4 @@
+set -e
 tag=${1:-dev}
 
 echo "Building User Notification Service Docker Image with tag ${tag}"

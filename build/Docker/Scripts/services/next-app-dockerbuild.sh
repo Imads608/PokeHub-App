@@ -1,3 +1,4 @@
+set -e
 tag=${1:-dev}
 
 echo "Building Next Front-end Application Docker Image with tag ${tag}"

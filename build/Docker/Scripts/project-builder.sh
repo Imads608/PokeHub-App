@@ -1,3 +1,6 @@
+# Exit when any command fails
+set -e
+
 tag=${1:-dev}
 echo "Building PokeHub Projects with tag ${tag}"
 
