@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   name: postgres
   namespace: postgres
 spec:
@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: postgres
   template:
-    metadata: 
+    metadata:
       labels:
         app: postgres
     spec:
@@ -34,4 +34,3 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-pv-storage
-

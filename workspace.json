@@ -30,6 +30,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build api-gateway",
+              "bash build/Docker/Scripts/api-gateway-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -52,26 +62,51 @@
         }
       }
     },
-    "auth": {
-      "root": "libs/auth",
-      "sourceRoot": "libs/auth/src",
+    "auth-interfaces": {
+      "root": "libs/auth/interfaces",
+      "sourceRoot": "libs/auth/interfaces/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/auth/**/*.ts"]
+            "lintFilePatterns": ["libs/auth/interfaces/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/auth"],
+          "outputs": ["coverage/libs/auth/interfaces"],
           "options": {
-            "jestConfig": "libs/auth/jest.config.js",
+            "jestConfig": "libs/auth/interfaces/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
+    },
+    "auth-models": {
+      "root": "libs/auth/models",
+      "sourceRoot": "libs/auth/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/auth/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/auth/models"],
+          "options": {
+            "jestConfig": "libs/auth/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "auth-service": {
       "root": "apps/auth-service",
@@ -102,6 +137,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build auth-service",
+              "bash build/Docker/Scripts/auth-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -123,6 +168,69 @@
           }
         }
       }
+    },
+    "chat-notif-service": {
+      "root": "apps/chat-notif-service",
+      "sourceRoot": "apps/chat-notif-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/chat-notif-service",
+            "main": "apps/chat-notif-service/src/main.ts",
+            "tsConfig": "apps/chat-notif-service/tsconfig.app.json",
+            "assets": ["apps/chat-notif-service/src/assets"],
+            "generatePackageJson": true
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/chat-notif-service/src/environments/environment.ts",
+                  "with": "apps/chat-notif-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build chat-notif-service",
+              "bash build/Docker/Scripts/chat-notif-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "chat-notif-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/chat-notif-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/chat-notif-service"],
+          "options": {
+            "jestConfig": "apps/chat-notif-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "chat-service": {
       "root": "apps/chat-service",
@@ -153,6 +261,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build chat-service",
+              "bash build/Docker/Scripts/chat-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -175,23 +293,290 @@
         }
       }
     },
-    "events": {
-      "root": "libs/events",
-      "sourceRoot": "libs/events/src",
+    "common-logger": {
+      "root": "libs/common/logger",
+      "sourceRoot": "libs/common/logger/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/events/**/*.ts"]
+            "lintFilePatterns": ["libs/common/logger/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/events"],
+          "outputs": ["coverage/libs/common/logger"],
           "options": {
-            "jestConfig": "libs/events/jest.config.js",
+            "jestConfig": "libs/common/logger/jest.config.js",
             "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "common-object-store": {
+      "root": "libs/common/object-store",
+      "sourceRoot": "libs/common/object-store/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/common/object-store/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/common/object-store"],
+          "options": {
+            "jestConfig": "libs/common/object-store/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "common-object-store-models": {
+      "root": "libs/common/object-store/models",
+      "sourceRoot": "libs/common/object-store/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/common/object-store/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/common/object-store/models"],
+          "options": {
+            "jestConfig": "libs/common/object-store/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "event-user": {
+      "root": "libs/event/user",
+      "sourceRoot": "libs/event/user/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/event/user/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/event/user"],
+          "options": {
+            "jestConfig": "libs/event/user/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "mail-interfaces": {
+      "root": "libs/mail/interfaces",
+      "sourceRoot": "libs/mail/interfaces/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/mail/interfaces/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/mail/interfaces"],
+          "options": {
+            "jestConfig": "libs/mail/interfaces/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "mail-models": {
+      "root": "libs/mail/models",
+      "sourceRoot": "libs/mail/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/mail/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/mail/models"],
+          "options": {
+            "jestConfig": "libs/mail/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "mail-service": {
+      "root": "apps/mail-service",
+      "sourceRoot": "apps/mail-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/mail-service",
+            "main": "apps/mail-service/src/main.ts",
+            "tsConfig": "apps/mail-service/tsconfig.app.json",
+            "assets": ["apps/mail-service/src/assets"],
+            "generatePackageJson": true
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/mail-service/src/environments/environment.ts",
+                  "with": "apps/mail-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build mail-service",
+              "bash build/Docker/Scripts/mail-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "mail-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/mail-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/mail-service"],
+          "options": {
+            "jestConfig": "apps/mail-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "next-app": {
+      "root": "apps/next-app",
+      "sourceRoot": "apps/next-app",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/next:build",
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production",
+          "options": {
+            "root": "apps/next-app",
+            "outputPath": "dist/apps/next-app"
+          },
+          "configurations": {
+            "production": {}
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build next-app",
+              "bash build/Docker/Scripts/next-app-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/next:server",
+          "options": {
+            "buildTarget": "next-app:build",
+            "dev": true
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "next-app:build:production",
+              "dev": false
+            }
+          }
+        },
+        "export": {
+          "executor": "@nrwl/next:export",
+          "options": {
+            "buildTarget": "next-app:build:production"
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/next-app"],
+          "options": {
+            "jestConfig": "apps/next-app/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/next-app/**/*.{ts,tsx,js,jsx}"]
+          }
+        }
+      }
+    },
+    "next-app-e2e": {
+      "root": "apps/next-app-e2e",
+      "sourceRoot": "apps/next-app-e2e/src",
+      "projectType": "application",
+      "targets": {
+        "e2e": {
+          "executor": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/next-app-e2e/cypress.json",
+            "devServerTarget": "next-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "next-app:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/next-app-e2e/**/*.{js,ts}"]
           }
         }
       }
@@ -299,40 +684,157 @@
         }
       }
     },
-    "room": {
-      "root": "libs/room",
-      "sourceRoot": "libs/room/src",
+    "room-database": {
+      "root": "libs/room/database",
+      "sourceRoot": "libs/room/database/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/**/*.ts"]
+            "lintFilePatterns": ["libs/room/database/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room"],
+          "outputs": ["coverage/libs/room/database"],
           "options": {
-            "jestConfig": "libs/room/jest.config.js",
+            "jestConfig": "libs/room/database/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
-    "socket-service": {
-      "root": "apps/socket-service",
-      "sourceRoot": "apps/socket-service/src",
+    "room-interfaces": {
+      "root": "libs/room/interfaces",
+      "sourceRoot": "libs/room/interfaces/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/room/interfaces/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room/interfaces"],
+          "options": {
+            "jestConfig": "libs/room/interfaces/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "room-models": {
+      "root": "libs/room/models",
+      "sourceRoot": "libs/room/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/room/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room/models"],
+          "options": {
+            "jestConfig": "libs/room/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-database": {
+      "root": "libs/user/database",
+      "sourceRoot": "libs/user/database/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/database/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/database"],
+          "options": {
+            "jestConfig": "libs/user/database/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-interfaces": {
+      "root": "libs/user/interfaces",
+      "sourceRoot": "libs/user/interfaces/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/interfaces/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/interfaces"],
+          "options": {
+            "jestConfig": "libs/user/interfaces/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-models": {
+      "root": "libs/user/models",
+      "sourceRoot": "libs/user/models/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/models/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/models"],
+          "options": {
+            "jestConfig": "libs/user/models/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-notif-service": {
+      "root": "apps/user-notif-service",
+      "sourceRoot": "apps/user-notif-service/src",
       "projectType": "application",
       "targets": {
         "build": {
           "executor": "@nrwl/node:build",
           "outputs": ["{options.outputPath}"],
           "options": {
-            "outputPath": "dist/apps/socket-service",
-            "main": "apps/socket-service/src/main.ts",
-            "tsConfig": "apps/socket-service/tsconfig.app.json",
-            "assets": ["apps/socket-service/src/assets"],
+            "outputPath": "dist/apps/user-notif-service",
+            "main": "apps/user-notif-service/src/main.ts",
+            "tsConfig": "apps/user-notif-service/tsconfig.app.json",
+            "assets": ["apps/user-notif-service/src/assets"],
             "generatePackageJson": true
           },
           "configurations": {
@@ -342,55 +844,46 @@
               "inspect": false,
               "fileReplacements": [
                 {
-                  "replace": "apps/socket-service/src/environments/environment.ts",
-                  "with": "apps/socket-service/src/environments/environment.prod.ts"
+                  "replace": "apps/user-notif-service/src/environments/environment.ts",
+                  "with": "apps/user-notif-service/src/environments/environment.prod.ts"
                 }
               ]
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build user-notif-service",
+              "bash build/Docker/Scripts/user-notif-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
-            "buildTarget": "socket-service:build"
+            "buildTarget": "user-notif-service:build"
           }
         },
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["apps/socket-service/**/*.ts"]
+            "lintFilePatterns": ["apps/user-notif-service/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/socket-service"],
+          "outputs": ["coverage/apps/user-notif-service"],
           "options": {
-            "jestConfig": "apps/socket-service/jest.config.js",
+            "jestConfig": "apps/user-notif-service/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
-    },
-    "user": {
-      "root": "libs/user",
-      "sourceRoot": "libs/user/src",
-      "projectType": "library",
-      "targets": {
-        "lint": {
-          "executor": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/user/**/*.ts"]
-          }
-        },
-        "test": {
-          "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/user"],
-          "options": {
-            "jestConfig": "libs/user/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
+      },
+      "tags": []
     },
     "user-service": {
       "root": "apps/user-service",
@@ -421,6 +914,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build user-service",
+              "bash build/Docker/Scripts/user-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -441,26 +944,6 @@
             "passWithNoTests": true
           }
         }
-      }
-    }
-  },
-  "cli": {
-    "defaultCollection": "@nrwl/nest"
-  },
-  "defaultProject": "api-gateway",
-  "generators": {
-    "@nrwl/react": {
-      "application": {
-        "style": "css",
-        "linter": "eslint",
-        "babel": true
-      },
-      "component": {
-        "style": "css"
-      },
-      "library": {
-        "style": "css",
-        "linter": "eslint"
       }
     }
   }

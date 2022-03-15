@@ -12,7 +12,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: AuthService
     listKind: AuthServiceList
     plural: authservices
@@ -37,8 +37,8 @@ spec:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             add_linkerd_headers:
               type: boolean
@@ -57,8 +57,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             auth_service:
               type: string
             failure_mode_allow:
@@ -71,20 +71,20 @@ spec:
                   description: These aren't pointer types because they are required.
                   type: integer
               required:
-              - allow_partial
-              - max_bytes
+                - allow_partial
+                - max_bytes
               type: object
             path_prefix:
               type: string
             proto:
               enum:
-              - http
-              - grpc
+                - http
+                - grpc
               type: string
             protocol_version:
               enum:
-              - v2
-              - v3
+                - v2
+                - v3
               type: string
             status_on_error:
               description: Why isn't this just an int??
@@ -97,20 +97,20 @@ spec:
             tls:
               description: BoolOrString is a type that can hold a Boolean or a string.
               oneOf:
-              - type: string
-              - type: boolean
+                - type: string
+                - type: boolean
           required:
-          - auth_service
+            - auth_service
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -125,7 +125,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: ConsulResolver
     listKind: ConsulResolverList
     plural: consulresolvers
@@ -153,20 +153,20 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             datacenter:
               type: string
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -181,7 +181,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: DevPortal
     listKind: DevPortalList
     plural: devportals
@@ -207,8 +207,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             content:
               description: Content specifies where the content shown in the DevPortal come from
               properties:
@@ -238,8 +238,8 @@ spec:
             naming_scheme:
               description: Describes how to display "services" in the DevPortal. Default namespace.name
               enum:
-              - namespace.name
-              - name.prefix
+                - namespace.name
+                - name.prefix
               type: string
             preserve_servers:
               description: Configures this DevPortal to use server definitions from the openAPI doc instead of rewriting them based on the url used for the connection.
@@ -252,8 +252,8 @@ spec:
                 type:
                   description: 'Type of search. "title-only" does a fuzzy search over openapi and page titles "all-content" will fuzzy search over all openapi and page content. "title-only" is the default. warning:  using all-content may incur a larger memory footprint'
                   enum:
-                  - title-only
-                  - all-content
+                    - title-only
+                    - all-content
                   type: string
               type: object
             selector:
@@ -274,9 +274,9 @@ spec:
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
+    - name: v2
+      served: true
+      storage: true
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -289,25 +289,25 @@ metadata:
   name: hosts.getambassador.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.hostname
-    name: Hostname
-    type: string
-  - JSONPath: .status.state
-    name: State
-    type: string
-  - JSONPath: .status.phaseCompleted
-    name: Phase Completed
-    type: string
-  - JSONPath: .status.phasePending
-    name: Phase Pending
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: Age
-    type: date
+    - JSONPath: .spec.hostname
+      name: Hostname
+      type: string
+    - JSONPath: .status.state
+      name: State
+      type: string
+    - JSONPath: .status.phaseCompleted
+      name: Phase Completed
+      type: string
+    - JSONPath: .status.phasePending
+      name: Phase Pending
+      type: string
+    - JSONPath: .metadata.creationTimestamp
+      name: Age
+      type: date
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: Host
     listKind: HostList
     plural: hosts
@@ -354,15 +354,15 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             ambassadorId:
               description: A compatibility alias for "ambassador_id"; because Host used to be specified with protobuf, and jsonpb allowed either "ambassador_id" or "ambassadorId", and even though we didn't tell people about "ambassadorId" it's what the web policy console generated because of jsonpb.  So Hosts with 'ambassadorId' exist in the wild.
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             hostname:
               description: Hostname by which the Ambassador can be reached.
               type: string
@@ -375,7 +375,7 @@ spec:
                 type:
                   description: What type of Preview URL is allowed?
                   enum:
-                  - Path
+                    - Path
                   type: string
               type: object
             requestPolicy:
@@ -385,9 +385,9 @@ spec:
                   properties:
                     action:
                       enum:
-                      - Redirect
-                      - Reject
-                      - Route
+                        - Redirect
+                        - Reject
+                        - Route
                       type: string
                     additionalPort:
                       type: integer
@@ -413,8 +413,8 @@ spec:
                           type: string
                         type: array
                     required:
-                    - key
-                    - operator
+                      - key
+                      - operator
                     type: object
                   type: array
                 matchLabels:
@@ -484,43 +484,43 @@ spec:
             phaseCompleted:
               description: phaseCompleted and phasePending are valid when state==Pending or state==Error.
               enum:
-              - NA
-              - DefaultsFilled
-              - ACMEUserPrivateKeyCreated
-              - ACMEUserRegistered
-              - ACMECertificateChallenge
+                - NA
+                - DefaultsFilled
+                - ACMEUserPrivateKeyCreated
+                - ACMEUserRegistered
+                - ACMECertificateChallenge
               type: string
             phasePending:
               description: phaseCompleted and phasePending are valid when state==Pending or state==Error.
               enum:
-              - NA
-              - DefaultsFilled
-              - ACMEUserPrivateKeyCreated
-              - ACMEUserRegistered
-              - ACMECertificateChallenge
+                - NA
+                - DefaultsFilled
+                - ACMEUserPrivateKeyCreated
+                - ACMEUserRegistered
+                - ACMECertificateChallenge
               type: string
             state:
               description: The first value listed in the Enum marker becomes the "zero" value, and it would be great if "Pending" could be the default value; but it's Important that the "zero" value be able to be shown as empty/omitted from display, and we really do want `kubectl get hosts` to say "Pending" in the "STATE" column, and not leave the column empty.
               enum:
-              - Initial
-              - Pending
-              - Ready
-              - Error
+                - Initial
+                - Pending
+                - Ready
+                - Error
               type: string
             tlsCertificateSource:
               enum:
-              - Unknown
-              - None
-              - Other
-              - ACME
+                - Unknown
+                - None
+                - Other
+                - ACME
               type: string
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
+    - name: v2
+      served: true
+      storage: true
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -535,7 +535,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: KubernetesEndpointResolver
     listKind: KubernetesEndpointResolverList
     plural: kubernetesendpointresolvers
@@ -561,18 +561,18 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -587,7 +587,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: KubernetesServiceResolver
     listKind: KubernetesServiceResolverList
     plural: kubernetesserviceresolvers
@@ -613,18 +613,18 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -639,7 +639,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: LogService
     listKind: LogServiceList
     plural: logservices
@@ -665,12 +665,12 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             driver:
               enum:
-              - tcp
-              - http
+                - tcp
+                - http
               type: string
             driver_config:
               properties:
@@ -700,12 +700,12 @@ spec:
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -718,25 +718,25 @@ metadata:
   name: mappings.getambassador.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.host
-    name: Source Host
-    type: string
-  - JSONPath: .spec.prefix
-    name: Source Prefix
-    type: string
-  - JSONPath: .spec.service
-    name: Dest Service
-    type: string
-  - JSONPath: .status.state
-    name: State
-    type: string
-  - JSONPath: .status.reason
-    name: Reason
-    type: string
+    - JSONPath: .spec.host
+      name: Source Host
+      type: string
+    - JSONPath: .spec.prefix
+      name: Source Prefix
+      type: string
+    - JSONPath: .spec.service
+      name: Dest Service
+      type: string
+    - JSONPath: .status.state
+      name: State
+      type: string
+    - JSONPath: .status.reason
+      name: Reason
+      type: string
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: Mapping
     listKind: MappingList
     plural: mappings
@@ -764,16 +764,16 @@ spec:
             add_request_headers:
               additionalProperties:
                 oneOf:
-                - type: string
-                - type: boolean
-                - type: object
+                  - type: string
+                  - type: boolean
+                  - type: object
               type: object
             add_response_headers:
               additionalProperties:
                 oneOf:
-                - type: string
-                - type: boolean
-                - type: object
+                  - type: string
+                  - type: boolean
+                  - type: object
               type: object
             allow_upgrade:
               description: "A case-insensitive list of the non-HTTP protocols to allow \"upgrading\" to from HTTP via the \"Connection: upgrade\" mechanism[1].  After the upgrade, Ambassador does not interpret the traffic, and behaves similarly to how it does for TCPMappings. \n [1]: https://tools.ietf.org/html/rfc7230#section-6.7 \n For example, if your upstream service supports WebSockets, you would write \n    allow_upgrade:    - websocket \n Or if your upstream service supports upgrading from HTTP to SPDY (as the Kubernetes apiserver does for `kubectl exec` functionality), you would write \n    allow_upgrade:    - spdy/3.1"
@@ -785,8 +785,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             auth_context_extensions:
               additionalProperties:
                 type: string
@@ -813,8 +813,8 @@ spec:
                     type: integer
                   priority:
                     enum:
-                    - default
-                    - high
+                      - default
+                      - high
                     type: string
                 type: object
               type: array
@@ -835,15 +835,15 @@ spec:
                   items:
                     type: string
                   oneOf:
-                  - type: string
-                  - type: array
+                    - type: string
+                    - type: array
                 headers:
                   description: StringOrStringList is just what it says on the tin, but note that it will always marshal as a list of strings right now.
                   items:
                     type: string
                   oneOf:
-                  - type: string
-                  - type: array
+                    - type: string
+                    - type: array
                 max_age:
                   type: string
                 methods:
@@ -851,15 +851,15 @@ spec:
                   items:
                     type: string
                   oneOf:
-                  - type: string
-                  - type: array
+                    - type: string
+                    - type: array
                 origins:
                   description: StringOrStringList is just what it says on the tin, but note that it will always marshal as a list of strings right now.
                   items:
                     type: string
                   oneOf:
-                  - type: string
-                  - type: array
+                    - type: string
+                    - type: array
               type: object
             docs:
               description: DocsInfo provides some extra information about the docs for the Mapping (used by the Dev Portal)
@@ -915,8 +915,8 @@ spec:
                     minimum: 400
                     type: integer
                 required:
-                - body
-                - on_status_code
+                  - body
+                  - on_status_code
                 type: object
               minItems: 1
               type: array
@@ -926,8 +926,8 @@ spec:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             host:
               type: string
@@ -973,21 +973,21 @@ spec:
                     ttl:
                       type: string
                   required:
-                  - name
+                    - name
                   type: object
                 header:
                   type: string
                 policy:
                   enum:
-                  - round_robin
-                  - ring_hash
-                  - maglev
-                  - least_request
+                    - round_robin
+                    - ring_hash
+                    - maglev
+                    - least_request
                   type: string
                 source_ip:
                   type: boolean
               required:
-              - policy
+                - policy
               type: object
             method:
               type: string
@@ -1020,61 +1020,61 @@ spec:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             redirect_response_code:
               description: The response code to use when generating an HTTP redirect. Defaults to 301. Used with `host_redirect`.
               enum:
-              - 301
-              - 302
-              - 303
-              - 307
-              - 308
+                - 301
+                - 302
+                - 303
+                - 307
+                - 308
               type: integer
             regex_headers:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             regex_query_parameters:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             regex_redirect:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               description: Prefix regex rewrite to use when generating an HTTP redirect. Used with `host_redirect`.
               type: object
             regex_rewrite:
               additionalProperties:
                 description: BoolOrString is a type that can hold a Boolean or a string.
                 oneOf:
-                - type: string
-                - type: boolean
+                  - type: string
+                  - type: boolean
               type: object
             remove_request_headers:
               description: StringOrStringList is just what it says on the tin, but note that it will always marshal as a list of strings right now.
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             remove_response_headers:
               description: StringOrStringList is just what it says on the tin, but note that it will always marshal as a list of strings right now.
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             resolver:
               type: string
             retry_policy:
@@ -1085,12 +1085,12 @@ spec:
                   type: string
                 retry_on:
                   enum:
-                  - 5xx
-                  - gateway-error
-                  - connect-failure
-                  - retriable-4xx
-                  - refused-stream
-                  - retriable-status-codes
+                    - 5xx
+                    - gateway-error
+                    - connect-failure
+                    - retriable-4xx
+                    - refused-stream
+                    - retriable-status-codes
                   type: string
               type: object
             rewrite:
@@ -1105,16 +1105,16 @@ spec:
             tls:
               description: BoolOrString is a type that can hold a Boolean or a string.
               oneOf:
-              - type: string
-              - type: boolean
+                - type: string
+                - type: boolean
             use_websocket:
               description: 'use_websocket is deprecated, and is equivlaent to setting `allow_upgrade: ["websocket"]`'
               type: boolean
             weight:
               type: integer
           required:
-          - prefix
-          - service
+            - prefix
+            - service
           type: object
         status:
           description: MappingStatus defines the observed state of Mapping
@@ -1123,20 +1123,20 @@ spec:
               type: string
             state:
               enum:
-              - ""
-              - Inactive
-              - Running
+                - ''
+                - Inactive
+                - Running
               type: string
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1151,7 +1151,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: Module
     listKind: ModuleList
     plural: modules
@@ -1176,8 +1176,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             config:
               description: UntypedDict is relatively opaque as a Go type, but it preserves its contents in a roundtrippable way.
               type: object
@@ -1185,12 +1185,12 @@ spec:
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1205,7 +1205,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: RateLimitService
     listKind: RateLimitServiceList
     plural: ratelimitservices
@@ -1231,14 +1231,14 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             domain:
               type: string
             protocol_version:
               enum:
-              - v2
-              - v3
+                - v2
+                - v3
               type: string
             service:
               type: string
@@ -1247,20 +1247,20 @@ spec:
             tls:
               description: BoolOrString is a type that can hold a Boolean or a string.
               oneOf:
-              - type: string
-              - type: boolean
+                - type: string
+                - type: boolean
           required:
-          - service
+            - service
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1275,7 +1275,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: TCPMapping
     listKind: TCPMappingList
     plural: tcpmappings
@@ -1303,8 +1303,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             circuit_breakers:
               items:
                 properties:
@@ -1318,8 +1318,8 @@ spec:
                     type: integer
                   priority:
                     enum:
-                    - default
-                    - high
+                      - default
+                      - high
                     type: string
                 type: object
               type: array
@@ -1332,7 +1332,7 @@ spec:
             host:
               type: string
             idle_timeout_ms:
-              description: 'FIXME(lukeshu): Surely this should be an ''int''?'
+              description: "FIXME(lukeshu): Surely this should be an 'int'?"
               type: string
             port:
               description: Port isn't a pointer because it's required.
@@ -1344,23 +1344,23 @@ spec:
             tls:
               description: BoolOrString is a type that can hold a Boolean or a string.
               oneOf:
-              - type: string
-              - type: boolean
+                - type: string
+                - type: boolean
             weight:
               type: integer
           required:
-          - port
-          - service
+            - port
+            - service
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1375,7 +1375,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: TLSContext
     listKind: TLSContextList
     plural: tlscontexts
@@ -1403,8 +1403,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             ca_secret:
               type: string
             cacert_chain_file:
@@ -1427,17 +1427,17 @@ spec:
               type: array
             max_tls_version:
               enum:
-              - v1.0
-              - v1.1
-              - v1.2
-              - v1.3
+                - v1.0
+                - v1.1
+                - v1.2
+                - v1.3
               type: string
             min_tls_version:
               enum:
-              - v1.0
-              - v1.1
-              - v1.2
-              - v1.3
+                - v1.0
+                - v1.1
+                - v1.2
+                - v1.3
               type: string
             private_key_file:
               type: string
@@ -1453,12 +1453,12 @@ spec:
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1473,7 +1473,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: TracingService
     listKind: TracingServiceList
     plural: tracingservices
@@ -1499,8 +1499,8 @@ spec:
               items:
                 type: string
               oneOf:
-              - type: string
-              - type: array
+                - type: string
+                - type: array
             config:
               properties:
                 access_token_file:
@@ -1511,9 +1511,9 @@ spec:
                   type: string
                 collector_endpoint_version:
                   enum:
-                  - HTTP_JSON_V1
-                  - HTTP_JSON
-                  - HTTP_PROTO
+                    - HTTP_JSON_V1
+                    - HTTP_JSON
+                    - HTTP_PROTO
                   type: string
                 collector_hostname:
                   type: string
@@ -1526,9 +1526,9 @@ spec:
               type: object
             driver:
               enum:
-              - lightstep
-              - zipkin
-              - datadog
+                - lightstep
+                - zipkin
+                - datadog
               type: string
             sampling:
               properties:
@@ -1546,18 +1546,18 @@ spec:
                 type: string
               type: array
           required:
-          - driver
-          - service
+            - driver
+            - service
           type: object
       type: object
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1570,24 +1570,24 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: FilterPolicy
     plural: filterpolicies
     shortNames:
-    - fp
+      - fp
     singular: filterpolicy
   scope: Namespaced
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1beta2
-    served: true
-    storage: false
-  - name: v1beta1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1beta2
+      served: true
+      storage: false
+    - name: v1beta1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1600,24 +1600,24 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: Filter
     plural: filters
     shortNames:
-    - fil
+      - fil
     singular: filter
   scope: Namespaced
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1beta2
-    served: true
-    storage: false
-  - name: v1beta1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1beta2
+      served: true
+      storage: false
+    - name: v1beta1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1630,24 +1630,24 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: RateLimit
     plural: ratelimits
     shortNames:
-    - rl
+      - rl
     singular: ratelimit
   scope: Namespaced
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
-  - name: v1beta2
-    served: true
-    storage: false
-  - name: v1beta1
-    served: true
-    storage: false
+    - name: v2
+      served: true
+      storage: true
+    - name: v1beta2
+      served: true
+      storage: false
+    - name: v1beta1
+      served: true
+      storage: false
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1660,7 +1660,7 @@ spec:
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: ProjectController
     plural: projectcontrollers
     singular: projectcontroller
@@ -1669,9 +1669,9 @@ spec:
     status: {}
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
+    - name: v2
+      served: true
+      storage: true
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1682,19 +1682,19 @@ metadata:
   name: projects.getambassador.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.prefix
-    name: Prefix
-    type: string
-  - JSONPath: .spec.githubRepo
-    name: Repo
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: Age
-    type: date
+    - JSONPath: .spec.prefix
+      name: Prefix
+      type: string
+    - JSONPath: .spec.githubRepo
+      name: Repo
+      type: string
+    - JSONPath: .metadata.creationTimestamp
+      name: Age
+      type: date
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: Project
     plural: projects
     singular: project
@@ -1703,9 +1703,9 @@ spec:
     status: {}
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
+    - name: v2
+      served: true
+      storage: true
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -1716,25 +1716,25 @@ metadata:
   name: projectrevisions.getambassador.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.project.name
-    name: Project
-    type: string
-  - JSONPath: .spec.ref
-    name: Ref
-    type: string
-  - JSONPath: .spec.rev
-    name: Rev
-    type: string
-  - JSONPath: .status.phase
-    name: Status
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: Age
-    type: date
+    - JSONPath: .spec.project.name
+      name: Project
+      type: string
+    - JSONPath: .spec.ref
+      name: Ref
+      type: string
+    - JSONPath: .spec.rev
+      name: Rev
+      type: string
+    - JSONPath: .status.phase
+      name: Status
+      type: string
+    - JSONPath: .metadata.creationTimestamp
+      name: Age
+      type: date
   group: getambassador.io
   names:
     categories:
-    - ambassador-crds
+      - ambassador-crds
     kind: ProjectRevision
     plural: projectrevisions
     singular: projectrevision
@@ -1743,6 +1743,6 @@ spec:
     status: {}
   version: null
   versions:
-  - name: v2
-    served: true
-    storage: true
+    - name: v2
+      served: true
+      storage: true

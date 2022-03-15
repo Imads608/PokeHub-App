@@ -1,50 +1,59 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { RoomService } from './room.service';
-import { UserData } from '@pokehub/user'
-import { ChatRoom, Participant } from '@pokehub/room';
+import { ChatRoom, Participant } from '@pokehub/room/database';
+import { AppLogger } from '@pokehub/common/logger';
+import { IRoomService, ROOM_SERVICE } from './room-service.interface';
+import { TCPEndpoints } from '@pokehub/room/interfaces';
 
 @Controller()
 export class RoomController {
-    private logger = new Logger(RoomController.name);
+  constructor(
+    @Inject(ROOM_SERVICE) private roomService: IRoomService,
+    private readonly logger: AppLogger
+  ) {
+    logger.setContext(RoomController.name);
+  }
 
-    constructor(private roomService: RoomService) {}
+  @MessagePattern({ cmd: TCPEndpoints.CHATROOM_JOIN }, Transport.TCP)
+  joinChatroom(userId: string, roomId: string): Promise<Participant> {
+    this.logger.log(
+      `joinChatRoom: Got Request for user ${userId} to join chatroom ${roomId}`
+    );
+    return this.roomService.addNewParticipant(userId, roomId);
+  }
 
-    @MessagePattern({ cmd: 'chatroom-join' }, Transport.TCP)
-    joinChatroom(userId: string, roomId: string): Promise<Participant> {
-        this.logger.debug('Got request for user to join chatroom');
-        return this.roomService.addNewParticipant(userId, roomId);
-    }
+  @MessagePattern({ cmd: TCPEndpoints.USER_JOINED_CHATROOMS }, Transport.TCP)
+  getUserChatrooms(userId: string): Promise<ChatRoom[]> {
+    this.logger.log(
+      `getUserChatrooms: Got request to fetch all Chatrooms User ${userId} has joined`
+    );
+    return this.roomService.getUserJoinedRooms(userId);
+  }
 
-    @MessagePattern({ cmd: 'user-joined-chatrooms' }, Transport.TCP)
-    getUserChatrooms(userId: string): Promise<ChatRoom[]> {
-        this.logger.debug('Got request for to get user joined chat rooms');
-        return this.roomService.getUserJoinedRooms(userId);
-        //return this.authService.emailLogin(user);
-    }
+  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOMS }, Transport.TCP)
+  getPublicChatrooms(): Promise<ChatRoom[]> {
+    this.logger.log(
+      `getPublicChatrooms: Got request to fetch all Public Chatrooms`
+    );
+    return this.roomService.getAllPublicRooms();
+  }
 
-    @MessagePattern({ cmd: 'get-public-chatrooms' }, Transport.TCP)
-    getPublicChatrooms(): Promise<ChatRoom[]> {
-        this.logger.debug('Got request to login user by email');
-        return this.roomService.getAllPublicRooms();
-        //return this.authService.emailLogin(user);
-    }
+  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOM }, Transport.TCP)
+  getPublicChatRoom(roomId: string): Promise<ChatRoom> {
+    this.logger.log(
+      `getPublicChatroom: Got request to fetch data related to chatroom ${roomId}`
+    );
+    return this.roomService.getPublicRoomById(roomId);
+  }
 
-    @MessagePattern({ cmd: 'get-public-chatroom' }, Transport.TCP)
-    getPublicChatRoom(roomId: string): Promise<ChatRoom> {
-        this.logger.debug('Got request to fetch Chatroom');
-        return this.roomService.getPublicRoomById(roomId);
-    }
-
-    @MessagePattern({ cmd: 'get-public-chatroom-users' }, Transport.TCP)
-    getPublicChatRoomUsers(roomId: string): Promise<Participant[]> {
-        this.logger.debug('Got request to fetch users of ChatRoom');
-        return this.roomService.getChatRoomParticipants(roomId);
-    }
-
-    @MessagePattern({ cmd: 'get-joined-public-chatrooms'}, Transport.TCP)
-    getUserJoinedPublicChatRooms(userId: string): Promise<ChatRoom[]> {
-        this.logger.debug('Got request to get All Public Chatrooms joined by user');
-        return this.roomService.getUserJoinedRooms(userId);
-    }
+  @MessagePattern(
+    { cmd: TCPEndpoints.GET_PUBLIC_CHATROOM_USERS },
+    Transport.TCP
+  )
+  getPublicChatRoomUsers(roomId: string): Promise<Participant[]> {
+    this.logger.log(
+      `getPublicChatRoomUsers: Got request to retrieve all Participants of Chatroom ${roomId}`
+    );
+    return this.roomService.getChatRoomParticipants(roomId);
+  }
 }

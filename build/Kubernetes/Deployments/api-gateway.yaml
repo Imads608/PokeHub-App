@@ -6,7 +6,7 @@ metadata:
   name: api-gateway
   namespace: backend-system
   annotations:
-    "sidecar.jaegertracing.io/inject": "true"
+    'sidecar.jaegertracing.io/inject': 'true'
 spec:
   replicas: 1
   selector:
@@ -29,23 +29,23 @@ spec:
               memory: 500Mi
           env:
             - name: APPLICATION_PORT
-              value: "3000"
+              value: '3000'
             - name: USER_MICROSERVICE_HOST
               value: user-service.backend-system.svc.cluster.local
             - name: USER_MICROSERVICE_PORT
-              value: "3000"
+              value: '3000'
             - name: AUTH_MICROSERVICE_HOST
               value: auth-service.backend-system.svc.cluster.local
             - name: AUTH_MICROSERVICE_PORT
-              value: "3000"
+              value: '3000'
             - name: CHAT_MICROSERVICE_HOST
               value: chat-service.backend-system.svc.cluster.local
             - name: CHAT_MICROSERVICE_PORT
-              value: "3000"
+              value: '3000'
             - name: RABBITMQ_SERVICE
-              value: "host.docker.internal"
+              value: 'host.docker.internal'
             - name: RABBITMQ_PORT
-              value: "5672"
+              value: '5672'
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -56,7 +56,7 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: GOOGLE_CLIENT_SECRET
-            
+
 ---
 apiVersion: v1
 kind: Service
@@ -71,4 +71,3 @@ spec:
     - name: http
       targetPort: 3000
       port: 3000
-

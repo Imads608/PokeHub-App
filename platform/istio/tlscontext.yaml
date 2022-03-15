@@ -5,5 +5,5 @@ metadata:
   name: istio-upstream
   namespace: ambassador
 spec:
-  secret: istio-certs     # This Secret name cannot currently be changed.
-  alpn_protocols: istio   # This is required for Istio.
+  secret: istio-certs # This Secret name cannot currently be changed.
+  alpn_protocols: istio # This is required for Istio.

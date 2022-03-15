@@ -9,7 +9,7 @@ spec:
   storageClassName: manual
   capacity:
     storage: 2Gi
-  accessModes: 
+  accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App"
+    path: '/Users/imadsheriff/Documents Local/Projects/Pokemon/PokeHub-App'

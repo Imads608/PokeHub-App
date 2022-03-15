@@ -3,7 +3,10 @@ import { ArrowBackIos } from '@mui/icons-material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { getPokedexEntryData, getPokedexSpeciesEntryData } from '../../../api/dex';
+import {
+  getPokedexEntryData,
+  getPokedexSpeciesEntryData,
+} from '../../../api/dex';
 import SpeciesInfo from './SpeciesInfo';
 import Header from './Header';
 import PropTypes from 'prop-types';
@@ -11,48 +14,91 @@ import Loading from '../../layout/Loading';
 import Type from '../common/Type';
 
 const Pokemon = ({ dexEntry, location }) => {
-    const dexNum = location.pathname.split('/')[3];
-    const { data, error, isLoading } = useQuery(['pokemon', dexNum], () => getPokedexEntryData(dexNum), { enabled: dexEntry || dexNum === undefined ? false : true});
-    const { data: speciesData, error: speciesError, isLoading: speciesLoading } = useQuery(['pokemon-species', dexNum], () => getPokedexSpeciesEntryData(dexNum));
+  const dexNum = location.pathname.split('/')[3];
+  const { data, error, isLoading } = useQuery(
+    ['pokemon', dexNum],
+    () => getPokedexEntryData(dexNum),
+    { enabled: dexEntry || dexNum === undefined ? false : true }
+  );
+  const {
+    data: speciesData,
+    error: speciesError,
+    isLoading: speciesLoading,
+  } = useQuery(['pokemon-species', dexNum], () =>
+    getPokedexSpeciesEntryData(dexNum)
+  );
 
-    const pokemonData = dexEntry ? dexEntry : data;
+  const pokemonData = dexEntry ? dexEntry : data;
 
-    return (
-        (!dexEntry && isLoading) || (!speciesData && speciesLoading) ? <Loading /> :
-        <main>
-            <Header pokemonData={pokemonData} />
-            <section style={{ display: 'flex' }}>
-                <SpeciesInfo speciesData={speciesData} dexEntryData={pokemonData} />
-                <Grid container spacing={3}>
-                    <Grid item xs={6} md={5}>
-                        <Paper style={{ backgroundColor: '#A7DB8D', width: '100%', padding: '5px' }} elevation={1}>
-                            <div style={{ dislay: 'flex', flexDirection: 'row', marginBottom: '5px' }}>
-                                <div className='theme-text'>
-                                    Abilities
-                                </div>
-                                <div style={{ backgroundColor: 'white', borderRadius: '5px', padding: '5px', display: 'flex', justifyContent: 'space-around' }}>
-                                    { pokemonData.abilities.map((abilityObj, index) => (
-                                        <Chip classes={{ label: 'theme-text-whitebkg' }} style={{ marginRight: '3px', marginBottom: '3px' }} key={index} label={abilityObj.ability.name} variant='outlined' color='secondary'/>
-                                    ))}
-                                </div>
-                            </div>
-                            <div>
-                                <div className='theme-text'>
-                                    Types
-                                </div>
-                                <div style={{ backgroundColor: 'white', borderRadius: '5px', padding: '5px', display: 'flex', justifyContent: 'space-around' }}>
-                                    { pokemonData.types.map((typeObj, index) => (
-                                        <Type key={index} pokemonType={typeObj.type.name} />    
-                                    ))}
-                                </div>
-                            </div>
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </section>
-        </main>
-    )
-    /*
+  return (!dexEntry && isLoading) || (!speciesData && speciesLoading) ? (
+    <Loading />
+  ) : (
+    <main>
+      <Header pokemonData={pokemonData} />
+      <section style={{ display: 'flex' }}>
+        <SpeciesInfo speciesData={speciesData} dexEntryData={pokemonData} />
+        <Grid container spacing={3}>
+          <Grid item xs={6} md={5}>
+            <Paper
+              style={{
+                backgroundColor: '#A7DB8D',
+                width: '100%',
+                padding: '5px',
+              }}
+              elevation={1}
+            >
+              <div
+                style={{
+                  dislay: 'flex',
+                  flexDirection: 'row',
+                  marginBottom: '5px',
+                }}
+              >
+                <div className="theme-text">Abilities</div>
+                <div
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '5px',
+                    padding: '5px',
+                    display: 'flex',
+                    justifyContent: 'space-around',
+                  }}
+                >
+                  {pokemonData.abilities.map((abilityObj, index) => (
+                    <Chip
+                      classes={{ label: 'theme-text-whitebkg' }}
+                      style={{ marginRight: '3px', marginBottom: '3px' }}
+                      key={index}
+                      label={abilityObj.ability.name}
+                      variant="outlined"
+                      color="secondary"
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="theme-text">Types</div>
+                <div
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '5px',
+                    padding: '5px',
+                    display: 'flex',
+                    justifyContent: 'space-around',
+                  }}
+                >
+                  {pokemonData.types.map((typeObj, index) => (
+                    <Type key={index} pokemonType={typeObj.type.name} />
+                  ))}
+                </div>
+              </div>
+            </Paper>
+          </Grid>
+        </Grid>
+      </section>
+    </main>
+  );
+  /*
     return (
         !dexEntry && isLoading ? <Loading /> : 
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -84,11 +130,11 @@ const Pokemon = ({ dexEntry, location }) => {
             </Grid>
         </div>
     )*/
-}
+};
 
 Pokemon.propTypes = {
-    dexEntry: PropTypes.object,
-    location: PropTypes.object.isRequired
-}
+  dexEntry: PropTypes.object,
+  location: PropTypes.object.isRequired,
+};
 
 export default Pokemon;

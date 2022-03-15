@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, UserStatus } from '@pokehub/user';
+import { User, UserStatus } from '@pokehub/user/database';
 import { UserModule } from '../user/user.module';
-
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import configuration from '../config/configuration';
+import { LoggerModule } from '@pokehub/common/logger';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -23,14 +22,15 @@ import configuration from '../config/configuration';
         database: configService.get('postgresCreds.database'),
         entities: [User, UserStatus],
         synchronize: true,
-      })
+      }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration]
-    })
+      load: [configuration],
+    }),
+    CommonModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

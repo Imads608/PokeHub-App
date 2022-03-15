@@ -7,9 +7,9 @@ export const SUCCESS = 'SUCCESS';
 export const INFO = 'INFO';
 
 export const AppNotificationPropTypes = PropTypes.shape({
-    type: PropTypes.string,
-    component: PropTypes.string,
-    message: PropTypes.string,
-    desiredState: PropTypes.string,
-    otherProps: PropTypes.object
-})
+  type: PropTypes.string,
+  component: PropTypes.string,
+  message: PropTypes.string,
+  desiredState: PropTypes.string,
+  otherProps: PropTypes.object,
+});

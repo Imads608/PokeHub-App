@@ -10,34 +10,38 @@ import PropTypes from 'prop-types';
 import DrawerItems from './DrawerItems';
 
 const MobileDrawer = ({ drawerToggle, closedDrawer, classes }) => {
-    const theme = useTheme();
+  const theme = useTheme();
 
-    const open = true;
-    return (
-        <Drawer
-            variant="temporary"
-            anchor='right'
-            open={drawerToggle}
-            hideBackdrop={false}
-            classes={{
-                paper: classes.drawerPaper,
-            }}
-        >
-            <div className={classes.drawerHeader}>
-                <IconButton onClick={() => closedDrawer()} size="large">
-                    {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-                </IconButton>
-            </div>
-            <DrawerItems />
-        </Drawer>
-    );
-}
+  const open = true;
+  return (
+    <Drawer
+      variant="temporary"
+      anchor="right"
+      open={drawerToggle}
+      hideBackdrop={false}
+      classes={{
+        paper: classes.drawerPaper,
+      }}
+    >
+      <div className={classes.drawerHeader}>
+        <IconButton onClick={() => closedDrawer()} size="large">
+          {theme.direction === 'rtl' ? (
+            <ChevronLeftIcon />
+          ) : (
+            <ChevronRightIcon />
+          )}
+        </IconButton>
+      </div>
+      <DrawerItems />
+    </Drawer>
+  );
+};
 
 MobileDrawer.propTypes = {
   drawerToggle: PropTypes.bool.isRequired,
   drawerItems: PropTypes.object,
   closedDrawer: PropTypes.func.isRequired,
-  classes: PropTypes.object.isRequired
-}
+  classes: PropTypes.object.isRequired,
+};
 
 export default connect(null, { closedDrawer })(MobileDrawer);

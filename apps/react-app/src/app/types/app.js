@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types';
 
 export const OpenedWindowPropTypes = PropTypes.shape({
-    type: PropTypes.string.isRequired,
-    payload: PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        name: PropTypes.string.isRequired
-    })
+  type: PropTypes.string.isRequired,
+  payload: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+  }),
 });
 
 // Open Window Types

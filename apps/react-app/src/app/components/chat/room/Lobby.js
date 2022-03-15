@@ -12,37 +12,61 @@ import { OpenedWindowPropTypes } from '../../../types/app';
 import WithConversation from '../../hoc/WithConversation';
 import '../chat.css';
 
-const Lobby = ({ isMember, user, room, setChatRoomState, location, sentMessageToChatRoom, error, reloadConversation, loading }) => {
-    
-    useEffect(() => {
-        room.state.url.pathname !== location.pathname || room.state.url.search !== location.search && setChatRoomState({ url: { pathname: location.pathname, search: location.search } }, room.id);
-    }, [isMember]);
+const Lobby = ({
+  isMember,
+  user,
+  room,
+  setChatRoomState,
+  location,
+  sentMessageToChatRoom,
+  error,
+  reloadConversation,
+  loading,
+}) => {
+  useEffect(() => {
+    room.state.url.pathname !== location.pathname ||
+      (room.state.url.search !== location.search &&
+        setChatRoomState(
+          { url: { pathname: location.pathname, search: location.search } },
+          room.id
+        ));
+  }, [isMember]);
 
-    return (
-        <div className='chat-section'>
-            <ChatWindow chatState={room.state} loading={loading} error={error} reload={reloadConversation} />
-            <ChatInput 
-                recipient={room} 
-                sentMessageToRecipient={sentMessageToChatRoom} 
-                typeChat={TYPE_CHAT_CHATROOM} 
-                disabled={error || loading} 
-            />
-            {user && !isMember && <JoinRoomDialog user={user} room={room} open={true} />}
-        </div>
-    
-    )
-}
+  return (
+    <div className="chat-section">
+      <ChatWindow
+        chatState={room.state}
+        loading={loading}
+        error={error}
+        reload={reloadConversation}
+      />
+      <ChatInput
+        recipient={room}
+        sentMessageToRecipient={sentMessageToChatRoom}
+        typeChat={TYPE_CHAT_CHATROOM}
+        disabled={error || loading}
+      />
+      {user && !isMember && (
+        <JoinRoomDialog user={user} room={room} open={true} />
+      )}
+    </div>
+  );
+};
 
 Lobby.propTypes = {
-    user: UserPropTypes.isRequired,
-    isMember: PropTypes.bool.isRequired,
-    currentWindow: OpenedWindowPropTypes.isRequired,
-    room: ChatroomPropTypes.isRequired,
-    location: PropTypes.object.isRequired,
-    setChatRoomState: PropTypes.func.isRequired,
-    error: PropTypes.bool.isRequired,
-    reloadConversation: PropTypes.func.isRequired, 
-    loading: PropTypes.bool.isRequired
-}
+  user: UserPropTypes.isRequired,
+  isMember: PropTypes.bool.isRequired,
+  currentWindow: OpenedWindowPropTypes.isRequired,
+  room: ChatroomPropTypes.isRequired,
+  location: PropTypes.object.isRequired,
+  setChatRoomState: PropTypes.func.isRequired,
+  error: PropTypes.bool.isRequired,
+  reloadConversation: PropTypes.func.isRequired,
+  loading: PropTypes.bool.isRequired,
+};
 
-export default connect(null, { setChatRoomState, sentMessageToChatRoom, loadChatRoomConversation })(WithConversation(Lobby, TYPE_CHAT_CHATROOM));
+export default connect(null, {
+  setChatRoomState,
+  sentMessageToChatRoom,
+  loadChatRoomConversation,
+})(WithConversation(Lobby, TYPE_CHAT_CHATROOM));

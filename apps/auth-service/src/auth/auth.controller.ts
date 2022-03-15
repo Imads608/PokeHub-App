@@ -1,70 +1,83 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { UserDataWithToken, UserData } from '@pokehub/user';
-import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/auth'; 
-import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
+import { UserDataWithToken } from '@pokehub/user/models';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens } from '@pokehub/auth/models';
+import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
+import { AppLogger } from '@pokehub/common/logger';
+import { TCPEndpoints } from '@pokehub/auth/interfaces';
+import { IJwtAuthService, JWT_AUTH_SERVICE } from '../common/jwt-auth-service.interface';
 
 @Controller()
 export class AuthController {
-    private readonly logger = new Logger(AuthController.name);
-
-    constructor(private readonly authService: AuthService, private readonly jwtService: JwtService) {}
-
+    constructor( @Inject(JWT_AUTH_SERVICE) private readonly authService: IJwtAuthService, private readonly logger: AppLogger ) {
+        this.logger.setContext(AuthController.name);
+    }
     /*
-    @MessagePattern({ cmd: 'validate-user' }, Transport.TCP)
-    validateUser(user: {username: string, password: string }): Promise<UserData> {
-        this.logger.log('Got request to validate user');
-        return this.authService.validateUser(user.username, user.password);
+    @MessagePattern({ cmd: TCPEndpoints.EMAIL_LOGIN }, Transport.TCP)
+    async emailLogin(user: EmailLogin): Promise<UserDataWithToken> {
+        this.logger.log( `emailLogin: Got request to login user with Email ${user.email}` );
+        return await this.authService.emailLogin(user);
     }
 
-    @MessagePattern({ cmd: 'login-user' }, Transport.TCP)
-    loginUser(user: { username: string, uid: string}): Promise<{ access_token: string, refresh_token: string }> {
-        return this.authService.login(user.username, user.uid)
+    @MessagePattern({ cmd: TCPEndpoints.USERNAME_LOGIN }, Transport.TCP)
+    async usernameLogin(user: UsernameLogin): Promise<UserDataWithToken> {
+        this.logger.log( `usernameLogin: Got request to login user by Username ${user.username}` );
+        return await this.authService.usernameLogin(user);
     }
 
-    @MessagePattern({ cmd: 'login-user' }, Transport.TCP)
-    loginUser2(user: EmailLogin | UsernameLogin): Promise<UserDataWithToken> {
-        this.logger.log('Got request to validate user credentials' + JSON.stringify(user));
-        return this.authService.loginUser(user);
+    @MessagePattern({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, Transport.TCP)
+    async googleOAuthLogin(token: string) {
+        this.logger.log( `googleOAuthLogin: Got request to login user with Google OAuth` );
+        return await this.authService.googleOAuthLogin(token);
     }*/
 
-    @MessagePattern({ cmd: 'email-login' }, Transport.TCP)
-    emailLogin(user: EmailLogin): Promise<UserDataWithToken> {
-        this.logger.debug('Got request to login user by email');
-        return this.authService.emailLogin(user);
+    @MessagePattern({ cmd: TCPEndpoints.VALIDATE_ACCESS_TOKEN }, Transport.TCP)
+    async validateAccessToken(accessToken: string): Promise<boolean> {
+        this.logger.log( 'validateAccessToken: Got request to validate provided access token' );
+        return await this.authService.validateAccessToken(accessToken);
     }
 
-    @MessagePattern({ cmd: 'username-login' }, Transport.TCP)
-    usernameLogin(user: UsernameLogin): Promise<UserDataWithToken> {
-        this.logger.debug('Got request to login user by username');
-        return this.authService.usernameLogin(user);
+    @MessagePattern( { cmd: TCPEndpoints.VALIDATE_EMAIL_CONFIRMATION_TOKEN }, Transport.TCP )
+    async validateEmailConfirmationToken(verificationToken: string): Promise<JwtTokenBody> {
+        this.logger.log( 'validateEmailConfirmationToken: Got request to validate provided Email Verification Token' );
+        return await this.authService.validateEmailVerificationToken(verificationToken);
     }
 
-    @MessagePattern({ cmd: 'google-oauth-login' }, Transport.TCP)
-    googleOAuthLogin(token: string) {
-        this.logger.debug('Got request to login user with OAuth');
-        return this.authService.googleOAuthLogin(token);
+    @MessagePattern( { cmd: TCPEndpoints.VALIDATE_PASSWORD_RESET_TOKEN }, Transport.TCP )
+    async validatePasswordResetToken(passwordResetToken: string): Promise<{ email: string }> {
+        this.logger.log( 'validatePasswordResetToken: Got request to validate provided Password Reset Token' );
+        return await this.authService.validatePasswordResetToken(passwordResetToken);
     }
 
-    @MessagePattern({ cmd: 'validate-accessToken' }, Transport.TCP)
-    validateAccessToken(accessToken: string): Promise<Boolean> {
-        return this.authService.validateAccessToken(accessToken);
+    @MessagePattern({ cmd: TCPEndpoints.DECODE_TOKEN }, Transport.TCP)
+    async decodeToken(accessToken: string): Promise<JwtTokenBody> {
+        this.logger.log('decodeToken: Got request to Decode Access Token');
+        return await this.authService.decodeToken(accessToken);
     }
 
-    @MessagePattern({ cmd: 'decode-token' }, Transport.TCP)
-    decodeToken(accessToken: string): Promise<JwtTokenBody> {
-        return this.authService.decodeToken(accessToken);
+    /*
+    @MessagePattern({ cmd: TCPEndpoints.GENERATE_TOKENS }, Transport.TCP)
+    async generateTokens(userInfo: JwtTokenBody): Promise<AuthTokens> {
+        this.logger.log( `generateTokens: Got request to generate tokens for user with uid ${userInfo.uid}` );
+        return await this.authService.generateNewTokens(userInfo);
+    }
+    */
+   
+    @MessagePattern({ cmd: TCPEndpoints.GET_ACCESS_TOKEN }, Transport.TCP)
+    async getNewAccessToken(refreshToken: string): Promise<{ access_token: string }> {
+        this.logger.log('getNewAccessToken: Got request to generate access token');
+        return await this.authService.getNewAccessToken(refreshToken);
     }
 
-    @MessagePattern({ cmd: 'generate-tokens' }, Transport.TCP)
-    generateTokens(userInfo: JwtTokenBody): Promise<AuthTokens> {
-        this.logger.log("Got request to generate tokens for user: " + JSON.stringify(userInfo));
-        return this.authService.generateNewTokens(userInfo);
+    @MessagePattern( { cmd: TCPEndpoints.GET_EMAIL_VERIFICATION_TOKEN }, Transport.TCP )
+    async getEmailVerificationToken( userData: JwtTokenBody ): Promise<{ email_verification_token: string }> {
+        this.logger.log( 'getEmailVerificationToken: Got request to generate new Email Verification Token' );
+        return await this.authService.getNewEmailVerificationToken(userData);
     }
 
-    @MessagePattern({ cmd: 'get-accessToken' }, Transport.TCP)
-    getNewAccessToken(refreshToken: string): Promise<{ access_token: string }> {
-        return this.authService.getNewAccessToken(refreshToken);
+    @MessagePattern( { cmd: TCPEndpoints.GET_PASSWORD_RESET_TOKEN }, Transport.TCP )
+    async getPasswordResetToken( userData: { email: string } ): Promise<{ password_reset_token: string }> {
+        this.logger.log( `getPasswordResetToken: Got request to generate new Password Reset Token for ${userData.email}` );
+        return await this.authService.getNewPasswordResetToken(userData);
     }
 }

@@ -6,7 +6,7 @@ metadata:
   name: user-service
   namespace: backend-system
   annotations:
-    "sidecar.jaegertracing.io/inject": "true"
+    'sidecar.jaegertracing.io/inject': 'true'
 spec:
   replicas: 1
   selector:
@@ -22,28 +22,35 @@ spec:
           name: user-service
           ports:
             - containerPort: 3000
+              name: microtcp-port
+            - containerPort: 3001
+              name: http-port
           resources:
             requests:
               memory: 256Mi
             limits:
               memory: 500Mi
           env:
+            - name: APPLICATION_NAME
+              value: 'User Service'
+            - name: HTTP_PORT
+              value: '3001'
             - name: APPLICATION_PORT
-              value: "3000"
+              value: '3000'
             - name: DB_HOST
-              value: "postgres.postgres.svc.cluster.local"
+              value: 'postgres.postgres.svc.cluster.local'
             - name: DB_PORT
-              value: "5432"
+              value: '5432'
             - name: DB_NAME
-              value: "pokehub"
+              value: 'pokehub'
             - name: DB_USERNAME
-              value: "postgres"
+              value: 'postgres'
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: DB_PASSWORD
-            
+
 ---
 apiVersion: v1
 kind: Service
@@ -55,7 +62,9 @@ spec:
   selector:
     app: user-service
   ports:
-    - name: http
+    - name: tcp
       targetPort: 3000
       port: 3000
-
+    - name: http
+      targetPort: 3001
+      port: 3001

@@ -22,26 +22,25 @@ import { getOpenedDM, getTotalUnreadDMs } from '../../selectors/chat';
 import { resetDMUnreadMessages } from '../../actions/chat';
 import Badge from '@mui/material/Badge';
 
-
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     position: 'sticky',
-    top: 0
+    top: 0,
   },
   title: {
     flexGrow: 1,
   },
   navbar: {
-    backgroundColor: 'rgb(199, 0, 57)'
+    backgroundColor: 'rgb(199, 0, 57)',
   },
   appBar: {
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    backgroundColor: 'rgb(199, 0, 57)'
+    backgroundColor: 'rgb(199, 0, 57)',
   },
   appBarShift: {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -53,32 +52,57 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Navbar = ({ isAuthenticated, loading, drawerToggle, user, authLoading, currentDM, openedDrawer, resetDMUnreadMessages, unreadDMCount, navbarRef }) => {
+const Navbar = ({
+  isAuthenticated,
+  loading,
+  drawerToggle,
+  user,
+  authLoading,
+  currentDM,
+  openedDrawer,
+  resetDMUnreadMessages,
+  unreadDMCount,
+  navbarRef,
+}) => {
   useEffect(() => {
-    currentDM && currentDM.state.unread > 0 && resetDMUnreadMessages(currentDM.id);
-  }, [currentDM])
+    currentDM &&
+      currentDM.state.unread > 0 &&
+      resetDMUnreadMessages(currentDM.id);
+  }, [currentDM]);
 
   console.log('Navbar Ref in Navbar', navbarRef.current);
 
   const classes = useStyles();
   return (
     <div className={classes.root}>
-      <AppBar position="sticky" className={clsx(classes.appBar, {
-        [classes.appBarShift]: drawerToggle,
-      })}>
-        <Toolbar style={{minHeight: '7vh'}}>
-          <img id='logo' src={logo}/>
+      <AppBar
+        position="sticky"
+        className={clsx(classes.appBar, {
+          [classes.appBarShift]: drawerToggle,
+        })}
+      >
+        <Toolbar style={{ minHeight: '7vh' }}>
+          <img id="logo" src={logo} />
           <Typography variant="h6" className={classes.title}>
-            <Link className='link nav-link' to={`${isAuthenticated ? '/dashboard' : '/'}`}>PokéHub</Link>
+            <Link
+              className="link nav-link"
+              to={`${isAuthenticated ? '/dashboard' : '/'}`}
+            >
+              PokéHub
+            </Link>
           </Typography>
-          
+
           {!isAuthenticated && !authLoading ? (
             <div>
-              <Link to='/login' className='link nav-link'>Log In</Link>
-              <Link to='/register' className='link nav-link'>Register</Link>
+              <Link to="/login" className="link nav-link">
+                Log In
+              </Link>
+              <Link to="/register" className="link nav-link">
+                Register
+              </Link>
             </div>
           ) : !loading ? (
-            <div style={{ display: 'flex'}}>
+            <div style={{ display: 'flex' }}>
               <UserMenu user={user} />
               <UserNotifications />
               <IconButton
@@ -88,19 +112,21 @@ const Navbar = ({ isAuthenticated, loading, drawerToggle, user, authLoading, cur
                 edge="end"
                 onClick={() => openedDrawer()}
                 className={clsx(drawerToggle && classes.hide)}
-                size="large">
-                <Badge badgeContent={unreadDMCount} color='primary'>
+                size="large"
+              >
+                <Badge badgeContent={unreadDMCount} color="primary">
                   <MenuIcon />
                 </Badge>
               </IconButton>
             </div>
-          ) : ''}
-          
+          ) : (
+            ''
+          )}
         </Toolbar>
       </AppBar>
     </div>
   );
-}
+};
 
 Navbar.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
@@ -111,8 +137,8 @@ Navbar.propTypes = {
   openedDrawer: PropTypes.func.isRequired,
   currentDM: PropTypes.object,
   unreadDMCount: PropTypes.number.isRequired,
-  resetDMUnreadMessages: PropTypes.func.isRequired
-}
+  resetDMUnreadMessages: PropTypes.func.isRequired,
+};
 
 const mapStateToProps = (state) => ({
   isAuthenticated: getIsAuthenticated(state),
@@ -121,7 +147,10 @@ const mapStateToProps = (state) => ({
   user: getUser(state),
   authLoading: getAuthLoading(state),
   currentDM: getOpenedDM(state),
-  unreadDMCount: getTotalUnreadDMs(state)
-})
+  unreadDMCount: getTotalUnreadDMs(state),
+});
 
-export default connect(mapStateToProps, { openedDrawer, resetDMUnreadMessages })(Navbar);
+export default connect(mapStateToProps, {
+  openedDrawer,
+  resetDMUnreadMessages,
+})(Navbar);

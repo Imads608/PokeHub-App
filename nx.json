@@ -26,40 +26,30 @@
       }
     ]
   },
-  "projects": {
-    "api-gateway": {
-      "tags": []
+  "cli": {
+    "defaultCollection": "@nrwl/nest"
+  },
+  "generators": {
+    "@nrwl/react": {
+      "application": {
+        "style": "css",
+        "linter": "eslint",
+        "babel": true
+      },
+      "component": {
+        "style": "css"
+      },
+      "library": {
+        "style": "css",
+        "linter": "eslint"
+      }
     },
-    "auth": {
-      "tags": []
-    },
-    "auth-service": {
-      "tags": []
-    },
-    "chat-service": {
-      "tags": []
-    },
-    "events": {
-      "tags": []
-    },
-    "react-app": {
-      "tags": []
-    },
-    "react-app-e2e": {
-      "tags": [],
-      "implicitDependencies": ["react-app"]
-    },
-    "room": {
-      "tags": []
-    },
-    "socket-service": {
-      "tags": []
-    },
-    "user": {
-      "tags": []
-    },
-    "user-service": {
-      "tags": []
+    "@nrwl/next": {
+      "application": {
+        "style": "css",
+        "linter": "eslint"
+      }
     }
-  }
+  },
+  "defaultProject": "api-gateway"
 }

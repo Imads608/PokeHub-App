@@ -1,0 +1,10 @@
+@use './common/content.scss';
+
+.main-window {
+    height: 93vh;
+    @include content.flexContentCenter(row);
+}
+
+.content {
+    @include content.flexContentCenter(column);
+}

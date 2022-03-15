@@ -5,9 +5,26 @@ import { connect } from 'react-redux';
 import { getChatRooms } from '../../middleware-thunks/chat';
 import Loading from '../layout/Loading';
 
-const PrivateRoute = ({component: Component, auth: { isAuthenticated, loading }, ...rest}) => (
-    <Route {...rest} render={props => loading ? <Loading /> : !isAuthenticated && !loading ? (<Redirect to={{ pathname: '/login', state: { from: props.location }}} />) : <Component {...props} />}/>
-)
+const PrivateRoute = ({
+  component: Component,
+  auth: { isAuthenticated, loading },
+  ...rest
+}) => (
+  <Route
+    {...rest}
+    render={(props) =>
+      loading ? (
+        <Loading />
+      ) : !isAuthenticated && !loading ? (
+        <Redirect
+          to={{ pathname: '/login', state: { from: props.location } }}
+        />
+      ) : (
+        <Component {...props} />
+      )
+    }
+  />
+);
 
 /*
 class PrivateRoute extends React.Component {
@@ -31,11 +48,11 @@ class PrivateRoute extends React.Component {
 }*/
 
 PrivateRoute.propTypes = {
-    auth: PropTypes.object.isRequired,
-}
+  auth: PropTypes.object.isRequired,
+};
 
 const mapStateToProps = (state) => ({
-    auth: state.auth,
-})
+  auth: state.auth,
+});
 
-export default connect(mapStateToProps, { getChatRooms })(PrivateRoute)
+export default connect(mapStateToProps, { getChatRooms })(PrivateRoute);

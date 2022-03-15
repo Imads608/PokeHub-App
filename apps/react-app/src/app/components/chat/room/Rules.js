@@ -6,21 +6,20 @@ import { ChatroomPropTypes } from '../../../types/chatroom';
 import '../chat.css';
 
 const Rules = ({ location, room, setChatRoomState }) => {
-    useEffect(() => {
-        setChatRoomState({ url: { pathname: location.pathname, search: location.search } }, room.id);
-    }, []);
+  useEffect(() => {
+    setChatRoomState(
+      { url: { pathname: location.pathname, search: location.search } },
+      room.id
+    );
+  }, []);
 
-    return (
-        <div className='main-window'>
-            Rules
-        </div>
-    )
-}
+  return <div className="main-window">Rules</div>;
+};
 
 Rules.propTypes = {
-    location: PropTypes.object.isRequired,
-    room: ChatroomPropTypes.isRequired,
-    setChatRoomState: PropTypes.func.isRequired
-}
+  location: PropTypes.object.isRequired,
+  room: ChatroomPropTypes.isRequired,
+  setChatRoomState: PropTypes.func.isRequired,
+};
 
 export default connect(null, { setChatRoomState })(Rules);

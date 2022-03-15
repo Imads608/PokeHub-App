@@ -15,7 +15,9 @@ body {
   margin: 0;
   padding: 0;
 }
-html, body, #root {
+html,
+body,
+#root {
   height: 100vh;
 }
 
@@ -47,7 +49,7 @@ html, body, #root {
 
 /* Drawer */
 .full-drawer-open {
-  margin-right: 240px
+  margin-right: 240px;
 }
 
 /* Landing Page */
@@ -61,7 +63,8 @@ html, body, #root {
 .trainer-card-background {
   position: relative;
   /*background-image: url('./img/landing-page.png');*/
-  background: url('./img/default-card_background.jpeg') no-repeat center center/cover;
+  background: url('./img/default-card_background.jpeg') no-repeat center
+    center/cover;
 }
 
 .landing-inner {
@@ -100,7 +103,7 @@ html, body, #root {
 }
 
 .link {
-  text-decoration: none; 
+  text-decoration: none;
   font-weight: bold;
 }
 
@@ -111,7 +114,6 @@ html, body, #root {
 }
 
 /**** Drawer Styles *****/
-
 
 /*** Others ***/
 /*
@@ -238,7 +240,7 @@ html, body, #root {
 }
 
 .dashboard {
-  height: 100vh
+  height: 100vh;
 }
 
 .backdrop {
@@ -256,7 +258,9 @@ html, body, #root {
 }
 
 .overworld {
-  background: transparent url(https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png?v5) no-repeat scroll -40px -0px !important;
+  background: transparent
+    url(https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png?v5)
+    no-repeat scroll -40px -0px !important;
   height: 30px;
   width: 40px;
   border: none;

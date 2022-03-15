@@ -11,51 +11,96 @@ import { useDMLoad } from '../../hooks/useDMLoad';
 import useConversationLoad from '../../hooks/useConversationLoad';
 
 const WithConversation = (Component, typeChat) => {
-    const ConversationHOC = (props) => {
-        const paths = props.location ? props.location.pathname.split('/') : null;
-        const pathsVal = paths ? paths[paths.length-1] : null;
-        const isDMRoute = props.location && props.location.pathname.includes('/dms') && pathsVal !== 'dms';
+  const ConversationHOC = (props) => {
+    const paths = props.location ? props.location.pathname.split('/') : null;
+    const pathsVal = paths ? paths[paths.length - 1] : null;
+    const isDMRoute =
+      props.location &&
+      props.location.pathname.includes('/dms') &&
+      pathsVal !== 'dms';
 
-        const dmId = typeChat === TYPE_CHAT_DM && isDMRoute && paths ? paths[paths.length-1] :
-                    typeChat === TYPE_CHAT_DM && props.currentDM ? props.currentDM.id : null;
-        const chatroomId = typeChat === TYPE_CHAT_CHATROOM ? props.room.id : null;
+    const dmId =
+      typeChat === TYPE_CHAT_DM && isDMRoute && paths
+        ? paths[paths.length - 1]
+        : typeChat === TYPE_CHAT_DM && props.currentDM
+        ? props.currentDM.id
+        : null;
+    const chatroomId = typeChat === TYPE_CHAT_CHATROOM ? props.room.id : null;
 
-        const { error: dmConvError, isLoading: dmConvLoading, refetch: dmRefetch } = useConversationLoad(dmId, typeChat, dmId && props.currentDM && !props.currentDM.isConversationLoaded);
-        const { error: dmError, isLoading: dmLoading } = useDMLoad(dmId, props.publicUser, 'NewDM_LINK', !props.currentDM);
-        const { error: roomConvError, isLoading: roomConvLoading, refetch: roomRefetch } = useConversationLoad(chatroomId, typeChat, chatroomId && props.isMember && !props.room.state.isConversationLoaded);
-        
-        const reloadConversation = () => {
-            typeChat === TYPE_CHAT_DM && dmConvError && dmRefetch();
-            typeChat === TYPE_CHAT_CHATROOM && roomConvError && roomRefetch();
-        };
+    const {
+      error: dmConvError,
+      isLoading: dmConvLoading,
+      refetch: dmRefetch,
+    } = useConversationLoad(
+      dmId,
+      typeChat,
+      dmId && props.currentDM && !props.currentDM.isConversationLoaded
+    );
+    const { error: dmError, isLoading: dmLoading } = useDMLoad(
+      dmId,
+      props.publicUser,
+      'NewDM_LINK',
+      !props.currentDM
+    );
+    const {
+      error: roomConvError,
+      isLoading: roomConvLoading,
+      refetch: roomRefetch,
+    } = useConversationLoad(
+      chatroomId,
+      typeChat,
+      chatroomId && props.isMember && !props.room.state.isConversationLoaded
+    );
 
-        const isError = () => {
-            return typeChat === TYPE_CHAT_DM ? (dmError || dmConvError) ? true : false : roomConvError ? true : false;
-        }
+    const reloadConversation = () => {
+      typeChat === TYPE_CHAT_DM && dmConvError && dmRefetch();
+      typeChat === TYPE_CHAT_CHATROOM && roomConvError && roomRefetch();
+    };
 
-        const isLoading = () => {
-            return typeChat === TYPE_CHAT_DM ? (dmConvLoading || dmLoading) ? true : false : roomConvLoading ? true : false;
-        }
+    const isError = () => {
+      return typeChat === TYPE_CHAT_DM
+        ? dmError || dmConvError
+          ? true
+          : false
+        : roomConvError
+        ? true
+        : false;
+    };
 
-        return (
-            <Component {...props} reloadConversation={reloadConversation} error={isError()} loading={isLoading()}/>
-        )
-    }
+    const isLoading = () => {
+      return typeChat === TYPE_CHAT_DM
+        ? dmConvLoading || dmLoading
+          ? true
+          : false
+        : roomConvLoading
+        ? true
+        : false;
+    };
 
-    ConversationHOC.propTypes = {
-        currentDM: DMPropTypes,
-        room: ChatroomPropTypes,
-        chatrooms: PropTypes.arrayOf(ChatroomPropTypes),
-        publicUser: PublicUserPropTypes,
-    }
+    return (
+      <Component
+        {...props}
+        reloadConversation={reloadConversation}
+        error={isError()}
+        loading={isLoading()}
+      />
+    );
+  };
 
-    const mapStateToProps = (state) => ({
-        chatrooms: getAllChatRooms(state),
-        publicUser: getPublicUser(state),
-        currentDM: getOpenedDM(state),
-    });
+  ConversationHOC.propTypes = {
+    currentDM: DMPropTypes,
+    room: ChatroomPropTypes,
+    chatrooms: PropTypes.arrayOf(ChatroomPropTypes),
+    publicUser: PublicUserPropTypes,
+  };
 
-    return connect(mapStateToProps)(ConversationHOC);
-}
+  const mapStateToProps = (state) => ({
+    chatrooms: getAllChatRooms(state),
+    publicUser: getPublicUser(state),
+    currentDM: getOpenedDM(state),
+  });
+
+  return connect(mapStateToProps)(ConversationHOC);
+};
 
 export default WithConversation;
