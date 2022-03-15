@@ -4,12 +4,12 @@ name: Production Build
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs: 
+      versionName:
+        description: 'Name of Version (Major.Minor.Path) (i.e 5.5.0)'
+        required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -22,16 +22,15 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      
+
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: 'dev'
+          main-branch-name: 'main'
 
       - name: Setup Node
         uses: actions/setup-node@v1
@@ -47,8 +46,20 @@ jobs:
           username: ${{ secrets.GITLAB_USERNAME }}
           password: ${{ secrets.GITLAB_PASSWORD }}
       
-      - name: Build App Base Image
-        run: bash build/Docker/Scripts/app-dockerbuild.sh
-        
-      - name: Build Project
-        run: npx nx affected --target=build-docker-prod --parallel=3
+      - name: Build Applications
+        run: bash build/Docker/Scripts/project-builder.sh ${{ github.event.inputs.versionName }}
+
+      - name: Build Changelog
+        id: github-release
+        uses: mikepenz/release-changelog-builder-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.versionName }}
+          release_name: release/v${{ github.event.inputs.versionName }}
+          body: ${{steps.github_release.outputs.changelog}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
