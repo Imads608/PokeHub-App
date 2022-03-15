@@ -6,7 +6,7 @@ import { CommonModule } from '../common/common.module';
 import configuration from '../config/configuration';
 import { EventsModule } from '../events/events.module';
 import { PubSubModule } from '../pubsub/pubsub.module';
-
+// Comment for testing
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,

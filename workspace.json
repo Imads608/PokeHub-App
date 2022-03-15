@@ -30,6 +30,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build api-gateway",
+              "bash build/Docker/Scripts/api-gateway-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -127,6 +137,16 @@
             }
           }
         },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build auth-service",
+              "bash build/Docker/Scripts/auth-service-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
@@ -161,7 +181,8 @@
             "outputPath": "dist/apps/chat-notif-service",
             "main": "apps/chat-notif-service/src/main.ts",
             "tsConfig": "apps/chat-notif-service/tsconfig.app.json",
-            "assets": ["apps/chat-notif-service/src/assets"]
+            "assets": ["apps/chat-notif-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -175,6 +196,16 @@
                 }
               ]
             }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build chat-notif-service",
+              "bash build/Docker/Scripts/chat-notif-service-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
@@ -228,6 +259,16 @@
                 }
               ]
             }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build chat-service",
+              "bash build/Docker/Scripts/chat-service-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
@@ -402,7 +443,8 @@
             "outputPath": "dist/apps/mail-service",
             "main": "apps/mail-service/src/main.ts",
             "tsConfig": "apps/mail-service/tsconfig.app.json",
-            "assets": ["apps/mail-service/src/assets"]
+            "assets": ["apps/mail-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -416,6 +458,16 @@
                 }
               ]
             }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build mail-service",
+              "bash build/Docker/Scripts/mail-service-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
@@ -455,6 +507,16 @@
           },
           "configurations": {
             "production": {}
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build next-app",
+              "bash build/Docker/Scripts/next-app-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
@@ -772,7 +834,8 @@
             "outputPath": "dist/apps/user-notif-service",
             "main": "apps/user-notif-service/src/main.ts",
             "tsConfig": "apps/user-notif-service/tsconfig.app.json",
-            "assets": ["apps/user-notif-service/src/assets"]
+            "assets": ["apps/user-notif-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -786,6 +849,16 @@
                 }
               ]
             }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build user-notif-service",
+              "bash build/Docker/Scripts/user-notif-service-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
@@ -839,6 +912,16 @@
                 }
               ]
             }
+          }
+        },
+        "build-docker-prod": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build user-service",
+              "bash build/Docker/Scripts/user-service-dockerbuild.sh"
+            ],
+            "parallel": false
           }
         },
         "serve": {
