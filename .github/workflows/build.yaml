@@ -47,5 +47,8 @@ jobs:
           username: ${{ secrets.GITLAB_USERNAME }}
           password: ${{ secrets.GITLAB_PASSWORD }}
       
+      - name: Build App Base Image
+        run: bash build/Docker/Scripts/app-dockerbuild.sh
+        
       - name: Build Project
         run: npx nx affected --target=build-docker-prod --parallel=3
