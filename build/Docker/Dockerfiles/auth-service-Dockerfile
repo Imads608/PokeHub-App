@@ -1,4 +1,6 @@
-FROM app-base-image:latest AS builder
+ARG TAG=dev
+
+FROM app-base-image:${TAG} AS builder
 WORKDIR /app/builder
 COPY . .
 RUN npx nx build auth-service --configuration=production
