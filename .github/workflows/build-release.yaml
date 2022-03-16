@@ -49,7 +49,7 @@ jobs:
           password: ${{ secrets.GITLAB_PASSWORD }}
       
       - name: Build Applications
-        run: bash build/Docker/Scripts/project-builder.sh v${{ RELEASE_VERSION }}
+        run: bash build/Docker/Scripts/project-builder.sh 'v$RELEASE_VERSION'
 
       - name: Build Changelog
         id: github-release
