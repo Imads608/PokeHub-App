@@ -27,7 +27,6 @@ export interface UserState {
   userDetails: IUserData | null;
   joinedPublicRooms: IChatRoomData[] | null;
   profileSetup: boolean;
-  status: IUserStatusData;
   clientIds?: NamespaceClientIds;
 }
 
@@ -46,7 +45,7 @@ const userSlice = createSlice({
     },
     status_update: (state: UserState, action: PayloadAction<UserStatusUpdate>) => {
       console.log('Status Update:', action.payload);
-      state.status = action.payload;
+      state.userDetails.status = action.payload;
     },
     websocket_connected: (state: UserState, action: PayloadAction<{ socketId: string, namespace: SocketNamespaces }>) => {
       if (action.payload.namespace === SocketNamespaces.USERS_NAMESPACE) state.clientIds.usersNS = action.payload.socketId;
@@ -62,7 +61,7 @@ const userSlice = createSlice({
       .addCase( login_success, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
           state.userDetails = action.payload.user;
           state.joinedPublicRooms = action.payload.joinedPublicRooms;
-          state.status = action.payload.status;
+          //state.status = action.payload.status;
           state.clientIds = { usersNS: null, roomsNS: null, dmsNS: null, isRefreshNeeded: false };
           if (action.payload.user.account === TypeAccount.GOOGLE)
             state.profileSetup = action.payload.user.avatar && action.payload.user.countUsernameChanged > 0;
@@ -77,7 +76,7 @@ const userSlice = createSlice({
       .addCase(logout, (state: UserState) => {
         state.userDetails = null;
         state.joinedPublicRooms = null;
-        state.status = null;
+        //state.status = null;
       })
       .addCase(HYDRATE, (state: UserState, action: any) => {
         return {

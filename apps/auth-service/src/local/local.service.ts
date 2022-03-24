@@ -21,19 +21,19 @@ export class LocalService implements ILocalService {
         try {
             // Retrieve User Data from User Service
             this.logger.log( `emailLogin: Retrieving User Data from User Microservice with email ${userCreds.email}` );
-            const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>( { cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_EMAIL }, userCreds.email ) );
+            const userData = await firstValueFrom( this.clientProxy.send<UserData>( { cmd: TCPEndpoints.FIND_USER_EMAIL }, userCreds.email ) );
             if (!userData) throw new UnauthorizedException('Invalid Credentials');
 
             this.logger.log( `emailLogin: Successfully retrieved User Data from User Microservice with email: ${userCreds.email}` );
 
             // Validate User Credentials
-            const isValidated: boolean = await this.validateCreds(userData.user as UserData, userCreds.password );
-            (userData.user as UserData).password = null;
+            const isValidated: boolean = await this.validateCreds(userData, userCreds.password );
+            userData.password = null;
 
             // Send back User Data with Access and Refresh Tokens otherwise throw Exception
             if (isValidated) {
-                const tokens = await this.jwtService.generateAccessAndRefreshTokens(new JwtTokenBody(userData.user.username, (userData.user as UserData).email, userData.user.uid));
-                return new UserDataWithToken( userData.user as UserData, tokens.accessToken, userData.status, tokens.refreshToken);
+                const tokens = await this.jwtService.generateAccessAndRefreshTokens(new JwtTokenBody(userData.username, userData.email, userData.uid));
+                return new UserDataWithToken( userData, tokens.accessToken, tokens.refreshToken);
             }
             throw new UnauthorizedException('Invalid Credentials');
         } catch (err) {
@@ -48,19 +48,19 @@ export class LocalService implements ILocalService {
         try {
             // Retrieve User Data from User Service
             this.logger.log( `usernameLogin: Retrieving User Data from User Microservice with username ${userCreds.username}` );
-            const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>( { cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_USERNAME }, userCreds.username ) );
+            const userData = await firstValueFrom( this.clientProxy.send<UserData>( { cmd: TCPEndpoints.FIND_USER_USERNAME }, userCreds.username ) );
             if (!userData) throw new UnauthorizedException('Invalid Credentials');
 
             this.logger.log( `usernameLogin: Successfully retrieved User Data from User Microservice with username: ${userCreds.username}` );
 
             // Validate User Credentials
-            const isValidated: boolean = await this.validateCreds(userData.user as UserData, userCreds.password );
-            (userData.user as UserData).password = null;
+            const isValidated: boolean = await this.validateCreds(userData, userCreds.password );
+            userData.password = null;
 
             // Send back User Data with Access and Refresh Tokens otherwise throw Exception
             if (isValidated) {
-                const tokens = await this.jwtService.generateAccessAndRefreshTokens(new JwtTokenBody(userData.user.username, (userData.user as UserData).email, userData.user.uid));
-                return new UserDataWithToken( userData.user as UserData, tokens.accessToken, userData.status, tokens.refreshToken );
+                const tokens = await this.jwtService.generateAccessAndRefreshTokens(new JwtTokenBody(userData.username, userData.email, userData.uid));
+                return new UserDataWithToken( userData, tokens.accessToken, tokens.refreshToken );
             }
             throw new UnauthorizedException('Invalid Credentials');
         } catch (err) {

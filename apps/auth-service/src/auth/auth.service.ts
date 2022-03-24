@@ -36,18 +36,18 @@ export class AuthService implements IAuthService {
             // Create or Retrieve User Data
             this.logger.log( `googleOAuthLogin: Fetching/Creating User Data from User Microservice` );
             const createReq = new CreateUserRequest( payload.email, 'testOAuth', TypeAccount.GOOGLE.toString(), `${payload.email} + ${this.configService.get<string>( 'ACCESS_TOKEN_SECRET' )}`, payload.given_name, payload.family_name );
-            const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>( { cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, createReq ) );
+            const userData = await firstValueFrom( this.clientProxy.send<UserData>( { cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, createReq ) );
             if (!userData)
                 throw new RpcException('Unable to retrieve User Data at this time');
 
             this.logger.log( `googleOAuthLogin: Successfully fetched/created User Data from User Microservice` );
 
             // Create Access and Refresh Tokens
-            const tokens = await this.generateNewTokens( new JwtTokenBody(userData.user.username, (userData.user as UserData).email, userData.user.uid) );
+            const tokens = await this.generateNewTokens( new JwtTokenBody(userData.username, userData.email, userData.uid) );
 
             // Send User Data back
             this.logger.log( `googleOAuthService: Successfully authenticated User through Google OAuth. Sending User Details back...` );
-            return new UserDataWithToken( userData.user as UserData, tokens.accessToken, userData.status, tokens.refreshToken );
+            return new UserDataWithToken( userData, tokens.accessToken, tokens.refreshToken );
         } catch (err) {
             this.logger.error( `googleOAuthLogin: Got error while authenticating user through Google OAuth: ${err}` );
             throw err;
@@ -178,19 +178,19 @@ export class AuthService implements IAuthService {
         try {
             // Retrieve User Data from User Service
             this.logger.log( `emailLogin: Retrieving User Data from User Microservice with email ${userCreds.email}` );
-            const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>( { cmd: TCPEndpoints.FIND_USER_EMAIL }, userCreds.email ) );
+            const userData = await firstValueFrom( this.clientProxy.send<UserData>( { cmd: TCPEndpoints.FIND_USER_EMAIL }, userCreds.email ) );
             if (!userData) throw new RpcException('Invalid Credentials');
 
             this.logger.log( `emailLogin: Successfully retrieved User Data from User Microservice with email: ${userCreds.email}` );
 
             // Validate User Credentials
-            const isValidated: boolean = await this.validateCreds( userData.user as UserData, userCreds.password );
-            (userData.user as UserData).password = null;
+            const isValidated: boolean = await this.validateCreds( userData, userCreds.password );
+            (userData).password = null;
 
             // Send back User Data with Access and Refresh Tokens otherwise throw Exception
             if (isValidated) {
-                const tokens = await this.generateNewTokens( new JwtTokenBody(userData.user.username, (userData.user as UserData).email, userData.user.uid) );
-                return new UserDataWithToken(userData.user as UserData, tokens.accessToken, userData.status, tokens.refreshToken);
+                const tokens = await this.generateNewTokens( new JwtTokenBody(userData.username, userData.email, userData.uid) );
+                return new UserDataWithToken(userData, tokens.accessToken, tokens.refreshToken);
             }
             throw new RpcException('Invalid Credentials');
         } catch (err) {
@@ -204,19 +204,19 @@ export class AuthService implements IAuthService {
         try {
             // Retrieve User Data from User Service
             this.logger.log( `usernameLogin: Retrieving User Data from User Microservice with username ${userCreds.username}` );
-            const userData = await firstValueFrom( this.clientProxy.send<UserDataWithStatus>( { cmd: TCPEndpoints.FIND_USER_USERNAME }, userCreds.username ) );
+            const userData = await firstValueFrom( this.clientProxy.send<UserData>( { cmd: TCPEndpoints.FIND_USER_USERNAME }, userCreds.username ) );
             if (!userData) throw new RpcException('Invalid Credentials');
 
-            this.logger.log( `usernameLogin: Successfully retrieved User Data from User Microservice with username: ${userData.user.username}` );
+            this.logger.log( `usernameLogin: Successfully retrieved User Data from User Microservice with username: ${userData.username}` );
 
             // Validate User Credentials
-            const isValidated: boolean = await this.validateCreds( userData.user as UserData, userCreds.password );
-            (userData.user as UserData).password = null;
+            const isValidated: boolean = await this.validateCreds( userData, userCreds.password );
+            userData.password = null;
 
             // Send back User Data with Access and Refresh Tokens otherwise throw Exception
             if (isValidated) {
-                const tokens = await this.generateNewTokens( new JwtTokenBody(userData.user.username, (userData.user as UserData).email, userData.user.uid) );
-                return new UserDataWithToken(userData.user as UserData, tokens.accessToken, userData.status, tokens.refreshToken );
+                const tokens = await this.generateNewTokens( new JwtTokenBody(userData.username, userData.email, userData.uid) );
+                return new UserDataWithToken(userData, tokens.accessToken, tokens.refreshToken );
             }
             throw new RpcException('Invalid Credentials');
         } catch (err) {

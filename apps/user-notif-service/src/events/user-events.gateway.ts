@@ -72,7 +72,7 @@ export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnecti
     this.logger.log( `onUserStatus: Received message: ${JSON.stringify(message)}` );
     this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, message);
     this.logger.log(`onUserStatus: Publishing User Status to Message Bus`);
-    //this.eventMessageService.publishUserStatus(message);
+    this.userEventsPublisherService.publishUserStatus(message);
   }
 
   @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)

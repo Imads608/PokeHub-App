@@ -13,6 +13,6 @@ import { UserService } from './user.service';
     providers: [{ useClass: UserService, provide: USER_SERVICE },
                 { useClass: UserStatusService, provide: USER_STATUS_SERVICE }],
     exports: [{ useClass: UserService, provide: USER_SERVICE },
-              { useClass: UserStatusService, provide: USER_STATUS_SERVICE },]
+              { useClass: UserStatusService, provide: USER_STATUS_SERVICE }, LoggerModule]
 })
 export class CommonModule {}

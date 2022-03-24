@@ -1,7 +1,6 @@
 {
   "extends": "../../../tsconfig.base.json",
   "files": [],
-  "include": [],
   "references": [
     {
       "path": "./tsconfig.lib.json"
@@ -11,10 +10,18 @@
     }
   ],
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "strictPropertyInitialization": false
-  }
+    "types": ["node", "jest"],
+     "lib": [
+        "es5",
+        "es6"
+     ],
+     "target": "es2015",
+     "module": "commonjs",
+     "moduleResolution": "node",
+     "outDir": "./build",
+     "emitDecoratorMetadata": true,
+     "experimentalDecorators": true,
+     "sourceMap": true
+  },
+  "include": ["**/*.ts"]
 }

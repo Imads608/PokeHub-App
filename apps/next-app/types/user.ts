@@ -9,6 +9,7 @@ export interface UserDetails {
 
 export interface UserStatusUpdate extends IUserStatusData {
   username: string;
+  uid: string;
   socketId: string;
   isHardUpdate: boolean;
 }

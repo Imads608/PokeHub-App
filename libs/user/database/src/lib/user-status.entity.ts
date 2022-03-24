@@ -1,20 +1,22 @@
-import { Column, Entity, OneToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Status } from '@pokehub/user/interfaces';
-import { User } from './user.entity';
+import { User } from '..';
 
-@Entity('user-status', { schema: 'user-schema' })
+@Entity('user-status', { schema: 'user-schema', database: 'users' })
 export class UserStatus {
-  @PrimaryColumn()
-  @OneToOne(() => User, (user) => user.uid, { primary: true })
-  uid: string;
+  @PrimaryGeneratedColumn()
+  id: string;
 
   @Column({
     type: 'enum',
     enum: Status,
     default: Status.ONLINE,
   })
-  status: Status;
+  state: Status;
 
   @Column({ type: 'timestamptz' })
   lastSeen: Date;
+
+  @OneToOne(() => User, user => user.status)
+  user: User;
 }

@@ -7,25 +7,24 @@ export const USER_STATUS_SERVICE = 'USER STATUS SERVICE';
 export interface IUserStatusService {
   /**
    * Saves the Last Seen Date of a User given its Id
-   * @param userId The Id associated with the User
+   * @param id The Id of the record
    * @param lastSeen The Last Seen Date to save into the User Status Table
    * @returns The Updated User Status record
    */
-  upsertLastSeen(userId: string, lastSeen: Date): Promise<UserStatusData>;
+  upsertLastSeen(id: string, lastSeen: Date): Promise<UserStatusData>;
 
   /**
    * Creates a New Status Record for the provided User Id
-   * @param userId The User Id the new status entry should be created for.
    * @returns the Newly created User Status Record
    */
-  createStatusForNewUser(userId: string): Promise<UserStatusData>
+  createStatusForNewUser(): Promise<UserStatusData>
 
   /**
    * Queries the User Status Table for the Last Seen Data of a User given its Id
-   * @param userId The Id associated with the User
+   * @param id The Id of the Status Record
    * @returns the Last Seen Data of the User
    */
-  getUserStatus(userId: string): Promise<UserStatusData>;
+  getUserStatus(id: string): Promise<UserStatusData>;
 
   /**
    * Updates the User's Status in the Database with the provided parameter if the User does not "APPEAR" to be Away, Offline or Available

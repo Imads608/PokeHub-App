@@ -1,7 +1,7 @@
 import { Status } from './status.enum';
 
 export interface IUserStatusData {
-  uid: string;
-  status: Status;
+  id: string;
+  state: Status;
   lastSeen: Date;
 }

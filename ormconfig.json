@@ -1,0 +1,14 @@
+{
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "database": "pokehub",
+    "entities": ["libs/user/database/**/user.entity.{ts,js}"],
+    "migrations": ["libs/user/database/src/lib/migrations/*.ts"],
+    "cli": {
+        "entitiesDir": "libs/user/database/src/lib/entity",
+        "migrationsDir": "libs/user/database/src/lib/migration"
+     }
+ }

@@ -49,7 +49,7 @@ export class UserController {
     this.logger.log( `create: Successfully sent Email Confirmation Link for User: ${userWithToken.user.uid}` );
 
     // Returns The User Data
-    return new UserProfileWithToken( userWithToken.user, userWithToken.accessToken, null, null );
+    return new UserProfileWithToken( userWithToken.user, userWithToken.accessToken, null);
   }
 
   @UseInterceptors(LoginInterceptor)

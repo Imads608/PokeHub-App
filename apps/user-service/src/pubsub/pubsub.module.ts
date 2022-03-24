@@ -14,10 +14,7 @@ import { CommonModule } from '../common/common.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         exchanges: [
-          /*{
-                    name: configService.get<string>('rabbitMQ.userEventsExchange'),
-                    type: 'fanout'
-                },*/ {
+          {
             name: configService.get<string>('rabbitMQ.eventsExchange.name'),
             type: 'topic',
           },
@@ -31,4 +28,4 @@ import { CommonModule } from '../common/common.module';
   providers: [{ useClass: MessageReceiverService, provide: MESSAGE_RECEIVER_SERVICE }],
   exports: [],
 })
-export class MessagingModule {}
+export class PubSubModule {}
