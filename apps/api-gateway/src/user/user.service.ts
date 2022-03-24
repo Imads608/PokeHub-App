@@ -168,7 +168,7 @@ export class UserService implements IUserService {
 
   private async getUserProfile(uid: string): Promise<UserProfile> {
     // Get User Details
-    const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS }, uid) );
+    const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.FIND_USER }, uid) );
     userData.password = undefined;
 
     if (!userData) throw new InternalServerErrorException();

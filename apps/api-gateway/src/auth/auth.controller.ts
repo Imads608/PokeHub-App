@@ -33,7 +33,7 @@ export class AuthController {
       const token = await this.authService.generateEmailVerficationToken(new JwtTokenBody( userWithToken.user.username, userWithToken.user.email, userWithToken.user.uid));
       await this.mailService.sendEmailConfirmation(userWithToken.user.email, token.email_verification_token);
       this.logger.log( `login: Successfully generated Verification Token and Sent email to activate account` );
-      return res.send(new UserProfileWithToken( userWithToken.user, null, null, null ));
+      return res.send(new UserProfileWithToken( userWithToken.user, null, null ));
     }
 
     // Retrieve Rooms User has joined
@@ -49,7 +49,7 @@ export class AuthController {
       sameSite: true
     });
     
-    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms, userWithToken.status));
+    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
   }
 
   @UseInterceptors(OauthInterceptor)
@@ -73,7 +73,7 @@ export class AuthController {
       sameSite: true
     });
     
-    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms, userWithToken.status));
+    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
   }
 
   @Post('logout')

@@ -24,17 +24,7 @@
     "workspace-generator": "nx workspace-generator",
     "dep-graph": "nx dep-graph",
     "help": "nx help",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "typeorm:cli": "ts-node ./node_modules/typeorm/cli -f ormconfig.json",
-    "migration:create": "ts-node --transpile-only ./node_modules/typeorm/cli.js migration:create -f ormconfig.json",
-    "migration:generate": "ts-node --transpile-only ./node_modules/typeorm/cli.js migration:generate -f ormconfig.json",
-    "migration:run": "ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run -f ormconfig.json",
-    "migration:run2": "ts-node -r tsconfig-paths/register",
-    "db:migration:generate": "scripty"
-  },
-  "scripty": {
-    "path": "tools/scripts",
-    "windowsPath": "tools/scripts-win"
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm"
   },
   "private": true,
   "dependencies": {
