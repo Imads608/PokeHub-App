@@ -6,6 +6,7 @@ export const AUTH_SERVICE = 'AUTH SERVICE';
 export interface IAuthService {
   /**
    * Authenticates a User through Google OAuth.
+   * @deprecated This method is deprecated and should not be used.
    * @param token The Token passed by Google for validation
    * @returns The Data related to the User along with the Access and Refresh Tokens
    */

@@ -23,7 +23,7 @@ export class AuthService implements IAuthService {
         if (!token) throw new UnauthorizedException();
 
         try {
-            const userDataWithToken = await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, token));
+            const userDataWithToken = null;//await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, token));
             if (!userDataWithToken) throw new InternalServerErrorException();
 
             this.logger.log(`googleOAuthLogin: Successfully authenticated user through Google OAuth`);
