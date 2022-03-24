@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -36,7 +35,6 @@ import { CommonModule } from '../common/common.module';
     ]),
     LoggerModule,
   ],
-  providers: [{ useClass: AuthService, provide: AUTH_SERVICE }],
   controllers: [AuthController],
 })
 export class AuthModule {}
