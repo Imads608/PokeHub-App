@@ -22,11 +22,11 @@ export const initUserNamespaceSocket = (action: PayloadAction<IUserProfileWithTo
         console.log('initUserNamespaceSocket: Successfully estabished connection with Server on Users Namespace');
 
         // Join User Rooms on Server
-        const messageEvent = new UserEventMessage<{ publicRooms: IChatRoomData[] }>(UserSocketEvents.CLIENT_DETAILS, 
+        const messageEvent = new UserEventMessage<IUserProfile>(UserSocketEvents.LOGGED_IN, 
                                 new UserSocket(action.payload.user.uid, action.payload.user.username, usersNamespaceSocket.id), 
-                                { publicRooms: action.payload.joinedPublicRooms });
+                                action.payload);
 
-        usersNamespaceSocket.emit(UserSocketEvents.CLIENT_DETAILS, messageEvent);
+        usersNamespaceSocket.emit(UserSocketEvents.LOGGED_IN, messageEvent);
 
         // Dispatch Client Id
         store.dispatch(websocket_connected({ socketId: usersNamespaceSocket.id, namespace: SocketNamespaces.USERS_NAMESPACE }));

@@ -16,6 +16,9 @@ import { CommonModule } from '../common/common.module';
         {
           name: configService.get<string>('rabbitMQ.eventsExchange.name'),
           type: 'topic',
+          options: {
+            durable: true
+          }
         },
       ],
       uri: `amqp://${configService.get<string>('rabbitMQ.host')}:${configService.get<number>('rabbitMQ.port')}`,

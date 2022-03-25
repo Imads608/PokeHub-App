@@ -59,6 +59,8 @@ const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase( login_success, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
+          const currStatus = action.payload.user.status;
+
           state.userDetails = action.payload.user;
           state.joinedPublicRooms = action.payload.joinedPublicRooms;
           //state.status = action.payload.status;
@@ -67,6 +69,9 @@ const userSlice = createSlice({
             state.profileSetup = action.payload.user.avatar && action.payload.user.countUsernameChanged > 0;
           else 
             state.profileSetup = !!action.payload.user.avatar;
+
+          if (currStatus.state !== Status.APPEAR_AWAY && currStatus.state !== Status.APPEAR_BUSY && currStatus.state !== Status.APPEAR_OFFLINE)
+            state.userDetails.status = { lastSeen: new Date(), state: Status.ONLINE, id: action.payload.user.status.id };
         }
       )
       .addCase( login_success_verification_needed, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {

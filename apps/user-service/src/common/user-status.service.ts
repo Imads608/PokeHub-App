@@ -54,7 +54,7 @@ export class UserStatusService implements IUserStatusService {
         .update(status)
         .set({ lastSeen: status.lastSeen, state: status.state })
         .where('id = :id', { id: status.id })
-        .andWhere('status not in (:...statuses)', { statuses: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] })
+        .andWhere('state not in (:...states)', { states: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] })
         .returning('*')
         .execute()
         .then((res) => res.raw[0]);

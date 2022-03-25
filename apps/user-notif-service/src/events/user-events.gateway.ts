@@ -7,6 +7,7 @@ import { UserEventMessage, UserNotificationEvent, UserSocketEvents, UserStatusEv
 import { Inject } from '@nestjs/common';
 import { AUTH_SERVICE, IAuthService } from '../auth/auth-service.interface';
 import { IUserEventsPublisherService, USER_EVENTS_PUBLISHER_SERVICE } from '../pubsub/user-events-publisher-service.interface';
+import { IUserProfile, Status } from '@pokehub/user/interfaces';
 
 @WebSocketGateway({ cors: true })
 export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
@@ -75,10 +76,20 @@ export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnecti
     this.userEventsPublisherService.publishUserStatus(message);
   }
 
-  @SubscribeMessage(UserSocketEvents.CLIENT_DETAILS)
-  async onClientDetails( @MessageBody() message: UserEventMessage<{ publicRooms: IChatRoomData[] }>, @ConnectedSocket() client: Socket ) {
-    this.logger.log( `onClientDetails: Received message ${JSON.stringify(message)}` );
+  @SubscribeMessage(UserSocketEvents.LOGGED_IN)
+  async onLogin( @MessageBody() message: UserEventMessage<IUserProfile>, @ConnectedSocket() client: Socket ) {
+    this.logger.log( `onLogin: Received message ${JSON.stringify(message)}` );
     client.join(message.from.uid);
     client.join(`${message.from.uid}-circle`);
+    
+    const status = message.data.user.status;
+    if (status.state !== Status.APPEAR_AWAY && status.state !== Status.APPEAR_BUSY && status.state !== Status.APPEAR_OFFLINE) {
+      this.logger.log(`onLogin: Sending updated User Status to Online for uid ${message.data.user.uid}`);
+      const emitMessage: UserEventMessage<UserStatusEvent> = { ...message, data: { isHardUpdate: false, 
+        status: { ...message.data.user.status, lastSeen: new Date(), state: Status.ONLINE } }};
+      this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, emitMessage);
+      this.userEventsPublisherService.publishUserStatus(emitMessage);
+      this.logger.log(`onLogin: Successfully sent User Status Update for uid ${message.data.user.uid}`);
+    }
   }
 }
