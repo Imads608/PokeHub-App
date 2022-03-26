@@ -4,11 +4,10 @@ import {
   login_success_verification_needed,
   logout,
 } from '../actions/common';
-import { IUserData, IUserProfile, IUserProfileWithToken, IUserStatusData, Status, TypeAccount } from '@pokehub/user/interfaces';
+import { IUserData, IUserProfile, IUserProfileWithToken, Status, TypeAccount } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
 import { IChatRoomData } from '@pokehub/room/interfaces';
 import { UserStatusUpdate } from '../../types/user';
-import { Socket } from 'socket.io-client';
 
 export interface NamespaceClientIds {
   usersNS: string;
@@ -53,7 +52,7 @@ const userSlice = createSlice({
       else if (action.payload.namespace === SocketNamespaces.DMS_NAMESPACE) state.clientIds.dmsNS = action.payload.socketId;
     },
     websocket_disconnected: (state: UserState) => {
-      state.clientIds.isRefreshNeeded = true;
+      state.clientIds.isRefreshNeeded = state.userDetails ? true : false;
     }
   },
   extraReducers: (builder) => {

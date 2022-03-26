@@ -7,7 +7,7 @@ import { UserEventMessage, UserNotificationEvent, UserSocketEvents, UserStatusEv
 import { Inject } from '@nestjs/common';
 import { AUTH_SERVICE, IAuthService } from '../auth/auth-service.interface';
 import { IUserEventsPublisherService, USER_EVENTS_PUBLISHER_SERVICE } from '../pubsub/user-events-publisher-service.interface';
-import { IUserProfile, Status } from '@pokehub/user/interfaces';
+import { IUserData, IUserProfile, Status } from '@pokehub/user/interfaces';
 
 @WebSocketGateway({ cors: true })
 export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnection {
@@ -90,6 +90,20 @@ export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnecti
       this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, emitMessage);
       this.userEventsPublisherService.publishUserStatus(emitMessage);
       this.logger.log(`onLogin: Successfully sent User Status Update for uid ${message.data.user.uid}`);
+    }
+  }
+
+  @SubscribeMessage(UserSocketEvents.LOGGED_OUT)
+  async onLogout(@MessageBody() message: UserEventMessage<IUserData>, @ConnectedSocket() client: Socket) {
+    this.logger.log(`onLogout: Received message ${JSON.stringify(message)}`);
+    const status = message.data.status;
+    if (status.state !== Status.APPEAR_AWAY && status.state !== Status.APPEAR_BUSY && status.state !== Status.APPEAR_OFFLINE) {
+      this.logger.log(`onLogout: Sending updated User Status to Offline for uid ${message.data.uid}`);
+      const emitMessage: UserEventMessage<UserStatusEvent> = { ...message, data: { isHardUpdate: false, 
+        status: { ...message.data.status, lastSeen: new Date(), state: Status.OFFLINE } }};
+      this.server.to(`${message.from.uid}-circle`).emit(UserSocketEvents.USER_STATUS, emitMessage);
+      this.userEventsPublisherService.publishUserStatus(emitMessage);
+      this.logger.log(`onLogout: Successfully sent User Status Update for uid ${message.data.uid}`);
     }
   }
 }
