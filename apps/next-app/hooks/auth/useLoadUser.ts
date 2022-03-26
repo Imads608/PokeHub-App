@@ -36,7 +36,6 @@ const useLoadUser = (refreshToken: string, enable: boolean) => {
           console.log('Successful Load User:', data);
           const dataWithTokens: IUserProfileWithToken = {
             user: data.user,
-            status: data.status,
             accessToken: localStorage.getItem('pokehub-access-token'),
             //refreshToken: localStorage.getItem('pokehub-refresh-token'),
             joinedPublicRooms: data.joinedPublicRooms,

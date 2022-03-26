@@ -56,7 +56,7 @@ const StatusMenuItems = ({ userStatus, classes, toggleMenu, changeStatus }: Stat
             <Divider style={{ color: 'orange' }} variant='inset' component='br' />
             </MenuItem>
             {statuses.map((status, index) => (
-                status != userStatus.status && (
+                status != userStatus.state && (
                     <MenuItem key={index} onClick={() => changeStatus(status)}>
                         <ListItemIcon style={{ minWidth: '30px' }}>
                             <Badge
