@@ -53,7 +53,7 @@ const UserMenu = ({ user }: UserMenuProps) => {
   const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
   const status = useSelector<RootState, IUserStatusData>(getUserStatus);
   const socketId = useSelector<RootState, string>(getUsersNSClientId);
-  const classes = useStyles({ userStatus: status.status });
+  const classes = useStyles({ userStatus: status.state });
 
   useEffect(() => {
     result.error && toast.error('Looks like something went wrong. Please try again',
@@ -82,7 +82,7 @@ const UserMenu = ({ user }: UserMenuProps) => {
   };
 
   const changeStatus = (newStatus: Status) => {
-    dispatch(status_update({ socketId, username: user.username, uid: user.uid, lastSeen: new Date(), status: newStatus, isHardUpdate: true }));
+    dispatch(status_update({ id: user.status.id, isHardUpdate: true, lastSeen: new Date(), socketId, state: newStatus, uid: user.uid, username: user.username }));
   }
 
   const toggleMenu = (desiredMenu: 'main-menu' | 'status-menu') => {

@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 import { RelationshipType, IRelationship } from '@pokehub/user/interfaces';
 
-@Entity('relationship', { schema: 'user-schema' })
+@Entity('relationship', { schema: 'user-schema', database: 'users' })
 export class Relationship implements IRelationship {
   @PrimaryColumn()
   uid: string;

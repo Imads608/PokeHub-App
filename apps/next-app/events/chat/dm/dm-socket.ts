@@ -28,14 +28,22 @@ export const initDMNamespaceSocket = (action: PayloadAction<IUserProfileWithToke
             console.log('initDMNamespaceSocket onDisconnect Reason: ', reason.toString());
             if (reason.toString() === 'io server disconnect' || reason.toString() === 'io client disconnect') {
                 dmsNamespaceSocket.close();
-                console.log('initDMNamespaceSocket onDisconnect: Disconnected from DMs Namespace. Refreshing Access Token');
-                await loadUserProxy();
-                console.log('initDMNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
-                initDMNamespaceSocket(action, store);
+                if (store.getState()['auth-state'].isAuthenticated && store.getState()['auth-state'].isEmailVerified) {
+                    console.log('initDMNamespaceSocket onDisconnect: Disconnected from DMs Namespace. Refreshing Access Token');
+                    await loadUserProxy();
+                    console.log('initDMNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
+                    initDMNamespaceSocket(action, store);
+                }
             }
         } catch (err) {
             console.error('initDMNamespaceSocket onDisconnect: Got error while trying to restablish connection: ', err);
             store.dispatch(websocket_disconnected());
         }
     })
+}
+
+export const disconnectDMNamespaceSocket = () => {
+    console.log('disconnectDMNamespaceSocket: Closing Websocket Connection');
+    dmsNamespaceSocket.close();
+    console.log('disconnecDMNamespaceSocket: Successfully Closed Websocket Connection');
 }

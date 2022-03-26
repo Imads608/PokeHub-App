@@ -6,10 +6,12 @@ import { UserModule } from '../user/user.module';
 import configuration from '../config/configuration';
 import { LoggerModule } from '@pokehub/common/logger';
 import { CommonModule } from '../common/common.module';
+import { PubSubModule } from '../pubsub/pubsub.module';
 
 @Module({
   imports: [
     UserModule,
+    PubSubModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,7 +23,7 @@ import { CommonModule } from '../common/common.module';
         password: configService.get('postgresCreds.password'),
         database: configService.get('postgresCreds.database'),
         entities: [User, UserStatus],
-        synchronize: true,
+        synchronize: configService.get<boolean>('postgresCreds.sync'),
       }),
     }),
     ConfigModule.forRoot({

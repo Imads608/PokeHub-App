@@ -16,6 +16,11 @@ export class UserEventsReceiverService implements IUserEventsReceiverService {
     exchange: 'events-exchange',
     queue: '',
     routingKey: 'events.user',
+    queueOptions: {
+      autoDelete: true,
+      durable: false,
+      messageTtl: 10000
+    }
   })
   async userEventsMessageHandler( msg: UserEventMessage<any>, amqpMsg: ConsumeMessage ) {
     this.logger.log(`userEventsMessageHandler: Received User Event Message with timestamp: ${amqpMsg.properties.timestamp}`);

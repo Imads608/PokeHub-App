@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { AppLogger } from '@pokehub/common/logger';
 import { IUserService } from './user-service.interface';
 import { IUserStatusService, USER_STATUS_SERVICE, } from './user-status-service.interface';
-import { User } from '@pokehub/user/database';
+import { User, UserStatus } from '@pokehub/user/database';
 import { TypeAccount } from '@pokehub/user/interfaces';
 import { BucketDetails } from '@pokehub/common/object-store/models';
 
@@ -90,11 +90,13 @@ export class UserService implements IUserService {
   }
 
   async createUser(userReq: CreateUserRequest): Promise<UserData> {
+    this.logger.log(`createUser: Creating new User with username: ${userReq.username}`);
     const user = this.usersRepository.create();
     this.populateNewUserFromReq(user, userReq);
+    const status = await this.createUserStatus();
+    user.status = status;
 
     const userData: UserData = await this.createUserInternal(user);
-    await this.userStatusService.createStatusForNewUser(userData.uid);
 
     this.logger.log('createUser: Sending newly created user back');
     return userData;
@@ -124,7 +126,7 @@ export class UserService implements IUserService {
   async findUser(uid: string): Promise<UserData> {
     try {
       this.logger.log(`findUser: Finding user with uid ${uid}`);
-      const user: User = await this.usersRepository.findOne(uid);
+      const user: User = await this.usersRepository.findOne(uid, { relations: [ "status" ]});
       if (user) {
         this.logger.log(`findUser: Successfully found user with uid ${uid}`);
         return this.createUserDataFromEntity(user, true);
@@ -143,6 +145,7 @@ export class UserService implements IUserService {
       const user = await this.usersRepository
         .createQueryBuilder('user')
         .where('email = :email', { email })
+        .leftJoinAndSelect("user.status", "status")
         .getOne();
       if (user) {
         this.logger.log( `findUserByEmail: Successfully found user with email ${email}` );
@@ -162,6 +165,7 @@ export class UserService implements IUserService {
       const user = await this.usersRepository
         .createQueryBuilder('user')
         .where('username = :username', { username })
+        .leftJoinAndSelect("user.status", "status")
         .getOne();
       if (user) {
         this.logger.log( `findUserByUsername: Successfully found user with username ${username}` );
@@ -202,6 +206,12 @@ export class UserService implements IUserService {
     return response;
   }
 
+  private async createUserStatus(): Promise<UserStatus> {
+    this.logger.log(`createUserStatus: Creating User Status Object`);
+    const userStatusData = await this.userStatusService.createStatusForNewUser();
+    return userStatusData as UserStatus;
+  }
+
   private async hashPassword(passwordText: string): Promise<string> {
     const salt = await bcrypt.genSalt();
     return await bcrypt.hash(passwordText, salt);
@@ -224,7 +234,7 @@ export class UserService implements IUserService {
 
   private createUserDataFromEntity(user: User, includePassword: boolean): UserData {
     return new UserData(user.uid, user.email, user.username, user.firstName, user.lastName, user.account, user.emailVerified, user.avatar, user.countUsernameChanged,
-                        includePassword ? user.password : null);
+                        includePassword ? user.password : null, null, user.status);
   }
   
 }

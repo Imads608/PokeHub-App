@@ -21,29 +21,28 @@ export class UserStatusService implements IUserStatusService {
     try {
       this.logger.log( `upsertLastSeen: Upserting Last Seen Status of ${lastSeen} for User ${userId}` );
       const userStatus = this.userStatusRepository.create();
-      userStatus.uid = userId;
       userStatus.lastSeen = lastSeen;
       const res = await this.userStatusRepository.save(userStatus);
       this.logger.log( `upsertLastSeen: Successfully updated Last Seen Status for User ${userId}` );
-      return new UserStatusData(res.uid, res.status, res.lastSeen);
+      return res;
     } catch (err) {
       this.logger.error( `upsertLastSeen: Got error saving last seen for user ${userId}: ${err}` );
       throw err;
     }
   }
 
-  async createStatusForNewUser(userId: string): Promise<UserStatusData> {
+  async createStatusForNewUser(): Promise<UserStatusData> {
     try {
-      this.logger.log(`createStatusForNewUser: Creating Status for new User ${userId}`);
+      this.logger.log(`createStatusForNewUser: Creating Status`);
       const userStatus = this.userStatusRepository.create();
-      userStatus.uid = userId;
+  
       userStatus.lastSeen = new Date();
-      userStatus.status = Status.ONLINE;
+      userStatus.state = Status.ONLINE;
       await this.userStatusRepository.save(userStatus);
-      this.logger.log(`createStatusForNewUser: Successfully created Status entry for User ${userId}`);
+      this.logger.log(`createStatusForNewUser: Successfully created Status entry`);
       return userStatus;
     } catch (err) {
-      this.logger.error(`createStatusForNewUser: Got error while creating status for user ${userId}: ${JSON.stringify(err)}`);
+      this.logger.error(`createStatusForNewUser: Got error while creating status: ${JSON.stringify(err)}`);
       throw err;
     }
   }
@@ -53,9 +52,9 @@ export class UserStatusService implements IUserStatusService {
       this.logger.log(`updateUserStatus: Starting to update User Status`);
       const updatedStatus: UserStatus = await this.userStatusRepository.createQueryBuilder()
         .update(status)
-        .set({ lastSeen: status.lastSeen, status: status.status })
-        .where('uid = :id', { id: status.uid})
-        .andWhere('status not in (:...statuses)', { statuses: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] })
+        .set({ lastSeen: status.lastSeen, state: status.state })
+        .where('id = :id', { id: status.id })
+        .andWhere('state not in (:...states)', { states: [Status.APPEAR_AWAY, Status.APPEAR_BUSY, Status.APPEAR_OFFLINE] })
         .returning('*')
         .execute()
         .then((res) => res.raw[0]);
@@ -69,9 +68,13 @@ export class UserStatusService implements IUserStatusService {
 
   async updateHardUserStatus(status: UserStatus): Promise<UserStatusData> {
     try {
-      this.logger.log(`updateHardUserStatus: Starting to update User Status`);
-      const updatedStatus = await this.userStatusRepository.save(status);
-      return updatedStatus;
+      this.logger.log(`updateHardUserStatus: Starting to update User Status: ${JSON.stringify(status)}`);
+      const currStatus = await this.userStatusRepository.findOne(status.id);
+      currStatus.lastSeen = status.lastSeen;
+      currStatus.state = status.state;
+      await this.userStatusRepository.save(currStatus);
+      //const updatedStatus = await this.userStatusRepository.save(status);
+      return currStatus;
     } catch (err) {
       this.logger.error(`updateHardUserStatus: Got error while trying to update User Status: ${JSON.stringify(err)}`);
       throw err;
@@ -81,12 +84,10 @@ export class UserStatusService implements IUserStatusService {
   async getUserStatus(userId: string): Promise<UserStatusData> {
     try {
       this.logger.log(`getLastSeenOfUser: Fetching Last Seen Status of User`);
-      const userStatus: UserStatus = await this.userStatusRepository.findOne(
-        userId
-      );
+      const userStatus: UserStatus = await this.userStatusRepository.findOne( userId );
       const data = new UserStatusData(
-        userStatus.uid,
-        userStatus.status,
+        userStatus.id,
+        userStatus.state,
         userStatus.lastSeen
       );
       this.logger.log(

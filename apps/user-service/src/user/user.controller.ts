@@ -7,7 +7,7 @@ import { IUserService, USER_SERVICE } from '../common/user-service.interface';
 import { IUserStatusService, USER_STATUS_SERVICE, } from '../common/user-status-service.interface';
 import { EmailLogin } from '@pokehub/auth/models';
 import { IUserData, Status, TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
-import { CreateUserRequest, UserData, UserDataWithStatus } from '@pokehub/user/models';
+import { CreateUserRequest, UserData, UserDataWithStatus, UserStatusData } from '@pokehub/user/models';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { Multer } from 'multer';
@@ -90,33 +90,6 @@ export class UserController {
     return user;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS}, Transport.TCP)
-  async loadUserWithStatus(uid: string): Promise<UserDataWithStatus> {
-    this.logger.log(`loadUserWithStatus: Got request to load user with uid ${uid}`);
-    const user = await this.userService.findUser(uid);
-    this.populateAvatarURL(user);
-    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
-    return new UserDataWithStatus(user, status);
-  }
-
-  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_EMAIL}, Transport.TCP)
-  async loadUserWithStatusByEmail(email: string): Promise<UserDataWithStatus> {
-    this.logger.log(`loadUserWithStatusByEmail: Got request to load user with email ${email}`);
-    const user = await this.userService.findUserByEmail(email);
-    this.populateAvatarURL(user);
-    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
-    return new UserDataWithStatus(user, status);
-  }
-
-  @MessagePattern({ cmd: TCPEndpoints.LOAD_USER_WITH_STATUS_BY_USERNAME}, Transport.TCP)
-  async loadUserWithStatusByUsername(username: string): Promise<UserDataWithStatus> {
-    this.logger.log(`loadUserWithStatusByUsername: Got request to load user with username ${username}`);
-    const user = await this.userService.findUserByUsername(username);
-    this.populateAvatarURL(user);
-    const status = await this.userStatusService.updateUserStatus({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid });
-    return new UserDataWithStatus(user, status);
-  }
-
   @MessagePattern({ cmd: TCPEndpoints.FIND_USER_EMAIL }, Transport.TCP)
   async findUserByEmail(email: string): Promise<UserData> {
     this.logger.log( `findUserByEmail: Got request to find user with email ${email}` );
@@ -134,9 +107,9 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: TCPEndpoints.GET_USER_STATUS }, Transport.TCP)
-  async getUserStatus(userId: string): Promise<UserStatus> {
-    this.logger.log( `getUserStatus: Got request to get User Status with id ${userId}` );
-    return this.userStatusService.getUserStatus(userId);
+  async getUserStatus(id: string): Promise<UserStatusData> {
+    this.logger.log( `getUserStatus: Got request to get User Status with id ${id}` );
+    return this.userStatusService.getUserStatus(id);
   }
 
   @MessagePattern({ cmd: TCPEndpoints.VERIFY_USER_EMAIL }, Transport.TCP)

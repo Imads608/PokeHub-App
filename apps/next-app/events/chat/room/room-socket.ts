@@ -28,14 +28,22 @@ export const initRoomNamespaceSocket = (action: PayloadAction<IUserProfileWithTo
             console.log('initRoomNamespaceSocket onDisconnect Reason: ', reason.toString());
             if (reason.toString() === 'io server disconnect' || reason.toString() === 'io client disconnect') {
                 roomsNamespaceSocket.close();
-                console.log('initRoomNamespaceSocket onDisconnect: Disconnected from Rooms Namespace. Refreshing Access Token');
-                await loadUserProxy();
-                console.log('initRoomNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
-                initRoomNamespaceSocket(action, store);
+                if (store.getState()['auth-state'].isAuthenticated && store.getState()['auth-state'].isEmailVerified) {
+                    console.log('initRoomNamespaceSocket onDisconnect: Disconnected from Rooms Namespace. Refreshing Access Token');
+                    await loadUserProxy();
+                    console.log('initRoomNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
+                    initRoomNamespaceSocket(action, store);
+                }
             }
         } catch (err) {
             console.error('initRoomNamespaceSocket onDisconnect: Got error while trying to restablish connection: ', err);
             store.dispatch(websocket_disconnected());
         }
     })
+}
+
+export const disconnectRoomNamespaceSocket = () => {
+    console.log('disconnectRoomNamespaceSocket: Closing Websocket Connection');
+    roomsNamespaceSocket.close();
+    console.log('disconnectRoomNamespaceSocket: Successfully closed Websocket Connection');
 }

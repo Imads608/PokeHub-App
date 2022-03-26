@@ -1,11 +1,14 @@
+/* eslint-disable @nrwl/nx/enforce-module-boundaries */
 import { IsEmail, Length } from 'class-validator';
-import { Entity, PrimaryGeneratedColumn, Column, } from 'typeorm';
-import { IUser } from '@pokehub/user/interfaces';
-import { TypeAccount } from '@pokehub/user/interfaces';
-import { BucketDetails } from '@pokehub/common/object-store/models';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, } from 'typeorm';
+import { TypeAccount } from '../../../interfaces/src/lib/type-account.enum';
+//import { TypeAccount } from '@pokehub/user/interfaces';
+import { BucketDetails } from '../../../../common/object-store/models/src/lib/bucket-details.model';
+//import { BucketDetails } from '@pokehub/common/object-store/models';
+import { UserStatus } from '..';
 
-@Entity('user', { schema: 'user-schema' })
-export class User implements IUser {
+@Entity('user', { schema: 'user-schema', database: 'users' })
+export class User {
   @PrimaryGeneratedColumn('uuid')
   uid: string;
 
@@ -38,4 +41,8 @@ export class User implements IUser {
 
   @Column({ type: 'enum', enum: TypeAccount, default: TypeAccount.REGULAR })
   account: TypeAccount;
+
+  @OneToOne(() => UserStatus)
+  @JoinColumn()
+  status: UserStatus
 }

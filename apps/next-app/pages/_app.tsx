@@ -114,29 +114,29 @@ const MainApp = ({ Component, pageProps, theme }) => {
 
   const onActive = (e: Event) => {
     console.log('onActive: Hit');
-    if (userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
+    if (userStatus.state != Status.APPEAR_AWAY && userStatus.state != Status.APPEAR_BUSY && userStatus.state != Status.APPEAR_OFFLINE) {
       console.log('onActive: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid, username: user.username, socketId, isHardUpdate: false }));
+      dispatch(status_update({ lastSeen: new Date(), state: Status.ONLINE, uid: user.uid, id: userStatus.id, username: user.username, socketId, isHardUpdate: false }));
     }
   }
 
   const onIdle = (e: Event) => {
     console.log('onIdle: Hit');
-    if (userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
+    if (userStatus.state != Status.APPEAR_AWAY && userStatus.state != Status.APPEAR_BUSY && userStatus.state != Status.APPEAR_OFFLINE) {
       console.log('onIdle: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.AWAY, uid: user.uid, username: user.username, socketId, isHardUpdate: false }));
+      dispatch(status_update({ lastSeen: new Date(), state: Status.AWAY, id: userStatus.id, uid: user.uid, username: user.username, socketId, isHardUpdate: false }));
     }
   }
 
   const onAction = (e: Event) => {
     const diffMilliseconds = (new Date()).valueOf() - lastSeen.valueOf();
     
-    if (diffMilliseconds >= 1000*60*5 && userStatus.status != Status.APPEAR_AWAY && userStatus.status != Status.APPEAR_BUSY && userStatus.status != Status.APPEAR_OFFLINE) {
+    if (diffMilliseconds >= 1000*60*5 && userStatus.state != Status.APPEAR_AWAY && userStatus.state != Status.APPEAR_BUSY && userStatus.state != Status.APPEAR_OFFLINE) {
       console.log('onAction: Sending update');
       lastSeen = new Date();
-      dispatch(status_update({ lastSeen: new Date(), status: Status.ONLINE, uid: user.uid, username: user.username, socketId, isHardUpdate: false }));
+      dispatch(status_update({ lastSeen: new Date(), state: Status.ONLINE, id: userStatus.id, uid: user.uid, username: user.username, socketId, isHardUpdate: false }));
     }
   }
 

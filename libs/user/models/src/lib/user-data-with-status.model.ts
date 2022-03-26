@@ -1,7 +1,6 @@
-import { IUserDataWithStatus } from "@pokehub/user/interfaces";
 import { UserData, UserPublicData, UserStatusData } from "..";
 
-export class UserDataWithStatus implements IUserDataWithStatus {
+export class UserDataWithStatus {
     user: UserData | UserPublicData;
     status: UserStatusData;
 

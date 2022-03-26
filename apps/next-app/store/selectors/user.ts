@@ -6,7 +6,7 @@ import { WindowTypes } from '../reducers/app';
 const userDetails = (state: RootState) => state['user-state'].userDetails;
 const joinedRooms = (state: RootState) => state['user-state'].joinedPublicRooms;
 const profileSetup = (state: RootState) => state['user-state'].profileSetup;
-const status = (state: RootState) => state['user-state'].status;
+const status = (state: RootState) => state['user-state'].userDetails?.status;
 const clientIds = (state: RootState) => state['user-state'].clientIds;
 
 export const getUser = createSelector(

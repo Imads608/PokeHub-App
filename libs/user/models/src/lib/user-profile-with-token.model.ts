@@ -1,7 +1,6 @@
 import { ChatRoom } from '@pokehub/room/database';
 import { ChatRoomData } from '@pokehub/room/models';
 import { IUserProfileWithToken } from '@pokehub/user/interfaces';
-import { UserStatusData } from '..';
 import { UserDataWithToken } from './user-data-token.model';
 import { UserData } from './user-data.model';
 
@@ -11,10 +10,9 @@ export class UserProfileWithToken extends UserDataWithToken implements IUserProf
   constructor(
     userData: UserData,
     accessToken: string,
-    rooms: ChatRoomData[] | ChatRoom[],
-    status: UserStatusData
+    rooms: ChatRoomData[] | ChatRoom[]
   ) {
-    super(userData, accessToken, status);
+    super(userData, accessToken);
     this.joinedPublicRooms = [];
     
     if (rooms && rooms.length > 0 && this.isRoomChatRoomDataType(rooms[0])) {
