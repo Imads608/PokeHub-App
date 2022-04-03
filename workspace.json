@@ -204,7 +204,8 @@
             "outputPath": "dist/apps/chat-events-gateway",
             "main": "apps/chat-events-gateway/src/main.ts",
             "tsConfig": "apps/chat-events-gateway/tsconfig.app.json",
-            "assets": ["apps/chat-events-gateway/src/assets"]
+            "assets": ["apps/chat-events-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -380,7 +381,8 @@
             "outputPath": "dist/apps/chat-socket-service",
             "main": "apps/chat-socket-service/src/main.ts",
             "tsConfig": "apps/chat-socket-service/tsconfig.app.json",
-            "assets": ["apps/chat-socket-service/src/assets"]
+            "assets": ["apps/chat-socket-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -432,7 +434,8 @@
             "outputPath": "dist/apps/chat-tcp-gateway",
             "main": "apps/chat-tcp-gateway/src/main.ts",
             "tsConfig": "apps/chat-tcp-gateway/tsconfig.app.json",
-            "assets": ["apps/chat-tcp-gateway/src/assets"]
+            "assets": ["apps/chat-tcp-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -1036,7 +1039,8 @@
             "outputPath": "dist/apps/user-events-gateway",
             "main": "apps/user-events-gateway/src/main.ts",
             "tsConfig": "apps/user-events-gateway/tsconfig.app.json",
-            "assets": ["apps/user-events-gateway/src/assets"]
+            "assets": ["apps/user-events-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -1197,7 +1201,8 @@
             "outputPath": "dist/apps/user-rest-gateway",
             "main": "apps/user-rest-gateway/src/main.ts",
             "tsConfig": "apps/user-rest-gateway/tsconfig.app.json",
-            "assets": ["apps/user-rest-gateway/src/assets"]
+            "assets": ["apps/user-rest-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -1310,7 +1315,8 @@
             "outputPath": "dist/apps/user-socket-service",
             "main": "apps/user-socket-service/src/main.ts",
             "tsConfig": "apps/user-socket-service/tsconfig.app.json",
-            "assets": ["apps/user-socket-service/src/assets"]
+            "assets": ["apps/user-socket-service/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
@@ -1362,7 +1368,8 @@
             "outputPath": "dist/apps/user-tcp-gateway",
             "main": "apps/user-tcp-gateway/src/main.ts",
             "tsConfig": "apps/user-tcp-gateway/tsconfig.app.json",
-            "assets": ["apps/user-tcp-gateway/src/assets"]
+            "assets": ["apps/user-tcp-gateway/src/assets"],
+            "generatePackageJson": true
           },
           "configurations": {
             "production": {
