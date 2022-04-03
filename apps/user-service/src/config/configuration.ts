@@ -10,14 +10,6 @@ export default () => ({
     password: process.env.DB_PASSWORD,
     sync: process.env.DB_SYNCHRONIZE
   },
-  rabbitMQ: {
-    host: process.env.RABBITMQ_SERVICE,
-    port: process.env.RABBITMQ_PORT,
-    eventsExchange: {
-      name: 'events-exchange',
-      userEventsRoutingPattern: 'events.user',
-    }
-  },
   awsConfig: {
     profile: 'pokehub',
     userBucketName: process.env.AWS_USER_DATA_BUCKET_NAME

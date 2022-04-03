@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@pokehub/auth": ["libs/auth/src/index.ts"],
+      "@pokehub/auth/endpoints": ["libs/auth/endpoints/src/index.ts"],
       "@pokehub/auth/interfaces": ["libs/auth/interfaces/src/index.ts"],
       "@pokehub/auth/models": ["libs/auth/models/src/index.ts"],
       "@pokehub/common/logger": ["libs/common/logger/src/index.ts"],
@@ -25,14 +26,17 @@
       ],
       "@pokehub/event/user": ["libs/event/user/src/index.ts"],
       "@pokehub/mail": ["libs/mail/src/index.ts"],
+      "@pokehub/mail/endpoints": ["libs/mail/endpoints/src/index.ts"],
       "@pokehub/mail/interfaces": ["libs/mail/interfaces/src/index.ts"],
       "@pokehub/mail/models": ["libs/mail/models/src/index.ts"],
       "@pokehub/room": ["libs/room/src/index.ts"],
       "@pokehub/room/database": ["libs/room/database/src/index.ts"],
+      "@pokehub/room/endpoints": ["libs/room/endpoints/src/index.ts"],
       "@pokehub/room/interfaces": ["libs/room/interfaces/src/index.ts"],
       "@pokehub/room/models": ["libs/room/models/src/index.ts"],
       "@pokehub/user": ["libs/user/src/index.ts"],
       "@pokehub/user/database": ["libs/user/database/src/index.ts"],
+      "@pokehub/user/endpoints": ["libs/user/endpoints/src/index.ts"],
       "@pokehub/user/interfaces": ["libs/user/interfaces/src/index.ts"],
       "@pokehub/user/models": ["libs/user/models/src/index.ts"]
     }

@@ -15,15 +15,15 @@ import { HttpModule } from '@nestjs/axios';
     ChatCommonModule,
     ClientsModule.registerAsync([
       {
-        name: 'UserMicroservice',
+        name: 'UserGateway',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
-          name: 'UserMicroservice',
+          name: 'UserGateway',
           transport: Transport.TCP,
           options: {
-            host: configService.get<string>('userService.host'),
-            port: +configService.get<number>('userService.port'),
+            host: configService.get<string>('userGateways.tcpGateway.host'),
+            port: +configService.get<number>('userGateways.tcpGateway.port'),
           },
         }),
       },

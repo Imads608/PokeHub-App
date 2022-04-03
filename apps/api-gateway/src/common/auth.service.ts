@@ -3,19 +3,19 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { UserDataWithToken } from '@pokehub/user/models';
 import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody } from '@pokehub/auth/models';
-import { TCPEndpoints, HTTPEndpoints } from '@pokehub/auth/interfaces';
 import { AppLogger } from '@pokehub/common/logger';
 import { IAuthService } from './auth-service.interface';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { AuthGatewayRESTEndpoints, AuthGatewayTCPEndpoints } from '@pokehub/auth/endpoints';
 
 @Injectable()
 export class AuthService implements IAuthService {
     private authMicroserviceURL: string;
-    constructor(@Inject('AuthMicroservice') private readonly clientProxy: ClientProxy, private readonly logger: AppLogger, private readonly configService: ConfigService,
+    constructor(@Inject('AuthGateway') private readonly clientProxy: ClientProxy, private readonly logger: AppLogger, private readonly configService: ConfigService,
                 private readonly httpService: HttpService) {
         logger.setContext(AuthService.name);
-        this.authMicroserviceURL = `${configService.get<string>('protocol')}://${configService.get<string>('authService.host')}:${configService.get<number>('authService.portHttp')}`;
+        this.authMicroserviceURL = `${configService.get<string>('protocol')}://${configService.get<string>('authGateway.host')}:${configService.get<number>('authGateway.restPort')}`;
     }
 
     async googleOAuthLogin(token: string): Promise<UserDataWithToken> {
@@ -41,11 +41,12 @@ export class AuthService implements IAuthService {
 
         try {
             let userData: UserDataWithToken = null;
+
             if (this.isEmailLogin(userCreds)) {
                 //userData = await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.EMAIL_LOGIN }, userCreds));
-                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}/${HTTPEndpoints.EMAIL_LOGIN}`, userCreds))).data;
+                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}${AuthGatewayRESTEndpoints.EMAIL_LOGIN}`, userCreds))).data;
             } else {
-                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}/${HTTPEndpoints.USERNAME_LOGIN}`, userCreds))).data;
+                userData = (await firstValueFrom( this.httpService.post<UserDataWithToken>(`${this.authMicroserviceURL}${AuthGatewayRESTEndpoints.USERNAME_LOGIN}`, userCreds))).data;
                 //userData = await firstValueFrom( this.clientProxy.send<UserDataWithToken>( { cmd: TCPEndpoints.USERNAME_LOGIN }, userCreds ) );
             }
             if (!userData) throw new InternalServerErrorException();
@@ -62,7 +63,7 @@ export class AuthService implements IAuthService {
     async generateNewTokens(user: JwtTokenBody): Promise<AuthTokens> {
         this.logger.log( `generateNewTokens: Going to generate new Refresh & Access Tokens for user ${user.uid}` );
         try {
-            const tokens = await firstValueFrom( this.clientProxy.send<AuthTokens>( { cmd: TCPEndpoints.GENERATE_TOKENS }, user ) );
+            const tokens = await firstValueFrom( this.clientProxy.send<AuthTokens>( { cmd: AuthGatewayTCPEndpoints.GENERATE_TOKENS }, user ) );
             if (!tokens) throw new InternalServerErrorException();
 
             this.logger.log( `generateNewTokens: Successfully generated Access and Refresh Tokens for user ${user.uid}` );
@@ -77,7 +78,7 @@ export class AuthService implements IAuthService {
         this.logger.log( `validateEmailConfirmationToken: Sending Validation Request to Auth Service` );
 
         try {
-            const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: TCPEndpoints.VALIDATE_EMAIL_CONFIRMATION_TOKEN }, verificationToken ) );
+            const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: AuthGatewayTCPEndpoints.VALIDATE_EMAIL_CONFIRMATION_TOKEN }, verificationToken ) );
             if (!userData) throw new InternalServerErrorException();
 
             this.logger.log( `validateEmailConfirmationToken: Successfully decoded Email Confirmation Token to User Data` );
@@ -92,7 +93,7 @@ export class AuthService implements IAuthService {
         this.logger.log( `validatePasswordResetToken: Sending Validation Request to Auth Service` );
 
         try {
-            const userData = await firstValueFrom( this.clientProxy.send<{ email: string }>( { cmd: TCPEndpoints.VALIDATE_PASSWORD_RESET_TOKEN }, resetToken ) );
+            const userData = await firstValueFrom( this.clientProxy.send<{ email: string }>( { cmd: AuthGatewayTCPEndpoints.VALIDATE_PASSWORD_RESET_TOKEN }, resetToken ) );
             if (!userData) throw new InternalServerErrorException();
 
             this.logger.log( `validatePasswordResetToken: Successfully decoded Password Reset Token to User Data` );
@@ -107,7 +108,7 @@ export class AuthService implements IAuthService {
         this.logger.log( `decodeToken: Sending Access Token Validation Request to Auth Service: ${accessToken}` );
 
         try {
-            const userData = (await firstValueFrom( this.httpService.get<JwtTokenBody>(`${this.authMicroserviceURL}/${HTTPEndpoints.AUTHENTICATE_USER}`, { headers: { authorization: accessToken }}))).data;
+            const userData = (await firstValueFrom( this.httpService.get<JwtTokenBody>(`${this.authMicroserviceURL}${AuthGatewayRESTEndpoints.AUTHENTICATE_USER}`, { headers: { authorization: accessToken }}))).data;
             //const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: TCPEndpoints.DECODE_TOKEN }, accessToken ) );
             if (!userData) throw new InternalServerErrorException();
 
@@ -122,7 +123,7 @@ export class AuthService implements IAuthService {
     async getNewAccessToken( refreshToken: string ): Promise<{ access_token: string }> {
         this.logger.log( `getNewAccessToken: Sending Request for New Access Token to Auth Service: ${refreshToken}` );
         try {
-            const token = (await firstValueFrom( this.httpService.get<{ access_token: string }>(`${this.authMicroserviceURL}/${HTTPEndpoints.GET_ACCESS_TOKEN}`, { headers: { authorization: refreshToken }}))).data;
+            const token = (await firstValueFrom( this.httpService.get<{ access_token: string }>(`${this.authMicroserviceURL}${AuthGatewayRESTEndpoints.GET_ACCESS_TOKEN}`, { headers: { authorization: refreshToken }}))).data;
             if (!token) throw new InternalServerErrorException();
 
             this.logger.log( `getNewAccessToken: Successfully generated Access Token from Refresh Token` );
@@ -136,7 +137,7 @@ export class AuthService implements IAuthService {
     async generateEmailVerficationToken( userData: JwtTokenBody ): Promise<{ email_verification_token: string }> {
         this.logger.log( `generateEmailVerficationToken: Sending Request for Email Verification Token to Auth Service` );
         try {
-            const token = await firstValueFrom( this.clientProxy.send<{ email_verification_token: string }>( { cmd: TCPEndpoints.GET_EMAIL_VERIFICATION_TOKEN }, userData ) );
+            const token = await firstValueFrom( this.clientProxy.send<{ email_verification_token: string }>( { cmd: AuthGatewayTCPEndpoints.GET_EMAIL_VERIFICATION_TOKEN }, userData ) );
             if (!token) throw new InternalServerErrorException();
 
             this.logger.log( `generateEmailVerficationToken: Successfully generated Email Verification Token` );
@@ -150,7 +151,7 @@ export class AuthService implements IAuthService {
     async generatePasswordResetToken( userData: { email: string } ): Promise<{ password_reset_token: string }> {
         this.logger.log( `generatePasswordResetToken: Sending Request for Password Reset Token to Auth Service` );
         try {
-            const token = await firstValueFrom( this.clientProxy.send<{ password_reset_token: string }>( { cmd: TCPEndpoints.GET_PASSWORD_RESET_TOKEN }, userData ) );
+            const token = await firstValueFrom( this.clientProxy.send<{ password_reset_token: string }>( { cmd: AuthGatewayTCPEndpoints.GET_PASSWORD_RESET_TOKEN }, userData ) );
             if (!token) throw new InternalServerErrorException();
 
             this.logger.log( `generatePasswordResetToken: Successfully generated Password Reset Token` );

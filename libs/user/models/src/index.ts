@@ -6,4 +6,3 @@ export * from './lib/user-public-profile.model';
 export * from './lib/user-status-data.model';
 export * from './lib/user-public-data.model';
 export * from './lib/user-profile.model';
-export * from './lib/user-data-with-status.model';

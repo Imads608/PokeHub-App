@@ -1,4 +1,3 @@
-export * from './lib/endpoints.enum';
 export * from './lib/room-type.enum';
 
 export * from './lib/chat-room.interface';

@@ -14,15 +14,15 @@ import { RoomService } from './room.service';
   imports: [
     ClientsModule.registerAsync([
       {
-        name: 'ChatMicroservice',
+        name: 'ChatTCPGateway',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
-          name: 'ChatMicroservice',
+          name: 'ChatTCPGateway',
           transport: Transport.TCP,
           options: {
-            host: configService.get<string>('chatService.host'),
-            port: +configService.get<number>('chatService.port'),
+            host: configService.get<string>('chatGateways.tcpGateway.host'),
+            port: +configService.get<number>('chatGateways.tcpGateway.port'),
           },
         }),
       },

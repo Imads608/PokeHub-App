@@ -13,28 +13,28 @@ import { HttpModule } from '@nestjs/axios';
   imports: [
     ClientsModule.registerAsync([
       {
-        name: 'AuthMicroservice',
+        name: 'AuthGateway',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
-          name: 'AuthMicroservice',
+          name: 'AuthGateway',
           transport: Transport.TCP,
           options: {
-            host: configService.get<string>('authService.host'),
-            port: +configService.get<number>('authService.port'),
+            host: configService.get<string>('authGateway.host'),
+            port: +configService.get<number>('authGateway.tcpPort'),
           },
         }),
       },
       {
-        name: 'MailMicroservice',
+        name: 'MailGateway',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
-          name: 'MailMicroservice',
+          name: 'MailGateway',
           transport: Transport.TCP,
           options: {
-            host: configService.get<string>('mailService.host'),
-            port: +configService.get<number>('mailService.port'),
+            host: configService.get<string>('mailGateway.host'),
+            port: +configService.get<number>('mailGateway.port'),
           },
         }),
       }

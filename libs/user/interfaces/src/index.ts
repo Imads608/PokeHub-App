@@ -1,6 +1,5 @@
 export * from './lib/create-user-request.interface';
 
-export * from './lib/endpoints.enum';
 export * from './lib/relationship-type.enum';
 export * from './lib/status.enum';
 export * from './lib/type-account.enum';

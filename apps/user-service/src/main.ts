@@ -23,6 +23,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   await app.listen(+configService.get<number>('httpPort'));
+  logger.log(`Microservice started on port ${configService.get<string>('appPort')}`);
   logger.log(`Application started on port ${configService.get('httpPort')}`);
   //await app.listen();
 }

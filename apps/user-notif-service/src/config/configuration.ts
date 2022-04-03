@@ -1,18 +1,20 @@
 export default () => ({
     appPort: parseInt(process.env.APPLICATION_PORT, 10) || 3000,
     appName: process.env.APPLICATION_NAME,
-    protocol: process.env.PROTOCOL,
-    authService: {
-      host: process.env.AUTH_MICROSERVICE_HOST,
-      port: process.env.AUTH_MICROSERVICE_PORT,
-      portHttp: process.env.AUTH_MICROSERVICE_HTTP_PORT
+    postgresCreds: {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      sync: process.env.DB_SYNCHRONIZE
     },
     rabbitMQ: {
       host: process.env.RABBITMQ_SERVICE,
       port: process.env.RABBITMQ_PORT,
       eventsExchange: {
-        name: 'events-exchange',
-        userEventsRoutingPattern: 'events.user'
+        name: 'user-events-exchange',
+        eventsRoutingPattern: 'events'
       },
     },
   });

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: auth-gateway
+  name: auth-gateway
+  namespace: pokehub-auth
+  annotations:
+    'sidecar.jaegertracing.io/inject': 'true'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-gateway
+  template:
+    metadata:
+      labels:
+        app: auth-gateway
+    spec:
+      containers:
+        - image: registry.gitlab.com/imadsheriff97/pokehub-app/auth-gateway:dev
+          name: auth-gateway
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 500Mi
+          env:
+            - name: APPLICATION_NAME
+              value: Auth Gateway
+            - name: APPLICATION_PORT
+              value: '3000'
+            - name: HTTP_PORT=3001
+            - name: USER_TCP_GATEWAY_HOST
+              value: user-tcp-gateway.pokehub-user.svc.cluster.local
+            - name: USER_TCP_GATEWAY_PORT
+              value: '3000'
+            - name: PROTOCOL
+              value: http
+            - name: CALLBACK_HOST
+              value: auth-gateway.pokehub-auth.svc.cluster.local
+            - name: CALLBACK_PORT
+              value: '3000'
+            - name: GOOGLE_OATH_CALLBACK
+              value: /google-oauth/redirect
+            - name: ACCESS_TOKEN_EXPIRATION_SECONDS
+              value: '60'
+            - name: EMAIL_VERIFICATION_TOKEN_EXPIRATION_SECONDS
+              value: '900'
+            - name: PASSWORD_RESET_TOKEN_EXPIRATION_SECONDS
+              value: '900'
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GOOGLE_CLIENT_SECRET
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GOOGLE_CLIENT_ID
+            - name: ACCESS_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ACCESS_TOKEN_SECRET
+            - name: REFRESH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REFRESH_TOKEN_SECRET
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-gateway
+  namespace: pokehub-auth
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-gateway
+  ports:
+    - name: tcp
+      targetPort: 3000
+      port: 3000
+    - name: http
+      targetPort: 3001
+      port: 3001

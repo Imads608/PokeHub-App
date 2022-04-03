@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CommonModule } from '../../common/common.module';
+import { ChatDBModule } from '@pokehub/room/database';
 
 @Module({
   imports: [
@@ -20,9 +21,9 @@ import { CommonModule } from '../../common/common.module';
         )}:${configService.get<number>('rabbitMQ.port')}`,
       }),
     }),
-    CommonModule,
+    CommonModule, ChatDBModule
   ],
   providers: [],
-  exports: [CommonModule, RabbitMQModule],
+  exports: [CommonModule, RabbitMQModule, ChatDBModule],
 })
 export class PubSubCommonModule {}

@@ -8,11 +8,12 @@ import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interface';
 import { AppLogger } from '@pokehub/common/logger';
 import { IUserService } from './user-service.interface';
-import { TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
+import { UserIdTypes } from '@pokehub/user/interfaces';
+import { UserTCPGatewayEndpoints } from '@pokehub/user/endpoints';
 
 @Injectable()
 export class UserService implements IUserService {
-  constructor(@Inject('UserMicroservice') private readonly clientProxy: ClientProxy,
+  constructor(@Inject('UserGateway') private readonly clientProxy: ClientProxy,
               @Inject(AUTH_SERVICE) private readonly authService: IAuthService,
               @Inject(ROOM_SERVICE) private readonly roomService: IRoomService, private readonly logger: AppLogger) {
     logger.setContext(UserService.name);
@@ -23,7 +24,7 @@ export class UserService implements IUserService {
       this.logger.log(`getUserPublicProfile: Retrieving Public User Details with ${uid}`);
     
       // Get User Details
-      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.GET_PUBLIC_USER }, uid) );
+      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.GET_PUBLIC_USER }, uid) );
       if (!userData) throw new InternalServerErrorException();
 
       // Get Joined Public Rooms
@@ -42,7 +43,7 @@ export class UserService implements IUserService {
       this.logger.log(`getUserPublicData: Retrieving Public User Data with ${uid}`);
 
       // Get User Data
-      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.GET_PUBLIC_USER }, uid) );
+      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.GET_PUBLIC_USER }, uid) );
       if (!userData) throw new InternalServerErrorException();
 
       return userData;
@@ -65,7 +66,7 @@ export class UserService implements IUserService {
   async updateUserData(userData: UserData): Promise<UserData> {
     try {
       this.logger.log(`updateUserData: Updating user data with uid ${userData.uid}`);
-      const updatedData: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: TCPEndpoints.UPDATE_USER_DATA }, userData));
+      const updatedData: UserData = await firstValueFrom(this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.UPDATE_USER_DATA }, userData));
       this.logger.log(`updateUserData: Successfully got updated data for uid ${userData.uid} from the User Microservice`);
       return updatedData;
     } catch (err) {
@@ -78,7 +79,7 @@ export class UserService implements IUserService {
   async doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> {
     try {
       this.logger.log(`doesUserExist: Checking if User with Id ${id} exists`);
-      const exists = await firstValueFrom(this.clientProxy.send<boolean>({ cmd: TCPEndpoints.CHECK_USER_EXISTS }, { userId: id, idType }));
+      const exists = await firstValueFrom(this.clientProxy.send<boolean>({ cmd: UserTCPGatewayEndpoints.CHECK_USER_EXISTS }, { userId: id, idType }));
       this.logger.log(`doesUserExist: Got response from User Microservice if User with Id ${id} exists: ${exists}`);
       return exists;
     } catch (err) {
@@ -90,7 +91,7 @@ export class UserService implements IUserService {
   async doesUserEmailExist(email: string): Promise<boolean> {
       try {
           this.logger.log(`doesUserExist: Checking if User with Email Exists Exists`);
-          const exists = await firstValueFrom( this.clientProxy.send<boolean>({ cmd: TCPEndpoints.CHECK_EMAIL_EXISTS }, email) );
+          const exists = await firstValueFrom( this.clientProxy.send<boolean>({ cmd: UserTCPGatewayEndpoints.CHECK_EMAIL_EXISTS }, email) );
           this.logger.log(`doesUserExist: Got response from User Microservice if Email ${email} exists: ${exists}`);
           return exists;
       } catch (err) {
@@ -103,7 +104,7 @@ export class UserService implements IUserService {
     try {
       // Create User
       this.logger.log( `createUser: Sending request to User Microservice to create User with email ${data.email}` );
-      const user: UserData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.CREATE_USER }, data) );
+      const user: UserData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.CREATE_USER }, data) );
       if (!user) throw new InternalServerErrorException();
 
       this.logger.log( `createUser: Successfully created User with email ${data.email}. Going to create tokens through Auth Microservice` );
@@ -132,7 +133,7 @@ export class UserService implements IUserService {
 
       // Update Email Verification Status of User
       this.logger.log(`activateUser: Successfully decoded token into User Data: ${JSON.stringify(data)}`);
-      const userData: UserData = await firstValueFrom(this.clientProxy.send({ cmd: TCPEndpoints.VERIFY_USER_EMAIL }, data.uid));
+      const userData: UserData = await firstValueFrom(this.clientProxy.send({ cmd: UserTCPGatewayEndpoints.VERIFY_USER_EMAIL }, data.uid));
       if (!userData) throw new InternalServerErrorException();
 
       // Return User Data
@@ -154,7 +155,7 @@ export class UserService implements IUserService {
 
       // Update Email Verification Status of User
       this.logger.log(`resetPassword: Successfully decoded token into User Data: ${JSON.stringify(data)}`);
-      const userData: UserData = await firstValueFrom(this.clientProxy.send({ cmd: TCPEndpoints.RESET_PASSWORD }, new EmailLogin(data.email, newPassword)));
+      const userData: UserData = await firstValueFrom(this.clientProxy.send({ cmd: UserTCPGatewayEndpoints.RESET_PASSWORD }, new EmailLogin(data.email, newPassword)));
       if (!userData) throw new InternalServerErrorException();
 
       // Return User Data
@@ -168,7 +169,7 @@ export class UserService implements IUserService {
 
   private async getUserProfile(uid: string): Promise<UserProfile> {
     // Get User Details
-    const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: TCPEndpoints.FIND_USER }, uid) );
+    const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.FIND_USER }, uid) );
     userData.password = undefined;
 
     if (!userData) throw new InternalServerErrorException();

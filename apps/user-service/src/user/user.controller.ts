@@ -1,13 +1,11 @@
-import { BadRequestException, Controller, Get, Inject, InternalServerErrorException, Param, Post, Res, UploadedFile, UseInterceptors, UsePipes } from '@nestjs/common';
+import { BadRequestException, Controller, Inject, InternalServerErrorException, Param, Post, Res, UploadedFile, UseInterceptors, UsePipes } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { User, UserStatus, } from '@pokehub/user/database';
+import { IUserService, IUserStatusService, USER_SERVICE, USER_STATUS_SERVICE, } from '@pokehub/user/database';
 import { ValidationPipe } from './validation.pipe';
 import { AppLogger } from '@pokehub/common/logger';
-import { IUserService, USER_SERVICE } from '../common/user-service.interface';
-import { IUserStatusService, USER_STATUS_SERVICE, } from '../common/user-status-service.interface';
 import { EmailLogin } from '@pokehub/auth/models';
-import { IUserData, Status, TCPEndpoints, UserIdTypes } from '@pokehub/user/interfaces';
-import { CreateUserRequest, UserData, UserDataWithStatus, UserStatusData } from '@pokehub/user/models';
+import { UserIdTypes } from '@pokehub/user/interfaces';
+import { CreateUserRequest, UserData, UserPublicData, UserStatusData } from '@pokehub/user/models';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { Multer } from 'multer';
@@ -16,7 +14,7 @@ import { BucketDetails, PutObjectRequest, ObjectImageUrlRequest } from '@pokehub
 import { ConfigService } from '@nestjs/config';
 import { ImageContentTypes } from '@pokehub/common/object-store/models';
 import path = require('path');
-import { UserPublicData } from '@pokehub/user/models';
+import { UserServiceTCPEndpoints } from '@pokehub/user/endpoints';
 
 @Controller('')
 export class UserController {
@@ -56,33 +54,31 @@ export class UserController {
   }
 
   @UsePipes(new ValidationPipe())
-  @MessagePattern({ cmd: TCPEndpoints.CREATE_USER }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.CREATE_USER }, Transport.TCP)
   async createUser(createReq: CreateUserRequest): Promise<UserData> {
     this.logger.log('createUser: Got request to create user');
     const data: UserData = await this.userService.createUser(createReq);
     return data;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, Transport.TCP)
-  async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserDataWithStatus> {
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.GOOGLE_OAUTH_LOGIN }, Transport.TCP)
+  async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserData> {
     this.logger.log('googleOAuthLogin: Got request to login user with Google');
     const user = await this.userService.createOrFindGoogleOAuthUser(createUser);
     this.populateAvatarURL(user);
-    const status = await this.userStatusService.getUserStatus(user.uid);
-    return new UserDataWithStatus(user, status);
+    return user;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_USER })
-  async getPublicUser(uid: string): Promise<UserDataWithStatus> {
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.GET_PUBLIC_USER })
+  async getPublicUser(uid: string): Promise<UserPublicData> {
     this.logger.log(`getPublicUser: Got request to retrieve Public Details of User ${uid}`);
     const userData = await this.userService.findUser(uid);
     this.populateAvatarURL(userData);
-    const status = await this.userStatusService.getUserStatus(userData.uid);
-    return new UserDataWithStatus(userData, status);
+    return userData;
     //return new UserPublicData(uid, userData.username, userData.emailVerified, userData.avatarUrl);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.FIND_USER }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.FIND_USER }, Transport.TCP)
   async findUser(uid: string): Promise<UserData> {
     this.logger.log(`findUser: Got request to find user ${uid}`);
     const user = await this.userService.findUser(uid);
@@ -90,7 +86,7 @@ export class UserController {
     return user;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.FIND_USER_EMAIL }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.FIND_USER_EMAIL }, Transport.TCP)
   async findUserByEmail(email: string): Promise<UserData> {
     this.logger.log( `findUserByEmail: Got request to find user with email ${email}` );
     const user = await this.userService.findUserByEmail(email);
@@ -98,7 +94,7 @@ export class UserController {
     return user;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.FIND_USER_USERNAME }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.FIND_USER_USERNAME }, Transport.TCP)
   async findUserByUsername(username: string): Promise<UserData> {
     this.logger.log( `findUserByUsername: Got request to find user by username ${username}` );
     const user = await this.userService.findUserByUsername(username);
@@ -106,25 +102,25 @@ export class UserController {
     return user;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.GET_USER_STATUS }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.GET_USER_STATUS }, Transport.TCP)
   async getUserStatus(id: string): Promise<UserStatusData> {
     this.logger.log( `getUserStatus: Got request to get User Status with id ${id}` );
     return this.userStatusService.getUserStatus(id);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.VERIFY_USER_EMAIL }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.VERIFY_USER_EMAIL }, Transport.TCP)
   async verifyUserEmail(userId: string): Promise<UserData> {
     this.logger.log( `verifyUserEmail: Got request to update Email Address Verification of User ${userId}` );
     return this.userService.validateUserEmail(userId);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.CHECK_EMAIL_EXISTS }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.CHECK_EMAIL_EXISTS }, Transport.TCP)
   async checkEmailExists(email: string): Promise<boolean> {
     this.logger.log( `checkEmailExists: Got request to check if Email ${email} exists`);
     return this.userService.doesEmailExist(email);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.CHECK_USER_EXISTS }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.CHECK_USER_EXISTS }, Transport.TCP)
   async checkUserExists(user: { userId: string, idType: UserIdTypes}): Promise<boolean> {
     this.logger.log( `checkEmailExists: Got request to check if User with id exists: ${user.userId}`);
     if (user.idType === UserIdTypes.EMAIL) {
@@ -140,13 +136,13 @@ export class UserController {
     return true;
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.RESET_PASSWORD }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.RESET_PASSWORD }, Transport.TCP)
   async updatePassword(userData: EmailLogin): Promise<UserData> {
     this.logger.log( `updatePassword: Got request to update password for user with email ${userData.email}`);
     return await this.userService.updatePassword(userData.email, userData.password);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.UPDATE_USER_DATA }, Transport.TCP)
+  @MessagePattern({ cmd: UserServiceTCPEndpoints.UPDATE_USER_DATA }, Transport.TCP)
   async updateUserData(userData: UserData): Promise<UserData> {
     this.logger.log(`updateUserData: Got request to update User Data for user with uid ${userData.uid}`);
     const user = await this.userService.updateUserData(userData);

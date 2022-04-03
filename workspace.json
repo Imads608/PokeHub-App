@@ -31,7 +31,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build api-gateway",
@@ -57,6 +57,90 @@
           "outputs": ["coverage/apps/api-gateway"],
           "options": {
             "jestConfig": "apps/api-gateway/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "auth-endpoints": {
+      "root": "libs/auth/endpoints",
+      "sourceRoot": "libs/auth/endpoints/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/auth/endpoints/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/auth/endpoints"],
+          "options": {
+            "jestConfig": "libs/auth/endpoints/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "auth-gateway": {
+      "root": "apps/auth-gateway",
+      "sourceRoot": "apps/auth-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/auth-gateway",
+            "main": "apps/auth-gateway/src/main.ts",
+            "tsConfig": "apps/auth-gateway/tsconfig.app.json",
+            "assets": ["apps/auth-gateway/src/assets"],
+            "generatePackageJson": true
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/auth-gateway/src/environments/environment.ts",
+                  "with": "apps/auth-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "build-docker-prod": {
+          "executor": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build auth-gateway",
+              "bash build/Docker/Scripts/auth-gateway-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "auth-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/auth-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/auth-gateway"],
+          "options": {
+            "jestConfig": "apps/auth-gateway/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -108,20 +192,19 @@
       },
       "tags": []
     },
-    "auth-service": {
-      "root": "apps/auth-service",
-      "sourceRoot": "apps/auth-service/src",
+    "chat-events-gateway": {
+      "root": "apps/chat-events-gateway",
+      "sourceRoot": "apps/chat-events-gateway/src",
       "projectType": "application",
       "targets": {
         "build": {
           "executor": "@nrwl/node:build",
           "outputs": ["{options.outputPath}"],
           "options": {
-            "outputPath": "dist/apps/auth-service",
-            "main": "apps/auth-service/src/main.ts",
-            "tsConfig": "apps/auth-service/tsconfig.app.json",
-            "assets": ["apps/auth-service/src/assets"],
-            "generatePackageJson": true
+            "outputPath": "dist/apps/chat-events-gateway",
+            "main": "apps/chat-events-gateway/src/main.ts",
+            "tsConfig": "apps/chat-events-gateway/tsconfig.app.json",
+            "assets": ["apps/chat-events-gateway/src/assets"]
           },
           "configurations": {
             "production": {
@@ -130,44 +213,36 @@
               "inspect": false,
               "fileReplacements": [
                 {
-                  "replace": "apps/auth-service/src/environments/environment.ts",
-                  "with": "apps/auth-service/src/environments/environment.prod.ts"
+                  "replace": "apps/chat-events-gateway/src/environments/environment.ts",
+                  "with": "apps/chat-events-gateway/src/environments/environment.prod.ts"
                 }
               ]
             }
           }
         },
-        "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
-          "options": {
-            "commands": [
-              "nx build auth-service",
-              "bash build/Docker/Scripts/auth-service-dockerbuild.sh"
-            ],
-            "parallel": false
-          }
-        },
         "serve": {
           "executor": "@nrwl/node:execute",
           "options": {
-            "buildTarget": "auth-service:build"
+            "buildTarget": "chat-events-gateway:build"
           }
         },
         "lint": {
           "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["apps/auth-service/**/*.ts"]
+            "lintFilePatterns": ["apps/chat-events-gateway/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/auth-service"],
+          "outputs": ["coverage/apps/chat-events-gateway"],
           "options": {
-            "jestConfig": "apps/auth-service/jest.config.js",
+            "jestConfig": "apps/chat-events-gateway/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "chat-notif-service": {
       "root": "apps/chat-notif-service",
@@ -199,7 +274,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build chat-notif-service",
@@ -262,7 +337,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build chat-service",
@@ -292,6 +367,110 @@
           }
         }
       }
+    },
+    "chat-socket-service": {
+      "root": "apps/chat-socket-service",
+      "sourceRoot": "apps/chat-socket-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/chat-socket-service",
+            "main": "apps/chat-socket-service/src/main.ts",
+            "tsConfig": "apps/chat-socket-service/tsconfig.app.json",
+            "assets": ["apps/chat-socket-service/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/chat-socket-service/src/environments/environment.ts",
+                  "with": "apps/chat-socket-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "chat-socket-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/chat-socket-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/chat-socket-service"],
+          "options": {
+            "jestConfig": "apps/chat-socket-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "chat-tcp-gateway": {
+      "root": "apps/chat-tcp-gateway",
+      "sourceRoot": "apps/chat-tcp-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/chat-tcp-gateway",
+            "main": "apps/chat-tcp-gateway/src/main.ts",
+            "tsConfig": "apps/chat-tcp-gateway/tsconfig.app.json",
+            "assets": ["apps/chat-tcp-gateway/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/chat-tcp-gateway/src/environments/environment.ts",
+                  "with": "apps/chat-tcp-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "chat-tcp-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/chat-tcp-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/chat-tcp-gateway"],
+          "options": {
+            "jestConfig": "apps/chat-tcp-gateway/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "common-logger": {
       "root": "libs/common/logger",
@@ -385,6 +564,90 @@
       },
       "tags": []
     },
+    "mail-endpoints": {
+      "root": "libs/mail/endpoints",
+      "sourceRoot": "libs/mail/endpoints/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/mail/endpoints/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/mail/endpoints"],
+          "options": {
+            "jestConfig": "libs/mail/endpoints/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "mail-gateway": {
+      "root": "apps/mail-gateway",
+      "sourceRoot": "apps/mail-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/mail-gateway",
+            "main": "apps/mail-gateway/src/main.ts",
+            "tsConfig": "apps/mail-gateway/tsconfig.app.json",
+            "assets": ["apps/mail-gateway/src/assets"],
+            "generatePackageJson": true
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/mail-gateway/src/environments/environment.ts",
+                  "with": "apps/mail-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "build-docker-prod": {
+          "executor": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "nx build mail-gateway",
+              "bash build/Docker/Scripts/mail-gateway-dockerbuild.sh"
+            ],
+            "parallel": false
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "mail-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/mail-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/mail-gateway"],
+          "options": {
+            "jestConfig": "apps/mail-gateway/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "mail-interfaces": {
       "root": "libs/mail/interfaces",
       "sourceRoot": "libs/mail/interfaces/src",
@@ -431,67 +694,6 @@
       },
       "tags": []
     },
-    "mail-service": {
-      "root": "apps/mail-service",
-      "sourceRoot": "apps/mail-service/src",
-      "projectType": "application",
-      "targets": {
-        "build": {
-          "executor": "@nrwl/node:build",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-            "outputPath": "dist/apps/mail-service",
-            "main": "apps/mail-service/src/main.ts",
-            "tsConfig": "apps/mail-service/tsconfig.app.json",
-            "assets": ["apps/mail-service/src/assets"],
-            "generatePackageJson": true
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": [
-                {
-                  "replace": "apps/mail-service/src/environments/environment.ts",
-                  "with": "apps/mail-service/src/environments/environment.prod.ts"
-                }
-              ]
-            }
-          }
-        },
-        "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
-          "options": {
-            "commands": [
-              "nx build mail-service",
-              "bash build/Docker/Scripts/mail-service-dockerbuild.sh"
-            ],
-            "parallel": false
-          }
-        },
-        "serve": {
-          "executor": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "mail-service:build"
-          }
-        },
-        "lint": {
-          "executor": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/mail-service/**/*.ts"]
-          }
-        },
-        "test": {
-          "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/mail-service"],
-          "options": {
-            "jestConfig": "apps/mail-service/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
     "next-app": {
       "root": "apps/next-app",
       "sourceRoot": "apps/next-app",
@@ -510,7 +712,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build next-app",
@@ -707,6 +909,29 @@
       },
       "tags": []
     },
+    "room-endpoints": {
+      "root": "libs/room/endpoints",
+      "sourceRoot": "libs/room/endpoints/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/room/endpoints/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/room/endpoints"],
+          "options": {
+            "jestConfig": "libs/room/endpoints/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "room-interfaces": {
       "root": "libs/room/interfaces",
       "sourceRoot": "libs/room/interfaces/src",
@@ -770,6 +995,81 @@
           "outputs": ["coverage/libs/user/database"],
           "options": {
             "jestConfig": "libs/user/database/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-endpoints": {
+      "root": "libs/user/endpoints",
+      "sourceRoot": "libs/user/endpoints/src",
+      "projectType": "library",
+      "targets": {
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["libs/user/endpoints/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/user/endpoints"],
+          "options": {
+            "jestConfig": "libs/user/endpoints/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-events-gateway": {
+      "root": "apps/user-events-gateway",
+      "sourceRoot": "apps/user-events-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/user-events-gateway",
+            "main": "apps/user-events-gateway/src/main.ts",
+            "tsConfig": "apps/user-events-gateway/tsconfig.app.json",
+            "assets": ["apps/user-events-gateway/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/user-events-gateway/src/environments/environment.ts",
+                  "with": "apps/user-events-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "user-events-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/user-events-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/user-events-gateway"],
+          "options": {
+            "jestConfig": "apps/user-events-gateway/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -852,7 +1152,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build user-notif-service",
@@ -879,6 +1179,58 @@
           "outputs": ["coverage/apps/user-notif-service"],
           "options": {
             "jestConfig": "apps/user-notif-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-rest-gateway": {
+      "root": "apps/user-rest-gateway",
+      "sourceRoot": "apps/user-rest-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/user-rest-gateway",
+            "main": "apps/user-rest-gateway/src/main.ts",
+            "tsConfig": "apps/user-rest-gateway/tsconfig.app.json",
+            "assets": ["apps/user-rest-gateway/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/user-rest-gateway/src/environments/environment.ts",
+                  "with": "apps/user-rest-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "user-rest-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/user-rest-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/user-rest-gateway"],
+          "options": {
+            "jestConfig": "apps/user-rest-gateway/jest.config.js",
             "passWithNoTests": true
           }
         }
@@ -915,7 +1267,7 @@
           }
         },
         "build-docker-prod": {
-          "builder": "@nrwl/workspace:run-commands",
+          "executor": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
               "nx build user-service",
@@ -945,6 +1297,110 @@
           }
         }
       }
+    },
+    "user-socket-service": {
+      "root": "apps/user-socket-service",
+      "sourceRoot": "apps/user-socket-service/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/user-socket-service",
+            "main": "apps/user-socket-service/src/main.ts",
+            "tsConfig": "apps/user-socket-service/tsconfig.app.json",
+            "assets": ["apps/user-socket-service/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/user-socket-service/src/environments/environment.ts",
+                  "with": "apps/user-socket-service/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "user-socket-service:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/user-socket-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/user-socket-service"],
+          "options": {
+            "jestConfig": "apps/user-socket-service/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "user-tcp-gateway": {
+      "root": "apps/user-tcp-gateway",
+      "sourceRoot": "apps/user-tcp-gateway/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/user-tcp-gateway",
+            "main": "apps/user-tcp-gateway/src/main.ts",
+            "tsConfig": "apps/user-tcp-gateway/tsconfig.app.json",
+            "assets": ["apps/user-tcp-gateway/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/user-tcp-gateway/src/environments/environment.ts",
+                  "with": "apps/user-tcp-gateway/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "user-tcp-gateway:build"
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/user-tcp-gateway/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/user-tcp-gateway"],
+          "options": {
+            "jestConfig": "apps/user-tcp-gateway/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     }
   }
 }
