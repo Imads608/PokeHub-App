@@ -26,9 +26,9 @@ export class UserData implements IUserData {
     lastName: string,
     account: TypeAccount,
     emailVerified: boolean,
-    avatar = null,
+    avatar: BucketDetails | null = null,
     countUsernameChanged = 0,
-    password = undefined,
+    password?: string,
     avatarUrl?: string,
     status?: UserStatusData
   ) {

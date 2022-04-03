@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserEventsPublisherService } from './user-events-publisher.service';
-import { USER_EVENTS_PUBLISHER_SERVICE } from './user-events-publisher-service.interface';
-import { UserEventsReceiverService } from './user-events-receiver.service';
-import { USER_EVENTS_RECEIVER_SERVICE } from './user-events-receiver-service.interface';
 import { CommonModule } from '../common/common.module';
+import { UserDBModule } from '@pokehub/user/database';
+import { MessageReceiverService } from './message-receiver.service';
+import { MESSAGE_RECEIVER_SERVICE } from './message-receiver-service.interface';
 
 @Module({
   imports: [CommonModule, RabbitMQModule.forRootAsync(RabbitMQModule, {
@@ -24,8 +23,6 @@ import { CommonModule } from '../common/common.module';
       uri: `amqp://${configService.get<string>('rabbitMQ.host')}:${configService.get<number>('rabbitMQ.port')}`,
     }),
   }),],
-  providers: [{ useClass: UserEventsPublisherService, provide: USER_EVENTS_PUBLISHER_SERVICE }, 
-              { useClass: UserEventsReceiverService, provide: USER_EVENTS_RECEIVER_SERVICE }],
-  exports: [{ useClass: UserEventsPublisherService, provide: USER_EVENTS_PUBLISHER_SERVICE }],
+  providers: [{ useClass: MessageReceiverService, provide: MESSAGE_RECEIVER_SERVICE }],
 })
 export class PubSubModule {}

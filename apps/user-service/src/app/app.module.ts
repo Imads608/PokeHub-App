@@ -4,14 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User, UserStatus } from '@pokehub/user/database';
 import { UserModule } from '../user/user.module';
 import configuration from '../config/configuration';
-import { LoggerModule } from '@pokehub/common/logger';
 import { CommonModule } from '../common/common.module';
-import { PubSubModule } from '../pubsub/pubsub.module';
 
 @Module({
   imports: [
     UserModule,
-    PubSubModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

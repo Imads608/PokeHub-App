@@ -1,7 +1,7 @@
-const appConfig: { apiGateway: string; chatService: string, userNotifService: string, chatNotifService: string, frontend: string } = {
+const appConfig: { apiGateway: string; chatService: string, userSocketService: string, chatSocketService: string, frontend: string } = {
   apiGateway: 'http://localhost:3015',
-  userNotifService: 'http://localhost:3018',
-  chatNotifService: 'http://localhost:3017',
+  userSocketService: 'http://localhost:3005',
+  chatSocketService: 'http://localhost:3010',
   chatService: 'http://localhost:3002',
   frontend: 'http://localhost:4200'
 };

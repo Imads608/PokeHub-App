@@ -1,9 +1,8 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { ChatRoom, Participant } from '@pokehub/room/database';
+import { ChatRoom, Participant, IRoomService, ROOM_SERVICE } from '@pokehub/room/database';
 import { AppLogger } from '@pokehub/common/logger';
-import { IRoomService, ROOM_SERVICE } from './room-service.interface';
-import { TCPEndpoints } from '@pokehub/room/interfaces';
+import { ChatServiceEndpoints } from '@pokehub/room/endpoints';
 
 @Controller()
 export class RoomController {
@@ -14,7 +13,7 @@ export class RoomController {
     logger.setContext(RoomController.name);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.CHATROOM_JOIN }, Transport.TCP)
+  @MessagePattern({ cmd: ChatServiceEndpoints.JOIN_CHATROOM }, Transport.TCP)
   joinChatroom(userId: string, roomId: string): Promise<Participant> {
     this.logger.log(
       `joinChatRoom: Got Request for user ${userId} to join chatroom ${roomId}`
@@ -22,7 +21,7 @@ export class RoomController {
     return this.roomService.addNewParticipant(userId, roomId);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.USER_JOINED_CHATROOMS }, Transport.TCP)
+  @MessagePattern({ cmd: ChatServiceEndpoints.GET_USER_JOINED_CHATROOMS }, Transport.TCP)
   getUserChatrooms(userId: string): Promise<ChatRoom[]> {
     this.logger.log(
       `getUserChatrooms: Got request to fetch all Chatrooms User ${userId} has joined`
@@ -30,7 +29,7 @@ export class RoomController {
     return this.roomService.getUserJoinedRooms(userId);
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOMS }, Transport.TCP)
+  @MessagePattern({ cmd: ChatServiceEndpoints.GET_PUBLIC_CHATROOMS }, Transport.TCP)
   getPublicChatrooms(): Promise<ChatRoom[]> {
     this.logger.log(
       `getPublicChatrooms: Got request to fetch all Public Chatrooms`
@@ -38,7 +37,7 @@ export class RoomController {
     return this.roomService.getAllPublicRooms();
   }
 
-  @MessagePattern({ cmd: TCPEndpoints.GET_PUBLIC_CHATROOM }, Transport.TCP)
+  @MessagePattern({ cmd: ChatServiceEndpoints.GET_PUBLIC_CHATROOM }, Transport.TCP)
   getPublicChatRoom(roomId: string): Promise<ChatRoom> {
     this.logger.log(
       `getPublicChatroom: Got request to fetch data related to chatroom ${roomId}`
@@ -47,7 +46,7 @@ export class RoomController {
   }
 
   @MessagePattern(
-    { cmd: TCPEndpoints.GET_PUBLIC_CHATROOM_USERS },
+    { cmd: ChatServiceEndpoints.GET_PUBLIC_CHATROOM_USERS },
     Transport.TCP
   )
   getPublicChatRoomUsers(roomId: string): Promise<Participant[]> {

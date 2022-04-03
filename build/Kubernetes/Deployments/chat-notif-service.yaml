@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: chat-notif-service
+  name: chat-notif-service
+  namespace: pokehub-chat
+  annotations:
+    'sidecar.jaegertracing.io/inject': 'true'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-notif-service
+  template:
+    metadata:
+      labels:
+        app: chat-notif-service
+    spec:
+      containers:
+        - image: registry.gitlab.com/imadsheriff97/pokehub-app/chat-notif-service:dev
+          name: chat-notif-service
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 500Mi
+          env:
+            - name: APPLICATION_NAME
+              value: Chat Notification Service
+            - name: APPLICATION_PORT
+              value: '3000'
+            - name: RABBITMQ_SERVICE
+              value: 'host.docker.internal'
+            - name: RABBITMQ_PORT
+              value: '5672'
+            - name: DB_HOST
+              value: 'postgres.postgres.svc.cluster.local'
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_NAME
+              value: 'pokehub'
+            - name: DB_USERNAME
+              value: 'postgres'
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-notif-service
+  namespace: pokehub-chat
+spec:
+  type: ClusterIP
+  selector:
+    app: chat-notif-service
+  ports:
+    - name: http
+      targetPort: 3000
+      port: 3000

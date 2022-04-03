@@ -11,7 +11,7 @@ import { loadUserProxy } from '../../../api/auth';
 export let dmsNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
 export const initDMNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
-    dmsNamespaceSocket = io(`${appConfig.chatNotifService}/dms`, { query: { token: http.defaults.headers.Authorization } });
+    dmsNamespaceSocket = io(`${appConfig.chatSocketService}/dms`, { query: { token: http.defaults.headers.Authorization } });
 
     console.log('initDMNamespaceSocket: Connecting to server with token', http.defaults.headers.Authorization );
 

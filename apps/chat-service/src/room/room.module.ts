@@ -1,14 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RoomService } from './room.service';
 import { RoomController } from './room.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChatRoom, Participant } from '@pokehub/room/database';
-import { LoggerModule } from '@pokehub/common/logger';
-import { ROOM_SERVICE } from './room-service.interface';
+import { ChatDBModule } from '@pokehub/room/database';
+import { CommonModule } from '../common/common.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ChatRoom, Participant]), LoggerModule],
-  providers: [{ useClass: RoomService, provide: ROOM_SERVICE }],
+  imports: [ChatDBModule, CommonModule],
   controllers: [RoomController],
 })
 export class RoomModule {}

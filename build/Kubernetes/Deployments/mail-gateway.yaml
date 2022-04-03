@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mail-gateway
+  name: mail-gateway
+  namespace: pokehub-mail
+  annotations:
+    'sidecar.jaegertracing.io/inject': 'true'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mail-gateway
+  template:
+    metadata:
+      labels:
+        app: mail-gateway
+    spec:
+      containers:
+        - image: registry.gitlab.com/imadsheriff97/pokehub-app/mail-gateway:dev
+          name: mail-gateway
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 500Mi
+          env:
+            - name: APPLICATION_NAME
+              value: Mail Gateway
+            - name: APPLICATION_PORT
+              value: '3000'
+            - name: FRONTEND_HOST
+              value: 'http://pokehub.ml'
+            - name: FRONTEND_PORT
+              value: '80'
+            - name: EMAIL_VERIFICATION_ENDPOINT
+              value: '/register/activate'
+            - name: PASSWORD_RESET_ENDPOINT
+              value: '/login/password-reset/edit'
+            - name: SMTP_HOST
+              value: smtp.gmail.com
+            - name: SMTP_EMAIL
+              value: imadsheriff97@gmail.com
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SMTP_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-gateway
+  namespace: pokehub-mail
+spec:
+  type: ClusterIP
+  selector:
+    app: mail-gateway
+  ports:
+    - name: tcp
+      targetPort: 3000
+      port: 3000
