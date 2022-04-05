@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Logger, Param, Redirect, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { AuthService } from '../common/auth.service';
 import { LoginInterceptor } from './login.interceptor';
 import { UsernameLogin, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
@@ -53,15 +53,17 @@ export class AuthController {
   }
 
   @UseInterceptors(OauthInterceptor)
-  @Post('oauth-google')
-  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<Response<UserProfileWithToken>>  {
+  @Redirect('http://localhost:3013/google-oauth', 302)
+  @Get('oauth-google')
+  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<any>  {
+    return { url: 'http://localhost:3013/google-oauth' };
     // Validate OAuth Credentials
-    this.logger.log( `googleOAuthLogin: Got request to login user through Google OAuth` );
-    const userWithToken: UserDataWithToken = await this.authService.googleOAuthLogin(req.headers['authorization']);
+    /*this.logger.log( `googleOAuthLogin: Got request to login user through Google OAuth` );
+    const userWithToken: UserDataWithToken = await this.authService.googleOAuthLogin();
 
     // Retrieve Rooms User has joined
-    this.logger.log( `googleOAuthLogin: Successfully authenticated user. Retrieving Rooms user has joined` );
-    const joinedRooms = await this.roomService.getJoinedPublicRoomsForUser( userWithToken.user.uid );
+    this.logger.log( `googleOAuthLogin: Successfully authenticated user. Retrieving Rooms user has joined: ${JSON.stringify(userWithToken)}` );
+    const joinedRooms = null;//await this.roomService.getJoinedPublicRoomsForUser( userWithToken.user.uid );
 
     // Return User Data
     res.set({
@@ -73,7 +75,7 @@ export class AuthController {
       sameSite: true
     });
     
-    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
+    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));*/
   }
 
   @Post('logout')

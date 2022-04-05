@@ -5,6 +5,7 @@ export class CreateUserRequest implements ICreateUserRequest {
   username: string;
   password: string;
   typeAccount: string;
+  emailVerified: boolean;
   firstName?: string;
   lastName?: string;
 
@@ -14,7 +15,8 @@ export class CreateUserRequest implements ICreateUserRequest {
     typeAccount: string,
     password: string,
     firstName?: string,
-    lastName?: string
+    lastName?: string,
+    emailVerified = false
   ) {
     this.email = email;
     this.username = username;
@@ -22,5 +24,6 @@ export class CreateUserRequest implements ICreateUserRequest {
     this.typeAccount = typeAccount;
     this.firstName = firstName;
     this.lastName = lastName;
+    this.emailVerified = emailVerified;
   }
 }

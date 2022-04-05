@@ -1,16 +1,14 @@
 import { UserDataWithToken } from '@pokehub/user/models';
-import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, } from '@pokehub/auth/models';
+import { EmailLogin, UsernameLogin, JwtTokenBody, AuthTokens, OAuthTokenBody, } from '@pokehub/auth/models';
 
 export const AUTH_SERVICE = 'AUTH SERVICE';
 
 export interface IAuthService {
   /**
    * Authenticates a User through Google OAuth.
-   * @deprecated This method is deprecated and should not be used.
-   * @param token The Token passed by Google for validation
    * @returns The Data related to the User along with the Access and Refresh Tokens
    */
-  googleOAuthLogin(token: string): Promise<UserDataWithToken>;
+  googleOAuthLogin(): Promise<UserDataWithToken>;
 
   /**
    * Authenticates a User through Email or Username Credentials
@@ -46,6 +44,13 @@ export interface IAuthService {
    * @returns An Object containing the encoded User Data
    */
   decodeToken(accessToken: string): Promise<JwtTokenBody>;
+
+  /**
+   * Validates and Decodes the provided OAuth Token and returns the User Data associated with it.
+   * @param oauthToken The Token that needs to be validated to login a user through OAuth
+   * @returns An Object containing the encoded User Data
+   */
+  verifyOAuthToken(oauthToken: string ): Promise<OAuthTokenBody>;
 
   /**
    * Generates A New Access Token given its Refresh Token

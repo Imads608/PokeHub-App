@@ -27,7 +27,8 @@ export default () => ({
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
     accessTokenExpiration: process.env.ACCESS_TOKEN_EXPIRATION_SECONDS || 60,
     emailVerificationTokenExpiration: process.env.EMAIL_VERIFICATION_TOKEN_EXPIRATON_SECONDS || 900,
-    passwordResetTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900
+    passwordResetTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900,
+    oauthTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900
   },
   googleClientCreds: {
     id: process.env.GOOGLE_CLIENT_ID,

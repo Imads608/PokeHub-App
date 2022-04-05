@@ -3,6 +3,7 @@ export interface ICreateUserRequest {
   username: string;
   password: string;
   typeAccount: string;
+  emailVerified: boolean;
   firstName?: string;
   lastName?: string;
 }

@@ -64,6 +64,22 @@ export class JwtAuthService implements IJwtAuthService {
         }
     }
 
+    async validateOAuthToken(oauthToken: string): Promise<JwtTokenBody> {
+        try {
+            const user: JwtTokenBody = await this.jwtService.verifyAsync(oauthToken, 
+                                                                                    { secret: this.configService.get<string>('tokenDetails.accessTokenSecret')});
+            this.logger.log(`validateOAuthToken: Sucessfully validated OAuth Token`);
+            return user;
+        } catch (err) {
+            this.logger.error(`validateOAuthToken: Got error while validating OAuth Token: ${err}`);
+            if (err.message.includes('expired'))
+                throw new RpcException('User is not authorized');
+            else if (err.message.includes('malformed'))
+                throw new RpcException('Token is not valid');
+            throw new RpcException('Internal Server Error');
+        }
+    }
+
     async validatePasswordResetToken(passwordResetToken: string): Promise<{ email: string }> {
         try {
             const user: { email: string } = await this.jwtService.verifyAsync(passwordResetToken, 
@@ -123,6 +139,28 @@ export class JwtAuthService implements IJwtAuthService {
             return { access_token: accessToken };
         } catch (err) {
             this.logger.error(`getNewAccessTokenFromPayload: Got error while creating new Access Token: ${JSON.stringify(err)}`);
+            throw new RpcException('Internal Server Error');
+        }
+    }
+
+    async getNewOAuthTokenFromPayload(user: JwtTokenBody): Promise<{ oauth_token: string }> {
+        try {
+
+            // Create OAuth Token
+            const token = this.jwtService.sign(user, {
+                secret: this.configService.get<string>('tokenDetails.accessTokenSecret'),
+                expiresIn: `${this.configService.get<string>('tokenDetails.oauthTokenExpiration')}s`,
+            });
+
+            this.logger.log(`getNewOAuthToken: Successfully created OAuth Token`);
+
+            // Return OAuth Token
+            return { oauth_token: token };
+        } catch (err) {
+            this.logger.error(`getNewOAuthToken: Got error getting new access token for user with uid ${user.uid}: ${err}`);
+            if (err.message.includes('expired'))
+                throw new RpcException('User is not authorized');
+            
             throw new RpcException('Internal Server Error');
         }
     }
