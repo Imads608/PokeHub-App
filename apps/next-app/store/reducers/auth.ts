@@ -61,6 +61,7 @@ const authSlice = createSlice({
           state.loading = false;
           state.isAuthenticated = true;
           state.isEmailVerified = false;
+          state.accessToken = (action.payload as IUserProfileWithToken)?.accessToken;
           //state.accessToken = action.payload.accessToken;
           //state.refreshToken = action.payload.refreshToken;
         }

@@ -7,11 +7,11 @@ import { disconnectDMNamespaceSocket, initDMNamespaceSocket } from './chat/dm/dm
 
 //export let socket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
-export const connectWebSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore): void => {
+export const connectWebSocket = (store: RootStore): void => {
   // Initialize Socket Connections
-  initUserNamespaceSocket(action, store);
-  initRoomNamespaceSocket(action, store);
-  initDMNamespaceSocket(action, store);
+  initUserNamespaceSocket(store);
+  initRoomNamespaceSocket(store);
+  initDMNamespaceSocket(store);
 };
 
 export const disconnectWebSocket = (store: RootStore): void => {

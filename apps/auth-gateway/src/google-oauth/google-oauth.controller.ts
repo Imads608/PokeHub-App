@@ -4,11 +4,14 @@ import { GoogleAuthGuard } from './google-oauth.guard';
 import { Request } from 'express';
 import { UserDataWithToken } from '@pokehub/user/models';
 import { IJwtAuthService, JWT_AUTH_SERVICE } from '../common/jwt-auth-service.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('google-oauth')
 export class GoogleOauthController {
-    constructor(private readonly logger: AppLogger, @Inject(JWT_AUTH_SERVICE) private readonly jwtService: IJwtAuthService) {
+    constructor(private readonly logger: AppLogger, @Inject(JWT_AUTH_SERVICE) private readonly jwtService: IJwtAuthService,
+                private readonly configService: ConfigService) {
         this.logger.setContext(GoogleOauthController.name);
+
     }
 
     @Get()
@@ -20,12 +23,13 @@ export class GoogleOauthController {
     @Redirect()
     @UseGuards(GoogleAuthGuard)
     async googleAuthRedirect(@Req() req: Request) {
-        this.logger.log(`googleAuthRedirect: Got redirected from Google OAuth: ${req.isAuthenticated}, ${req.isUnauthenticated}, ${JSON.stringify(req.body)}, ${JSON.stringify(req.headers)}`);
+        this.logger.log(`googleAuthRedirect: Got redirected from Google OAuth`);
         const user = req.user as UserDataWithToken;
         const token = await this.jwtService.getNewOAuthTokenFromPayload({ uid: user.user.uid, email: user.user.email, username: user.user.username });
-        /*if (!req.user)
-            return null;
-        return req.user as UserDataWithToken;*/
-        return { url: `http://localhost:4200/login?oauth_token=${token.oauth_token}` };
+        const url = `${this.configService.get<string>('protocol')}://${this.configService.get<string>('frontendApp.host')}:${this.configService.get<string>('frontendApp.port')}/login?oauth_token=${token.oauth_token}`;
+        this.logger.log(`googleAuthRedirect: Url: ${url}`)
+        this.logger.log(`googleAuthRedirect: Url: http://localhost:4200/login?oauth_token=${token.oauth_token}`)
+        return { url };
+        //return { url: `http://localhost:4200/login?oauth_token=${token.oauth_token}` };
     }
 }

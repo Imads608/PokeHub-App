@@ -24,15 +24,16 @@ import NProgress from 'nprogress';
 import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
-import { getIsAuthenticated, getAuthLoading } from '../store/selectors/auth';
+import { getIsAuthenticated, getAuthLoading, getAccessToken } from '../store/selectors/auth';
 import { getUsersNSClientId, getUser, getUserStatus, getIsRefreshNeeded } from '../store/selectors/user';
 import { IUserData, Status, IUserStatusData } from '@pokehub/user/interfaces';
 import { IUserEventMessage, UserSocketEvents } from '@pokehub/event/user';
 import { sendUserStatusMessage } from '../events/user/user-events';
 import { useIdleTimer } from 'react-idle-timer';
-import { status_update } from '../store/reducers/user';
+import { start_websocket_connection, status_update } from '../store/reducers/user';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
+import http from '../axios';
 
 // Router Page Navigation Progress Bar
 NProgress.configure({ showSpinner: false });
@@ -92,6 +93,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
   const socketId = useSelector<RootState, string>(getUsersNSClientId);
   const isSocketRefreshNeeded = useSelector<RootState, boolean>(getIsRefreshNeeded);
   const userStatus = useSelector<RootState, IUserStatusData>(getUserStatus);
+  const initialAccessToken = useSelector<RootState, string>(getAccessToken);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
   const res = useLoadUser(null, !isAuthenticated && authLoading)
   const dispatch = useDispatch();
@@ -100,6 +102,8 @@ const MainApp = ({ Component, pageProps, theme }) => {
   useEffect(() => {
     if (isAuthenticated) {
       start();
+      http.defaults.headers.Authorization = http.defaults.headers.Authorization ? http.defaults.headers.Authorization : initialAccessToken;
+      dispatch(start_websocket_connection());
     } else pause();
 
   }, [isAuthenticated]);

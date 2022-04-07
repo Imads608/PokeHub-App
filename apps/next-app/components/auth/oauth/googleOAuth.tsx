@@ -18,12 +18,12 @@ interface GoogleOAuthProps {
 }
 
 const GoogleOAuth = ({ classes, notificationClose }: GoogleOAuthProps) => {
-  const mutation = useGoogleOAuthLogin();
+  //const mutation = useGoogleOAuthLogin();
   const dispatch = useDispatch();
-  const error = mutation.error as AxiosError<APIError>;
+  //const error = mutation.error as AxiosError<APIError>;
   const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
 
-  useEffect(() => {
+  /*useEffect(() => {
     error &&
       toast.error(
         error.response?.data.statusCode === 401
@@ -35,7 +35,7 @@ const GoogleOAuth = ({ classes, notificationClose }: GoogleOAuthProps) => {
           theme,
         }
       );
-  }, [error]);
+  }, [error]);*/
 
   return (
     <GoogleLogin
@@ -54,9 +54,9 @@ const GoogleOAuth = ({ classes, notificationClose }: GoogleOAuthProps) => {
       buttonText="Login with Google"
       onSuccess={(data) => {
         console.log('Got data:', data);
-        mutation.mutate((data as GoogleLoginResponse).tokenId);
+        //mutation.mutate((data as GoogleLoginResponse).tokenId);
       }}
-      onFailure={(err) => dispatch(auth_failure(err))}
+      onFailure={(err) => console.log('GoogleLogin: failure')}
       cookiePolicy={'single_host_origin'}
     />
   );

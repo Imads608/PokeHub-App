@@ -6,6 +6,7 @@ const authLoading = (state: RootState) => state['auth-state'].loading;
 const emailVerified = (state: RootState) => state['auth-state'].isEmailVerified;
 const authenticated = (state: RootState) => state['auth-state'].isAuthenticated;
 const authError = (state: RootState) => state['auth-state'].error;
+const accessToken = (state: RootState) => state['auth-state'].accessToken;
 
 export const getAuthLoading = createSelector(
   [authLoading],
@@ -34,3 +35,7 @@ export const getAuthError = createSelector(
   [authError],
   (authError) => authError
 );
+
+export const getAccessToken = createSelector(
+  [accessToken], (accessToken) => accessToken
+)

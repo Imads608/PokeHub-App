@@ -28,6 +28,9 @@ import Copyright from '../../components/common/copyright';
 import withLoadUser from '../../hoc/auth/withLoadUser';
 import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import useOAuthLoad from '../../hooks/auth/useOAuthLoad';
+import withOAuthLoad from '../../hoc/auth/withOAuthLoad';
+import GoogleButton from 'react-google-button';
+import appConfig from '../../config';
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -50,8 +53,11 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export const getServerSideProps: GetServerSideProps<{ oauthToken: string }> = wrapper.getServerSideProps((store) => async ({ req, res, query }) => {
-  await withLoadUser.isAuth({ req, res, store});
   const oauthToken = query.oauth_token ? query.oauth_token as string : null;
+
+  await withLoadUser.isAuth({ req, res, store, isOAuthLogin: !!oauthToken });
+  if (oauthToken)
+    await withOAuthLoad.isAuth({ req, res, store, oauthToken });
   return {
     props: {
       oauthToken
@@ -73,7 +79,7 @@ const Login = ({ oauthToken }: InferGetServerSidePropsType<typeof getServerSideP
   const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
   const result = useLoginUser(getValues('email'), getValues('password'), rememberMe, loginEnable);
   const error: AxiosError<APIError> = result.error as AxiosError<APIError>;
-  const oauthLoadRes = useOAuthLoad(oauthToken, !!oauthToken);
+  //const oauthLoadRes = useOAuthLoad(oauthToken, !!oauthToken);
 
   const notificationClose = () => {
     dispatch(reset_auth_failure());
@@ -139,7 +145,11 @@ const Login = ({ oauthToken }: InferGetServerSidePropsType<typeof getServerSideP
             >
               Sign In
             </Button>
-            <GoogleOAuth classes={classes} notificationClose={notificationClose} />
+            <a href={`${appConfig.apiGateway}/auth/oauth-google-login`} style={{ textDecoration: 'none' }}>
+              <GoogleButton
+                style={{ borderRadius: '5px', width: '100%' }}
+              />
+            </a>
             <Grid container>
               <Grid item xs>
                 <Link href="/login/password-reset" variant="body2">
@@ -164,4 +174,4 @@ const Login = ({ oauthToken }: InferGetServerSidePropsType<typeof getServerSideP
   );
 };
 
-export default withLoadUser(Login);
+export default withOAuthLoad(withLoadUser(Login));

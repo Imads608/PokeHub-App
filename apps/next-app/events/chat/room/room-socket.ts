@@ -10,7 +10,7 @@ import { loadUserProxy } from '../../../api/auth';
 
 export let roomsNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
-export const initRoomNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
+export const initRoomNamespaceSocket = (store: RootStore) => {
     roomsNamespaceSocket = io(`${appConfig.chatSocketService}/rooms`, { query: { token: http.defaults.headers.Authorization } });
 
     console.log('initRoomNamespaceSocket: Connecting to server with token', http.defaults.headers.Authorization );
@@ -32,7 +32,7 @@ export const initRoomNamespaceSocket = (action: PayloadAction<IUserProfileWithTo
                     console.log('initRoomNamespaceSocket onDisconnect: Disconnected from Rooms Namespace. Refreshing Access Token');
                     await loadUserProxy();
                     console.log('initRoomNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
-                    initRoomNamespaceSocket(action, store);
+                    initRoomNamespaceSocket(store);
                 }
             }
         } catch (err) {

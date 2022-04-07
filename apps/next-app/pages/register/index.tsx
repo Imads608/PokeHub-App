@@ -36,7 +36,7 @@ import { withUsernameAvailableField } from '../../hoc/auth/fields/withUsernameAv
 
 export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
   if (!store.getState()['auth-state'].isAuthenticated)
-    await withLoadUser.isAuth({ req, res, store});
+    await withLoadUser.isAuth({ req, res, store, isOAuthLogin: false });
   return {
     props: {
     }

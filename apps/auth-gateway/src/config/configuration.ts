@@ -12,6 +12,10 @@ export default () => ({
     host: process.env.USER_TCP_GATEWAY_HOST,
     port: process.env.USER_TCP_GATEWAY_PORT,
   },
+  frontendApp: {
+    host: process.env.FRONTEND_HOST,
+    port: process.env.FRONTEND_PORT
+  },
   rabbitMQ: {
     host: process.env.RABBITMQ_SERVICE,
     port: process.env.RABBITMQ_PORT,

@@ -20,9 +20,10 @@ export const useGoogleOAuthLogin = () => {
       onError: (err: Error | AxiosError<APIError>) => {
         if (err && axios.isAxiosError(err)) {
           const apiError = err as AxiosError<APIError>;
-          dispatch(auth_failure(apiError.response?.data));
+          console.log('useGoogleOAuthLogin: got error: ', err);
+          //dispatch(auth_failure(apiError.response?.data));
         } else {
-          dispatch(auth_failure({ statusCode: 500, message: err.message }));
+          //dispatch(auth_failure({ statusCode: 500, message: err.message }));
         }
       },
     }

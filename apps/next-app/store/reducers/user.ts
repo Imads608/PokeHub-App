@@ -46,6 +46,9 @@ const userSlice = createSlice({
       console.log('Status Update:', action.payload);
       state.userDetails.status = action.payload;
     },
+    start_websocket_connection: (state: UserState) => {
+      // Nothing to do here
+    },
     websocket_connected: (state: UserState, action: PayloadAction<{ socketId: string, namespace: SocketNamespaces }>) => {
       if (action.payload.namespace === SocketNamespaces.USERS_NAMESPACE) state.clientIds.usersNS = action.payload.socketId;
       else if (action.payload.namespace === SocketNamespaces.ROOMS_NAMESPACE) state.clientIds.roomsNS = action.payload.socketId;
@@ -70,7 +73,7 @@ const userSlice = createSlice({
             state.profileSetup = !!action.payload.user.avatar;
 
           if (currStatus.state !== Status.APPEAR_AWAY && currStatus.state !== Status.APPEAR_BUSY && currStatus.state !== Status.APPEAR_OFFLINE)
-            state.userDetails.status = { lastSeen: new Date(), state: Status.ONLINE, id: action.payload.user.status.id };
+            state.userDetails.status = { lastSeen: action.payload.user.status.lastSeen, state: Status.ONLINE, id: action.payload.user.status.id };
         }
       )
       .addCase( login_success_verification_needed, ( state: UserState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
@@ -85,11 +88,11 @@ const userSlice = createSlice({
       .addCase(HYDRATE, (state: UserState, action: any) => {
         return {
           ...state,
-          ...action.payload['user-state']
+          ...action.payload['user-state'],
         }
       });
   },
 });
 
-export const { join_chatroom, leave_chatroom, user_data_update, status_update, websocket_connected, websocket_disconnected } = userSlice.actions;
+export const { join_chatroom, leave_chatroom, user_data_update, status_update, websocket_connected, websocket_disconnected, start_websocket_connection } = userSlice.actions;
 export default userSlice;
