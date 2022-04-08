@@ -1,90 +1,67 @@
 # Pokehub
 
-This project was generated using [Nx](https://nx.dev).
+This project is a clone of Pokemon Showdown with some differences.
+Here are the features of this app planning to be included
+- Public Chat Rooms
+- Private Conversations (DMs)
+- Private Group Chats
+- Full Pokedex Catalog of All Generations
+- Team Builder and Battle Simulator (latest Generation for now but can potentially include older)
 
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+**Architecture**
 
-🔎 **Smart, Extensible Build Framework**
+This project follows the Microservice paradigm with breaking up the application into multiple modules.
+There are various technologies used to accomplish this mentioned below.
 
-## Adding capabilities to your workspace
 
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
+## Tech Stack
 
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
+Since this has a distributed architecture, there are many components in order to make this as reliable as possible.
+The Tech stack is split into separate sections mentioned below.
 
-Below are our core plugins:
+###### Database
 
-- [React](https://reactjs.org)
-  - `npm install --save-dev @nrwl/react`
-- Web (no framework frontends)
-  - `npm install --save-dev @nrwl/web`
-- [Angular](https://angular.io)
-  - `npm install --save-dev @nrwl/angular`
-- [Nest](https://nestjs.com)
-  - `npm install --save-dev @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `npm install --save-dev @nrwl/express`
-- [Node](https://nodejs.org)
-  - `npm install --save-dev @nrwl/node`
+- PostgreSQL
+  - For User Data, Chat Rooms and Messages
+- MongoDB
+  - For storing Pokedex related information
 
-There are also many [community plugins](https://nx.dev/community) you could add.
+Note: The Database choices could change later on depending on performance.
 
-## Generate an application
+###### Backend Services
+Nest.js Apps with Typescript and TypeORM used for Data Modelling
 
-Run `nx g @nrwl/react:app my-app` to generate an application.
+###### Frontend
+Next.js with Typescript
 
-> You can use any of the plugins above to generate applications as well.
+###### Communication Protocols
+- Service to Service Communication
+  - RabbitMQ
+  - Nest.js TCP
+  - REST
+  - gRPC (to be added)
+- Frontend to Backend and vice versa
+  - REST
+  - Websockets
 
-When using Nx, you can create multiple applications and libraries in the same workspace.
+###### Deployment and Environment
+Docker and Kubernetes.
+The idea is that every service has an image which is run on Kubernetes.
+This includes the database and other persistent stores as well.
 
-## Generate a library
+The images are hosted [GitLab](https://gitlab.com/imadsheriff97/PokeHub-App/container_registry)
 
-Run `nx g @nrwl/react:lib my-lib` to generate a library.
+###### Logging
+The plan here is to use Winston for the application level logs and use Fluentd and Loki for aggregation and storage.
 
-> You can also use any of the plugins above to generate libraries as well.
+###### Observability
+Jaeger or OpenTelemetry
 
-Libraries are shareable across libraries and applications. They can be imported from `@pokehub/mylib`.
+###### Metrics and Resources Analysis
+Prometheus
 
-## Development server
+###### Visualization
+Grafana
 
-Run `nx serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `nx g @nrwl/react:component my-component --project=my-app` to generate a new component.
-
-## Build
-
-Run `nx build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `nx test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx dep-graph` to see a diagram of the dependencies of your projects.
-
-## Further help
-
-Visit the [Nx Documentation](https://nx.dev) to learn more.
-
-## ☁ Nx Cloud
-
-### Distributed Computation Caching & Distributed Task Execution
-
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+###### Tooling
+Nx MonoRepo
