@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getNewAccessToken, oauthLoad } from '../../../api/auth';
 import http from '../../../axios';
 import axios from 'axios';
 import appConfig from '../../../config';

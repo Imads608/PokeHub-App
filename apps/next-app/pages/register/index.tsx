@@ -14,7 +14,6 @@ import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
 import { FieldValues, UseControllerProps, useForm } from 'react-hook-form';
 import { useSignupUser } from '../../hooks/auth/useSignupUser';
 import EmailField from '../../components/auth/fields/emailField';
-import GoogleOAuth from '../../components/auth/oauth/googleOAuth';
 import PasswordField from '../../components/auth/fields/passwordField';
 import UsernameField from '../../components/auth/fields/usernameField';
 import { Theme } from '@mui/material/styles';
@@ -33,6 +32,8 @@ import { getAppTheme } from '../../store/selectors/app';
 import EmailVerificationNotification from '../../components/auth/notifications/emailVerificationNotification';
 import { withEmailAvailableField } from '../../hoc/auth/fields/withEmailAvailableField';
 import { withUsernameAvailableField } from '../../hoc/auth/fields/withUsernameAvailableField';
+import GoogleButton from 'react-google-button';
+import appConfig from '../../config';
 
 export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
   if (!store.getState()['auth-state'].isAuthenticated)
@@ -125,7 +126,11 @@ const Register = () => {
             >
               Sign Up
             </Button>
-            <GoogleOAuth classes={classes} notificationClose={null} />
+            <a href={`${appConfig.apiGateway}/auth/oauth-google-login`} style={{ textDecoration: 'none' }}>
+              <GoogleButton
+                style={{ borderRadius: '5px', width: '100%' }}
+              />
+            </a>
             <Grid container justifyContent="flex-start">
               <Grid item>
                 <NextLink href="/register">

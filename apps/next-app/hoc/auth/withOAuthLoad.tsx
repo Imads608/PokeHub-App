@@ -1,6 +1,5 @@
 /* eslint-disable react/display-name */
 import http from '../../axios';
-import { getNewAccessToken, loadUser, oauthLoginProxy } from '../../api/auth';
 import { login_success, login_success_verification_needed } from '../../store/actions/common';
 import { auth_loaded } from '../../store/reducers/auth';
 import { RootStore } from '../../store/store';
