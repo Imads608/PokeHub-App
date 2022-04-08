@@ -1,13 +1,11 @@
-import React, { FC, useEffect, useRef } from 'react';
-import { AppProps } from 'next/app';
-import Head from 'next/head';
+import React, { useEffect, useRef } from 'react';
 import { RootState, wrapper } from '../store/store';
 import '../styles/global.scss';
-import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import Navbar from '../components/nav/navbar';
 import { QueryClientProvider } from 'react-query';
 import queryClient from '../queryClient';
-import { getRootDesignTokens, getMainAppDesignTokens } from '../styles/mui/themes/theme';
+import { getRootDesignTokens } from '../styles/mui/themes/theme';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import { CacheProvider } from '@emotion/react';
 import { Hydrate } from 'react-query/hydration';
@@ -24,11 +22,9 @@ import NProgress from 'nprogress';
 import RouteGuard from '../components/auth/guards/routeGuard';
 import MainDrawer from '../components/drawer/mainDrawer';
 import { getDrawerToggle } from '../store/selectors/drawer';
-import { getIsAuthenticated, getAuthLoading, getAccessToken } from '../store/selectors/auth';
+import { getIsAuthenticated, getAuthLoading, getInitialAccessToken } from '../store/selectors/auth';
 import { getUsersNSClientId, getUser, getUserStatus, getIsRefreshNeeded } from '../store/selectors/user';
 import { IUserData, Status, IUserStatusData } from '@pokehub/user/interfaces';
-import { IUserEventMessage, UserSocketEvents } from '@pokehub/event/user';
-import { sendUserStatusMessage } from '../events/user/user-events';
 import { useIdleTimer } from 'react-idle-timer';
 import { start_websocket_connection, status_update } from '../store/reducers/user';
 import { useDispatch } from 'react-redux';
@@ -93,7 +89,7 @@ const MainApp = ({ Component, pageProps, theme }) => {
   const socketId = useSelector<RootState, string>(getUsersNSClientId);
   const isSocketRefreshNeeded = useSelector<RootState, boolean>(getIsRefreshNeeded);
   const userStatus = useSelector<RootState, IUserStatusData>(getUserStatus);
-  const initialAccessToken = useSelector<RootState, string>(getAccessToken);
+  const initialAccessToken = useSelector<RootState, string>(getInitialAccessToken);
   const matches = useMediaQuery(theme.breakpoints.up('md'));
   const res = useLoadUser(null, !isAuthenticated && authLoading)
   const dispatch = useDispatch();

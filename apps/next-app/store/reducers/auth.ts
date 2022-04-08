@@ -12,8 +12,7 @@ import { HYDRATE } from 'next-redux-wrapper';
 import { APIError } from '../../types/api';
 
 export interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
+  accessTokenOnLogin: string | null;
   isAuthenticated: boolean;
   isEmailVerified: boolean;
   error: APIError | null;
@@ -23,8 +22,7 @@ export interface AuthState {
 const authSlice = createSlice({
   name: 'auth-state',
   initialState: {
-    accessToken: null,
-    refreshToken: null,
+    accessTokenOnLogin: null,
     isAuthenticated: false,
     error: null,
     loading: true,
@@ -37,8 +35,7 @@ const authSlice = createSlice({
     auth_loaded: (state: AuthState, action?: PayloadAction<boolean>) => {
       state.loading = false;
       if (action && action?.payload == false) {
-        state.accessToken = null;
-        state.refreshToken = null;
+        state.accessTokenOnLogin = null;
         state.isAuthenticated = false;
         state.isEmailVerified = false;
         state.error = null;
@@ -61,7 +58,7 @@ const authSlice = createSlice({
           state.loading = false;
           state.isAuthenticated = true;
           state.isEmailVerified = false;
-          state.accessToken = (action.payload as IUserProfileWithToken)?.accessToken;
+          state.accessTokenOnLogin = (action.payload as IUserProfileWithToken)?.accessToken;
           //state.accessToken = action.payload.accessToken;
           //state.refreshToken = action.payload.refreshToken;
         }
@@ -75,8 +72,7 @@ const authSlice = createSlice({
       .addCase(logout, (state: AuthState) => {
         state.loading = false;
         state.isAuthenticated = false;
-        state.accessToken = null;
-        state.refreshToken = null;
+        state.accessTokenOnLogin = null;
       })
       .addCase(login_success_verification_needed, (state: AuthState) => {
         state.loading = false;
