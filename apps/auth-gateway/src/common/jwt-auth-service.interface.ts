@@ -25,6 +25,13 @@ export interface IJwtAuthService {
   validatePasswordResetToken(passwordResetToken: string): Promise<{ email: string }>
 
   /**
+   * Validates the provided OAuth Token and returns the User Data embedded in the Token itself
+   * @param oauthToken The Token to use to validate OAuth Login of User
+   * @returns the User Data embedded in the Token
+   */
+  validateOAuthToken(oauthToken: string): Promise<JwtTokenBody>
+
+  /**
    * Decodes the Access Token and returns the User Data
    * @param accessToken The Access Token that needs to be decoded
    * @returns The User Data associated with the token
@@ -51,6 +58,13 @@ export interface IJwtAuthService {
    * @returns An Object representing the created Token.
    */
   getNewEmailVerificationToken( user: JwtTokenBody ): Promise<{ email_verification_token: string }>;
+
+  /**
+   * Creates The OAuth Token with a configured Expiration Time given the Payload
+   * @param user The Payload needing to be encoded in the token
+   * @returns A New OAuth Token that can be used to login the user
+   */
+   getNewOAuthTokenFromPayload(user: JwtTokenBody): Promise<{ oauth_token: string }> 
 
   /**
    * Creates a Token that can be used for Resetting a User's password.

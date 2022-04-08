@@ -12,6 +12,10 @@ export default () => ({
     host: process.env.USER_TCP_GATEWAY_HOST,
     port: process.env.USER_TCP_GATEWAY_PORT,
   },
+  frontendApp: {
+    host: process.env.FRONTEND_HOST,
+    port: process.env.FRONTEND_PORT
+  },
   rabbitMQ: {
     host: process.env.RABBITMQ_SERVICE,
     port: process.env.RABBITMQ_PORT,
@@ -27,7 +31,8 @@ export default () => ({
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
     accessTokenExpiration: process.env.ACCESS_TOKEN_EXPIRATION_SECONDS || 60,
     emailVerificationTokenExpiration: process.env.EMAIL_VERIFICATION_TOKEN_EXPIRATON_SECONDS || 900,
-    passwordResetTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900
+    passwordResetTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900,
+    oauthTokenExpiration: process.env.PASSWORD_RESET_TOKEN_EXPIRATON_SECONDS || 900
   },
   googleClientCreds: {
     id: process.env.GOOGLE_CLIENT_ID,

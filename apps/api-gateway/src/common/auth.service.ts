@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, InternalServerErrorException, 
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { UserDataWithToken } from '@pokehub/user/models';
-import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody } from '@pokehub/auth/models';
+import { UsernameLogin, EmailLogin, AuthTokens, JwtTokenBody, OAuthTokenBody } from '@pokehub/auth/models';
 import { AppLogger } from '@pokehub/common/logger';
 import { IAuthService } from './auth-service.interface';
 import { ConfigService } from '@nestjs/config';
@@ -18,12 +18,11 @@ export class AuthService implements IAuthService {
         this.authMicroserviceURL = `${configService.get<string>('protocol')}://${configService.get<string>('authGateway.host')}:${configService.get<number>('authGateway.restPort')}`;
     }
 
-    async googleOAuthLogin(token: string): Promise<UserDataWithToken> {
+    async googleOAuthLogin(): Promise<UserDataWithToken> {
         this.logger.log(`googleOAuthLogin: Authenticating user with Google OAuth`);
-        if (!token) throw new UnauthorizedException();
-
         try {
-            const userDataWithToken = null;//await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, token));
+            //const userDataWithToken = null;//await firstValueFrom(this.clientProxy.send<UserDataWithToken>({ cmd: TCPEndpoints.GOOGLE_OAUTH_LOGIN }, token));
+            const userDataWithToken = (await firstValueFrom( this.httpService.get<UserDataWithToken>(`${this.authMicroserviceURL}${AuthGatewayRESTEndpoints.GOOGLE_OAUTH_LOGIN}`))).data;
             if (!userDataWithToken) throw new InternalServerErrorException();
 
             this.logger.log(`googleOAuthLogin: Successfully authenticated user through Google OAuth`);
@@ -116,6 +115,20 @@ export class AuthService implements IAuthService {
             return userData;
         } catch (err) {
             this.logger.error( `decodeToken: Got error while decoding and validating Access Token: ${err}` );
+            throw err;
+        }
+    }
+
+    async verifyOAuthToken(oauthToken: string ): Promise<OAuthTokenBody> {
+        this.logger.log( `verifyOAuthToken: Sending Request for OAuth Token to Auth Service` );
+        try {
+            const userData = await firstValueFrom( this.clientProxy.send<OAuthTokenBody>( { cmd: AuthGatewayTCPEndpoints.VALIDATE_OAUTH_TOKEN }, oauthToken) );
+            if (!userData) throw new InternalServerErrorException();
+
+            this.logger.log( `verifyOAuthToken: Successfully decoded OAuth Token to User Data` );
+            return userData;
+        } catch (err) {
+            this.logger.error( `verifyOAuthToken: Got error while trying to verify OAuth Token: ${err}` );
             throw err;
         }
     }

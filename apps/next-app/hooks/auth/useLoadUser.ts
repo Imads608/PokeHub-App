@@ -13,23 +13,7 @@ const useLoadUser = (refreshToken: string, enable: boolean) => {
   const dispatch: Dispatch = useDispatch();
 
   const response = useQuery(['users', 'load', { refreshToken }],
-    async () => await loadUserProxy()/*{
-      //const rememberMe = localStorage['pokehub-rememberme'] == 'undefined' || localStorage['pokehub-rememberme'] === 'null' ? null : localStorage['pokehub-rememberme'];
-
-      //console.log('Remember Me is: ', rememberMe);
-      
-      /*if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
-        throw new Error('No Refresh Token provided');
-      } else if (!rememberMe) {
-        throw new Error('Remember Me is not set to true');
-      }*/
-      /*
-      //dispatch(requestStarted());
-      //const accessToken: string = await getNewAccessToken(refreshToken);
-      //localStorage.setItem('pokehub-access-token', accessToken);
-      const user: IUserProfile = await loadUserProxy();
-      return user;
-    }*/,
+    async () => await loadUserProxy(),
     {
       onSuccess: (data: IUserProfile) => {
         if (data) {

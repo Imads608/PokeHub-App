@@ -9,12 +9,13 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { RootStore } from '../../store/store';
 import { SocketNamespaces, websocket_connected, websocket_disconnected } from '../../store/reducers/user';
 import { loadUserProxy } from '../../api/auth';
+import { UserProfile } from '@pokehub/user/models';
 
 export let usersNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
-export const initUserNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
+export const initUserNamespaceSocket = (store: RootStore) => {
     usersNamespaceSocket = io(`${appConfig.userSocketService}`, { query: { token: http.defaults.headers.Authorization } });
-
+    const userState = store.getState()['user-state'];
     console.log('initUserNamespaceSocket: Connecting to server with token', appConfig.userSocketService, http.defaults.headers.Authorization );
 
     // Connect to Server with User Namespace
@@ -23,8 +24,8 @@ export const initUserNamespaceSocket = (action: PayloadAction<IUserProfileWithTo
 
         // Join User Rooms on Server
         const messageEvent = new UserEventMessage<IUserProfile>(UserSocketEvents.LOGGED_IN, 
-                                new UserSocket(action.payload.user.uid, action.payload.user.username, usersNamespaceSocket.id), 
-                                action.payload);
+                                new UserSocket(userState.userDetails.uid, userState.userDetails.username, usersNamespaceSocket.id), 
+                                new UserProfile(userState.userDetails, userState.joinedPublicRooms));
 
         usersNamespaceSocket.emit(UserSocketEvents.LOGGED_IN, messageEvent);
 
@@ -41,7 +42,7 @@ export const initUserNamespaceSocket = (action: PayloadAction<IUserProfileWithTo
                     console.log('initUserNamespaceSocket onDisconnect: Disconnected from Users Namespace. Refreshing Access Token');
                     await loadUserProxy();
                     console.log('initUserNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
-                    initUserNamespaceSocket(action, store);
+                    initUserNamespaceSocket(store);
                 }
             }
         } catch (err) {

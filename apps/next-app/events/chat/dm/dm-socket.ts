@@ -10,7 +10,7 @@ import { loadUserProxy } from '../../../api/auth';
 
 export let dmsNamespaceSocket: Socket<DefaultEventsMap, DefaultEventsMap> = null;
 
-export const initDMNamespaceSocket = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
+export const initDMNamespaceSocket = (store: RootStore) => {
     dmsNamespaceSocket = io(`${appConfig.chatSocketService}/dms`, { query: { token: http.defaults.headers.Authorization } });
 
     console.log('initDMNamespaceSocket: Connecting to server with token', http.defaults.headers.Authorization );
@@ -32,7 +32,7 @@ export const initDMNamespaceSocket = (action: PayloadAction<IUserProfileWithToke
                     console.log('initDMNamespaceSocket onDisconnect: Disconnected from DMs Namespace. Refreshing Access Token');
                     await loadUserProxy();
                     console.log('initDMNamespaceSocket onDisconnect: Successfully refreshed Access Token. Connecting to Server');
-                    initDMNamespaceSocket(action, store);
+                    initDMNamespaceSocket(store);
                 }
             }
         } catch (err) {

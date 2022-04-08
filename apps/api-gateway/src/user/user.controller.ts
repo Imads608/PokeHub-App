@@ -8,7 +8,7 @@ import { IUserService, USER_SERVICE } from './user-service.interface';
 import { AppLogger } from '@pokehub/common/logger';
 import { IMailService, MAIL_SERVICE } from '../common/mail-service.interface';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
-import { EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
+import { EmailLogin, JwtTokenBody, OAuthTokenBody } from '@pokehub/auth/models';
 import { ActivateUserInterceptor } from './activate-user.interceptor';
 import { UserIdTypes } from '@pokehub/user/interfaces';
 import { ResourceInterceptor } from '../common/resource.interceptor';
@@ -23,6 +23,7 @@ import * as FormData  from 'form-data';
 import { Readable } from 'stream';
 import axios from 'axios';
 import path = require('path');
+import { OAuthGuard } from '../common/oauth.guard';
 
 @Controller()
 export class UserController {
@@ -58,6 +59,26 @@ export class UserController {
   loadUser(@Req() req: Request, @User() user: JwtTokenBody): Promise<UserProfile> {
     this.logger.log(`loadUser: Got request to load user with uid ${user.uid}`);
     return this.userService.loadUser(user.uid);
+  }
+
+  @UseInterceptors(LoginInterceptor)
+  @UseGuards(OAuthGuard)
+  @Get('oauth-load')
+  async oauthLoadUser(@Req() req: Request, @User() user: OAuthTokenBody, @Res() res: Response): Promise<Response<UserProfileWithToken>> {
+    this.logger.log(`oauthLoadUser: Got request to load user with uid ${user.uid}`);
+    const data = await this.userService.loadUser(user.uid);
+    const userWithToken = new UserProfileWithToken(data.user, user.accessToken, data.joinedPublicRooms);
+
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true
+    }).cookie('refreshToken', user.refreshToken.token, {
+      maxAge: user.refreshToken.expirySeconds*1000,
+      httpOnly: true,
+      sameSite: true
+    });
+
+    return res.send(userWithToken);
   }
 
   @UseInterceptors(ActivateUserInterceptor)

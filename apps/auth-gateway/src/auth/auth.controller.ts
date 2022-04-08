@@ -1,6 +1,6 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { JwtTokenBody, AuthTokens } from '@pokehub/auth/models';
+import { JwtTokenBody, AuthTokens, OAuthTokenBody } from '@pokehub/auth/models';
 import { AppLogger } from '@pokehub/common/logger';
 import { AuthGatewayTCPEndpoints } from '@pokehub/auth/endpoints';
 import { IJwtAuthService, JWT_AUTH_SERVICE } from '../common/jwt-auth-service.interface';
@@ -21,6 +21,14 @@ export class AuthController {
     async validateEmailConfirmationToken(verificationToken: string): Promise<JwtTokenBody> {
         this.logger.log( 'validateEmailConfirmationToken: Got request to validate provided Email Verification Token' );
         return await this.authService.validateEmailVerificationToken(verificationToken);
+    }
+
+    @MessagePattern( { cmd: AuthGatewayTCPEndpoints.VALIDATE_OAUTH_TOKEN }, Transport.TCP )
+    async validateOAuthToken(oauthToken: string): Promise<OAuthTokenBody> {
+        this.logger.log( 'validateOAuthToken: Got request to validate provided OAuth Token' );
+        const jwtTokenBody = await this.authService.validateOAuthToken(oauthToken);
+        const tokens = await this.authService.generateAccessAndRefreshTokens(jwtTokenBody);
+        return new OAuthTokenBody(jwtTokenBody.username, jwtTokenBody.email, jwtTokenBody.uid, tokens.accessToken, tokens.refreshToken);
     }
 
     @MessagePattern( { cmd: AuthGatewayTCPEndpoints.VALIDATE_PASSWORD_RESET_TOKEN }, Transport.TCP )

@@ -7,7 +7,6 @@ import { FieldValues, UseControllerProps, useForm } from 'react-hook-form';
 import useLoginUser from '../../hooks/auth/useLoginUser';
 import EmailField from '../../components/auth/fields/emailField';
 import PasswordField from '../../components/auth/fields/passwordField';
-import GoogleOAuth from '../../components/auth/oauth/googleOAuth';
 import { getIsAuthenticated, getIsEmailVerified, } from '../../store/selectors/auth';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
@@ -26,7 +25,10 @@ import EmailVerificationNotification from '../../components/auth/notifications/e
 import { QueryClient, useQueryClient } from 'react-query';
 import Copyright from '../../components/common/copyright';
 import withLoadUser from '../../hoc/auth/withLoadUser';
-import { GetServerSideProps } from 'next';
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import withOAuthLoad from '../../hoc/auth/withOAuthLoad';
+import GoogleButton from 'react-google-button';
+import appConfig from '../../config';
 
 const useStyles = makeStyles((theme: Theme) => ({
   paper: {
@@ -48,8 +50,11 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res }) => {
-  await withLoadUser.isAuth({ req, res, store});
+export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res, query }) => {
+  const oauthToken = query.oauth_token ? query.oauth_token as string : null;
+
+  if (oauthToken)
+    await withOAuthLoad.isAuth({ req, res, store, oauthToken });
   return {
     props: {
     }
@@ -135,7 +140,11 @@ const Login = () => {
             >
               Sign In
             </Button>
-            <GoogleOAuth classes={classes} notificationClose={notificationClose} />
+            <a href={`${appConfig.apiGateway}/auth/oauth-google-login`} style={{ textDecoration: 'none' }}>
+              <GoogleButton
+                style={{ borderRadius: '5px', width: '100%' }}
+              />
+            </a>
             <Grid container>
               <Grid item xs>
                 <Link href="/login/password-reset" variant="body2">
@@ -160,4 +169,4 @@ const Login = () => {
   );
 };
 
-export default withLoadUser(Login);
+export default withOAuthLoad(Login);

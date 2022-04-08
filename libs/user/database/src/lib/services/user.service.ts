@@ -11,10 +11,12 @@ import { User } from '../entities/user.entity';
 import { UserStatus } from '../entities/user-status.entity';
 import { TypeAccount } from '@pokehub/user/interfaces';
 import { BucketDetails } from '@pokehub/common/object-store/models';
+import { UsernameGeneratorService } from '../utils/username-gen.service';
+import { uuid } from 'uuidv4';
 
 @Injectable()
 export class UserService implements IUserService {
-  constructor(@InjectRepository(User) private usersRepository: Repository<User>,
+  constructor(@InjectRepository(User) private usersRepository: Repository<User>, private readonly usernameGenService: UsernameGeneratorService,
               @Inject(USER_STATUS_SERVICE) private userStatusService: IUserStatusService, private readonly logger: AppLogger) {
     this.logger.setContext(UserService.name);
   }
@@ -110,21 +112,31 @@ export class UserService implements IUserService {
     // Initialize new User
     const user = this.usersRepository.create();
 
-    // Check if User already exists
     this.logger.log( `createOrFindGoogleOAuthUser: Trying to find user with email ${userReq.email}` );
-    user.username = `user-${user.uid}`;
+    
+    // Randomly generate Username
+    if (userReq.firstName && userReq.lastName)
+      userReq.username = this.usernameGenService.generateWithName(userReq.firstName, userReq.lastName);
+    else
+      userReq.username = this.usernameGenService.generateWithoutName();
+    
+    // Populate Object from Request
     this.populateNewGoogleOAuthUserFromReq(user, userReq);
+
+    // Check if User Already exists
     const userData = await this.findUserByEmail(user.email);
 
     // Return User if Account Type is Google otherwise throw and error
     if (userData && userData.account === TypeAccount.GOOGLE) {
-      await this.userStatusService.upsertLastSeen(userData.uid, new Date());
       return userData;
     } else if (userData && userData.account === TypeAccount.REGULAR)
-      throw new RpcException( 'An account with this already exists. Please login with your account credentials' );
+      throw new RpcException( 'An account with this email already exists. Please login with your account credentials' );
+
+    // Create User Status
+    user.status = await this.createUserStatus();
 
     // Create and Return User if not existing
-    return await this.createUserInternal(user);
+    return await this.tryCreateOAuthUsername(user);
   }
 
   async findUser(uid: string): Promise<UserData | null> {
@@ -183,6 +195,34 @@ export class UserService implements IUserService {
     }
   }
 
+  private async tryCreateOAuthUsername(user: User): Promise<UserData> {
+    this.logger.log(`tryCreateOAuthUsername: Trying to create user with username ${user.username}`);
+    let createdUser: UserData;
+    let attempt = 0;
+
+    while (attempt <= 4 && !createdUser) {
+      try {
+        createdUser = await this.createUserInternal(user);
+      } catch (err) {
+        if (err.message.includes("username already exists")) {
+          this.logger.warn(`tryCreateOAuthUsername: Unable to create username ${user.username}. Going to try again with a different one: ${attempt}`);
+          attempt++;
+          if (user.firstName && user.lastName)
+            user.username = this.usernameGenService.generateWithName(user.firstName, user.lastName);
+          else
+            user.username = this.usernameGenService.generateWithoutName();
+        } else throw err;
+      }
+    }
+
+    if (attempt > 4) {
+      user.username = `user-${uuid()}`;
+      createdUser = await this.createUserInternal(user);
+    }
+
+    return createdUser;
+  }
+
   private async createUserInternal(user: User): Promise<UserData> {
     // Initialize Variables
     let response: UserData;
@@ -228,6 +268,7 @@ export class UserService implements IUserService {
     user.firstName = userReq.firstName || "";
     user.lastName = userReq.lastName || "";
     user.account = TypeAccount.REGULAR;
+    user.emailVerified = userReq.emailVerified;
   }
 
   private populateNewGoogleOAuthUserFromReq( user: User, userReq: CreateUserRequest ): void {

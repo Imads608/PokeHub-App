@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { CommonModule } from '../common/common.module';
 import { GoogleOauthController } from './google-oauth.controller';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [CommonModule, ClientsModule.registerAsync([
@@ -21,5 +22,6 @@ import { GoogleOauthController } from './google-oauth.controller';
     },
   ])],
   controllers: [GoogleOauthController],
+  providers: [GoogleStrategy]
 })
 export class GoogleOauthModule {}

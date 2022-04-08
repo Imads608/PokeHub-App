@@ -10,14 +10,15 @@ import { NextApiRequestCookies } from 'next/dist/server/api-utils';
 interface IsAuthProps {
     req: IncomingMessage & { cookies: NextApiRequestCookies },
     res: ServerResponse,
-    store: RootStore
+    store: RootStore,
+    isOAuthLogin: boolean
 }
 
 const withLoadUser = (WrappedComponent) => (props) => {
     return <WrappedComponent { ...props } />    
 }
 
-withLoadUser.isAuth = async ({ req, res, store } : IsAuthProps) => {
+withLoadUser.isAuth = async ({ req, res, store, isOAuthLogin } : IsAuthProps) => {
     /**
    * If req is present this function is running on the server
    * The server at this point will _always_ be missing the accessToken because it is stored in the clients memory
@@ -45,7 +46,8 @@ withLoadUser.isAuth = async ({ req, res, store } : IsAuthProps) => {
 
         } catch (e) {
             console.error('withLoadUser: Got error:', e);
-            store.dispatch(auth_loaded(false));
+            if (!isOAuthLogin)
+                store.dispatch(auth_loaded(false));
         }
 }
 }

@@ -45,7 +45,7 @@ export const logoutUserProxy = async () => {
 
 export const loadUserProxy = async () => {
   const resp: AxiosResponse<IUserProfileWithToken> = await axios.get( `/api/auth/load-user` );
-  console.log('Loaded User Proxy result:', resp.data.accessToken);
+  console.log('loadUserProxy: Loaded User Proxy result:', resp.data.accessToken);
   http.defaults.headers.Authorization = resp.data.accessToken;
   return resp.data as IUserProfile;
 }
@@ -53,19 +53,6 @@ export const loadUserProxy = async () => {
 export const loadUser = async () => {
   const resp: AxiosResponse<IUserProfile> = await http.get('/users/auth');
   return resp.data;
-};
-
-export const googleOAuthLogin = async (googleTokenId: string) => {
-  console.log('googleOAuthLogin: Logging in Google OAuth User', googleTokenId);
-  const response: AxiosResponse<IUserProfileWithToken> = await axios.post( `/api/auth/oauth-google`, null,
-    {
-      headers: {
-        Authorization: googleTokenId,
-      },
-    }
-  );
-
-  return response.data;
 };
 
 export const activateUser = async (verificationToken: string) => {

@@ -3,7 +3,7 @@ import { IUserProfile, IUserProfileWithToken, IUserStatusData } from '@pokehub/u
 import { PayloadAction } from '@reduxjs/toolkit';
 import { connectWebSocket, disconnectWebSocket } from '../../events/socket';
 import { login_success, logout } from '../actions/common';
-import { status_update } from '../reducers/user';
+import { start_websocket_connection, status_update } from '../reducers/user';
 import { sendUserStatusMessage } from '../../events/user/user-events';
 import { UserSocketEvents } from '@pokehub/event/user';
 import { LoginSuccessAction } from '../../types/auth';
@@ -18,14 +18,14 @@ const registerGlobalEventHandlers = (store) => {
 export const connectWebSocketMiddleware = (store) => (next) => (action) => {
   console.log(`connectWebSocketMiddleware: Starting to check for any middleware to execut for action ${action.type}`);
   switch (action.type) {
-    case login_success.toString():
-      handleLoginSuccess(action, store);
-      break;
     case status_update.toString():
       handleUserStatusUpdate(action as PayloadAction<UserStatusUpdate>, (action as PayloadAction<UserStatusUpdate>).payload.isHardUpdate);
       break;
     case logout.toString():
       handleLogoutSuccess(store);
+      break;
+    case start_websocket_connection.toString():
+      handleInitSocketConnections(store);
       break;
   }
 
@@ -33,9 +33,9 @@ export const connectWebSocketMiddleware = (store) => (next) => (action) => {
   return next(action);
 };
 
-const handleLoginSuccess = (action: PayloadAction<IUserProfileWithToken | IUserProfile>, store: RootStore) => {
-  console.log('Socket Middleware: handleLoginSuccess: Establishing connection with Server');
-  connectWebSocket(action, store);
+const handleInitSocketConnections = (store: RootStore) => {
+  console.log('Socket Middleware: handleInitSocketConnections: Establishing connection with Server');
+  connectWebSocket(store);
 }
 
 const handleUserStatusUpdate = (action: PayloadAction<UserStatusUpdate>, isHardUpdate: boolean) => {

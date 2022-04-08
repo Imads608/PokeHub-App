@@ -65,7 +65,8 @@ export class UserController {
   async googleOAuthLogin(createUser: CreateUserRequest): Promise<UserData> {
     this.logger.log('googleOAuthLogin: Got request to login user with Google');
     const user = await this.userService.createOrFindGoogleOAuthUser(createUser);
-    this.populateAvatarURL(user);
+    if (user.avatar)
+      this.populateAvatarURL(user);
     return user;
   }
 

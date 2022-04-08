@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Logger, Param, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Logger, Param, Redirect, Post, Query, Req, Res, UnauthorizedException, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { AuthService } from '../common/auth.service';
 import { LoginInterceptor } from './login.interceptor';
 import { UsernameLogin, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
@@ -13,11 +13,16 @@ import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interfa
 import { MAIL_SERVICE, IMailService } from '../common/mail-service.interface';
 import { TokenValidatorInterceptor } from './token-validator.interceptor';
 import { Response, Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { AuthGatewayRESTEndpoints } from '@pokehub/auth/endpoints';
 
 @Controller()
 export class AuthController {
+  private authGatewayURL: string;
   constructor(@Inject(AUTH_SERVICE) private readonly authService: IAuthService, @Inject(ROOM_SERVICE) private readonly roomService: IRoomService,
-              @Inject(MAIL_SERVICE) private readonly mailService: IMailService, private readonly logger: AppLogger) {
+              @Inject(MAIL_SERVICE) private readonly mailService: IMailService, private readonly logger: AppLogger,
+              private readonly configService: ConfigService) {
+    this.authGatewayURL = `${configService.get<string>('protocol')}://${configService.get<string>('authGateway.host')}:${configService.get<number>('authGateway.restPort')}`;
     logger.setContext(AuthController.name);
   }
 
@@ -53,27 +58,10 @@ export class AuthController {
   }
 
   @UseInterceptors(OauthInterceptor)
-  @Post('oauth-google')
-  async googleOAuthLogin( @Req() req: Request, @Res() res: Response): Promise<Response<UserProfileWithToken>>  {
-    // Validate OAuth Credentials
-    this.logger.log( `googleOAuthLogin: Got request to login user through Google OAuth` );
-    const userWithToken: UserDataWithToken = await this.authService.googleOAuthLogin(req.headers['authorization']);
-
-    // Retrieve Rooms User has joined
-    this.logger.log( `googleOAuthLogin: Successfully authenticated user. Retrieving Rooms user has joined` );
-    const joinedRooms = await this.roomService.getJoinedPublicRoomsForUser( userWithToken.user.uid );
-
-    // Return User Data
-    res.set({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true
-    }).cookie('refreshToken', userWithToken.refreshToken.token, {
-      maxAge: userWithToken.refreshToken.expirySeconds*1000,
-      httpOnly: true,
-      sameSite: true
-    });
-    
-    return res.send(new UserProfileWithToken(userWithToken.user, userWithToken.accessToken, joinedRooms));
+  @Redirect('http://localhost:3013/google-oauth', 302)
+  @Get('oauth-google-login')
+  async googleOAuthLogin( @Req() req: Request, @Res() res: Response) {
+    return { url: `${this.authGatewayURL}${AuthGatewayRESTEndpoints.GOOGLE_OAUTH_LOGIN}` };
   }
 
   @Post('logout')
