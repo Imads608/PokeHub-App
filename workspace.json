@@ -889,92 +889,92 @@
         }
       }
     },
-    "room-database": {
-      "root": "libs/room/database",
-      "sourceRoot": "libs/room/database/src",
+    "chat-database": {
+      "root": "libs/chat/database",
+      "sourceRoot": "libs/chat/database/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/database/**/*.ts"]
+            "lintFilePatterns": ["libs/chat/database/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room/database"],
+          "outputs": ["coverage/libs/chat/database"],
           "options": {
-            "jestConfig": "libs/room/database/jest.config.js",
+            "jestConfig": "libs/chat/database/jest.config.js",
             "passWithNoTests": true
           }
         }
       },
       "tags": []
     },
-    "room-endpoints": {
-      "root": "libs/room/endpoints",
-      "sourceRoot": "libs/room/endpoints/src",
+    "chat-endpoints": {
+      "root": "libs/chat/endpoints",
+      "sourceRoot": "libs/chat/endpoints/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/endpoints/**/*.ts"]
+            "lintFilePatterns": ["libs/chat/endpoints/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room/endpoints"],
+          "outputs": ["coverage/libs/chat/endpoints"],
           "options": {
-            "jestConfig": "libs/room/endpoints/jest.config.js",
+            "jestConfig": "libs/chat/endpoints/jest.config.js",
             "passWithNoTests": true
           }
         }
       },
       "tags": []
     },
-    "room-interfaces": {
-      "root": "libs/room/interfaces",
-      "sourceRoot": "libs/room/interfaces/src",
+    "chat-interfaces": {
+      "root": "libs/chat/interfaces",
+      "sourceRoot": "libs/chat/interfaces/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/interfaces/**/*.ts"]
+            "lintFilePatterns": ["libs/chat/interfaces/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room/interfaces"],
+          "outputs": ["coverage/libs/chat/interfaces"],
           "options": {
-            "jestConfig": "libs/room/interfaces/jest.config.js",
+            "jestConfig": "libs/chat/interfaces/jest.config.js",
             "passWithNoTests": true
           }
         }
       },
       "tags": []
     },
-    "room-models": {
-      "root": "libs/room/models",
-      "sourceRoot": "libs/room/models/src",
+    "chat-models": {
+      "root": "libs/chat/models",
+      "sourceRoot": "libs/chat/models/src",
       "projectType": "library",
       "targets": {
         "lint": {
           "executor": "@nrwl/linter:eslint",
           "outputs": ["{options.outputFile}"],
           "options": {
-            "lintFilePatterns": ["libs/room/models/**/*.ts"]
+            "lintFilePatterns": ["libs/chat/models/**/*.ts"]
           }
         },
         "test": {
           "executor": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/room/models"],
+          "outputs": ["coverage/libs/chat/models"],
           "options": {
-            "jestConfig": "libs/room/models/jest.config.js",
+            "jestConfig": "libs/chat/models/jest.config.js",
             "passWithNoTests": true
           }
         }

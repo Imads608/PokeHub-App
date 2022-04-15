@@ -3,7 +3,7 @@ import { DefaultEventsMap } from 'socket.io-client/build/typed-events';
 import appConfig from '../../config';
 import http from '../../axios';
 import { UserEventMessage, UserSocketEvents, UserSocket } from '@pokehub/event/user';
-import { IChatRoomData } from '@pokehub/room/interfaces'
+import { IChatRoomData } from '@pokehub/chat/interfaces'
 import { IUserProfileWithToken, IUserProfile, IUserData } from '@pokehub/user/interfaces';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { RootStore } from '../../store/store';

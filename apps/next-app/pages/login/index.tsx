@@ -53,7 +53,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 export const getServerSideProps: GetServerSideProps = wrapper.getServerSideProps((store) => async ({ req, res, query }) => {
   const oauthToken = query.oauth_token ? query.oauth_token as string : null;
 
-  if (oauthToken)
+  if (oauthToken && !store.getState()['auth-state'].isAuthenticated)
     await withOAuthLoad.isAuth({ req, res, store, oauthToken });
   return {
     props: {

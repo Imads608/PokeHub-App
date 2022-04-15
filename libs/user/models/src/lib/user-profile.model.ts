@@ -1,6 +1,6 @@
 import { UserData } from './user-data.model';
-import { ChatRoomData } from '@pokehub/room/models';
-import { ChatRoom } from '@pokehub/room/database';
+import { ChatRoomData } from '@pokehub/chat/models';
+import { ChatRoom } from '@pokehub/chat/database';
 import { IUserProfile } from '@pokehub/user/interfaces';
 
 export class UserProfile implements IUserProfile {

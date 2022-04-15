@@ -1,0 +1,11 @@
+{
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "database": "chat",
+    "schema": "chat-schema",
+    "synchronize": "false",
+    "migrations": ["libs/chat/database/src/lib/migration/*.ts"]
+ }

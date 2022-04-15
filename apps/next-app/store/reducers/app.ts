@@ -52,10 +52,9 @@ const appSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(HYDRATE, (state: AppState, action: any) => {
-        return {
-          ...state,
-          ...action.payload['app-state']
-        }
+        if (!action.payload['auth-state'].isAuthenticated)
+          return { ...state }
+        else return { ...state, ...action.payload['app-state'] }
       })
       .addCase(request_start, (state: AppState) => {
         state.loading = true;

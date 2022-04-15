@@ -10,7 +10,6 @@ import Image from 'next/image';
 const useStyles = makeStyles((theme: CustomTheme) => ({
     root: {
         display: 'flex',
-        fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
         color: theme.palette.primary.main,
         width: '100%',
         flexDirection: 'column',

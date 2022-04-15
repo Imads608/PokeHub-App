@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, OneToMany, } from 'typeorm';
-import { RoomType } from '@pokehub/room/interfaces';
-import { IChatRoom } from '@pokehub/room/interfaces';
+import { RoomType } from '@pokehub/chat/interfaces';
+import { IChatRoom } from '@pokehub/chat/interfaces';
 import { Participant } from './participant.entity';
 
 @Entity('room', { schema: 'chat-schema' })

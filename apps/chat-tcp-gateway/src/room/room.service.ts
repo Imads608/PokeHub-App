@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { AppLogger } from '@pokehub/common/logger';
-import { ChatRoom, Participant } from '@pokehub/room/database';
-import { ChatServiceEndpoints } from '@pokehub/room/endpoints';
+import { ChatRoom, Participant } from '@pokehub/chat/database';
+import { ChatServiceEndpoints } from '@pokehub/chat/endpoints';
 import { UserData } from '@pokehub/user/models';
 import { firstValueFrom } from 'rxjs';
 import { IRoomService } from './room-service.interface';

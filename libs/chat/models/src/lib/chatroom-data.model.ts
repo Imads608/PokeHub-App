@@ -1,4 +1,4 @@
-import { IChatRoomData } from '@pokehub/room/interfaces';
+import { IChatRoomData } from '@pokehub/chat/interfaces';
 
 export class ChatRoomData implements IChatRoomData {
   id: string;

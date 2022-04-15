@@ -26,6 +26,12 @@ export const getRootDesignTokens = (mode: PaletteMode) => ({
           },
         }),
   },
+  typography: {
+    fontFamily: [
+      'Orbitron',
+      'sans-serif'
+    ].join(',')
+  }
 });
 
 export const getMainAppDesignTokens = (mode: PaletteMode) => ({
@@ -87,6 +93,12 @@ export const getMainAppDesignTokens = (mode: PaletteMode) => ({
           }
         }),
   },
+  typography: {
+    fontFamily: [
+      'Orbitron',
+      'sans-serif'
+    ].join(',')
+  }
 });
 
 
@@ -149,4 +161,10 @@ export const getDashboardDesignTokens = (mode: PaletteMode) => ({
           }
         }),
   },
+  typography: {
+    fontFamily: [
+      'Orbitron',
+      'sans-serif'
+    ].join(',')
+  }
 });

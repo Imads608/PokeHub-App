@@ -2,7 +2,7 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { Server, Socket } from 'socket.io';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AppLogger } from '@pokehub/common/logger';
-import { IChatRoomData } from '@pokehub/room/interfaces';
+import { IChatRoomData } from '@pokehub/chat/interfaces';
 import { UserEventMessage, UserNotificationEvent, UserSocketEvents, UserStatusEvent } from '@pokehub/event/user';
 import { Inject } from '@nestjs/common';
 import { AUTH_SERVICE, IAuthService } from '../auth/auth-service.interface';

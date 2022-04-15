@@ -1,4 +1,4 @@
-import { IChatRoomData } from '@pokehub/room/interfaces';
+import { IChatRoomData } from '@pokehub/chat/interfaces';
 import { IUserData } from './user-data.interface';
 
 export interface IUserProfileWithToken {

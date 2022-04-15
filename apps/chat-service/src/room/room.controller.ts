@@ -1,8 +1,8 @@
 import { Controller, Inject } from '@nestjs/common';
 import { MessagePattern, Transport } from '@nestjs/microservices';
-import { ChatRoom, Participant, IRoomService, ROOM_SERVICE } from '@pokehub/room/database';
+import { ChatRoom, Participant, IRoomService, ROOM_SERVICE } from '@pokehub/chat/database';
 import { AppLogger } from '@pokehub/common/logger';
-import { ChatServiceEndpoints } from '@pokehub/room/endpoints';
+import { ChatServiceEndpoints } from '@pokehub/chat/endpoints';
 
 @Controller()
 export class RoomController {

@@ -1,3 +1,4 @@
+import { IChatRoom } from '@pokehub/chat/interfaces';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { HYDRATE } from 'next-redux-wrapper';
 import { ParsedUrlQuery } from 'querystring';
@@ -6,14 +7,12 @@ export interface RoomState {
   publicRooms: PublicRoomData[] | null;
 }
 
-export interface PublicRoomData {
+export interface PublicRoomData extends IChatRoom {
   state: InternalRoomState;
-  id: string;
-  name: string;
 }
 
 export interface InternalRoomState {
-  url: UrlPath | null;
+  currentTab: 'Lobby' | 'Members' | 'Rules';
   isActive: boolean;
   isOpened: boolean;
   messages: any[];
@@ -29,21 +28,17 @@ const roomSlice = createSlice({
   name: 'room-state',
   initialState: { publicRooms: [] } as RoomState,
   reducers: {
-    get_chatrooms_success: (
-      state: RoomState,
-      action: PayloadAction<PublicRoomData[]>
-    ) => {
-      state.publicRooms = action.payload;
+    get_chatrooms_success: ( state: RoomState, action: PayloadAction<IChatRoom[]> ) => {
+      action.payload.forEach(room => state.publicRooms.push({ ...room, state: { currentTab: 'Lobby', isActive: false, isOpened: false, messages: [], isConversationLoaded: false } }));
     },
-    chatroom_opened: (
+    open_chatroom: (
       state: RoomState,
-      action: PayloadAction<{ id: string; url: UrlPath }>
+      action: PayloadAction<{ id: string; }>
     ) => {
       state.publicRooms =
         state.publicRooms &&
         state.publicRooms.map((room) => {
           if (room.id === action.payload.id) {
-            room.state.url = action.payload.url;
             room.state.isActive = true;
             room.state.isOpened = true;
           } else {
@@ -52,13 +47,13 @@ const roomSlice = createSlice({
           return room;
         });
     },
-    chatroom_closed: (state: RoomState, action: PayloadAction<string>) => {
+    close_chatroom: (state: RoomState, action: PayloadAction<string>) => {
       state.publicRooms =
         state.publicRooms &&
         state.publicRooms.map((room) => {
           if (room.id === action.payload) {
             room.state = {
-              url: null,
+              ...room.state,
               isActive: false,
               isOpened: false,
               messages: [],
@@ -136,15 +131,18 @@ const roomSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(HYDRATE, (state: RoomState, action: any) => {
-      return { ...state,  ...action.payload['room-state'] };
+      if (state.publicRooms.length > 0)
+        return { ...state };
+      else
+        return { ...state,  ...action.payload['room-state'] };
     });
   },
 });
 
 export const {
   get_chatrooms_success,
-  chatroom_opened,
-  chatroom_closed,
+  open_chatroom,
+  close_chatroom,
   set_chatroom_state,
   load_chatroom_conversation,
   chatroom_mesage_received,

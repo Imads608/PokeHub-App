@@ -5,8 +5,8 @@ https://docs.nestjs.com/providers#services
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { AppLogger } from '@pokehub/common/logger';
-import { ChatRoom } from '@pokehub/room/database';
-import { ChatTCPGatewayEndpoints } from '@pokehub/room/endpoints';
+import { ChatRoom } from '@pokehub/chat/database';
+import { ChatTCPGatewayEndpoints } from '@pokehub/chat/endpoints';
 import { UserData } from '@pokehub/user/models';
 import { firstValueFrom } from 'rxjs';
 import { IRoomService } from './room-service.interface';

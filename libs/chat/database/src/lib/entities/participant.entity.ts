@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, ManyToOne, } from 'typeorm';
 import { ChatRoom } from './chat-room.entity';
-import { IParticipant } from '@pokehub/room/interfaces';
-import { RoomType } from '@pokehub/room/interfaces';
+import { IParticipant } from '@pokehub/chat/interfaces';
+import { RoomType } from '@pokehub/chat/interfaces';
 
 @Entity('participant', { schema: 'chat-schema' })
 export class Participant implements IParticipant {

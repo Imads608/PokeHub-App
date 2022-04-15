@@ -1,5 +1,5 @@
 import { Controller, Get, Logger } from '@nestjs/common';
-import { ChatRoom } from '@pokehub/room/database';
+import { ChatRoom } from '@pokehub/chat/database';
 
 @Controller()
 export class ChatController {

@@ -1,6 +1,6 @@
-import { ChatRoom } from '@pokehub/room/database';
+import { ChatRoom } from '@pokehub/chat/database';
 import { IUserPublicProfile } from '@pokehub/user/interfaces';
-import { ChatRoomData } from '@pokehub/room/models';
+import { ChatRoomData } from '@pokehub/chat/models';
 import { UserPublicData } from './user-public-data.model';
 
 export class UserPublicProfile implements IUserPublicProfile {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
-import { chatroom_opened, chatroom_closed, PublicRoomData, } from '../../../../store/reducers/room';
+import { open_chatroom, close_chatroom, PublicRoomData, } from '../../../../store/reducers/room';
 import ChatIcon from '@mui/icons-material/Chat';
 import { List, ListItemText, ListItem, MenuItem, Menu, ListItemButton, } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -13,13 +13,14 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import Link from 'next/link';
 import AddIcon from '@mui/icons-material/Add';
 import { getCurrentOpenedWindow } from '../../../../store/selectors/app';
-import { getAllChatRooms, getActiveChatRooms, } from '../../../../store/selectors/room'; 
+import { getAllChatRooms, getActiveChatRooms, getCurrentChatRoom, } from '../../../../store/selectors/room'; 
 import { chatrooms_closed, chatrooms_opened, } from '../../../../store/reducers/drawer';
 import { getChatRoomsToggle } from '../../../../store/selectors/drawer';
 import { OpenedWindow, WindowTypes } from '../../../../store/reducers/app';
 import { RootState } from '../../../../store/store';
 import styles from '../../drawer.module.scss';
 import { Dispatch } from '@reduxjs/toolkit';
+import { useRouter } from 'next/router';
 
 const useStyles = makeStyles({
   headerBlock: {
@@ -43,9 +44,9 @@ const ChatRooms = () => {
   const classes = useStyles();
   const theme = useTheme();
 
+  const router = useRouter();
   const chatrooms: PublicRoomData[] = useSelector<RootState, PublicRoomData[]>( getAllChatRooms );
   const activeRooms: PublicRoomData[] = useSelector< RootState, PublicRoomData[] >(getActiveChatRooms);
-  const currentWindow: OpenedWindow = useSelector<RootState, OpenedWindow>( getCurrentOpenedWindow );
   const chatroomsMenuToggle: boolean = useSelector<RootState, boolean>( getChatRoomsToggle );
   const dispatch: Dispatch = useDispatch();
 
@@ -74,7 +75,7 @@ const ChatRooms = () => {
   };
 
   const closeChat = (opened: string) => {
-    dispatch(chatroom_closed(opened));
+    dispatch(close_chatroom(opened));
   };
 
   return (
@@ -96,26 +97,25 @@ const ChatRooms = () => {
         </AccordionSummary>
         <AccordionDetails className={`${styles['drawer-accordion-details']}`}>
           <List className={styles['drawer-expanded-list']}>
-            {activeRooms && activeRooms.map((opened: PublicRoomData) => (
-                <Link key={opened.id} href={{ pathname: opened.state.url.pathname, query: opened.state.url.query, }} passHref>
+            {activeRooms && activeRooms.map((activeRoom: PublicRoomData) => (
+                <Link key={activeRoom.id} href={{ pathname: `/chatrooms/${activeRoom.id}`, query: { view: activeRoom.state.currentTab }, }} passHref>
                   <ListItemButton
-                    selected={ currentWindow.type === WindowTypes.CHAT_ROOM && currentWindow.payload && currentWindow.payload.id === opened.id }
+                    selected={ router.pathname.includes('/[...chatrooms]') && activeRoom.state.isOpened === true }
                     className={styles['drawer-expanded-list-item']}
                   >
-                    {currentWindow.type === WindowTypes.CHAT_ROOM && currentWindow.payload && currentWindow.payload.id === opened.id && (
+                    {router.pathname.includes('/[...chatrooms]') && activeRoom.state.isOpened === true && (
                         <CancelIcon
                           fontSize="small"
                           className={classes.closeIcon}
-                          onClick={() => closeChat(opened.id)}
+                          onClick={() => closeChat(activeRoom.id)}
                         />
                       )}
                     <ListItemText
                       primary={
                         <h5 className={`${styles['drawer-header-text']} ${ styles['drawer-expanded-list-item-text'] } 
-                                       ${ currentWindow.type === WindowTypes.CHAT_ROOM && currentWindow.payload && 
-                                          currentWindow.payload.id === opened.id ? styles[ 'drawer-header-expanded' ] : 
+                                       ${ router.pathname.includes('/[...chatrooms]') && activeRoom.state.isOpened === true  ? styles[ 'drawer-header-expanded' ] : 
                                           styles['drawer-header'] }`} >
-                          # {opened.name}
+                          # {activeRoom.name}
                         </h5>
                       }
                     />
@@ -141,7 +141,7 @@ const ChatRooms = () => {
               <Menu id="simple-menu" anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu} >
                 {chatrooms && chatrooms.map( (room, id) =>
                       !activeRooms.find((opened) => opened.id === room.id) && (
-                        <Link href={`/chatrooms/${room.id}`} passHref>
+                        <Link key={id} href={`/chatrooms/${room.id}`} passHref>
                           <MenuItem className="drawer-header" key={id} onClick={closeMenu} >
                             #{room.name}
                           </MenuItem>

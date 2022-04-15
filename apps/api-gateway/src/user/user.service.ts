@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, UserProfile, UserPublicData } from '@pokehub/user/models';
 import { AuthTokens, EmailLogin, JwtTokenBody } from '@pokehub/auth/models';
-import { ChatRoom } from '@pokehub/room/database';
+import { ChatRoom } from '@pokehub/chat/database';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
 import { IRoomService, ROOM_SERVICE, } from '../chat/common/room-service.interface';
 import { AppLogger } from '@pokehub/common/logger';

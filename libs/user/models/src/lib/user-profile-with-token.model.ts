@@ -1,5 +1,5 @@
-import { ChatRoom } from '@pokehub/room/database';
-import { ChatRoomData } from '@pokehub/room/models';
+import { ChatRoom } from '@pokehub/chat/database';
+import { ChatRoomData } from '@pokehub/chat/models';
 import { IUserProfileWithToken } from '@pokehub/user/interfaces';
 import { UserDataWithToken } from './user-data-token.model';
 import { UserData } from './user-data.model';

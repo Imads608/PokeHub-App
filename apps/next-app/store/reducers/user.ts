@@ -6,7 +6,7 @@ import {
 } from '../actions/common';
 import { IUserData, IUserProfile, IUserProfileWithToken, Status, TypeAccount } from '@pokehub/user/interfaces';
 import { HYDRATE } from 'next-redux-wrapper';
-import { IChatRoomData } from '@pokehub/room/interfaces';
+import { IChatRoomData } from '@pokehub/chat/interfaces';
 import { UserStatusUpdate } from '../../types/user';
 
 export interface NamespaceClientIds {
@@ -86,10 +86,9 @@ const userSlice = createSlice({
         //state.status = null;
       })
       .addCase(HYDRATE, (state: UserState, action: any) => {
-        return {
-          ...state,
-          ...action.payload['user-state'],
-        }
+        if (state.userDetails && !action.payload['auth-state'].isAuthenticated)
+          return { ...state }
+        else return { ...state, ...action.payload['user-state'] }
       });
   },
 });
