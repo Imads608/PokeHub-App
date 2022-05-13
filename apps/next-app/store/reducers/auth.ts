@@ -52,13 +52,16 @@ const authSlice = createSlice({
           ...state,
           ...action.payload['auth-state']
         }
+        /*console.log('In Hydrate, state: ', state.isAuthenticated, state, action);
+        if (state.isAuthenticated) return { ...state }
+        else return { ...state, ...action.payload['auth-state'] }*/
       })
       .addCase( login_success, ( state: AuthState, action: PayloadAction<IUserProfileWithToken | IUserProfile> ) => {
           console.log('In Login Success')
           state.loading = false;
           state.isAuthenticated = true;
           state.isEmailVerified = false;
-          state.accessTokenOnLogin = (action.payload as IUserProfileWithToken)?.accessToken;
+          state.accessTokenOnLogin = (action.payload as IUserProfileWithToken).accessToken ? (action.payload as IUserProfileWithToken).accessToken : null;
           //state.accessToken = action.payload.accessToken;
           //state.refreshToken = action.payload.refreshToken;
         }

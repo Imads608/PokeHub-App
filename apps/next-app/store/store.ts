@@ -17,7 +17,7 @@ const makeStore = () =>
       [userSlice.name]: userSlice.reducer,
       [drawerSlice.name]: drawerSlice.reducer,
     },
-    devTools: true,
+    devTools: { trace: true, traceLimit: 25, name: 'PokeHub' },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ serializableCheck: false }).concat(/*authMiddleware, */connectWebSocketMiddleware),
   });

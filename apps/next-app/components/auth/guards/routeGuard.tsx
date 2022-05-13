@@ -35,7 +35,7 @@ const RouteGuard = ({ children }: { children: JSX.Element }) => {
     }, [isAuthenticated, authLoading]);
 
     const redirectToPrivatePage = () => {
-        if (router.query && router.query.from) {
+        if (router.query && router.query.from && !router.query.from.includes('login')) {
         router.push(router.query.from as string);
         } else {
         router.push('/dashboard');
