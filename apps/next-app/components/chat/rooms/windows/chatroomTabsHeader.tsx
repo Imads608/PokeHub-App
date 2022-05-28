@@ -1,21 +1,23 @@
-import { CustomTheme } from "@mui/material";
+import { CustomTheme, List, ListItem, ListItemButton, ListItemText, ListSubheader, Menu } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import { ChatRoomTabs } from "../../../../types/chatroom";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useDispatch } from 'react-redux';
+import { change_chatroom_tab } from '../../../../store/reducers/room';
 
 const useStyles = makeStyles((theme: CustomTheme) => ({
     root: {
         display: 'flex',
+        paddingTop: 0
     },
     tab: { 
-        border: '1px solid grey',
-        width: '40%',
-        textAlign: 'center',
         borderRadius: '2px',
-        textDecoration: 'none',
         color: theme.palette.secondary.main,
-        '&:hover': {
-            backgroundColor: theme.palette.primary.light
-        }
+    },
+    text: {
+        textAlign: 'center',
+        width: '100%'
     },
     selected: {
         backgroundColor: theme.palette.primary.light,
@@ -25,24 +27,47 @@ const useStyles = makeStyles((theme: CustomTheme) => ({
 
 interface ChatRoomTabsHeaderProps {
     chatroomId: string,
-    selectedTab?: 'Lobby' | 'Rules' | 'Members'
+    selectedTab?: ChatRoomTabs
 };
 
 const ChatRoomTabsHeader = ({ chatroomId, selectedTab }: ChatRoomTabsHeaderProps) => {
     const classes = useStyles();
 
+    const router = useRouter();
+    const dispatch = useDispatch();
+
+    const openRoomTab = (tabId: ChatRoomTabs) => {
+        dispatch(change_chatroom_tab({ tab: tabId, id: chatroomId }));
+        router.push({ pathname: `/chatrooms/${chatroomId}`, query: { view: `${tabId.toLowerCase()}` } }, undefined, { shallow: true });
+    }
+
+    console.log('ChatRoomTabsHeader: ', chatroomId, selectedTab);
+
     return (
-        <div className={classes.root}>
-            <Link href={`/chatrooms/${chatroomId}?view=lobby`}>
-                <a className={selectedTab && selectedTab === 'Lobby' ? `${classes.tab} ${classes.selected}` : `${classes.tab}`}>Lobby</a>
-            </Link>
-            <Link href={`/chatrooms/${chatroomId}?view=members`}>
-                <a className={selectedTab && selectedTab === 'Members' ? `${classes.tab} ${classes.selected}` : `${classes.tab}`}>Members</a>
-            </Link>
-            <Link href={`/chatrooms/${chatroomId}?view=rules`}>
-                <a className={selectedTab && selectedTab === 'Rules' ? `${classes.tab} ${classes.selected}` : `${classes.tab}`}>Rules</a>
-            </Link>
-        </div>
+        <List component='nav' className={classes.root}>
+            <ListItemButton 
+                selected={selectedTab == 'Lobby'}
+                className={classes.tab}
+                onClick={() => openRoomTab('Lobby')}
+            >
+                <span className={classes.text}>Lobby</span>
+            </ListItemButton>
+            <ListItemButton
+                selected={selectedTab === 'Rules'}
+                className={classes.tab}
+                onClick={() => openRoomTab('Rules')}
+            >
+                <span className={classes.text}>Rules</span>
+            </ListItemButton>
+            <ListItemButton
+                selected={selectedTab === 'Members'}
+                className={classes.tab}
+                onClick={() => openRoomTab('Members')}
+            >
+                <span className={classes.text}>Members</span>
+            </ListItemButton>
+            
+        </List>
     )
 }
 

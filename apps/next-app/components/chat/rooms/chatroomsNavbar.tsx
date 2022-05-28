@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { open_chatroom, PublicRoomData } from '../../../store/reducers/room';
 import { RootState } from '../../../store/store';
-import { getCurrentChatRoom } from '../../../store/selectors/room';
+import { getCurrentChatRoom, getAllChatRooms } from '../../../store/selectors/room';
 
 const useStyles = makeStyles((theme: CustomTheme) => ({
     root: {
@@ -31,6 +31,7 @@ const ChatRoomsNavbar = ({ chatrooms }: ChatRoomsNavbarProps) => {
     const router = useRouter();
     const roomIdSelected = router.query.chatrooms && router.query.chatrooms.length > 1 ? router.query.chatrooms[1] : null;
     const openedRoom = useSelector<RootState, PublicRoomData>(getCurrentChatRoom);
+    const chatroomsWithState = useSelector<RootState, PublicRoomData[]>(getAllChatRooms);
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -43,8 +44,9 @@ const ChatRoomsNavbar = ({ chatrooms }: ChatRoomsNavbarProps) => {
     console.log('ChatRooms Navbar: Room Id Selected: ', roomIdSelected, router.query.chatrooms);
 
     const openChatRoom = (chatroom: IChatRoom) => {
+        const roomToOpen = chatroomsWithState.find((room) => room.id === chatroom.id);
         dispatch(open_chatroom({ id: chatroom.id }));
-        router.push(`/chatrooms/${chatroom.id}`, undefined, { shallow: true });
+        router.push(`/chatrooms/${chatroom.id}?view=${roomToOpen.state.currentTab}`, undefined, { shallow: true });
     }
 
     return (

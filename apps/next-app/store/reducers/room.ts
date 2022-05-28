@@ -2,6 +2,7 @@ import { IChatRoom } from '@pokehub/chat/interfaces';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { HYDRATE } from 'next-redux-wrapper';
 import { ParsedUrlQuery } from 'querystring';
+import { ChatRoomTabs } from '../../types/chatroom';
 
 export interface RoomState {
   publicRooms: PublicRoomData[] | null;
@@ -12,7 +13,7 @@ export interface PublicRoomData extends IChatRoom {
 }
 
 export interface InternalRoomState {
-  currentTab: 'Lobby' | 'Members' | 'Rules';
+  currentTab: ChatRoomTabs
   isActive: boolean;
   isOpened: boolean;
   messages: any[];
@@ -33,7 +34,7 @@ const roomSlice = createSlice({
     },
     open_chatroom: (
       state: RoomState,
-      action: PayloadAction<{ id: string; }>
+      action: PayloadAction<{ id: string; tab?: ChatRoomTabs }>
     ) => {
       state.publicRooms =
         state.publicRooms &&
@@ -41,6 +42,7 @@ const roomSlice = createSlice({
           if (room.id === action.payload.id) {
             room.state.isActive = true;
             room.state.isOpened = true;
+            room.state.currentTab = action.payload.tab ? action.payload.tab : room.state.currentTab;
           } else {
             room.state.isOpened = false;
           }
@@ -58,6 +60,19 @@ const roomSlice = createSlice({
               isOpened: false,
               messages: [],
               isConversationLoaded: false,
+            };
+          }
+          return room;
+        });
+    },
+    change_chatroom_tab: (state: RoomState, action: PayloadAction<{ id: string; tab: ChatRoomTabs}>) => {
+      state.publicRooms =
+        state.publicRooms &&
+        state.publicRooms.map((room) => {
+          if (room.id === action.payload.id) {
+            room.state = {
+              ...room.state,
+              currentTab: action.payload.tab
             };
           }
           return room;
@@ -143,6 +158,7 @@ export const {
   get_chatrooms_success,
   open_chatroom,
   close_chatroom,
+  change_chatroom_tab,
   set_chatroom_state,
   load_chatroom_conversation,
   chatroom_mesage_received,
