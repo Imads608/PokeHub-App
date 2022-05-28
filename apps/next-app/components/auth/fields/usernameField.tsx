@@ -1,37 +1,14 @@
 import { TextField, CustomTheme } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Control, FieldValues, useController } from 'react-hook-form';
+import { useController } from 'react-hook-form';
 import { UsernameFieldProps } from './props/userFieldProps';
 import { makeStyles } from '@mui/styles';
 import CircularProgress from '@mui/material/CircularProgress';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
-
-const useStyles = makeStyles((theme: CustomTheme) => ({
-  root: {
-    display: 'flex', 
-    alignContent: 'center',
-    width: '100vh'
-  },
-  field: {
-    width: '41.5%'
-  },
-  messageSuccess: {
-    marginLeft: '5px',
-    color: theme.palette.success.main,
-    display: 'flex',
-    alignSelf: 'center',
-  },
-  messageError: {
-      marginLeft: '5px',
-      color: theme.palette.error.main,
-      display: 'flex',
-      alignSelf: 'center',
-  }
-}));
+import { useFieldStyles } from './styles/useFieldStyles';
 
 const UsernameField = ({ control, controllerProps, availabilityResults }: UsernameFieldProps) => {
-  const classes = useStyles();
+  const classes = useFieldStyles();
 
   const defaultControllerProps = {
     name: 'username',
@@ -71,19 +48,22 @@ const UsernameField = ({ control, controllerProps, availabilityResults }: Userna
         helperText={error && error.message}
       />
       { availabilityResults ? (
-        availabilityResults.isLoading ? <CircularProgress style={{ marginLeft: '10px' }} color='secondary' /> :
+        availabilityResults.isLoading ? 
+        <div className={`${classes.message}`}>
+          <CircularProgress color='secondary' />
+        </div>  :
         usernameAvailable && !error && value.length > 0 ? (
-          <div className={classes.messageSuccess}>
+          <div className={`${classes.message} ${classes.messageSuccess}`}>
               <DoneIcon />
               <div style={{ marginLeft: '5px' }}>Looks good</div>
           </div>
         ) : availabilityResults.isError && !error ? (
-          <div className={classes.messageError}>
+          <div className={`${classes.message} ${classes.messageError}`}>
               <CloseIcon />
               <span style={{ marginLeft: '5px' }}>Uh Oh. Looks like an error occurred on the server. Please try again later.</span>
           </div>
         ) : !usernameAvailable ? (
-          <div className={classes.messageError}>
+          <div className={`${classes.message} ${classes.messageError}`}>
               <CloseIcon />
               <span style={{ marginLeft: '5px' }}>That username is taken</span>
           </div>
