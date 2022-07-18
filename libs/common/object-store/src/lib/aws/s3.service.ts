@@ -31,13 +31,14 @@ export class S3Service implements IS3Service {
 
     getUrlForImageObject(request: ObjectImageUrlRequest): string {
         try {
+            this.logger.log(`getUrlForImageObject: Generating URL for Image with Key: ${request.fileName}, Bucket: ${request.bucketInfo.bucketName}/${request.bucketInfo.objectPath}`);
             return this.s3.getSignedUrl('getObject', {
                 Key: request.fileName,
                 Bucket: `${request.bucketInfo.bucketName}/${request.bucketInfo.objectPath}`,
                 Expires: request.urlExpiryTime
             });
         } catch (err) {
-            this.logger.error(`Got error while trying to retrieve signed URL for request ${JSON.stringify(request)}: ${JSON.stringify(err)}`);
+            this.logger.error(`Got error while trying to retrieve signed URL for request ${JSON.stringify(request)}: ${(<Error>err).message}`, (<Error>err).stack);
             throw err;
         }
     }

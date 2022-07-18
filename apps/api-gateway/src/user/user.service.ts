@@ -1,4 +1,4 @@
-import { Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUserRequest, UserDataWithToken, UserData, UserPublicProfile, UserProfile, UserPublicData } from '@pokehub/user/models';
@@ -10,10 +10,18 @@ import { AppLogger } from '@pokehub/common/logger';
 import { IUserService } from './user-service.interface';
 import { UserIdTypes } from '@pokehub/user/interfaces';
 import { UserTCPGatewayEndpoints } from '@pokehub/user/endpoints';
+import { HttpService } from '@nestjs/axios';
+import * as FormData  from 'form-data';
+import { ConfigService } from '@nestjs/config';
+import { createReadStream } from 'fs';
+import { Readable } from 'stream';
+
 
 @Injectable()
 export class UserService implements IUserService {
-  constructor(@Inject('UserGateway') private readonly clientProxy: ClientProxy,
+  constructor(private readonly httpService: HttpService,
+              private readonly configService: ConfigService,
+              @Inject('UserGateway') private readonly clientProxy: ClientProxy,
               @Inject(AUTH_SERVICE) private readonly authService: IAuthService,
               @Inject(ROOM_SERVICE) private readonly roomService: IRoomService, private readonly logger: AppLogger) {
     logger.setContext(UserService.name);
@@ -24,7 +32,7 @@ export class UserService implements IUserService {
       this.logger.log(`getUserPublicProfile: Retrieving Public User Details with ${uid}`);
     
       // Get User Details
-      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.GET_PUBLIC_USER }, uid) );
+      const userData = await firstValueFrom( this.clientProxy.send<UserData>({ cmd: UserTCPGatewayEndpoints.GET_PUBLIC_USER }, uid));
       if (!userData) throw new InternalServerErrorException();
 
       // Get Joined Public Rooms
@@ -33,7 +41,7 @@ export class UserService implements IUserService {
       // Get DMs
       return new UserPublicProfile(userData, rooms);
     } catch (err) {
-      this.logger.error(`getUserPublicProfile: Got error while trying to retrieve Public User Data with uid ${uid}: ${err}`);
+      this.logger.error(`getUserPublicProfile: Got error while trying to retrieve Public User Data with uid ${uid}: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -48,7 +56,7 @@ export class UserService implements IUserService {
 
       return userData;
     } catch (err) {
-      this.logger.error(`getUserPublicData: Got error while trying to retrieve Public User Data with uid ${uid}: ${err}`);
+      this.logger.error(`getUserPublicData: Got error while trying to retrieve Public User Data with uid ${uid}: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -58,7 +66,7 @@ export class UserService implements IUserService {
       this.logger.log(`loadUser: Loading User with uid ${uid}`);
       return await this.getUserProfile(uid);
     } catch (err) {
-      this.logger.error( `loadUser: Got error while trying to load User with uid ${uid}: ${err}` ); 
+      this.logger.error( `loadUser: Got error while trying to load User with uid ${uid}: ${err.message}`, err.stack); 
       throw err;
     }
   }
@@ -70,10 +78,56 @@ export class UserService implements IUserService {
       this.logger.log(`updateUserData: Successfully got updated data for uid ${userData.uid} from the User Microservice`);
       return updatedData;
     } catch (err) {
-      this.logger.error(`updateUserData: Got error while trying to load User with uid ${userData.uid}: ${err}`)
+      this.logger.error(`updateUserData: Got error while trying to load User with uid ${userData.uid}: ${err.message}`, err.stack);
       throw err;
     }
+  }
 
+  async updateUserProfile(userId: string, updates: { user: UserData; avatar?: Express.Multer.File[] }): Promise<UserData> {
+    try {
+      this.logger.log(`updateUserProfile: Going to update user data with uid ${userId}`);
+
+      // Create and Forward Form Data containing profile updates
+      const fwdFormData = new FormData();
+
+      fwdFormData.append('user', JSON.stringify(updates.user));
+      if (updates.avatar && updates.avatar.length > 0) {
+        const avatarStream = Readable.from(updates.avatar[0].buffer) || updates.avatar[0].stream;
+        this.logger.log(`updateUserProfile: Updates contain new avatar. Adding image to form data: ${avatarStream}`);
+        fwdFormData.append('avatar', avatarStream, { filename: updates.avatar?.[0].originalname || updates.avatar?.[0].filename || "avatar" });
+      }
+
+      // Send Data
+      this.logger.log(`updateUserProfile: Sending updates to User REST Gateway for uid ${userId}`);
+      const updatesRes = await firstValueFrom(this.httpService.put<UserData>(`${this.configService.get<string>('protocol')}://${this.configService.get<string>('userGateways.restGateway.host')}:${this.configService.get<string>('userGateways.restGateway.port')}/${userId}/profile`,
+                              fwdFormData, { headers: { ...fwdFormData.getHeaders(), 'Content-Type': 'multipart/form-data' }}));
+      
+      this.logger.log(`updateUserProfile: Successfully updated User Profile for uid: ${userId}`);
+      return updatesRes.data;
+      } catch (err) {
+        this.logger.error(`updateUserProfile: Got error while trying to update User Profile: ${(<Error>err).message}`, (<Error>err).stack);
+        throw err;
+      }
+  }
+
+  async updateUserAvatar(userId: string, avatar: Express.Multer.File): Promise<UserData> {
+      try {
+        this.logger.log(`updateUserAvatar: Updating Avatar of User ${userId}`);
+        
+        // Creating Payload
+        const formData = new FormData();
+        formData.append('avatar', createReadStream(avatar.path), { filename: avatar.filename });
+
+        // Send Data
+        const res = await firstValueFrom(this.httpService.post<UserData>(`${this.configService.get<string>('protocol')}://${this.configService.get<string>('userGateways.restGateway.host')}:${this.configService.get<string>('userGateways.restGateway.port')}/${userId}/avatar`,
+                                formData, { headers: { ...formData.getHeaders() }}));
+    
+        this.logger.log(`Successfully uploaded new avatar for user ${userId}`);
+        return res.data
+      } catch (err) {
+        this.logger.error(`updateUserAvatar: Got error while trying to update User Avatar: ${err.message}`, err.stack);
+        throw err;
+      }
   }
 
   async doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> {
@@ -83,7 +137,7 @@ export class UserService implements IUserService {
       this.logger.log(`doesUserExist: Got response from User Microservice if User with Id ${id} exists: ${exists}`);
       return exists;
     } catch (err) {
-      this.logger.error(`doesUserExist: Got error while trying to check if User with id ${id} exists: ${JSON.stringify(err)}`);
+      this.logger.error(`doesUserExist: Got error while trying to check if User with id ${id} exists: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -95,7 +149,7 @@ export class UserService implements IUserService {
           this.logger.log(`doesUserExist: Got response from User Microservice if Email ${email} exists: ${exists}`);
           return exists;
       } catch (err) {
-          this.logger.error(`doesUserExist: Got error while trying to check if User with ${email} exists: ${JSON.stringify(err)}`);
+          this.logger.error(`doesUserExist: Got error while trying to check if User with ${email} exists: ${err.message}`, err.stack);
           throw err;
       }
   }
@@ -119,7 +173,7 @@ export class UserService implements IUserService {
       const response = new UserDataWithToken( user, tokens.accessToken, tokens.refreshToken );
       return response;
     } catch (err) {
-      this.logger.error( `createUser: Got error while trying to create user with email ${data.email}: ${err}` );
+      this.logger.error( `createUser: Got error while trying to create user with email ${data.email}: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -140,7 +194,7 @@ export class UserService implements IUserService {
       this.logger.log(`activateUser: Successfully updaed Email Verification Status of User ${userData.uid}`);
       return userData;
     } catch (err) {
-      this.logger.error(`activateUser: Got error while trying to activate user: ${JSON.stringify(err)}`);
+      this.logger.error(`activateUser: Got error while trying to activate user: ${err.mesasge}`, err.stack);
       throw err;
     }
   }
@@ -162,7 +216,7 @@ export class UserService implements IUserService {
       this.logger.log(`resetPassword: Successfully changed Password of User ${userData.uid}`);
       return userData;
     } catch (err) {
-      this.logger.error(`resetPassword: Got error while trying to reset password of user: ${JSON.stringify(err)}`);
+      this.logger.error(`resetPassword: Got error while trying to reset password of user: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -180,4 +234,13 @@ export class UserService implements IUserService {
     // Get DMs
     return new UserProfile(userData, rooms);
   }
+
+  private streamToString(stream): Promise<string> {
+    const chunks = [];
+    return new Promise((resolve, reject) => {
+      stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      stream.on("error", (err) => reject(err));
+      stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    });
+  };
 }

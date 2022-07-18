@@ -1,4 +1,3 @@
-import { EmailLogin } from '@pokehub/auth/models';
 import { UserIdTypes } from '@pokehub/user/interfaces';
 import { CreateUserRequest, UserData, UserDataWithToken, UserProfile, UserPublicData, UserPublicProfile } from '@pokehub/user/models';
 
@@ -31,7 +30,23 @@ export interface IUserService {
    * @param userData The Object containing the Updated User Data to save
    * @returns The User Data Object after saving to the database
    */
-  updateUserData(userData: UserData): Promise<UserData>
+  updateUserData(userData: UserData): Promise<UserData>;
+
+  /**
+   * Updates the Database with the User Data and optionally the avatar as well
+   * @param userId The Id of the User
+   * @param updates Data containing the updates to the User Data and optionally a new avatar for the user
+   * @returns The Updated User Data Object after saving to the database
+   */
+  updateUserProfile(userId: string, updates: { user: UserData, avatar?: Express.Multer.File[] }): Promise<UserData>;
+
+  /**
+   * Updates the Avatar Image of the User
+   * @param userId The Id of the User
+   * @param avatar The Data containing the Avatar to use for the User
+   * @returns The Updated User Data Object containing the Avatar Path after saving to the database
+   */
+  updateUserAvatar(userId: string, avatar: Express.Multer.File): Promise<UserData>;
 
   /**
    * Checks if a User exists through either UID, Username or Email Address
@@ -39,14 +54,14 @@ export interface IUserService {
    * @param idType The Type of Id to which id value is associated with
    * @returns A Boolean signifying if a User Exists
    */
-  doesUserExist(id: string, idType: UserIdTypes): Promise<boolean> 
+  doesUserExist(id: string, idType: UserIdTypes): Promise<boolean>;
 
   /**
    * Checks if a User Exists through their Email Address
    * @param email The User's Email Address to check if they exist
    * @returns A Boolean indicating if the User exists
    */
-  doesUserEmailExist(email: string): Promise<boolean>
+  doesUserEmailExist(email: string): Promise<boolean>;
 
   /**
    * Creates a new User in the Database by calling the User Microservice
@@ -68,5 +83,5 @@ export interface IUserService {
    * @param newPassword The New Password the User wants to use
    * @returns The User Data from the database with the password updated.
    */
-  resetPassword(reset_token: string, newPassword: string): Promise<UserData>
+  resetPassword(reset_token: string, newPassword: string): Promise<UserData>;
 }

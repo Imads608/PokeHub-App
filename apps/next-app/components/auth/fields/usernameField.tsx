@@ -6,8 +6,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
 import { useFieldStyles } from './styles/useFieldStyles';
+import { useEffect } from 'react';
 
-const UsernameField = ({ control, controllerProps, availabilityResults }: UsernameFieldProps) => {
+const UsernameField = ({ control, controllerProps, availabilityResults, currentValListener }: UsernameFieldProps) => {
   const classes = useFieldStyles();
 
   const defaultControllerProps = {
@@ -31,6 +32,10 @@ const UsernameField = ({ control, controllerProps, availabilityResults }: Userna
   } = useController(controllerProps ? controllerProps : defaultControllerProps);
 
   const usernameAvailable = !availabilityResults ? true : availabilityResults.isLoading || !availabilityResults.isFetched ? true : availabilityResults.data
+
+  useEffect(() => {
+    currentValListener && currentValListener(usernameAvailable && !error && !availabilityResults.error ? value : null);
+  }, [usernameAvailable, currentValListener, availabilityResults.error, value, error]);
 
   return (
     <div className={classes.root}>

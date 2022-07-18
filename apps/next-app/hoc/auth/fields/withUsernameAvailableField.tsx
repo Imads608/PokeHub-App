@@ -10,15 +10,11 @@ export function withUsernameAvailableField(WrappedComponent: ComponentType<Usern
         const [ usernameText, setUsernameText ] = useState<string>('');
         const result = useUsernameAvailability(usernameText, enableUsernameCheck);
 
-        useEffect(() => {
-            result.isLoading && setEnableUsernameCheck(false);
-        }, [result.isLoading])
-
         const usernameFieldControllerProps: UseControllerProps<FieldValues, string> = {
             name: 'username',
             control: props.control,
             rules: {
-                required: { value: true, message: 'This field is required' },
+                required: { value: props.required || props.required === undefined, message: 'This field is required' },
                 minLength: {
                   value: 5,
                   message: 'Username should be at least 5 characters',
@@ -38,6 +34,10 @@ export function withUsernameAvailableField(WrappedComponent: ComponentType<Usern
                 }
             }, defaultValue: ''
           }
+
+          useEffect(() => {
+            result.isLoading && setEnableUsernameCheck(false);
+        }, [result.isLoading])
 
           console.log('withUsernameAvailableField Vars:', usernameText, enableUsernameCheck);
 

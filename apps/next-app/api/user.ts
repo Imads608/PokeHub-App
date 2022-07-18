@@ -46,6 +46,11 @@ export const updateUser = async (user: IUserData) => {
     return resp.data;
 }
 
+export const updateUserProfile = async (userId: string, updatedProfile: FormData) => {
+    const resp: AxiosResponse<IUserData> = await http.put(`/users/${userId}/profile`, updatedProfile, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return resp.data;
+}
+
 export const setProfileAvatar = async (userId: string, avatar: FormData) => {
     const resp: AxiosResponse<IUserData> = await http.post(`/users/${userId}/avatar`, avatar, { headers: { 'Content-Type': 'multipart/form-data' } });
     return resp.data;

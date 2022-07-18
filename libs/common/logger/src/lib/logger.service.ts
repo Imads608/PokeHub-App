@@ -20,8 +20,8 @@ export class AppLogger implements LoggerService {
   log(message: any, ...optionalParams: any[]) {
     this.logger.log(message, this.context, ...optionalParams);
   }
-  error(message: any, ...optionalParams: any[]) {
-    this.logger.error(message, this.context, ...optionalParams);
+  error(message: any, stack?: string, ...optionalParams: any[]) {
+    this.logger.error(message, stack, this.context, ...optionalParams);
   }
   warn(message: any, ...optionalParams: any[]) {
     this.logger.warn(message, this.context, ...optionalParams);

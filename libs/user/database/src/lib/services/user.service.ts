@@ -70,6 +70,9 @@ export class UserService implements IUserService {
       const dbUser = await this.findUser(user.uid);
       if (!dbUser)
         throw new Error(`No user found with uid ${user.uid}`);
+      if (dbUser.username !== user.username) {
+        user.countUsernameChanged++;
+      }
 
       user.password = dbUser.password as string;
       const updatedUser = await this.usersRepository.save(user);

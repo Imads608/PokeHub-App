@@ -5,7 +5,8 @@ import { ChangeEvent, useEffect, useState } from "react";
 const useStyles = makeStyles((theme: CustomTheme) => ({
     root: {
       paddingTop: '5px',
-      marginLeft: '5px'
+      marginLeft: '5px',
+      marginBottom: '10px'
     },
     form: {
         display: 'flex',
@@ -51,10 +52,10 @@ const AvatarSetup = ({ avatarChosen }: AvatarSetupProps) => {
 
     return (
         <div className={classes.root}>
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '5px' }}>
                 Upload a Profile Picture (Optional)
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar src={profileImage ? profileImage.preview : ''} alt='Profile Picture' sx={{ width: 56, height: 56 }} />
                     <input
