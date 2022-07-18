@@ -68,7 +68,7 @@ const userSlice = createSlice({
           //state.status = action.payload.status;
           state.clientIds = { usersNS: null, roomsNS: null, dmsNS: null, isRefreshNeeded: false };
           if (action.payload.user.account === TypeAccount.GOOGLE)
-            state.profileSetup = action.payload.user.avatar && action.payload.user.countUsernameChanged > 0;
+            state.profileSetup = !!action.payload.user.avatar || action.payload.user.countUsernameChanged > 0;
           else 
             state.profileSetup = !!action.payload.user.avatar;
 

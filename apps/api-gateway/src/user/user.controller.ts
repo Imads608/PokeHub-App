@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Put, Query, Redirect, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Head, HttpCode, Inject, NotFoundException, Param, Post, Put, Query, Req, Res, UnauthorizedException, UploadedFile, UploadedFiles, UseGuards, UseInterceptors, } from '@nestjs/common';
 import { CreateUserRequest, UserData, UserDataWithToken, UserProfile, UserProfileWithToken, UserPublicProfile, } from '@pokehub/user/models';
 import { CreateUserInterceptor } from './create-user.interceptor';
 import { User } from '../common/user.decorator';
@@ -8,21 +8,17 @@ import { IUserService, USER_SERVICE } from './user-service.interface';
 import { AppLogger } from '@pokehub/common/logger';
 import { IMailService, MAIL_SERVICE } from '../common/mail-service.interface';
 import { AUTH_SERVICE, IAuthService } from '../common/auth-service.interface';
-import { EmailLogin, JwtTokenBody, OAuthTokenBody } from '@pokehub/auth/models';
+import { JwtTokenBody, OAuthTokenBody } from '@pokehub/auth/models';
 import { ActivateUserInterceptor } from './activate-user.interceptor';
 import { UserIdTypes } from '@pokehub/user/interfaces';
 import { ResourceInterceptor } from '../common/resource.interceptor';
 import { Express, Response, Request } from 'express';
 import { Multer } from 'multer';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { createReadStream, unlinkSync } from 'fs';
-import * as FormData  from 'form-data';
-import { Readable } from 'stream';
-import axios from 'axios';
-import path = require('path');
+import { unlinkSync } from 'fs';
+import * as path from 'path';
 import { OAuthGuard } from '../common/oauth.guard';
 
 @Controller()
@@ -115,34 +111,54 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ResourceInterceptor)
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'avatar', maxCount: 1 },
+  ]))
+  @Put(':userId/profile')
+  async updateUserProfile(@User() user: JwtTokenBody, @Param('userId') userId: string, @Body('user') userJsonStr: string, @UploadedFiles() data: { avatar?: Express.Multer.File[] }): Promise<UserData> {
+    this.logger.log(`updateUser: Got request to update profile: ${data.avatar?.[0].originalname}`);
+
+    // Handle Failure Scenarios
+    if (user.uid != userId)
+      throw new UnauthorizedException();
+    else if (!data || !userJsonStr)
+      throw new BadRequestException();
+    else if (data.avatar && data.avatar.length > 0) {
+      const ext = path.extname(data.avatar[0].originalname);
+      if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg' || (!data.avatar[0].originalname && !data.avatar[0].filename)) {
+        throw new BadRequestException({ statusCode: 400, message: "Not a valid profile image"});
+      }
+    }
+    const userObj = JSON.parse(userJsonStr);
+
+    return await this.userService.updateUserProfile(userId, { ...data, user: userObj });
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ResourceInterceptor)
   @UseInterceptors(FileInterceptor('avatar', { 
     dest: './upload',
     fileFilter: (req, file, callback) => {
-      console.log('herrre')
       const ext = path.extname(file.originalname);
-        if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+        if(ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
             return callback(new Error('Only images are allowed'), false);
         }
         callback(null, true)
     } 
   }))
   @Post(':userId/avatar')
-  async updateUserAvatar(@UploadedFile() avatar: Express.Multer.File, @Param('userId') userId: string): Promise<UserData> {
-    // Creating Payload
-    this.logger.log(`updateUserAvatar: Sending file: ${avatar.path}`);
-    const formData = new FormData();
-    formData.append('avatar', createReadStream(avatar.path), { filename: avatar.filename });
+  async updateUserAvatar(@User() user: JwtTokenBody, @UploadedFile() avatar: Express.Multer.File, @Param('userId') userId: string): Promise<UserData> {
+    this.logger.log(`updateUserAvatar: Got request to update User Avatar`);
 
-    // Send Data
-    const data = await firstValueFrom(this.httpService.post<UserData>(`http://${this.configService.get<string>('userService.host')}:${this.configService.get<string>('userService.portHttp')}/${userId}/avatar`,
-                            formData, { headers: { ...formData.getHeaders() }}));
-    
-    this.logger.log(`Successfully uploaded new avatar for user ${userId}. Deleting temporary file`);
+    if (user.uid !== userId)
+      throw new UnauthorizedException();
+
+    const updatedData = await this.userService.updateUserAvatar(userId, avatar);
+
     // Delete Temporary Image File
     unlinkSync(avatar.path);
 
-    this.logger.log(`Sending data ${JSON.stringify(data.data)}`);
-    return data.data;
+    return updatedData;
   }
 
   @HttpCode(204)

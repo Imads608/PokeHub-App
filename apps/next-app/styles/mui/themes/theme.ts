@@ -1,7 +1,7 @@
-import { PaletteMode } from '@mui/material';
+import { CustomThemeOptions, PaletteMode } from '@mui/material';
 import {} from './theme.d';
 
-export const getRootDesignTokens = (mode: PaletteMode) => ({
+export const getRootDesignTokens = (mode: PaletteMode): CustomThemeOptions => ({
   palette: {
     mode,
     ...(mode === 'light'
@@ -26,9 +26,12 @@ export const getRootDesignTokens = (mode: PaletteMode) => ({
           },
         }),
   },
+  typography: {
+    fontFamily: "'Orbitron', sans-serif"
+  }
 });
 
-export const getMainAppDesignTokens = (mode: PaletteMode) => ({
+export const getMainAppDesignTokens = (mode: PaletteMode): CustomThemeOptions => ({
   palette: {
     mode,
     ...(mode === 'light'
@@ -87,10 +90,13 @@ export const getMainAppDesignTokens = (mode: PaletteMode) => ({
           }
         }),
   },
+  typography: {
+    fontFamily: "'Orbitron', sans-serif"
+  }
 });
 
 
-export const getDashboardDesignTokens = (mode: PaletteMode) => ({
+export const getDashboardDesignTokens = (mode: PaletteMode): CustomThemeOptions => ({
   palette: {
     mode,
     ...(mode === 'light'
