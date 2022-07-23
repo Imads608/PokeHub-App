@@ -5,7 +5,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build user-tcp-gateway --configuration=production
 
-FROM node:lts-alpine AS final
+FROM node:lts-alpine3.10 AS final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/user-tcp-gateway .
 RUN npm install --only=production
