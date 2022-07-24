@@ -29,7 +29,7 @@ export class StatusMessageReceiverService implements IStatusMessageReceiverServi
       await this.statusPublisher.publishUserStatus(msg);
       this.logger.log(`userStatusEventMessageHandler: Successfully published User Status to Notification Service for id ${msg.data.status.id} with timestamp ${new Date(amqpMsg.properties.timestamp)}`);
     } catch (err) {
-      this.logger.error(`userStatusEventMessageHandler: Got error while trying to process User Status Message: ${JSON.stringify(err)}`);
+      this.logger.error(`userStatusEventMessageHandler: Got error while trying to process User Status Message: ${err.message}`, err.stack);
       throw err;
     }
   }

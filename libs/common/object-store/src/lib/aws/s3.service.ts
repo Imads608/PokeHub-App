@@ -24,7 +24,7 @@ export class S3Service implements IS3Service {
             });*/
             this.logger.log(`putObject: Successfully uploaded object with file name ${request.keyName} into S3 Bucket ${request.bucketInfo.bucketName}`);
         } catch (err) {
-            this.logger.error(`Got error while trying to put object with details file name ${request.keyName} into S3 Bucket ${request.bucketInfo.bucketName}: ${err}`);
+            this.logger.error(`Got error while trying to put object with details file name ${request.keyName} into S3 Bucket ${request.bucketInfo.bucketName}: ${(<Error>err).message}`, (<Error>err).stack);
             throw err;
         }
     }

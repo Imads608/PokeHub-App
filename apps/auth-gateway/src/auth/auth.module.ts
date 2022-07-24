@@ -3,7 +3,6 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Transport, ClientsModule } from '@nestjs/microservices';
-import { AUTH_SERVICE } from './auth-service.interface';
 import { LoggerModule } from '@pokehub/common/logger';
 import { CommonModule } from '../common/common.module';
 

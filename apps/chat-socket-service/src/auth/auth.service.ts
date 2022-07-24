@@ -26,7 +26,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `decodeToken: Successfully decoded Access Token to User Data` );
             return userData;
         } catch (err) {
-            this.logger.error( `decodeToken: Got error while decoding and validating Access Token: ${err}` );
+            this.logger.error( `decodeToken: Got error while decoding and validating Access Token: ${err.message}`, err.stack);
             throw err;
         }    
     }

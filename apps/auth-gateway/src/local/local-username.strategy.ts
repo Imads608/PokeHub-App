@@ -26,7 +26,7 @@ export class LocalUsernameStrategy extends PassportStrategy(Strategy, 'local-use
             this.logger.log(`validate: Successfully validated Username Credentials for username ${username}`);
             return user;
         } catch (err) {
-            this.logger.error(`validate: Got error while validating user credentials with username: ${JSON.stringify(err)}`);
+            this.logger.error(`validate: Got error while validating user credentials with username: ${err.message}`, err.stack);
             if (err instanceof UnauthorizedException)
                 throw err;
             throw new InternalServerErrorException();

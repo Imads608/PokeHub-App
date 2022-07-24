@@ -32,7 +32,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
         // Return New Access Token
         return accessToken;
       } catch (err) {
-        this.logger.error(`validate: Got error while generating access token: ${JSON.stringify(err)}`);
+        this.logger.error(`validate: Got error while generating access token: ${err.message}`, err.stack);
         throw new InternalServerErrorException();
       }
   }

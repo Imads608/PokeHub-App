@@ -18,7 +18,7 @@ export class MailService implements IMailService {
       await firstValueFrom(this.clientProxy.send({ cmd: MailGatewayTCPEndpoints.SEND_EMAIL_CONFIRMATION }, new EmailConfirmationRequest(emailAddress, validationToken)))
             .catch((err) => { if (!err.message.includes('no elements in sequence')) throw err; });
     } catch (err) {
-      this.logger.error(`sendEmailConfirmation: Got error while sending email confirmation request to ${emailAddress}: ${JSON.stringify(err)}`);
+      this.logger.error(`sendEmailConfirmation: Got error while sending email confirmation request to ${emailAddress}: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -29,7 +29,7 @@ export class MailService implements IMailService {
           await firstValueFrom(this.clientProxy.send({ cmd: MailGatewayTCPEndpoints.SEND_PASSWORD_RESET }, new PasswordResetRequest(emailAddress, resetToken)))
             .catch((err) => { if (!err.message.includes('no elements in sequence')) throw err; });
       } catch (err) {
-        this.logger.error(`sendPasswordReset: Got error while sending password reset request to ${emailAddress}: ${JSON.stringify(err)}`);
+        this.logger.error(`sendPasswordReset: Got error while sending password reset request to ${emailAddress}: ${err.message}`, err.stack);
       }
   }
 }

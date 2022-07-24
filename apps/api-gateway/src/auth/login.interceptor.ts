@@ -21,7 +21,7 @@ export class LoginInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<any> {
     return next.handle().pipe(
       catchError((err) => {
-        this.logger.error(`intercept: Error caught in Interceptor: ${err}`);
+        this.logger.error(`intercept: Error caught in Interceptor: ${err.message}`, err.stack);
         if ( err.message && (err.message.includes('Invalid Credentials') || err.message.includes('not authorized')) || err.message.includes('401') ) {
           throw new UnauthorizedException(err.message);
         } else if (err instanceof BadRequestException) {
