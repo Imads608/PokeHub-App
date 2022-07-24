@@ -28,7 +28,6 @@ export class GoogleOauthController {
         const token = await this.jwtService.getNewOAuthTokenFromPayload({ uid: user.user.uid, email: user.user.email, username: user.user.username });
         const url = `${this.configService.get<string>('protocol')}://${this.configService.get<string>('frontendApp.host')}:${this.configService.get<string>('frontendApp.port')}/login?oauth_token=${token.oauth_token}`;
         this.logger.log(`googleAuthRedirect: Url: ${url}`)
-        this.logger.log(`googleAuthRedirect: Url: http://localhost:4200/login?oauth_token=${token.oauth_token}`)
         return { url };
         //return { url: `http://localhost:4200/login?oauth_token=${token.oauth_token}` };
     }

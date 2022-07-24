@@ -32,7 +32,7 @@ export class MessageReceiverService implements IMessageReceiverService {
       
       this.logger.log(`userStatusEventMessageHandler: Successfully updated User Status for id ${msg.data.status.id} with timestamp ${new Date(amqpMsg.properties.timestamp)}`);
     } catch (err) {
-      this.logger.error(`userStatusEventMessageHandler: Got error while trying to process User Status Message: ${JSON.stringify(err)}`);
+      this.logger.error(`userStatusEventMessageHandler: Got error while trying to process User Status Message: ${err.message}`, err.stack);
       throw err;
     }
   }

@@ -6,7 +6,6 @@ import { Injectable, CanActivate, ExecutionContext, Inject, UnauthorizedExceptio
 import { JwtTokenBody } from '@pokehub/auth/models';
 import { AppLogger } from '@pokehub/common/logger';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
-import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -34,7 +33,7 @@ export class AuthGuard implements CanActivate {
         return true;
       }
     } catch (err) {
-      this.logger.error(`canActivate: Got error decoding token: ${err}`);
+      this.logger.error(`canActivate: Got error decoding token: ${err.message}`, err.stack);
     }
 
     // User is not Authenticated

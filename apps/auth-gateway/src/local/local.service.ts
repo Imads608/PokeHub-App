@@ -37,7 +37,7 @@ export class LocalService implements ILocalService {
             }
             throw new UnauthorizedException('Invalid Credentials');
         } catch (err) {
-            this.logger.error( `emailLogin: Got exception trying to login user by email ${userCreds.email}: ${err}` );
+            this.logger.error( `emailLogin: Got exception trying to login user by email ${userCreds.email}: ${err.message}`, err.stack);
             if (err instanceof UnauthorizedException)
                 throw err;
             throw new InternalServerErrorException();
@@ -64,7 +64,7 @@ export class LocalService implements ILocalService {
             }
             throw new UnauthorizedException('Invalid Credentials');
         } catch (err) {
-            this.logger.error( `usernameLogin: Got exception trying to login user by username ${userCreds.username}: ${err}` );
+            this.logger.error( `usernameLogin: Got exception trying to login user by username ${userCreds.username}: ${err.message}`, err.stack);
             if (err instanceof UnauthorizedException)
                 throw err;
             throw new InternalServerErrorException();
@@ -82,7 +82,7 @@ export class LocalService implements ILocalService {
             }
         }
 
-        this.logger.log( `validateCreds: User credentials provided are invalid for user ${userFromDB.uid}` );
+        this.logger.log( `validateCreds: User credentials provided are invalid for user ${userFromDB.uid}`);
         return false;
     }
 

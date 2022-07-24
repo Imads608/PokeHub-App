@@ -26,7 +26,7 @@ export class LocalEmailStrategy extends PassportStrategy(Strategy, 'local-email'
       this.logger.log(`validate: Successfully validated Email Credentials for email ${email}`);
       return user;
     } catch (err) {
-      this.logger.error(`validate: Got error while validating credentials: ${JSON.stringify(err)}`);
+      this.logger.error(`validate: Got error while validating credentials: ${err.message}`, err.stack);
       if (err instanceof UnauthorizedException)
         throw err;
       throw new InternalServerErrorException();

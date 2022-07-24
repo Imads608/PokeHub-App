@@ -3,10 +3,9 @@ https://docs.nestjs.com/guards#guards
 */
 
 import { Injectable, CanActivate, ExecutionContext, Inject, UnauthorizedException } from '@nestjs/common';
-import { JwtTokenBody, OAuthTokenBody } from '@pokehub/auth/models';
+import { OAuthTokenBody } from '@pokehub/auth/models';
 import { AppLogger } from '@pokehub/common/logger';
 import { AUTH_SERVICE, IAuthService } from './auth-service.interface';
-import { AuthService } from './auth.service';
 
 @Injectable()
 export class OAuthGuard implements CanActivate {
@@ -34,7 +33,7 @@ export class OAuthGuard implements CanActivate {
         return true;
       }
     } catch (err) {
-      this.logger.error(`canActivate: Got error decoding token: ${err}`);
+      this.logger.error(`canActivate: Got error decoding token: ${err.message}`, err.stack);
     }
 
     // User is not Authenticated

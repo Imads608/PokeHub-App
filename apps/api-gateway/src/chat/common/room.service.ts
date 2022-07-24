@@ -24,7 +24,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getAllPublicRooms: Successfully retrieved all Public Chat Rooms from Chat Service` );
       return chatrooms;
     } catch (err) {
-      this.logger.error( `getAllPublicRooms: Got error while retrieving all Public Chat Rooms: ${err}` );
+      this.logger.error( `getAllPublicRooms: Got error while retrieving all Public Chat Rooms: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -36,7 +36,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getPublicRoomFromId: Succesfully retrieved Data for Room ${roomId}` );
       return chatroom;
     } catch (err) {
-      this.logger.error( `getPublicRoomFromId: Got error while retrieving Public Chat Room data for Id ${roomId}: ${err}` );
+      this.logger.error( `getPublicRoomFromId: Got error while retrieving Public Chat Room data for Id ${roomId}: ${err.message}`, err.stack);
       throw err;
     }
   }
@@ -48,7 +48,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getPublicRoomUsers: Successfully retrieved Users for Public Chat Room ${roomId}` );
       return users;
     } catch (err) {
-      this.logger.error( `getPublicRoomUsers: Got error while retrieving Users from Public Room ${roomId}: ${err}` );
+      this.logger.error( `getPublicRoomUsers: Got error while retrieving Users from Public Room ${roomId}: ${err.message}`, err.stack );
       throw err;
     }
   }
@@ -60,7 +60,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getJoinedPublicRoomsForUser: Successfully retrieved Public Chat Rooms User ${userId} has joined` );
       return chatrooms;
     } catch (err) {
-      this.logger.error( `getJoinedPublicRoomsForUser: Got error while retrieving Public Chat Rooms User ${userId} has joined: ${err}` );
+      this.logger.error( `getJoinedPublicRoomsForUser: Got error while retrieving Public Chat Rooms User ${userId} has joined: ${err.message}`, err.stack );
       throw err;
     }
   }

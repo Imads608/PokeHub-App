@@ -24,7 +24,7 @@ export class UserService implements IUserService {
         this.logger.log( `createUser: Successfully created User with email ${createReq.email}` );
         return user;
         } catch (err) {
-        this.logger.error( `createUser: Got error while trying to create user with email ${createReq.email}: ${err}` );
+        this.logger.error( `createUser: Got error while trying to create user with email ${createReq.email}: ${err.message}`, err.stack );
         throw err;
         }
     }
@@ -38,7 +38,7 @@ export class UserService implements IUserService {
             this.logger.log(`googleOAuthLogin: Successfully Created/Logged in User with email ${createUser.email}`);
             return user;
         } catch (err) {
-            this.logger.error(`googleOAuthLogin: Got error while trying to login user with email ${createUser.email}`);
+            this.logger.error(`googleOAuthLogin: Got error while trying to login user with email ${createUser.email}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -50,7 +50,7 @@ export class UserService implements IUserService {
             this.logger.log(`getPublicUser: Successfully retrieved details of User with uid ${uid}`);
             return user;
         } catch (err) {
-            this.logger.error(`getPublicUser: Got error while trying to retrieve public details of user with uid ${uid}: ${JSON.stringify(err)}`);
+            this.logger.error(`getPublicUser: Got error while trying to retrieve public details of user with uid ${uid}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -62,7 +62,7 @@ export class UserService implements IUserService {
             this.logger.log(`findUser: Sucessfully retrieved details of User with uid ${uid}`);
             return user;
         } catch (err) {
-            this.logger.error(`findUser: Got error while trying to retrieve Data of User with uid ${uid}: ${JSON.stringify(err)}`);
+            this.logger.error(`findUser: Got error while trying to retrieve Data of User with uid ${uid}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -74,7 +74,7 @@ export class UserService implements IUserService {
             this.logger.log(`findUserByEmail: Sucessfully retrieved details of User with email ${email}`);
             return user;
         } catch (err) {
-            this.logger.error(`findUserByEmail: Got error while trying to retrieve Data of User with email ${email}: ${JSON.stringify(err)}`);
+            this.logger.error(`findUserByEmail: Got error while trying to retrieve Data of User with email ${email}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -86,7 +86,7 @@ export class UserService implements IUserService {
             this.logger.log(`findUserByUsername: Sucessfully retrieved details of User with uid ${username}`);
             return user;
         } catch (err) {
-            this.logger.error(`findUserByUsername: Got error while trying to retrieve Data of User with uid ${username}: ${JSON.stringify(err)}`);
+            this.logger.error(`findUserByUsername: Got error while trying to retrieve Data of User with uid ${username}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -98,7 +98,7 @@ export class UserService implements IUserService {
             this.logger.log(`getUserStatus: Successfully retrieved details of Status Data with id ${id}`);
             return statusData;
         } catch (err) {
-            this.logger.error(`getUserStatus: Got error while trying to retrieve Status with id ${id}: ${JSON.stringify(err)}`);
+            this.logger.error(`getUserStatus: Got error while trying to retrieve Status with id ${id}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -110,7 +110,7 @@ export class UserService implements IUserService {
             this.logger.log(`verifyUserEmail: Successfully verified User's Email with id ${userId}`);
             return userData;
         } catch (err) {
-            this.logger.error(`verifyUserEmail: Got error while trying to verify User ${userId} email: ${JSON.stringify(err)}`);
+            this.logger.error(`verifyUserEmail: Got error while trying to verify User ${userId} email: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -122,7 +122,7 @@ export class UserService implements IUserService {
             this.logger.log(`checkEmailExists: Successfully executed query against User Service with result: ${res} for email ${email}`);
             return res;
         } catch (err) {
-            this.logger.error(`checkEmailExists: Got error while trying to check if email ${email} exists: ${JSON.stringify(err)}`);
+            this.logger.error(`checkEmailExists: Got error while trying to check if email ${email} exists: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -134,7 +134,7 @@ export class UserService implements IUserService {
             this.logger.log(`checkUserExists: Successfully executed query against User Service with result: ${res} for id ${user.userId}`);
             return res;
         } catch (err) {
-            this.logger.error(`checkUserExists: Got error while trying to check if user ${user.userId} exists: ${JSON.stringify(err)}`);
+            this.logger.error(`checkUserExists: Got error while trying to check if user ${user.userId} exists: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -146,7 +146,7 @@ export class UserService implements IUserService {
             this.logger.log(`updatePassword: Successfully updated Password for user ${userData.email}`);
             return updatedData;
         } catch (err) {
-            this.logger.error(`updatePassword: Got error while trying to update password for ${userData.email}: ${JSON.stringify(err)}`);
+            this.logger.error(`updatePassword: Got error while trying to update password for ${userData.email}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -158,7 +158,7 @@ export class UserService implements IUserService {
             this.logger.log(`updateUserData: Successfully updated User Data for uid ${userData.uid}`);
             return updatedData;
         } catch (err) {
-            this.logger.error(`updateUserData: Got error while trying to update User Data for uid ${userData.uid}: ${JSON.stringify(err)}`);
+            this.logger.error(`updateUserData: Got error while trying to update User Data for uid ${userData.uid}: ${err.message}`, err.stack);
             throw err;
         }
     }

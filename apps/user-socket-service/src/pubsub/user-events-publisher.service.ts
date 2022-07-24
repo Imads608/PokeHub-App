@@ -20,7 +20,7 @@ export class UserEventsPublisherService implements IUserEventsPublisherService {
         this.getDefaultOptions());
       this.logger.log(`publishUser: Successfully published User Status Event Message`);
     } catch(err) {
-      this.logger.error(`publishUserStatus: Got error while trying to publish User Status Event: ${JSON.stringify(err)}`);
+      this.logger.error(`publishUserStatus: Got error while trying to publish User Status Event: ${err.message}`, err.stack);
       throw err;
     }
     return;

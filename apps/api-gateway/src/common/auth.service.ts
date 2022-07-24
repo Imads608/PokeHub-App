@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, UnauthorizedException, } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { UserDataWithToken } from '@pokehub/user/models';
@@ -28,7 +28,7 @@ export class AuthService implements IAuthService {
             this.logger.log(`googleOAuthLogin: Successfully authenticated user through Google OAuth`);
             return userDataWithToken;
         } catch (err) {
-            this.logger.error(`googleOAuthLogin: Got error while authenticating user through Google OAuth: ${err}`);
+            this.logger.error(`googleOAuthLogin: Got error while authenticating user through Google OAuth: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -54,7 +54,7 @@ export class AuthService implements IAuthService {
             this.logger.log(`loginUser: Successfully validated user credentials`);
             return userData;
         } catch (err) {
-            this.logger.error( `loginUser: Got error while validating user credentials: ${err}` );
+            this.logger.error( `loginUser: Got error while validating user credentials: ${err.message}`, err.stack );
             throw err;
         }
     }
@@ -68,7 +68,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `generateNewTokens: Successfully generated Access and Refresh Tokens for user ${user.uid}` );
             return tokens;
         } catch (err) {
-            this.logger.error( `generateNewTokens: Got error while generating Refresh and Access Tokens for user ${user.uid}: ${err}` );
+            this.logger.error( `generateNewTokens: Got error while generating Refresh and Access Tokens for user ${user.uid}: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -80,10 +80,10 @@ export class AuthService implements IAuthService {
             const userData = await firstValueFrom( this.clientProxy.send<JwtTokenBody>( { cmd: AuthGatewayTCPEndpoints.VALIDATE_EMAIL_CONFIRMATION_TOKEN }, verificationToken ) );
             if (!userData) throw new InternalServerErrorException();
 
-            this.logger.log( `validateEmailConfirmationToken: Successfully decoded Email Confirmation Token to User Data` );
+            this.logger.log( `validateEmailConfirmationToken: Successfully decoded Email Confirmation Token to User Data`);
             return userData;
         } catch (err) {
-            this.logger.error( `validateEmailConfirmationToken: Got error while decoding and validating Email Verification Token: ${err}` );
+            this.logger.error( `validateEmailConfirmationToken: Got error while decoding and validating Email Verification Token: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -98,7 +98,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `validatePasswordResetToken: Successfully decoded Password Reset Token to User Data` );
             return userData;
         } catch (err) {
-            this.logger.error( `validatePasswordResetToken: Got error while decoding and validating Password Reset Token: ${err}` );
+            this.logger.error( `validatePasswordResetToken: Got error while decoding and validating Password Reset Token: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -114,7 +114,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `decodeToken: Successfully decoded Access Token to User Data` );
             return userData;
         } catch (err) {
-            this.logger.error( `decodeToken: Got error while decoding and validating Access Token: ${err}` );
+            this.logger.error( `decodeToken: Got error while decoding and validating Access Token: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -128,7 +128,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `verifyOAuthToken: Successfully decoded OAuth Token to User Data` );
             return userData;
         } catch (err) {
-            this.logger.error( `verifyOAuthToken: Got error while trying to verify OAuth Token: ${err}` );
+            this.logger.error( `verifyOAuthToken: Got error while trying to verify OAuth Token: ${err.message}`, err.stack);
             throw err;
         }
     }
@@ -142,7 +142,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `getNewAccessToken: Successfully generated Access Token from Refresh Token` );
             return token;
         } catch (err) {
-            this.logger.error( `getNewAccessToken: Got error while trying to retrieve new Access Token from Refresh Token: ${err}` );
+            this.logger.error( `getNewAccessToken: Got error while trying to retrieve new Access Token from Refresh Token: ${err.message}`, err.stack );
             throw err;
         }
     }
@@ -156,7 +156,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `generateEmailVerficationToken: Successfully generated Email Verification Token` );
             return token;
         } catch (err) {
-            this.logger.error( `generateEmailVerficationToken: Got error while trying to generate new Email Verification Token: ${err}` );
+            this.logger.error( `generateEmailVerficationToken: Got error while trying to generate new Email Verification Token: ${err.message}`, err.stack );
             throw err;
         }
     }
@@ -170,7 +170,7 @@ export class AuthService implements IAuthService {
             this.logger.log( `generatePasswordResetToken: Successfully generated Password Reset Token` );
             return token;
         } catch (err) {
-            this.logger.error( `generatePasswordResetToken: Got error while trying to generate new Password Reset Token: ${err}` );
+            this.logger.error( `generatePasswordResetToken: Got error while trying to generate new Password Reset Token: ${err.message}`, err.stack );
             throw err;
         }
     }

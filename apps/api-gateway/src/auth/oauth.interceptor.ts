@@ -17,7 +17,7 @@ export class OauthInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((err) => {
-        this.logger.error(`intercept: Caught Error in Interceptor: ${err}`);
+        this.logger.error(`intercept: Caught Error in Interceptor: ${err.message}`, err.stack);
         throw new InternalServerErrorException(
           'An error occurred on the server'
         );

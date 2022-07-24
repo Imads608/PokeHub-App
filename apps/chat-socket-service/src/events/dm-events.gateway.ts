@@ -24,7 +24,7 @@ export class DMEventsGateway implements OnGatewayDisconnect, OnGatewayConnection
       await this.authService.decodeToken(client.handshake.query.token as string);
       this.logger.log(`handleConnection: Client ${client.id} Successfully connected to server`);
     } catch (err) {
-      this.logger.error(`handleConnection: Got error while trying to connect with client: ${JSON.stringify(err)}. Disconnecting`);
+      this.logger.error(`handleConnection: Got error while trying to connect with client: ${err.message}. Disconnecting`, err.stack);
       client.disconnect();
     }
   }

@@ -42,7 +42,7 @@ export class JwtAuthService implements IJwtAuthService {
             await this.jwtService.verifyAsync(accessToken, { secret: this.configService.get<string>('token.'), });
             this.logger.log( `validateAccessToken: Sucessfully validated Access Token` );
         } catch (err) {
-            this.logger.error( `validateAccessToken: Got error while validating Access Token: ${err}` );
+            this.logger.error( `validateAccessToken: Got error while validating Access Token: ${err.message}`, err.stack);
             res = false;
         }
         return res;
@@ -55,7 +55,7 @@ export class JwtAuthService implements IJwtAuthService {
             this.logger.log(`validateEmailVerificationToken: Sucessfully validated Email Verification Token`);
             return new JwtTokenBody(user.username, user.email, user.uid);
         } catch (err) {
-            this.logger.error(`validateEmailVerificationToken: Got error while validating Email Verification Token: ${err}`);
+            this.logger.error(`validateEmailVerificationToken: Got error while validating Email Verification Token: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             else if (err.message.includes('malformed'))
@@ -71,7 +71,7 @@ export class JwtAuthService implements IJwtAuthService {
             this.logger.log(`validateOAuthToken: Sucessfully validated OAuth Token`);
             return user;
         } catch (err) {
-            this.logger.error(`validateOAuthToken: Got error while validating OAuth Token: ${err}`);
+            this.logger.error(`validateOAuthToken: Got error while validating OAuth Token: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             else if (err.message.includes('malformed'))
@@ -87,7 +87,7 @@ export class JwtAuthService implements IJwtAuthService {
             this.logger.log(`validateEmailVerificationToken: Sucessfully validated Email Verification Token`);
             return user;
         } catch (err) {
-            this.logger.error(`validateEmailVerificationToken: Got error while validating Email Verification Token: ${err}`);
+            this.logger.error(`validateEmailVerificationToken: Got error while validating Email Verification Token: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             else if (err.message.includes('malformed'))
@@ -102,7 +102,7 @@ export class JwtAuthService implements IJwtAuthService {
             this.logger.log( `decodeToken: Successfully decoded User Data from Access Token with uid ${jwtBody.uid}` );
             return jwtBody;
         } catch (err) {
-            this.logger.error( `decodeToken: Got error while decoding Access Token: ${err}` );
+            this.logger.error( `decodeToken: Got error while decoding Access Token: ${err.message}`, err.stack);
             throw new RpcException('User is unauthorized');
         }
     }
@@ -121,7 +121,7 @@ export class JwtAuthService implements IJwtAuthService {
             // Return New Access Token
             return { access_token: accessToken };
         } catch (err) {
-            this.logger.error( `getNewAccessToken: Got error creating new Access Token: ${JSON.stringify(err)}` );
+            this.logger.error( `getNewAccessToken: Got error creating new Access Token: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             throw new RpcException('Internal Server Error');
@@ -138,7 +138,7 @@ export class JwtAuthService implements IJwtAuthService {
             // Return New Access Token
             return { access_token: accessToken };
         } catch (err) {
-            this.logger.error(`getNewAccessTokenFromPayload: Got error while creating new Access Token: ${JSON.stringify(err)}`);
+            this.logger.error(`getNewAccessTokenFromPayload: Got error while creating new Access Token: ${err.message}`, err.stack);
             throw new RpcException('Internal Server Error');
         }
     }
@@ -157,7 +157,7 @@ export class JwtAuthService implements IJwtAuthService {
             // Return OAuth Token
             return { oauth_token: token };
         } catch (err) {
-            this.logger.error(`getNewOAuthToken: Got error getting new access token for user with uid ${user.uid}: ${err}`);
+            this.logger.error(`getNewOAuthToken: Got error getting new access token for user with uid ${user.uid}: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             
@@ -179,7 +179,7 @@ export class JwtAuthService implements IJwtAuthService {
             // Return Email Verification Token
             return { email_verification_token: token };
         } catch (err) {
-            this.logger.error(`getNewEmailVerificationToken: Got error getting new access token for user with uid ${user.uid}: ${err}`);
+            this.logger.error(`getNewEmailVerificationToken: Got error getting new access token for user with uid ${user.uid}: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             
@@ -201,7 +201,7 @@ export class JwtAuthService implements IJwtAuthService {
             // Return Password Reset Token
             return { password_reset_token: token };
         } catch (err) {
-            this.logger.error(`getNewPasswordResetToken: Got error getting new access token for user with email ${user.email}: ${JSON.stringify(err)}`);
+            this.logger.error(`getNewPasswordResetToken: Got error getting new access token for user with email ${user.email}: ${err.message}`, err.stack);
             if (err.message.includes('expired'))
                 throw new RpcException('User is not authorized');
             

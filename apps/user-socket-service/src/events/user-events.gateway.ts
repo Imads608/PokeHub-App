@@ -42,7 +42,7 @@ export class UserEventsGateway implements OnGatewayDisconnect, OnGatewayConnecti
       await this.authService.decodeToken(client.handshake.query.token as string);
       this.logger.log(`handleConnection: Client ${client.id} Successfully connected to server`);
     } catch (err) {
-      this.logger.error(`handleConnection: Got error while trying to connect with client: ${JSON.stringify(err)}. Disconnecting user`);
+      this.logger.error(`handleConnection: Got error while trying to connect with client: ${err.message}. Disconnecting user`, err.stack);
       client.disconnect(true);
       //throw err;
     }

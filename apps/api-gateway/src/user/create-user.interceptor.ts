@@ -19,7 +19,7 @@ export class CreateUserInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((err) => {
-        this.logger.error(`intercept: Caught error: ${err}`);
+        this.logger.error(`intercept: Caught error: ${err.message}`, err.stack);
         if (
           err.message &&
           (err.message.includes('exists') || err.message.includes('duplicate'))

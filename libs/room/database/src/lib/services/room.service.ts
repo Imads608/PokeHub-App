@@ -24,7 +24,7 @@ export class RoomService implements IRoomService {
       this.logger.log(`getAllPublicRooms: No Rooms found`);
       return null;
     } catch (err) {
-      this.logger.error( `getAllPublicRooms: Got error trying to fetch all Public Rooms: ${err}` );
+      this.logger.error( `getAllPublicRooms: Got error trying to fetch all Public Rooms: ${(<Error>err).message}`, (<Error>err).stack);
       throw err;
     }
   }
@@ -42,7 +42,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getPublicRoomById: No Public Room found with id ${roomId}` );
       return null;
     } catch (err) {
-      this.logger.error( `getPublicRoomById: Got error fetching chat room with id ${roomId}: ${err}` );
+      this.logger.error( `getPublicRoomById: Got error fetching chat room with id ${roomId}: ${(<Error>err).message}`, (<Error>err).stack);
       throw err;
     }
   }
@@ -71,7 +71,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getUserJoinedRooms: No Joined Public Rooms found for user ${userId}` );
       return null;
     } catch (err) {
-      this.logger.error( `getUserJoinedRooms: Got error trying to fetch all joined Rooms for user ${userId}: ${err}` );
+      this.logger.error( `getUserJoinedRooms: Got error trying to fetch all joined Rooms for user ${userId}: ${(<Error>err).message}`, (<Error>err).stack );
       throw err;
     }
   }
@@ -91,7 +91,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `addNewParticipant: Successfully added user ${userId} to Participant List for ${roomId}` );
       return newParticipant;
     } catch (err) {
-      this.logger.error( `addNewParticipant: Got error trying to add user ${userId} to room ${roomId}: ${err}` );
+      this.logger.error( `addNewParticipant: Got error trying to add user ${userId} to room ${roomId}: ${(<Error>err).message}`, (<Error>err).stack);
       throw err;
     }
   }
@@ -110,7 +110,7 @@ export class RoomService implements IRoomService {
       this.logger.log( `getChatRoomParticipants: No Participants found for ChatRoom ${roomId}` );
       return null;
     } catch (err) {
-      this.logger.error( `getChatRoomParticipants: Got error getting all participants of Chat Room ${roomId}: ${err}` );
+      this.logger.error( `getChatRoomParticipants: Got error getting all participants of Chat Room ${roomId}: ${(<Error>err).message}`, (<Error>err).stack);
       throw err;
     }
   }

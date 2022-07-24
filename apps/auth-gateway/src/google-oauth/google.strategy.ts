@@ -63,7 +63,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         this.logger.log( `googleOAuthService: Successfully authenticated User through Google OAuth. Sending User Details back...` );
         return new UserDataWithToken( userData, tokens.accessToken, tokens.refreshToken );
     } catch (err) {
-        this.logger.error( `googleOAuthLogin: Got error while authenticating user through Google OAuth: ${err}` );
+        this.logger.error( `googleOAuthLogin: Got error while authenticating user through Google OAuth: ${err.message}`, err.stack);
         throw new InternalServerErrorException();
     }
 }

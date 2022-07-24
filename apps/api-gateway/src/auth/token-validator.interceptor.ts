@@ -11,7 +11,7 @@ export class TokenValidatorInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((err) => {
-        this.logger.error(`intercept: Error caught in Interceptor: ${err}`);
+        this.logger.error(`intercept: Error caught in Interceptor: ${err.message}`, err.stack);
         if (err.message && (err.message.includes('unauthorized') || err.message.includes('not authorized') || err.message.includes('not valid'))) {
           return new Observable<boolean>((subscriber) => {
             subscriber.next(false);
