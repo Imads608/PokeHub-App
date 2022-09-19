@@ -115,16 +115,16 @@
     "@nestjs/schematics": "^7.0.0",
     "@nestjs/testing": "^9.0.11",
     "@nrwl/cli": "13.4.1",
-    "@nrwl/cypress": "13.4.1",
+    "@nrwl/cypress": "14.7.5",
     "@nrwl/eslint-plugin-nx": "14.7.5",
-    "@nrwl/jest": "13.4.1",
-    "@nrwl/linter": "13.4.1",
+    "@nrwl/jest": "14.7.5",
+    "@nrwl/linter": "14.7.5",
     "@nrwl/nest": "13.4.1",
     "@nrwl/node": "13.4.1",
-    "@nrwl/react": "13.4.1",
+    "@nrwl/react": "14.7.5",
     "@nrwl/tao": "13.4.1",
-    "@nrwl/web": "13.4.1",
-    "@nrwl/workspace": "13.4.1",
+    "@nrwl/web": "14.7.5",
+    "@nrwl/workspace": "14.7.5",
     "@testing-library/react": "12.1.2",
     "@testing-library/react-hooks": "7.0.2",
     "@types/amqplib": "^0.8.2",
@@ -170,3 +170,4 @@
     "uuidv4": "^6.2.13"
   }
 }
+

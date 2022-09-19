@@ -145,7 +145,7 @@ export class UserService implements IUserService {
   async findUser(uid: string): Promise<UserData | null> {
     try {
       this.logger.log(`findUser: Finding user with uid ${uid}`);
-      const user = await this.usersRepository.findOne(uid, { relations: [ "status" ]});
+      const user = await this.usersRepository.findOne({ where: { uid }, relations: [ "status" ]});
       if (user) {
         this.logger.log(`findUser: Successfully found user with uid ${uid}`);
         return this.createUserDataFromEntity(user, true);

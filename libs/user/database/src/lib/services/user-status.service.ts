@@ -69,7 +69,7 @@ export class UserStatusService implements IUserStatusService {
   async updateHardUserStatus(status: UserStatus): Promise<UserStatusData> {
     try {
       this.logger.log(`updateHardUserStatus: Starting to update User Status: ${JSON.stringify(status)}`);
-      const currStatus = await this.userStatusRepository.findOne(status.id);
+      const currStatus = await this.userStatusRepository.findOne({ where: { id: status.id } });
       if (!currStatus)
         throw new Error(`No Status found with id ${status.id}`);
         
@@ -87,7 +87,7 @@ export class UserStatusService implements IUserStatusService {
   async getUserStatus(userId: string): Promise<UserStatusData | null> {
     try {
       this.logger.log(`getLastSeenOfUser: Fetching Last Seen Status of User`);
-      const userStatus = await this.userStatusRepository.findOne( userId );
+      const userStatus = await this.userStatusRepository.findOne({ where: { id: userId }});
       if (!userStatus)
         return null;
 
