@@ -6,7 +6,7 @@ echo "Building PokeHub Projects Locally"
 nx build api-gateway --configuration=production
 nx build auth-gateway --configuration=production
 nx build chat-events-gateway --configuration=production
-nx build chat-notif-service --configuraiton=production
+nx build chat-notif-service --configuration=production
 nx build chat-service --configuration=production
 nx build chat-socket-service --configuration=production
 nx build chat-tcp-gateway --configuration=production

@@ -32,8 +32,13 @@ export class RoomService implements IRoomService {
   async getPublicRoomById( roomId: string, includeParticipants?: boolean ): Promise<ChatRoom | null> {
     this.logger.log( `getPublicRoomById: Retrieving Public Room Data for Room ${roomId} with Participant Flag: ${includeParticipants}` );
     try {
-      const room = includeParticipants ? await this.chatRoomRepository.findOne(roomId, { relations: ['participants'], }) : 
-                    await this.chatRoomRepository.findOne(roomId);
+      const room = includeParticipants ? await this.chatRoomRepository.findOne({ relations: ['participants'], where: {
+        id: roomId
+      } }) : await this.chatRoomRepository.findOne({
+        where: {
+          id: roomId
+        }
+      });
 
       if (room) {
         this.logger.log( `getPublicRoomById: Successfully retrieved data for Room ${roomId} with Participant Flag ${includeParticipants}` );

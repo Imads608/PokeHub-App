@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { DefaultEventsMap } from 'socket.io-client/build/typed-events';
+import { DefaultEventsMap } from 'socket.io-client/dist/socket.io';
 import appConfig from '../../../config';
 import http from '../../../axios';
 import { IUserProfileWithToken, IUserProfile } from '@pokehub/user/interfaces';

@@ -5,7 +5,7 @@ import { RoomType } from '@pokehub/room/interfaces';
 
 @Entity('participant', { schema: 'chat-schema' })
 export class Participant implements IParticipant {
-  @ManyToOne(() => ChatRoom, (room) => room.id, { primary: true })
+  @ManyToOne(() => ChatRoom, (room) => room.id)
   room: string;
 
   @PrimaryColumn({ nullable: false })
