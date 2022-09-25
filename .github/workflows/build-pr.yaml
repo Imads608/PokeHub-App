@@ -39,4 +39,4 @@ jobs:
         run: npm install
       
       - name: Build Applications
-        run: bash build/Docker/Scripts/project-builder.sh dev 0
+        run: bash build/Docker/Scripts/project-builder.sh temp 0
