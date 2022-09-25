@@ -7,7 +7,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build next-app --configuration=production
 
-FROM node:14.18 as final
+FROM node:lts as final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/next-app .
 RUN npm install --only=production

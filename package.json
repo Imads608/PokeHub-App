@@ -114,7 +114,7 @@
     "@faker-js/faker": "^6.1.1",
     "@nestjs/schematics": "^7.0.0",
     "@nestjs/testing": "^9.0.11",
-    "@nrwl/cli": "13.4.1",
+    "@nrwl/cli": "14.7.13",
     "@nrwl/cypress": "14.7.5",
     "@nrwl/eslint-plugin-nx": "14.7.5",
     "@nrwl/jest": "14.7.5",
