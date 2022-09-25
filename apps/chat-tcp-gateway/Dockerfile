@@ -5,7 +5,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build chat-tcp-gateway --configuration=production
 
-FROM node:lts-alpine3.10 as final
+FROM node:lts-alpine as final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/chat-tcp-gateway .
 RUN npm install --only=production

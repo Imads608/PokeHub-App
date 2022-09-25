@@ -5,7 +5,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build user-notif-service --configuration=production
 
-FROM node:lts-alpine3.10 as final
+FROM node:lts as final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/user-notif-service .
 RUN npm install --only=production

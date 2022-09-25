@@ -5,7 +5,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build auth-gateway --configuration=production
 
-FROM node:lts-alpine3.10 as final
+FROM node:lts as final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/auth-gateway .
 RUN npm install --only=production

@@ -5,7 +5,7 @@ WORKDIR /app/builder
 COPY . .
 RUN npx nx build mail-gateway --configuration=production
 
-FROM node:lts-alpine3.10 as final
+FROM node:lts-alpine as final
 WORKDIR /app
 COPY --from=builder /app/builder/dist/apps/mail-gateway .
 RUN npm install --only=production
