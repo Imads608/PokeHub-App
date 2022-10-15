@@ -1,0 +1,9 @@
+---
+apiVersion: getambassador.io/v3alpha1
+kind: TLSContext
+metadata:
+  name: istio-upstream
+  namespace: emissary
+spec:
+  secret: istio-certs # This Secret name cannot currently be changed.
+  alpn_protocols: istio # This is required for Istio.

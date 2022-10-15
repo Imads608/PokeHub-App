@@ -1,0 +1,375 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnszones_pokehub_ml_name": {
+            "defaultValue": "pokehub.ml",
+            "type": "String"
+        },
+        "privateDnsZones_pokehub_ml_name": {
+            "defaultValue": "pokehub.ml",
+            "type": "String"
+        },
+        "managedClusters_pokehub_name": {
+            "defaultValue": "pokehub",
+            "type": "String"
+        },
+        "userAssignedIdentities_pokehub_admin_name": {
+            "defaultValue": "pokehub_admin",
+            "type": "String"
+        },
+        "publicIPAddresses_c00828a6_1307_433b_a102_5f921f303f05_externalid": {
+            "defaultValue": "/subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/MC_PokeHub_group_pokehub_eastus/providers/Microsoft.Network/publicIPAddresses/c00828a6-1307-433b-a102-5f921f303f05",
+            "type": "String"
+        },
+        "userAssignedIdentities_pokehub_agentpool_externalid": {
+            "defaultValue": "/subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/MC_PokeHub_group_pokehub_eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/pokehub-agentpool",
+            "type": "String"
+        },
+        "publicIPAddresses_kubernetes_a5bdb25fc3376497cabcb7d37e0d228d_externalid": {
+            "defaultValue": "/subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/mc_pokehub_group_pokehub_eastus/providers/Microsoft.Network/publicIPAddresses/kubernetes-a5bdb25fc3376497cabcb7d37e0d228d",
+            "type": "String"
+        },
+        "virtualNetworks_aks_vnet_40108867_externalid": {
+            "defaultValue": "/subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/MC_PokeHub_group_pokehub_eastus/providers/Microsoft.Network/virtualNetworks/aks-vnet-40108867",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2022-06-02-preview",
+            "name": "[parameters('managedClusters_pokehub_name')]",
+            "location": "eastus",
+            "sku": {
+                "name": "Basic",
+                "tier": "Free"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "kubernetesVersion": "1.22.6",
+                "dnsPrefix": "[concat(parameters('managedClusters_pokehub_name'), '-dns')]",
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "count": 1,
+                        "vmSize": "Standard_B4ms",
+                        "osDiskSizeGB": 128,
+                        "osDiskType": "Managed",
+                        "kubeletDiskType": "OS",
+                        "maxPods": 110,
+                        "type": "VirtualMachineScaleSets",
+                        "enableAutoScaling": false,
+                        "powerState": {
+                            "code": "Running"
+                        },
+                        "orchestratorVersion": "1.22.6",
+                        "enableNodePublicIP": false,
+                        "enableCustomCATrust": false,
+                        "mode": "System",
+                        "osType": "Linux",
+                        "osSKU": "Ubuntu",
+                        "enableFIPS": false
+                    },
+                    {
+                        "name": "userpool",
+                        "count": 1,
+                        "vmSize": "Standard_B4ms",
+                        "osDiskSizeGB": 128,
+                        "osDiskType": "Managed",
+                        "kubeletDiskType": "OS",
+                        "maxPods": 110,
+                        "type": "VirtualMachineScaleSets",
+                        "maxCount": 5,
+                        "minCount": 1,
+                        "enableAutoScaling": true,
+                        "powerState": {
+                            "code": "Running"
+                        },
+                        "orchestratorVersion": "1.22.6",
+                        "enableNodePublicIP": false,
+                        "enableCustomCATrust": false,
+                        "mode": "User",
+                        "osType": "Linux",
+                        "osSKU": "Ubuntu",
+                        "enableFIPS": false
+                    }
+                ],
+                "servicePrincipalProfile": {
+                    "clientId": "msi"
+                },
+                "addonProfiles": {
+                    "azureKeyvaultSecretsProvider": {
+                        "enabled": false
+                    },
+                    "azurepolicy": {
+                        "enabled": false
+                    },
+                    "httpApplicationRouting": {
+                        "enabled": false
+                    }
+                },
+                "nodeResourceGroup": "[concat('MC_PokeHub_group_', parameters('managedClusters_pokehub_name'), '_eastus')]",
+                "enableRBAC": true,
+                "networkProfile": {
+                    "networkPlugin": "kubenet",
+                    "loadBalancerSku": "Standard",
+                    "loadBalancerProfile": {
+                        "managedOutboundIPs": {
+                            "count": 1
+                        },
+                        "effectiveOutboundIPs": [
+                            {
+                                "id": "[parameters('publicIPAddresses_c00828a6_1307_433b_a102_5f921f303f05_externalid')]"
+                            }
+                        ]
+                    },
+                    "podCidr": "10.244.0.0/16",
+                    "serviceCidr": "10.0.0.0/16",
+                    "dnsServiceIP": "10.0.0.10",
+                    "dockerBridgeCidr": "172.17.0.1/16",
+                    "outboundType": "loadBalancer"
+                },
+                "identityProfile": {
+                    "kubeletidentity": {
+                        "resourceId": "[parameters('userAssignedIdentities_pokehub_agentpool_externalid')]",
+                        "clientId": "409adfdb-8476-4360-ba01-7a77711bc4b7",
+                        "objectId": "7769e7c2-d643-41b2-898a-b5bdc10f7f1b"
+                    }
+                },
+                "autoScalerProfile": {
+                    "balance-similar-node-groups": "false",
+                    "expander": "random",
+                    "max-empty-bulk-delete": "10",
+                    "max-graceful-termination-sec": "600",
+                    "max-node-provision-time": "15m",
+                    "max-total-unready-percentage": "45",
+                    "new-pod-scale-up-delay": "0s",
+                    "ok-total-unready-count": "3",
+                    "scale-down-delay-after-add": "10m",
+                    "scale-down-delay-after-delete": "10s",
+                    "scale-down-delay-after-failure": "3m",
+                    "scale-down-unneeded-time": "10m",
+                    "scale-down-unready-time": "20m",
+                    "scale-down-utilization-threshold": "0.5",
+                    "scan-interval": "10s",
+                    "skip-nodes-with-local-storage": "false",
+                    "skip-nodes-with-system-pods": "true"
+                },
+                "securityProfile": {},
+                "oidcIssuerProfile": {
+                    "enabled": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2022-01-31-preview",
+            "name": "[parameters('userAssignedIdentities_pokehub_admin_name')]",
+            "location": "eastus"
+        },
+        {
+            "type": "Microsoft.Network/dnszones",
+            "apiVersion": "2018-05-01",
+            "name": "[parameters('dnszones_pokehub_ml_name')]",
+            "location": "global",
+            "tags": {
+                "env": ""
+            },
+            "properties": {
+                "zoneType": "Public"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[parameters('privateDnsZones_pokehub_ml_name')]",
+            "location": "global",
+            "tags": {
+                "type": "development"
+            },
+            "properties": {
+                "maxNumberOfRecordSets": 25000,
+                "maxNumberOfVirtualNetworkLinks": 1000,
+                "maxNumberOfVirtualNetworkLinksWithRegistration": 100,
+                "numberOfRecordSets": 2,
+                "numberOfVirtualNetworkLinks": 1,
+                "numberOfVirtualNetworkLinksWithRegistration": 1,
+                "provisioningState": "Succeeded"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/agentPools",
+            "apiVersion": "2022-06-02-preview",
+            "name": "[concat(parameters('managedClusters_pokehub_name'), '/agentpool')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_pokehub_name'))]"
+            ],
+            "properties": {
+                "count": 1,
+                "vmSize": "Standard_B4ms",
+                "osDiskSizeGB": 128,
+                "osDiskType": "Managed",
+                "kubeletDiskType": "OS",
+                "maxPods": 110,
+                "type": "VirtualMachineScaleSets",
+                "enableAutoScaling": false,
+                "powerState": {
+                    "code": "Running"
+                },
+                "orchestratorVersion": "1.22.6",
+                "enableNodePublicIP": false,
+                "enableCustomCATrust": false,
+                "mode": "System",
+                "osType": "Linux",
+                "osSKU": "Ubuntu",
+                "enableFIPS": false
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/agentPools",
+            "apiVersion": "2022-06-02-preview",
+            "name": "[concat(parameters('managedClusters_pokehub_name'), '/userpool')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_pokehub_name'))]"
+            ],
+            "properties": {
+                "count": 1,
+                "vmSize": "Standard_B4ms",
+                "osDiskSizeGB": 128,
+                "osDiskType": "Managed",
+                "kubeletDiskType": "OS",
+                "maxPods": 110,
+                "type": "VirtualMachineScaleSets",
+                "maxCount": 5,
+                "minCount": 1,
+                "enableAutoScaling": true,
+                "powerState": {
+                    "code": "Running"
+                },
+                "orchestratorVersion": "1.22.6",
+                "enableNodePublicIP": false,
+                "enableCustomCATrust": false,
+                "mode": "User",
+                "osType": "Linux",
+                "osSKU": "Ubuntu",
+                "enableFIPS": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/A",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "targetResource": {
+                    "id": "[parameters('publicIPAddresses_kubernetes_a5bdb25fc3376497cabcb7d37e0d228d_externalid')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/NS",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 172800,
+                "NSRecords": [
+                    {
+                        "nsdname": "ns1-32.azure-dns.com."
+                    },
+                    {
+                        "nsdname": "ns2-32.azure-dns.net."
+                    },
+                    {
+                        "nsdname": "ns3-32.azure-dns.org."
+                    },
+                    {
+                        "nsdname": "ns4-32.azure-dns.info."
+                    }
+                ],
+                "targetResource": {}
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/SOA",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "SOARecord": {
+                    "email": "azuredns-hostmaster.microsoft.com",
+                    "expireTime": 2419200,
+                    "host": "ns1-32.azure-dns.com.",
+                    "minimumTTL": 300,
+                    "refreshTime": 3600,
+                    "retryTime": 300,
+                    "serialNumber": 1
+                },
+                "targetResource": {}
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('privateDnsZones_pokehub_ml_name'), '/aks-userpool-48405283-vmss000006')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "ttl": 10,
+                "aRecords": [
+                    {
+                        "ipv4Address": "10.224.0.6"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/SOA",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('privateDnsZones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "ttl": 3600,
+                "soaRecord": {
+                    "email": "azureprivatedns-host.microsoft.com",
+                    "expireTime": 2419200,
+                    "host": "azureprivatedns.net",
+                    "minimumTtl": 10,
+                    "refreshTime": 3600,
+                    "retryTime": 300,
+                    "serialNumber": 1
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('privateDnsZones_pokehub_ml_name'), '/development-vn-link')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "registrationEnabled": true,
+                "virtualNetwork": {
+                    "id": "[parameters('virtualNetworks_aks_vnet_40108867_externalid')]"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+  845  helm uninstall psql bitnami/postgresql --set persistence.existingClaim=postgresql-pv-claim --set volumePermissions.enabled=true
+  846  helm uninstall psql
+  847  helm install psql bitnami/postgresql --set persistence.existingClaim=postgresql-pv-claim --set volumePermissions.enabled=true --namespace postgres
+  848  kubectl get all --namespace postgres
+  849  export POSTGRES_PASSWORD=$(kubectl get secret --namespace postgres psql-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+  850  echo $POSTGRES_PASSWORD
+  851  ls
+  852  mv Screen\ Shot\ 2022-10-02\ at\ 11.46.56\ AM.png connection.png
+  853  ls
+  854  mkdir Resources
+  855  cp * Resources
+  856  ls
+  857  rm connection.png
+  858  rm postgres-pv
+  859  rm postgres-pv*
+  860  ls

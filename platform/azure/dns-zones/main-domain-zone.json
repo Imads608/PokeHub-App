@@ -1,0 +1,90 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnszones_pokehub_ml_name": {
+            "defaultValue": "pokehub.ml",
+            "type": "String"
+        },
+        "publicIPAddresses_kubernetes_a5bdb25fc3376497cabcb7d37e0d228d_externalid": {
+            "defaultValue": "/subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/mc_pokehub_group_pokehub_eastus/providers/Microsoft.Network/publicIPAddresses/kubernetes-a5bdb25fc3376497cabcb7d37e0d228d",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/dnszones",
+            "apiVersion": "2018-05-01",
+            "name": "[parameters('dnszones_pokehub_ml_name')]",
+            "location": "global",
+            "tags": {
+                "env": ""
+            },
+            "properties": {
+                "zoneType": "Public"
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/A",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "targetResource": {
+                    "id": "[parameters('publicIPAddresses_kubernetes_a5bdb25fc3376497cabcb7d37e0d228d_externalid')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/NS",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 172800,
+                "NSRecords": [
+                    {
+                        "nsdname": "ns1-32.azure-dns.com."
+                    },
+                    {
+                        "nsdname": "ns2-32.azure-dns.net."
+                    },
+                    {
+                        "nsdname": "ns3-32.azure-dns.org."
+                    },
+                    {
+                        "nsdname": "ns4-32.azure-dns.info."
+                    }
+                ],
+                "targetResource": {}
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/SOA",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('dnszones_pokehub_ml_name'), '/@')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/dnszones', parameters('dnszones_pokehub_ml_name'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "SOARecord": {
+                    "email": "azuredns-hostmaster.microsoft.com",
+                    "expireTime": 2419200,
+                    "host": "ns1-32.azure-dns.com.",
+                    "minimumTTL": 300,
+                    "refreshTime": 3600,
+                    "retryTime": 300,
+                    "serialNumber": 1
+                },
+                "targetResource": {}
+            }
+        }
+    ]
+}

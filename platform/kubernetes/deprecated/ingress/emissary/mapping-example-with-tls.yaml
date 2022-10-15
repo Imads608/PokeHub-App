@@ -1,0 +1,9 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Mapping
+metadata:
+  name: quote-backend
+spec:
+  hostname: "pokehub.ml"
+  prefix: /backend/
+  service: quote:80       # Be explicit about port 80. THIS IS IMPORTANT: see below
+  tls: istio-upstream     # Originate TLS with the mTLS certificate

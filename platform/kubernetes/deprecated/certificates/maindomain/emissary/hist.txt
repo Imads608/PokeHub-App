@@ -1,0 +1,500 @@
+  580  cd .
+  581  cd ..
+  582  ls
+  583  cd ..
+  584  ls
+  585  cd maindomain
+  586  ls
+  587  cd emsisa
+  588  cd emissary/
+  589  lks
+  590  ls
+  591  touch README.md
+  592  subl README.md 
+  593  kubectl apply -f https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.crds.yaml
+  594  helm repo add jetstack https://charts.jetstack.io && helm repo update
+  595  kubectl create ns cert-manager
+  596  helm install cert-manager --namespace cert-manager jetstack/cert-manager
+  597  kubectl get namespaces
+  598  kubectl get all --namespace cert-manager
+  599  kubectl info
+  600  kubectl get info
+  601  kubectl get Host --namespace emissary
+  602  kubectl get secrets --namespace emissary
+  603  cd ..
+  604  ls
+  605  cd ..
+  606  ls
+  607  cd ..
+  608  ls
+  609  cd ingress
+  610  ls
+  611  cd emissary
+  612  ls
+  613  vim main-host.yaml 
+  614  cd ..
+  615  cd ..
+  616  cd certificates/
+  617  ls
+  618  cd maindomain
+  619  ls
+  620  cd emissary
+  621  ls
+  622  ---
+  623  apiVersion: cert-manager.io/v1alpha2
+  624  kind: ClusterIssuer
+  625  metadata:
+  626    name: letsencrypt-prod
+  627  spec:
+  628    acme:
+  629      email: email@example.com
+  630      server: https://acme-v02.api.letsencrypt.org/directory
+  631      privateKeySecretRef:
+  632        name: letsencrypt-prod
+  633      solvers:
+  634      - http01:
+  635          ingress:
+  636            class: nginx
+  637        selector: {}
+  638  ls
+  639  vim ClusterIssuer.yaml
+  640  kubectl apply -f ClusterIssuer.yaml 
+  641  vim ClusterIssuer.yaml 
+  642  kubectl create -f ClusterIssuer.yaml 
+  643  kubectl get crd
+  644  kubectl describe crd clusterissuers.cert-manager.io
+  645  ls
+  646  vim ClusterIssuer.yaml 
+  647  kubectl describe crd clusterissuers.cert-manager.io
+  648  kubectl create -f ClusterIssuer.yaml 
+  649  kubectl get clusterissuer 
+  650  vim Certificate.yaml
+  651  kubectl create -f ClusterIssuer.yaml 
+  652  kubectl create -f Certificate.yaml 
+  653  vim Certificate.yaml 
+  654  kubectl create -f Certificate.yaml 
+  655  kubectl get pods --namespace emissary
+  656  kubectl logs cert-manager-756d6d885d-v7gmg
+  657  kubectl logs cm-acme-http-solver-tmrpx
+  658  kubectl logs cm-acme-http-solver-tmrpx --namespace emissary
+  659  kubectl logs cm-acme-http-solver-tmrpx --namespace emissary
+  660  kubectl get pods --namespace cert-manager
+  661  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d
+  662  ls
+  663  vim HttpAcmeChallenge.yaml
+  664  vim HttpAcmeChallenge.yaml 
+  665  kubectl create -f HttpAcmeChallenge.yaml 
+  666  kubectl get pods --namespace cert-manager
+  667  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d
+  668  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  669  kubectl get secrets --namespace emissary
+  670  kubectl get secrets --namespace emissary
+  671  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  672  kubectl get secrets --namespace emissary
+  673  kubectl get secrets --namespace emissary
+  674  cd ..
+  675  ls
+  676  cd ..
+  677  ls
+  678  cd ..
+  679  ls
+  680  cd ingress
+  681  ls
+  682  cd emissary
+  683  ls
+  684  vim main-host.yaml 
+  685  vim listener.yaml 
+  686  vim main-host
+  687  vim main-host-with-tls.yaml 
+  688  kubectl get secrets --namespace emissary
+  689  kubectl delete secret --namespace emissary tls-cert
+  690  kubectl get secrets --namespace emissary
+  691  ls
+  692  vim main-host-with-tls.yaml 
+  693  cd ..
+  694  ls
+  695  cd ..
+  696  ls
+  697  cd istio/
+  698  ls
+  699  cd emissary/
+  700  ls
+  701  vim tlscontext.yaml 
+  702  kubectl get secrets --namespace emissary
+  703  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  704  cd ..
+  705  ls
+  706  cd ..
+  707  ls
+  708  cd certificates/
+  709  ls
+  710  cd maindomain
+  711  ls
+  712  cd emissary/
+  713  ls
+  714  vim HttpAcmeChallenge.yaml 
+  715  vim Certificate.yaml 
+  716  kubectl apply -f Certificate.yaml 
+  717  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  718  ls
+  719  kubectl create secret tls tls-cert --cert=cert.pem --key=key.pem
+  720  kubectl create secret tls tls-cert --cert=cert.pem --key=key.pem --namespace emissary
+  721  kubectl delete secret tls-cert
+  722  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  723  kubectl delete secret tls-cert
+  724  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  725  kubectl get secrets --namespace emissary
+  726  ls
+  727  kubectl get mapping --namespace emissary
+  728  kubectl get service --namespace emissary
+  729  kubectl get secrets
+  730  kubectl get secrets --namespace emissary
+  731  kubectl get pods --namespace emissary
+  732  kubectl logs --namespace emissary
+  733  kubectl get pods --namespace cert-manager
+  734  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d
+  735  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d > tmp.txt
+  736  vim tmp.txt 
+  737  ls
+  738  vim Certificate.yaml 
+  739  vim ClusterIssuer.yaml 
+  740  ls
+  741  vim Certificate.yaml 
+  742  kubectl apply -f Certificate.yaml 
+  743  vim ClusterIssuer.yaml 
+  744  kubectl get ClusterIssuer
+  745  kubectl get pods --namespace emissary
+  746  kubectl logs --namespace cm-acme-http-solver-cqbq6
+  747  kubectl logs --namespace emissary cm-acme-http-solver-cqbq6
+  748  kubectl logs --namespace emissary cm-acme-http-solver-zxkds
+  749  vim tmp.txt 
+  750  subl tmp.txt 
+  751  kubectl get pods --namespace cert-manager
+  752  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d
+  753  kubectl get secrets
+  754  kubectl get secrets --namespace cert-manage
+  755  kubectl get secrets --namespace cert-managrr
+  756  kubectl get secrets --namespace cert-manager
+  757  kubectl get secrets --namespace emissary
+  758  kubectl get secrets
+  759  kubectl get crd
+  760  kubectl describe crd certificates.cert-manager.io 
+  761  kubectl describe crd clusterissuers.cert-manager.io
+  762  :q
+  763  kubectl get secrets --namespace emissary
+  764  ls
+  765  vim ClusterIssuer.yaml 
+  766  kubectl apply -f ClusterIssuer.yaml 
+  767  kubectl get ClusterIssuer
+  768  kubectl get ClusterIssuer
+  769  kubectl get ClusterIssuer
+  770  kubectl get ClusterIssuer
+  771  kubectl get ClusterIssuer
+  772  kubectl get ClusterIssuer
+  773  kubectl get ClusterIssuer
+  774  kubectl delete ClusterIssuer
+  775  kubectl delete ClusterIssuer letsencrypt-prod
+  776  kubectl apply -f ClusterIssuer.yaml 
+  777  kubectl get ClusterIssuer
+  778  kubectl get ClusterIssuer
+  779  kubectl apply -f Certificate
+  780  kubectl apply -f Certificate.yaml 
+  781  vim Certificate.yaml 
+  782  kubectl apply -f Certificate.yaml 
+  783  kubectl get ClusterIssuer
+  784  kubectl get secrets --namespace emissary
+  785  ls
+  786  vim Certificate.yaml 
+  787  kubectl apply -f Certificate.yaml 
+  788  kubectl get pods --namespace cert-manager
+  789  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d 
+  790  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -100f
+  791  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f 100
+  792  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  793  kubectl get ClusterIssuer
+  794  kubectl describe ClusterIssuer letsencrypt-prod
+  795  vim ClusterIssuer.yaml 
+  796  kubectl apply -f ClusterIssuer.yaml 
+  797  kubectl get ClusterIssuer
+  798  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  799  kubectl get secrets --namespace emissary
+  800  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  801  ls
+  802  vim Certificate.yaml 
+  803  kubectl apply -f Certificate.yaml 
+  804  kubectl get Certificate --namespace emissary
+  805  kubectl get Certificate --namespace emissary
+  806  kubectl describe Certificate --namespace emissary ambassador-certs
+  807  kubectl get Certificate --namespace emissary
+  808  kubectl get Certificate --namespace emissary
+  809  kubectl get Certificate --namespace emissary
+  810  kubectl describe Certificate --namespace emissary ambassador-certs
+  811  kubectl logs --namespace cert-manager cert-manager-7b8d75c477-dwz5d -f
+  812  kubectl get secrets --namespace emissary
+  813  kubectl get all --namespace emissary
+  814  vim Certificate.yaml 
+  815  vim Certificate.yaml 
+  816  vim Certificate.yaml 
+  817  kubectl apply -f Certificate.yaml 
+  818  kubectl get Certificate --namespace emissary
+  819  kubectl get Certificate --namespace emissary
+  820  kubectl describe Certificate --namespace emissary
+  821  vim Certificate.yaml 
+  822  kubectl apply -f Certificate.yaml 
+  823  vim Certificate.yaml 
+  824  kubectl apply -f Certificate.yaml 
+  825  kubectl get Certificate --namespace emissary
+  826  kubectl describe Certificate --namespace emissary
+  827  vim Certificate.yaml 
+  828  kubectl apply -f Certificate.yaml 
+  829  kubectl describe Certificate --namespace emissary
+  830  kubectl get secrets --namespace emissary
+  831  kubectl get secrets --namespace cert-manager
+  832  kubectl get CertificateRequest
+  833  kubectl get CertificateRequest --namespace emissary
+  834  kubectl describe CertificateRequest --namespace emissary ambassador-certs-dc7qh
+  835  kubectl get CertificateRequest --namespace emissary
+  836  kubectl get CertificateRequest --namespace emissary
+  837  kubectl get certificates --namespace emissary
+  838  kubectl get secrets --namespace emissary
+  839  kubectl describe certificates --namespace emissary ambassador-certs
+  840  kubectl describe CertificateRequest --namespace emissary ambassador-certs-dc7qh
+  841  kubectl get Certificate --namespace emissary
+  842  kubectl get resource
+  843  kubectl get issuance 
+  844  kubectl get certificaterequest --namespace emissary
+  845  kubectl describe order
+  846  kubectl describe order --namespace cert-manager
+  847  kubectl describe order --namespace emissary
+  848  kubectl get ordder --namespace emissary
+  849  kubectl get order --namespace emissary
+  850  kubectl kubectl describe challenge ambassador-certs-dc7qh-3289319976-9329676
+  851  kubectl describe challenge ambassador-certs-dc7qh-3289319976-9329676
+  852  kubectl describe challenge ambassador-certs-dc7qh-3289319976-9329676 --namespace emissary
+  853  curl http://pokehub.ml/.well-known/acme-challenge/xvoq4XqOEp02uXjXwOCBatsGr8ie-BDZ8NHMyVp1_UQ
+  854  kubectl get pods
+  855  kubectl exec -it quote-7fcd8d55dd-hllhl -- /bin/bash
+  856  kubectl describe pod quote-7fcd8d55dd-hllhl
+  857  kubectl exec -it quote-7fcd8d55dd-hllhl -c backend -- /bin/bash
+  858  kubectl get pod quote-7fcd8d55dd-hllhl -o jsonpath='{.spec.containers[*].name}{"\n"}'
+  859  kubectl exec -it quote-7fcd8d55dd-hllhl -c backend -- /bin/bash
+  860  kubectl get pods --namespace emissary
+  861  kubectl exec -it emissary-ingress-6448969786-85jhc --namespace emissary  -- /bin/bash
+  862  kubectl get pods --namespace emissary
+  863  kubectl get pods --namespace emissary
+  864  kubectl get pods --namespace emissary
+  865  kubectl get pods --namespace emissary
+  866  kubectl get all --namespace cert-manager
+  867  ls
+  868  kubectl delete -f ClusterIssuer.yaml
+  869  kubectl delete -f Certificate.yaml 
+  870  kubectl delete HttpAcmeChallenge.yaml 
+  871  cp ClusterIssuer.yaml ClusterIssuerDNS01.yaml
+  872  vim ClusterIssuer
+  873  vim ClusterIssuerDNS01.yaml 
+  874  kubectl apply -f ClusterIssuerDNS01.yaml 
+  875  vim ClusterIssuerDNS01.yaml 
+  876  kubectl get pods
+  877  kubectl get pods --namespace cert-manager
+  878  vim ClusterIssuerDNS01.yaml 
+  879  kubectl get ClusterIssuer
+  880  vim Certificate.yaml 
+  881  cp Certificate.yaml CertificateDNS01.yaml
+  882  vim CertificateDNS01.yaml 
+  883  kubectl apply -f CertificateDNS01.yaml 
+  884  kubectl get Certificate -n emissary
+  885  kubectl describe certificate -n emissary pokehub.ml
+  886  :q
+  887  kubectl get secrets -n emissary
+  888  kubectl get Certificate -n emissary
+  889  kubectl get secrets -n emissary
+  890  kubectl describe certificate -n emissary pokehub.ml
+  891  cd ..
+  892  ls
+  893  cd ..
+  894  ls
+  895  cd ..
+  896  ls
+  897  cd ingress
+  898  ls
+  899  cd emissary
+  900  ls
+  901  vim listener.yaml 
+  902  vim main-host-with-tls.yaml 
+  903  vim main-host-with-tls.yaml 
+  904  ls
+  905  vim mapping-example-with-tls.yaml 
+  906  cd ..
+  907  ls
+  908  cd ..
+  909  ls
+  910  cd istio/
+  911  ls
+  912  vim emissary/
+  913  cd emissary/
+  914  ls
+  915  vim tlscontext.yaml 
+  916  cd ..
+  917  ls
+  918  cd emissary
+  919  cd ..
+  920  cd ..
+  921  cd ingress
+  922  ls
+  923  cd emissary
+  924  ls
+  925  kubectl apply -f main-host-with-tls.yaml 
+  926  kubectl get host --namespace emissary
+  927  kubectl get host --namespace emissary
+  928  kubectl get host --namespace emissary
+  929  kubectl get host --namespace emissary
+  930  kubectl get host --namespace emissary
+  931  kubectl edit host --namespace emissary
+  932  kubectl get secrets -n emissary
+  933  kubectl describe secret --namespace emissary pokehub.ml-glz64
+  934  kubectl get ClusterIssuer 
+  935  kubectl describe ClusterIssuer 
+  936  kubectl get ClusterIssuer 
+  937  kubectl get ClusterIssuer letsencrypt-prod
+  938  kubectl describe ClusterIssuer letsencrypt-prod
+  939  kubectl get certificate --namespace emissary
+  940  kubectl describe certificate --namespace emissary pokehub.ml
+  941  kubectl get CertificateRequest --namespace emissary
+  942  kubectl describe certificaterequest --namespace emissary pokehub.ml-nckxp
+  943  kubectl get all --namespace emissary
+  944  kubectl get challenges --namespace emissayr
+  945  kubectl get challenges --namespace emissary
+  946  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  947  ls
+  948  cd ..
+  949  cd ..
+  950  ls
+  951  cd certificates/maindomain/emissary/
+  952  ls
+  953  vim ClusterIssuerDNS01.yaml 
+  954  vim ClusterIssuerDNS01.yaml 
+  955  vim ClusterIssuerDNS01.yaml 
+  956  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  957  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  958  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  959  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  960  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  961  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  962  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  963  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  964  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  965  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  966  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  967  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  968  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  969  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  970  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  971  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  972  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  973  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  974  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  975  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  976  kubectl get challenges --namespace emissary
+  977  kubectl get challenges --namespace emissary
+  978  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  979  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  980  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  981  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  982  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  983  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  984  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  985  ls
+  986  kubectl rollout restart Certificate CertificateDNS01.yaml 
+  987  kubectl get certificates --namespace emissary
+  988  kubectl rollout restart certificate --namespace emissary pokehub.ml
+  989  kubectl describe challenge --namespace emissary pokehub.ml-nckxp-2630555301-3225893671
+  990  kubectl delete certificate CertificateDNS01.yaml 
+  991  kubectl delete CertificateDNS01.yaml 
+  992  kubectl delete -f CertificateDNS01.yaml 
+  993  kubectl apply -f CertificateDNS01.yaml 
+  994  kubectl get certificates --namespace emissary
+  995  kubectl get certificaterequest --namespace emissary
+  996  kubectl describe certificaterequest --namespace emissary pokehub.ml-t8rhz
+  997  kubectl describe certificaterequest --namespace emissary pokehub.ml-t8rhz
+  998  kubectl describe certificaterequest --namespace emissary pokehub.ml-t8rhz
+  999  kubectl describe certificaterequest --namespace emissary pokehub.ml-t8rhz
+ 1000  :q
+ 1001  kubectl get challenge --namespace emissary
+ 1002  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-3225893671
+ 1003  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-3225893671
+ 1004  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-3225893671
+ 1005  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-3225893671
+ 1006  ls
+ 1007  vim ClusterIssuer.yaml 
+ 1008  vim ClusterIssuerDNS01.yaml 
+ 1009  kubectl apply -f ClusterIssuerDNS01.yaml 
+ 1010  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-3225893671
+ 1011  kubectl get challenge --namespace emissary
+ 1012  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-2296592527
+ 1013  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-2296592527
+ 1014  az network dns record-set list -z pokehub.ml
+ 1015  az network dns record-set list -z pokehub.ml --resource-group pokehub.ml
+ 1016  az network dns record-set list -z pokehub.ml --resource-group pokehub
+ 1017  az network dns record-set list -z pokehub.ml --resource-group pokehub_group
+ 1018  kubectl get all --namespace emissary
+ 1019  kubectl rollout restart --namespace emissary
+ 1020  kubectl rollout restart --namespace emissary deployments
+ 1021  kubectl get all --namespace emissary
+ 1022  kubectl get all --namespace emissary
+ 1023  kubectl describe pod --namespace emissary emissary-ingress-7fb87bc8dc-nsnt9
+ 1024  kubectl get all --namespace emissary
+ 1025  kubectl describe deployment --namespace emissary emissary-ingress
+ 1026  kubectl get all --namespace emissary
+ 1027  kubectl logs --namespace emissary emissary-ingress-7fb87bc8dc-nsnt9
+ 1028  ls
+ 1029  kubectl get secrets --namespace emissary
+ 1030  cd ..
+ 1031  ls
+ 1032  cd ..
+ 1033  ls
+ 1034  cd ..
+ 1035  ls
+ 1036  cd ingress
+ 1037  ls
+ 1038  cd emissary
+ 1039  ls
+ 1040  vim main-host-with-tls.yaml 
+ 1041  vim main-host-with-tls.yaml 
+ 1042  vim main-host-with-tls.yaml 
+ 1043  kubectl apply -f main-host-with-tls.yaml 
+ 1044  vim mapping-example-with-tls.yaml 
+ 1045  kubectl get all --namespace emissary
+ 1046  kubectl describe challenge --namespace emissary pokehub.ml-t8rhz-2630555301-2296592527
+ 1047  kubectl get pods --namespace cert-manager
+ 1048  kubectl logs --namespace cert-manager cert-manager-f55444947-mz5bq  
+ 1049  cd ..
+ 1050  cd ..
+ 1051  cd certificates/
+ 1052  ls
+ 1053  cd maindomain/
+ 1054  ls
+ 1055  cd emissary
+ 1056  ls
+ 1057  vim ClusterIssuerDNS01.yaml 
+ 1058  vim CertificateDNS01.yaml 
+ 1059  ls
+ 1060  helm install cert-manager --namespace cert-manager jetstack/cert-manager --set 'extraArgs={--dns01-recursive-nameservers-only,--dns01-recursive-nameservers=ns1-32.azure-dns.com.,ns2-32.azure.dns.net.,ns3-32.azure-dns.org.,ns4-32.azure-dns.info.}'
+ 1061  kubectl get all --namespace cert-manager
+ 1062  kubectl edit pod --namespace cert-manager cert-manager
+ 1063  kubectl edit deployment --namespace cert-manager cert-manager
+ 1064  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml --dns01-recursive-nameservers-only --dns01-recursive-nameservers=ns1-32.azure-dns.com.,ns2-32.azure.dns.net.,ns3-32.azure-dns.org.,ns4-32.azure-dns.info.
+ 1065  helm list
+ 1066  helm --help
+ 1067  helm repos
+ 1068  helm repo
+ 1069  helm list
+ 1070  helm charts
+ 1071  helm char
+ 1072  helm chart
+ 1073  helm list
+ 1074  kubectl get all --namespace cert-manager
+ 1075  helm repo update
+ 1076  helm search repo
+ 1077  helm show chart
+ 1078  helm show chart jetstack/cert-manager
+ 1079  history > hist.txt

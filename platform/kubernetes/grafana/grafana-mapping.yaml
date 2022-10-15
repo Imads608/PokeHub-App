@@ -1,0 +1,13 @@
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  namespace: monitoring
+  name: grafana
+spec:
+  host: internal.pokehub.ml
+  prefix:
+    /grafana/
+    #rewrite: /grafana
+  service: grafana:80
+  tls: istio-upstream

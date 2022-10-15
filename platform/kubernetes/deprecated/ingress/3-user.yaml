@@ -1,0 +1,15 @@
+---
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: maindomain
+  namespace: ambassador
+spec:
+  hostname: pokehub.ml
+  acmeProvider:
+    authority: none
+  tlsSecret:
+    name: tls-cert
+  requestPolicy:
+    insecure:
+      action: Route

@@ -1,0 +1,10 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Host
+metadata:
+  name: main-host
+  namespace: emissary
+spec:
+  hostname: pokehub.ml
+  requestPolicy:
+    insecure:
+      action: Route

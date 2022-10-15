@@ -1,0 +1,172 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: ['']
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources:
+      - configmaps
+    verbs: ['get']
+  - nonResourceURLs: ['/metrics']
+    verbs: ['get']
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    prometheus: prometheus
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  externalUrl: http://localhost/prometheus/
+  routePrefix: /prometheus/
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      app: prometheus
+  ruleSelector:
+    matchLabels:
+      app: prometheus
+  resources:
+    requests:
+      memory: 400Mi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ambassador-monitor
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - ambassador
+  selector:
+    matchLabels:
+      service: ambassador-admin
+  endpoints:
+    - port: ambassador-admin
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-app-monitor
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      service: sample-app
+  endpoints:
+    - port: http
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-monitor
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      component: otel-collector
+  endpoints:
+    - port: metrics
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jaeger-collector-monitor
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app: jaeger
+  endpoints:
+    - targetPort: 14269
+
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: prometheus-ui
+  namespace: monitoring
+spec:
+  prefix: /prometheus/
+  rewrite: /prometheus/
+  host: internal.pokehub.ml
+  service: prometheus:9090
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ambassador-rules
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  groups:
+    - name: Ambassador Ingress Rules
+      rules:
+        - alert: Throughput (req/sec)
+          expr: sum(rate(envoy_http_downstream_rq_xx{}[1m])) < 5
+        - alert: Latency (ms)
+          expr: sum(rate(envoy_http_downstream_rq_time_sum{}[1m])) / sum(rate(envoy_http_downstream_rq_time_count{}[1m])) > 500
+        - alert: Error Rate (%)
+          expr: sum(rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5"}[1m])) / sum(rate(envoy_http_downstream_rq_xx{}[1m])) * 100 > 10
