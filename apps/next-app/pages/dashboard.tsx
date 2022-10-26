@@ -1,28 +1,25 @@
-import { getDrawerToggle } from '../store/selectors/drawer';
 import { useSelector } from 'react-redux';
-import { RootState, wrapper } from '../store/store';
+import { RootState } from '../store/store';
 import { getUser, isProfileSetup } from '../store/selectors/user';
-import { getAppTheme } from '../store/selectors/app';
-import { IUserData, TypeAccount } from '@pokehub/user/interfaces';
+import { getPaletteTheme } from '../store/selectors/app';
+import { IUserData } from '@pokehub/user/interfaces';
 import UserGuide from '../components/dashboard/guide/userGuide';
-import { Button, Collapse, Fade, Grow, PaletteMode } from '@mui/material';
+import { Grow, PaletteMode } from '@mui/material';
 import React, { useState } from 'react';
-import { createTheme, CustomTheme, CustomThemeOptions } from '@mui/material/styles';
+import { createTheme, CustomTheme } from '@mui/material/styles';
 import { getMainAppDesignTokens } from '../styles/mui/themes/theme';
-import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
-import TrainerCard from '../components/dashboard/trainer-card/trainerCard';
+import { ThemeProvider } from '@mui/material/styles';
 import NavigationLinks from '../components/dashboard/navigation-links/navigationLinks';
 import withLoadUser from '../hoc/auth/withLoadUser';
-import { GetServerSideProps } from 'next';
-import { useTheme } from '@mui/material';
+import { usePageStyles } from "../hooks/styles/common/usePageStyles";
 
 const Dashboard = () => {
+  const { classes } = usePageStyles({ padding: '15px', alignItems: 'center', overflow: 'auto' });
   const user: IUserData = useSelector<RootState, IUserData>(getUser);
-  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
   const profileSetupFlag = useSelector<RootState, boolean>(isProfileSetup);
   const profileSetupEnable = localStorage.getItem('profile-setup-enable') === null ? true : localStorage.getItem('profile-setup-enable') === 'true';
   const [ guideOpen, setGuideOpen ] = useState<boolean>(profileSetupEnable);
-  //const theme: CustomTheme = useTheme();
   const appTheme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getMainAppDesignTokens(mode)), [mode]);
 
   const closeGuide = () => {
@@ -39,7 +36,7 @@ const Dashboard = () => {
   return (
   
     <ThemeProvider theme={appTheme}>
-      <div style={{ height: '93vh', padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'auto' }}>
+      <main className={classes.root}>
         <Grow 
           in={!guideOpen ? false : !profileSetupFlag} 
           mountOnEnter 
@@ -64,7 +61,7 @@ const Dashboard = () => {
           <div>Authenticated</div>
           <div>Authenticated</div>
         </div>*/}
-      </div>
+      </main>
     </ThemeProvider>
   );
 };

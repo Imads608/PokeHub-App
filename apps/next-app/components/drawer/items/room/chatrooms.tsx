@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import PropTypes from 'prop-types';
-import { chatroom_opened, chatroom_closed, PublicRoomData, } from '../../../../store/reducers/room';
+import { chatroom_closed, PublicRoomData, } from '../../../../store/reducers/room';
 import ChatIcon from '@mui/icons-material/Chat';
 import { List, ListItemText, ListItem, MenuItem, Menu, ListItemButton, } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import { Accordion, AccordionSummary } from '../../../custom/accordion';
@@ -20,8 +18,9 @@ import { OpenedWindow, WindowTypes } from '../../../../store/reducers/app';
 import { RootState } from '../../../../store/store';
 import styles from '../../drawer.module.scss';
 import { Dispatch } from '@reduxjs/toolkit';
+import { makeStyles } from 'tss-react/mui'
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()(() => ({
   headerBlock: {
     display: 'flex',
     alignItems: 'center',
@@ -35,12 +34,12 @@ const useStyles = makeStyles({
       color: 'red',
     },
   },
-});
+}));
 
 const ChatRooms = () => {
   const [anchorEl, setAnchorEl] = useState<any>(null);
   const [expand, setExpand] = useState<boolean>(false);
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
 
   const chatrooms: PublicRoomData[] = useSelector<RootState, PublicRoomData[]>( getAllChatRooms );

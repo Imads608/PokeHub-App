@@ -1,14 +1,14 @@
 
 import { Avatar, CustomTheme, Divider, ListItem, ListItemButton, Paper } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
 import TrainerCardHeaderLeft from '../../../public/images/TrainerCardHeaderLeft.png';
 import TrainerCardHeaderRight from '../../../public/images/TrainerCardHeaderRight.png';
-import { IUserData, IUserPublicProfile } from '@pokehub/user/interfaces';
+import { IUserPublicProfile } from '@pokehub/user/interfaces';
 import Image from 'next/image';
 import { ClassNameMap } from '@mui/styles';
 import Link from 'next/link';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme: CustomTheme) => ({
+const useStyles = makeStyles()((theme: CustomTheme) => ({
     root: {
         fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
         color: 'white',
@@ -87,7 +87,7 @@ interface TrainerCardProps {
 
 
 const TrainerCard = ({ userProfile }: TrainerCardProps) => {
-    const classes = useStyles();
+    const { classes } = useStyles();
 
     return (
         <>

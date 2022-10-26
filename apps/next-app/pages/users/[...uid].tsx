@@ -1,26 +1,24 @@
-import { IUserData } from '@pokehub/user/interfaces';
 import { NextRouter, useRouter } from 'next/router';
-import { getUser } from '../../store/selectors/user';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUserPublicProfile } from '../../hooks/user/useUserPublicProfile';
 import TrainerCard from '../../components/user/profile/trainerCard';
 import { CustomTheme, createTheme, PaletteMode } from '@mui/material';
 import { getMainAppDesignTokens } from '../../styles/mui/themes/theme';
-import { getAppTheme } from '../../store/selectors/app';
-import { ClassNameMap, makeStyles, ThemeProvider } from '@mui/styles';
+import { getPaletteTheme } from '../../store/selectors/app';
+import { ThemeProvider } from '@mui/styles';
 import RestError from '../../components/common/rest-error/restError';
 import { AxiosError } from 'axios';
 import { APIError } from '../../types/api';
 import About from '../../components/user/profile/about';
-import Link from 'next/link';
 import BattleStats from '../../components/user/profile/battleStats';
 import Friends from '../../components/user/profile/friends';
 import ActiveRooms from '../../components/user/profile/activeRooms';
 import Teams from '../../components/user/profile/teams';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme: CustomTheme) => ({
+const useStyles = makeStyles()((theme: CustomTheme) => ({
   root: {
     height: '93vh',
     display: 'flex',
@@ -44,19 +42,11 @@ const useStyles = makeStyles((theme: CustomTheme) => ({
   },
 }));
 
-const Header = ({ classes, theme }: { classes: ClassNameMap<'title'>, theme: CustomTheme } ) => {
-  return (
-    <h3 style={{ fontFamily: theme.palette.fontTextOptions.primary.fontFamily }} className={classes.title}>
-      <span>Profile</span>
-    </h3>
-  );
-};
-
 const UserProfile = () => {
-  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
   const appTheme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getMainAppDesignTokens(mode)), [mode]);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const router: NextRouter = useRouter();
   //const user: IUserData = useSelector<RootState, IUserData>(getUser);
   const { uid } = router.query;

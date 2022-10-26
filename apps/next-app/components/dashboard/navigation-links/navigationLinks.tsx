@@ -1,13 +1,12 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faCommentAlt, faGamepad, faBookOpen, faBook } from '@fortawesome/free-solid-svg-icons';
 import NavigationLinkItem from './navigationLinkItem';
-import styles from './navigation-links.module.scss';
 import { CustomTheme } from '@mui/material';
-import { ClassNameMap, makeStyles } from '@mui/styles';
 import PokedexIcon from '../../../public/svg/surprised-pikachu-meme.svg';
 import Image from 'next/image';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme: CustomTheme) => ({
+const useStyles = makeStyles()((theme: CustomTheme) => ({
     root: {
         display: 'flex',
         fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
@@ -66,7 +65,7 @@ const useStyles = makeStyles((theme: CustomTheme) => ({
     }
 }));
 
-const Header = ({ classes }: { classes: ClassNameMap<'header'> } ) => {
+const Header = ({ classes }: { classes: Record<'header', string> } ) => {
   return (
     <h3 className={classes.header}>
       <span>Navigation Links</span>
@@ -75,7 +74,7 @@ const Header = ({ classes }: { classes: ClassNameMap<'header'> } ) => {
 };
 
 const NavigationLinks = ({ theme }: { theme: CustomTheme }) => {
-    const classes = useStyles();
+    const { classes } = useStyles();
     return (
         <div className={classes.root}>
             <Header classes={classes} />

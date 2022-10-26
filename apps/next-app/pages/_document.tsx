@@ -2,7 +2,6 @@
 /* eslint-disable @next/next/no-sync-scripts */
 import Document, { Html, Head, Main, NextScript } from 'next/document';
 import * as React from 'react';
-import { ServerStyleSheets } from '@mui/styles';
 import createEmotionCache from '../styles/mui/createEmotionCache';
 import createEmotionServer from '@emotion/server/create-instance';
 

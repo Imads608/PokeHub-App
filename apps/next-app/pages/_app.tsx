@@ -13,7 +13,7 @@ import useLoadUser from '../hooks/auth/useLoadUser';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
-import { getAppTheme } from '../store/selectors/app';
+import { getPaletteTheme } from '../store/selectors/app';
 import { useSelector } from 'react-redux';
 import { createTheme } from '@mui/material/styles';
 import { CustomTheme } from '@mui/material';
@@ -51,7 +51,7 @@ const clientSideEmotionCache = createEmotionCache();
 
 const WrappedApp = (props) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
-  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
 
   const theme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getRootDesignTokens(mode)), [mode]);
 
@@ -81,7 +81,7 @@ const WrappedApp = (props) => {
 };
 
 const MainApp = ({ Component, pageProps, theme }) => {
-  const navRef = useRef(null);
+  const navRef: React.MutableRefObject<HTMLButtonElement> = useRef(null);
   const drawerToggle: boolean = useSelector<RootState, boolean>(getDrawerToggle);
   const isAuthenticated: boolean = useSelector<RootState, boolean>(getIsAuthenticated);
   const authLoading: boolean = useSelector<RootState, boolean>(getAuthLoading);

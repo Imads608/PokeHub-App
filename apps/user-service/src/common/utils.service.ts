@@ -14,6 +14,10 @@ export class UtilsService implements IUtilsService {
 
     populateAvatarURL(userData: UserData): void {
         this.logger.log(`populateAvatarURL: Creating url for user with details: ${JSON.stringify(userData.avatar)}`);
+        if (!userData.avatar) {
+            this.logger.log(`populateAvatarURL: No Avatar found for user. Skipping...`);
+            return;
+        }
         userData.avatarUrl = this.objectStoreService.getUrlForImageObject(new ObjectImageUrlRequest(new BucketDetails(userData.avatar.bucketName, userData.avatar.objectPath)
                                                                     , 'avatar.png', 900));
     }

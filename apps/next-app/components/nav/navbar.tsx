@@ -4,17 +4,14 @@ import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
-import makeStyles from '@mui/styles/makeStyles';
-
 import logo from '../../public/images/pokehub-logo.png';
-import Badge from '@mui/material/Badge';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './navbar.module.scss';
-import { PaletteMode, Theme } from '@mui/material';
+import { CustomTheme, PaletteMode } from '@mui/material';
 import ThemeSwitch from './themeSwitch';
 import { toggle_theme } from '../../store/reducers/app';
-import { getAppTheme } from '../../store/selectors/app';
+import { getPaletteTheme } from '../../store/selectors/app';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from '@reduxjs/toolkit';
 import { RootState } from '../../store/store';
@@ -25,10 +22,9 @@ import UserMenu from './user/userMenu';
 import UserNotifications from './user/userNotifications';
 import { drawer_opened } from '../../store/reducers/drawer';
 import { getDrawerToggle } from '../../store/selectors/drawer';
+import { makeStyles } from 'tss-react/mui';
 
-const drawerWidth = 240;
-
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles()((theme: CustomTheme) => ({
   root: {
     position: 'sticky',
     top: 0,
@@ -45,26 +41,18 @@ const useStyles = makeStyles((theme: Theme) => ({
       duration: theme.transitions.duration.leavingScreen,
     }),
     backgroundColor: 'rgb(199, 0, 57)',
-  },
-  appBarShift: {
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    marginRight: drawerWidth,
-  },
+  }
 }));
 
 interface NavbarProps {
-  navRef: any;
+  navRef: React.MutableRefObject<HTMLButtonElement>;
 }
 
 const Navbar = ({ navRef }: NavbarProps) => {
-  const classes: any = useStyles();
+  const { classes } = useStyles();
   const dispatch: Dispatch = useDispatch();
   const currMode: PaletteMode = useSelector<RootState, PaletteMode>(
-    getAppTheme
+    getPaletteTheme
   );
   const user: IUserData = useSelector<RootState, IUserData>(getUser);
   const isAuthenticated: boolean = useSelector<RootState, boolean>(
@@ -78,9 +66,7 @@ const Navbar = ({ navRef }: NavbarProps) => {
     <div className={classes.root}>
       <AppBar
         position="sticky"
-        className={clsx(classes.appBar, {
-          [classes.appBarShift]: false,
-        })}
+        className={classes.appBar}
       >
         <Toolbar style={{ minHeight: '7vh' }}>
           <Image height={40} width={40} src={logo} alt="logo" />
@@ -113,12 +99,10 @@ const Navbar = ({ navRef }: NavbarProps) => {
                 aria-label="open drawer"
                 edge="end"
                 onClick={() => dispatch(drawer_opened())}
-                className={clsx(drawerToggle && classes.hide)}
+                className={clsx(drawerToggle)}
                 size="large"
               >
-                {/*<Badge badgeContent={unreadDMCount} color='primary'>*/}
                 <MenuIcon />
-                {/*</Badge>*/}
               </IconButton>
             </>
           )}
