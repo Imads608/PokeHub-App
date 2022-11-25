@@ -1,14 +1,23 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import appConfig from './config';
 
 import createAuthRefreshInterceptor from 'axios-auth-refresh';
 
-const http = axios.create({
-  baseURL: `${appConfig.apiGateway}`,
-  withCredentials: false,
-});
+let http: AxiosInstance;
 
-createAuthRefreshInterceptor(http, (failedRequest => http.get(`${appConfig.frontend}/api/auth/load-user`).then(resp => {
+export const getAxiosInstance = () => {
+  if (http) {
+    return http;
+  }
+  http = axios.create({
+    baseURL: `${appConfig.apiGateway}`,
+    timeout: 10000,
+    withCredentials: false,
+  });
+  return http;
+} 
+
+createAuthRefreshInterceptor(getAxiosInstance(), (failedRequest => getAxiosInstance().get(`${appConfig.frontend}/api/auth/load-user`).then(resp => {
   const { accessToken } = resp.data;
   console.log('Refetching Access Token');
   //const bearer = `Bearer ${accessToken}`;

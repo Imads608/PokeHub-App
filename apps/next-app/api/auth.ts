@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { getAPIRequestHeader } from './utils';
 import appConfig from '../config';
-import http from '../axios';
+import http, { getAxiosInstance } from '../axios';
 import { IUserData, IUserProfile, IUserProfileWithToken, IUserPublicProfile, } from '@pokehub/user/interfaces';
 import { TokenTypes } from '@pokehub/auth/interfaces';
 
@@ -28,7 +28,8 @@ export const signupUser = async ( email: string, username: string, password: str
 };
 
 export const getNewAccessToken = async () => {
-  const resp: AxiosResponse<{ access_token: string }> = await http.get( `/auth/access-token` );
+  console.log('Base url is: ', http.defaults.baseURL);
+  const resp: AxiosResponse<{ access_token: string }> = await getAxiosInstance().get( `/auth/access-token` );
   return resp.data.access_token;
 };
 

@@ -1,38 +1,31 @@
 /* eslint-disable no-labels */
 import React, { useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import withStyles from '@mui/styles/withStyles';
 import Button from '@mui/material/Button';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../../store/actions/common';
 import { useQueryClient } from 'react-query';
 import Badge from '@mui/material/Badge';
-import { makeStyles } from '@mui/styles';
 import { IUserData, IUserStatusData, Status } from '@pokehub/user/interfaces';
 import styles from '../navbar.module.scss';
 import { useLogoutUser } from '../../../hooks/auth/useLogoutUser';
 import { toast } from 'react-toastify';
-import { getAppTheme } from '../../../store/selectors/app';
+import { getPaletteTheme } from '../../../store/selectors/app';
 import { getUserStatus, getUsersNSClientId } from '../../../store/selectors/user';
 import { RootState } from '../../../store/store';
 import { CustomTheme, PaletteMode } from '@mui/material';
 import { StyledMenu } from '../../common/menu-bar/styledMenu';
 import UserMenuItems from './menu-items/userMenuItems';
 import StatusMenuItems from './menu-items/statusMenuItems';
-import Link from 'next/link';
 import { status_update } from '../../../store/reducers/user';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles<CustomTheme, { userStatus: Status }>((theme: CustomTheme) => ({
+const useStyles = makeStyles<{ userStatus: Status }>()((theme: CustomTheme, { userStatus }) => ({
   badge: {
     fontSize: 'x-large',
     height: '12px',
     width: '12px',
     borderRadius: '10px',
-    backgroundColor: ({userStatus}) => userStatus === Status.ONLINE ? theme.palette.success.main : userStatus === Status.AWAY || userStatus === Status.APPEAR_AWAY ?
+    backgroundColor: userStatus === Status.ONLINE ? theme.palette.success.main : userStatus === Status.AWAY || userStatus === Status.APPEAR_AWAY ?
                       theme.palette.warning.main : userStatus === Status.BUSY || userStatus === Status.APPEAR_BUSY ? theme.palette.error.main :
                       'grey'
   }
@@ -50,10 +43,10 @@ const UserMenu = ({ user }: UserMenuProps) => {
   const [enableLogout, setEnableLogout] = React.useState<boolean>(false);
   const [menuType, setMenuType] = React.useState<'main-menu' | 'status-menu'>('main-menu');
   const result = useLogoutUser(user.uid, enableLogout);
-  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+  const mode: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
   const status = useSelector<RootState, IUserStatusData>(getUserStatus);
   const socketId = useSelector<RootState, string>(getUsersNSClientId);
-  const classes = useStyles({ userStatus: status.state });
+  const { classes } = useStyles({ userStatus: status.state });
 
   useEffect(() => {
     result.error && toast.error('Looks like something went wrong. Please try again',

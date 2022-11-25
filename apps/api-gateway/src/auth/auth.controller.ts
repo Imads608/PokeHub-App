@@ -84,6 +84,7 @@ export class AuthController {
   async getAccessToken(@Req() req: Request): Promise<{ access_token: string }> {
     this.logger.log( `getAccessToken: Got request to generate Access Token for user` );
     if (!req.cookies['refreshToken']) {
+      this.logger.log(`getAccessToken: No Refresh Token Provided, Unauthorizing user`);
       throw new UnauthorizedException();
     }
     return await this.authService.getNewAccessToken( req.cookies['refreshToken']);

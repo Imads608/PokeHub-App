@@ -4,20 +4,21 @@ import { EmailFieldProps } from './props/emailFieldProps';
 import CircularProgress from '@mui/material/CircularProgress';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
-import { useFieldStyles } from './styles/useFieldStyles';
+import { useFieldStyles } from '../../../hooks/styles/auth/useFieldStyles';
+import { useMemo } from 'react';
 
 
 const EmailField = ({ control, controllerProps, availabilityResults }: EmailFieldProps) => {
-  const classes = useFieldStyles();
+  const {classes} = useFieldStyles();
 
-  const defaultControllerProps = {
+  const defaultControllerProps = useMemo(() => ({
     name: 'email', 
     control, 
     rules: {
       required: { value: true, message: 'This field is required' },
       pattern: { value: /.+@.+/, message: 'Please enter a valid email' },
     }, defaultValue: ''
-  }
+  }), [control]);
 
   const {
     field: { ref, value, ...inputProps },

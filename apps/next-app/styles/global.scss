@@ -13,20 +13,6 @@ body,
   font-weight: bold;
 }
 
-.full-drawer-open {
-  margin-right: 240px;
-  transition: ease-in-out 0.2s; /* Animation */
-}
-
-.dashboard {
-  width: calc(100% - 240px);
-}
-
-.theme-text {
-  font-family: 'Orbitron', sans-serif;
-  color: white;
-}
-
 /*.app {
   font-family: sans-serif;
   min-width: 300px;

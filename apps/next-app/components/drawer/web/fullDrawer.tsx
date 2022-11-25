@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';

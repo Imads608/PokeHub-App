@@ -1,18 +1,19 @@
-import { Avatar, Box, Container, Typography, Button, PaletteMode, } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
+import { Avatar, Box, Container, Typography, Button, PaletteMode } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect } from 'react';
-import { FieldValues, UseControllerProps, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import EmailField from '../../../components/auth/fields/emailField';
 import { Theme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { toast } from 'react-toastify';
-import { getAppTheme } from '../../../store/selectors/app';
+import { getPaletteTheme } from '../../../store/selectors/app';
 import { useSendPasswordReset } from '../../../hooks/auth/useSendPasswordReset';
 import Copyright from '../../../components/common/copyright';
+import { usePageStyles } from 'apps/next-app/hooks/styles/common/usePageStyles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles()((theme: Theme) => ({
     paper: {
       marginTop: theme.spacing(8),
       display: 'flex',
@@ -33,16 +34,17 @@ const useStyles = makeStyles((theme: Theme) => ({
   }));
 
 const PasswordReset = () => {
-    const classes = useStyles();
+    const { classes: pageClasses } = usePageStyles();
+    const {classes} = useStyles();
     const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
     const mutation = useSendPasswordReset();
-    const theme: PaletteMode = useSelector<RootState, PaletteMode>(getAppTheme);
+    const mode: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
 
     const successNotification = () => {
         toast.success("A Password Reset Link has been sent to the provided Email.",
         {
           position: toast.POSITION.TOP_CENTER,
-          theme,
+          theme: mode,
           style: { maxWidth: '80vh', width: '150%', left: -80, position: 'absolute', justifySelf: 'start', alignSelf: 'center' }
         });
     }
@@ -51,7 +53,7 @@ const PasswordReset = () => {
         toast.error('Uh Oh. Looks like something went wrong. Please try again later',
         {
           position: toast.POSITION.TOP_CENTER,
-          theme,
+          theme: mode,
           style: { maxWidth: '80vh', width: '150%', left: -80, position: 'absolute', justifySelf: 'start', alignSelf: 'center' }
         });
     }
@@ -63,7 +65,7 @@ const PasswordReset = () => {
     }, [mutation.isSuccess, mutation.isLoading]);
 
     return (
-        <div>
+        <div className={pageClasses.root}>
             <Container component="main" maxWidth="xs">
                 <div className={classes.paper}>
                     <Avatar className={classes.avatar}>
