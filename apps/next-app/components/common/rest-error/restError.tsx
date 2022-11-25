@@ -1,17 +1,18 @@
-import styles from './rest-error.module.scss';
 import SentimentVeryDissatisfied from '@mui/icons-material/SentimentVeryDissatisfied';
 import Link from 'next/link';
 import { Button } from '@mui/material';
+import { usePageStyles } from '../../../hooks/styles/common/usePageStyles';
 
 interface RestErrorProps {
     message?: string
 }
 
 const RestError = ({ message }: RestErrorProps) => {
+    const { classes } = usePageStyles();
     const defaultMessage = message ? message : 'Uh Oh. Looks Like Something Went Wrong.';
 
     return (
-        <div className={styles['content']}>
+        <div className={classes.root}>
             <SentimentVeryDissatisfied
                 fontSize="large"
                 style={{ width: '80px', height: '80px', color: 'grey' }}

@@ -3,11 +3,12 @@ import { CSSProperties } from 'react';
 import { makeStyles } from 'tss-react/mui';
 
 export const usePageStyles = (additionalProps?: CSSProperties) => {
-    return makeStyles<{ additionalProps?: CSSProperties }>()((theme: CustomTheme, { additionalProps }) => ({
+    return makeStyles<{ additionalProps?: CSSProperties }>()((_, { additionalProps }) => ({
         root: {
-            height: '93vh',
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            overflowY: 'auto',
             ...additionalProps
         }
     }))({ additionalProps });

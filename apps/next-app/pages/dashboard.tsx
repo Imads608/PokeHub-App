@@ -7,7 +7,7 @@ import UserGuide from '../components/dashboard/guide/userGuide';
 import { Grow, PaletteMode } from '@mui/material';
 import React, { useState } from 'react';
 import { createTheme, CustomTheme } from '@mui/material/styles';
-import { getMainAppDesignTokens } from '../styles/mui/themes/theme';
+import { getAppMainDesignTokens } from '../styles/mui/themes/theme';
 import { ThemeProvider } from '@mui/material/styles';
 import NavigationLinks from '../components/dashboard/navigation-links/navigationLinks';
 import withLoadUser from '../hoc/auth/withLoadUser';
@@ -20,7 +20,7 @@ const Dashboard = () => {
   const profileSetupFlag = useSelector<RootState, boolean>(isProfileSetup);
   const profileSetupEnable = localStorage.getItem('profile-setup-enable') === null ? true : localStorage.getItem('profile-setup-enable') === 'true';
   const [ guideOpen, setGuideOpen ] = useState<boolean>(profileSetupEnable);
-  const appTheme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getMainAppDesignTokens(mode)), [mode]);
+  const appTheme: CustomTheme = React.useMemo((): CustomTheme => createTheme(getAppMainDesignTokens(mode)), [mode]);
 
   const closeGuide = () => {
     localStorage.setItem('profile-setup-enable', 'false');

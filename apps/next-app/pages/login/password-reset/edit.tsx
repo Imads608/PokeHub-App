@@ -1,5 +1,5 @@
 import { Avatar, Box, Container, Typography, Button, PaletteMode, CircularProgress, } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
+import { makeStyles } from 'tss-react/mui';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,14 +13,14 @@ import Copyright from '../../../components/common/copyright';
 import { usePasswordReset } from '../../../hooks/auth/usePasswordReset';
 import useValidateToken from '../../../hooks/auth/useValidateToken';
 import { TokenTypes } from '@pokehub/auth/interfaces';
-import styles from '../../../styles/password-reset-edit.module.scss';
 import SuccessAuthNotification from '../../../components/auth/notifications/successAuthNotification';
 import FailureAuthNotification from '../../../components/auth/notifications/failureAuthNotification';
 import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { AxiosError } from 'axios';
 import { APIError } from '../../../types/api';
+import { usePageStyles } from 'apps/next-app/hooks/styles/common/usePageStyles';
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles()((theme: Theme) => ({
     paper: {
       marginTop: theme.spacing(8),
       display: 'flex',
@@ -50,12 +50,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 }
 
 const NewPassword = ({ passwordResetToken }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
-    const classes = useStyles();
+    const { classes: pageClasses } = usePageStyles({ alignItems: 'center', justifyContent: 'center' });
+    const {classes} = useStyles();
     const mutation = usePasswordReset();
     const [ enableValidation, setEnableValidation ] = useState<boolean>(true);
     const theme: PaletteMode = useSelector<RootState, PaletteMode>(getPaletteTheme);
     const validationResult = useValidateToken(passwordResetToken, TokenTypes.PASSWORD_RESET_TOKEN, enableValidation);
-    const { handleSubmit, getValues, control, formState: { errors } } = useForm({ mode: 'onChange' });
+    const { handleSubmit, control } = useForm({ mode: 'onChange' });
     const mutationError: AxiosError<APIError> = mutation.error as AxiosError<APIError>;
     const notifyError = (message) => {
         toast.error(message,
@@ -72,7 +73,7 @@ const NewPassword = ({ passwordResetToken }: InferGetServerSidePropsType<typeof 
 
     return (
         <div className={(validationResult.isLoading || mutation.isLoading) || !validationResult.data || mutation.isSuccess || mutation.isError ? 
-                        styles['main-window'] : ''}>
+                        pageClasses.root : ''}>
             { validationResult.isLoading || mutation.isLoading? (
                 <CircularProgress /> 
             ) : mutation.isSuccess ? (

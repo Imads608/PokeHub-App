@@ -9,7 +9,6 @@ import { makeStyles } from 'tss-react/mui';
 const useStyles = makeStyles()((theme: CustomTheme) => ({
     root: {
         display: 'flex',
-        fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
         color: theme.palette.primary.main,
         width: '100%',
         flexDirection: 'column',
@@ -25,7 +24,7 @@ const useStyles = makeStyles()((theme: CustomTheme) => ({
         margin: '25px 0 30px',
         '& span': {
             padding: '0 10px',
-            backgroundColor: theme.palette.background.default
+            backgroundColor: 'inherit'
         }
     },
     items: {

@@ -31,7 +31,6 @@ import { withEmailAvailableField } from '../../hoc/auth/fields/withEmailAvailabl
 import { withUsernameAvailableField } from '../../hoc/auth/fields/withUsernameAvailableField';
 import GoogleButton from 'react-google-button';
 import appConfig from '../../config';
-import { AuthForm, AuthFormLogo, DetailsSection } from 'apps/next-app/components/auth/styled/formContainer';
 import { useTheme } from '@mui/material/styles';
 import { useAuthFormStyles } from '../../hooks/styles/auth/useAuthFormStyles';
 

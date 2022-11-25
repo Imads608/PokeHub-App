@@ -1,93 +1,18 @@
 
-import { Avatar, CustomTheme, Divider, ListItem, ListItemButton, Paper } from '@mui/material';
+import { Avatar, Divider, ListItemButton, Paper } from '@mui/material';
 import TrainerCardHeaderLeft from '../../../public/images/TrainerCardHeaderLeft.png';
 import TrainerCardHeaderRight from '../../../public/images/TrainerCardHeaderRight.png';
 import { IUserPublicProfile } from '@pokehub/user/interfaces';
 import Image from 'next/image';
-import { ClassNameMap } from '@mui/styles';
 import Link from 'next/link';
-import { makeStyles } from 'tss-react/mui';
-
-const useStyles = makeStyles()((theme: CustomTheme) => ({
-    root: {
-        fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
-        color: 'white',
-        height: '35%',
-        width: '70%',
-        padding: '5px',
-        display: 'flex',
-        marginTop: '10px',
-        flexDirection: 'column',
-        flexWrap: 'wrap',
-        position: 'relative',
-        backgroundImage: `url('/images/TrainerCardBackground.png')`,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-    },
-    title: {
-        fontFamily: theme.palette.fontTextOptions.primary.fontFamily,
-        color: theme.palette.primary.main,
-        fontSize: 'x-large',
-        width: '50%',
-        textAlign: 'center',
-        borderBottom: '3px solid darkgrey',
-        lineHeight: '0.1em',
-        margin: '25px 0',
-        '& span': {
-            padding: '0 10px',
-            backgroundColor: theme.palette.background.default
-        }
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center'
-    },
-    body: {
-        marginLeft: '10px',
-        marginTop: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        flexWrap: 'wrap',
-        width: '40%',
-        '& h3': {
-            padding: '5px',
-            backgroundColor: theme.palette.primary.main,
-            borderRadius: '5px',
-            width: '95%'
-        }
-    },
-    avatar: {
-        marginTop: '10px',
-        marginRight: '10px',
-        width: '100px',
-        height: '100px'
-    },
-    content: {
-        display: 'flex',
-        flexDirection: 'column',
-        fontSize: 'large'
-    },
-    link: {
-        margin: '10px 0'
-    }
-}));
-
-const Title = ({ classes }: { classes: ClassNameMap<'title'> } ) => {
-    return (
-      <h3 className={classes.title}>
-        <span>Profile</span>
-      </h3>
-    );
-};
+import { useTrainerCardStyles } from '../../../hooks/styles/user/useTrainerCardStyles';
 
 interface TrainerCardProps {
     userProfile: IUserPublicProfile
 };
 
-
 const TrainerCard = ({ userProfile }: TrainerCardProps) => {
-    const { classes } = useStyles();
+    const { classes } = useTrainerCardStyles();
 
     return (
         <>

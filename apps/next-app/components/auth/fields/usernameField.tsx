@@ -1,15 +1,14 @@
-import { TextField, CustomTheme } from '@mui/material';
+import { TextField } from '@mui/material';
 import { useController } from 'react-hook-form';
 import { UsernameFieldProps } from './props/userFieldProps';
-import { makeStyles } from '@mui/styles';
 import CircularProgress from '@mui/material/CircularProgress';
 import DoneIcon from '@mui/icons-material/Done';
 import CloseIcon from '@mui/icons-material/Close';
-import { useFieldStyles } from './styles/useFieldStyles';
+import { useFieldStyles } from '../../../hooks/styles/auth/useFieldStyles';
 import { useEffect } from 'react';
 
 const UsernameField = ({ control, controllerProps, availabilityResults, currentValListener }: UsernameFieldProps) => {
-  const classes = useFieldStyles();
+  const {classes} = useFieldStyles();
 
   const defaultControllerProps = {
     name: 'username',
