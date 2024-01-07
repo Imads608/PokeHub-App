@@ -15,7 +15,9 @@
     "skipDefaultLibCheck": true,
     "strict": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@pokehub/frontend/shared-components": ["packages/frontend/shared-components/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
