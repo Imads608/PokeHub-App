@@ -1,0 +1,618 @@
+[NX Daemon Server] - 2024-09-22T00:46:10.430Z - Started listening on: /var/folders/3m/dpbp49ss6bsbmgs4dmq479f00000gn/T/42cb238d00c76e1dc6d1/d.sock
+[NX Daemon Server] - 2024-09-22T00:46:10.431Z - [WATCHER]: Subscribed to changes within: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (native)
+[NX Daemon Server] - 2024-09-22T00:46:10.434Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T00:46:10.434Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T00:46:10.435Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T00:46:10.436Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T00:46:10.492Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:10.599Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:10.599Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:10.599Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:10.605Z - Time taken for 'loadNxPlugins' 162.26354205608368ms
+[NX Daemon Server] - 2024-09-22T00:46:10.638Z - Time taken for 'build-project-configs' 24.895874977111816ms
+[NX Daemon Server] - 2024-09-22T00:46:10.769Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:10.770Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T00:46:10.771Z - Time taken for 'total for creating and serializing project graph' 334.2610419988632ms
+[NX Daemon Server] - 2024-09-22T00:46:10.773Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T00:46:10.773Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 335. Response time: 3.
+[NX Daemon Server] - 2024-09-22T00:46:10.812Z - [REQUEST]: Responding to the client. handleHashTasks
+[NX Daemon Server] - 2024-09-22T00:46:10.812Z - Done responding to the client handleHashTasks
+[NX Daemon Server] - 2024-09-22T00:46:10.812Z - Handled HASH_TASKS. Handling time: 11. Response time: 0.
+[NX Daemon Server] - 2024-09-22T00:46:12.067Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T00:46:12.069Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T00:46:12.069Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T00:46:12.070Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T00:46:12.071Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.072Z - Time taken for 'total for creating and serializing project graph' 0.26454198360443115ms
+[NX Daemon Server] - 2024-09-22T00:46:12.074Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.074Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 3.
+[NX Daemon Server] - 2024-09-22T00:46:12.724Z - Established a connection. Number of open connections: 3
+[NX Daemon Server] - 2024-09-22T00:46:12.725Z - Closed a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T00:46:12.725Z - Established a connection. Number of open connections: 3
+[NX Daemon Server] - 2024-09-22T00:46:12.727Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T00:46:12.727Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.728Z - Time taken for 'total for creating and serializing project graph' 0.14920806884765625ms
+[NX Daemon Server] - 2024-09-22T00:46:12.731Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.731Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 4.
+[NX Daemon Server] - 2024-09-22T00:46:12.856Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T00:46:12.856Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.858Z - Time taken for 'total for creating and serializing project graph' 0.28575003147125244ms
+[NX Daemon Server] - 2024-09-22T00:46:12.870Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T00:46:12.870Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 14.
+[NX Daemon Server] - 2024-09-22T00:46:13.518Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:13.521Z - [WATCHER]: 1 file(s) created or restored, 0 file(s) modified, 47 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:13.623Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:13.623Z - [REQUEST]: apps/pokehub-app/.next/package.json
+[NX Daemon Server] - 2024-09-22T00:46:13.623Z - [REQUEST]: apps/pokehub-app/.next/static/development/_ssgManifest.js,apps/pokehub-app/.next/static/webpack/f1a0b94946d8281d.webpack.hot-update.json,apps/pokehub-app/.next/server/server-reference-manifest.js,apps/pokehub-app/.next/server/vendor-chunks/next.js,apps/pokehub-app/.next/server/middleware-build-manifest.js,apps/pokehub-app/.next/static/chunks/_app-pages-browser_node_modules_tanstack_query-devtools_build_Devtools_A6DP7BKI_js.js,apps/pokehub-app/.next/server/webpack-runtime.js,apps/pokehub-app/.next/static/chunks/app/page.js,apps/pokehub-app/.next/static/webpack/app/layout.8af0d9e409ca1e48.hot-update.js,apps/pokehub-app/.next/server/app-paths-manifest.json,apps/pokehub-app/.next/server/middleware-manifest.json,apps/pokehub-app/.next/server/vendor-chunks/class-variance-authority.js,apps/pokehub-app/.next/server/vendor-chunks/classnames.js,apps/pokehub-app/.next/server/interception-route-rewrite-manifest.js,apps/pokehub-app/.next/server/app/login/page.js,apps/pokehub-app/.next/server/server-reference-manifest.json,apps/pokehub-app/.next/server/vendor-chunks/clsx.js,apps/pokehub-app/.next/static/chunks/app/login/page.js,apps/pokehub-app/.next/server/vendor-chunks/@tanstack.js,apps/pokehub-app/.next/server/vendor-chunks/@radix-ui.js,apps/pokehub-app/.next/server/app/page_client-reference-manifest.js,apps/pokehub-app/.next/static/chunks/app-pages-internals.js,apps/pokehub-app/.next/server/middleware-react-loadable-manifest.js,apps/pokehub-app/.next/static/chunks/main-app.js,apps/pokehub-app/.next/server/next-font-manifest.js,apps/pokehub-app/.next/static/chunks/webpack.js,apps/pokehub-app/.next/static/webpack/633457081244afec._.hot-update.json,apps/pokehub-app/.next/static/chunks/app/layout.js,apps/pokehub-app/.next/types/app/login/page.ts,apps/pokehub-app/.next/types/app/page.ts,apps/pokehub-app/.next/server/app/login/page_client-reference-manifest.js,apps/pokehub-app/.next/types/package.json,apps/pokehub-app/.next/static/chunks/polyfills.js,apps/pokehub-app/.next/static/webpack/webpack.f1a0b94946d8281d.hot-update.js,apps/pokehub-app/.next/react-loadable-manifest.json,apps/pokehub-app/.next/server/app/page.js,apps/pokehub-app/.next/static/webpack/8af0d9e409ca1e48.webpack.hot-update.json,apps/pokehub-app/.next/trace,apps/pokehub-app/.next/build-manifest.json,apps/pokehub-app/.next/static/development/_buildManifest.js,apps/pokehub-app/.next/static/css/app/layout.css,apps/pokehub-app/.next/types/app/layout.ts,apps/pokehub-app/.next/server/vendor-chunks/tailwind-merge.js,apps/pokehub-app/.next/static/webpack/webpack.8af0d9e409ca1e48.hot-update.js,apps/pokehub-app/.next/server/pages-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.json,apps/pokehub-app/.next/app-build-manifest.json
+[NX Daemon Server] - 2024-09-22T00:46:13.626Z - Time taken for 'hash changed files from watcher' 0.2230839729309082ms
+[NX Daemon Server] - 2024-09-22T00:46:13.637Z - Time taken for 'build-project-configs' 10.020083904266357ms
+[NX Daemon Server] - 2024-09-22T00:46:13.656Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:13.656Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:13.656Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:13.656Z - Time taken for 'total execution time for createProjectGraph()' 13.177667021751404ms
+[NX Daemon Server] - 2024-09-22T00:46:14.851Z - [WATCHER]: 18 file(s) created or restored, 0 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:14.851Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:14.954Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:14.954Z - [REQUEST]: apps/pokehub-app/.next/server/server-reference-manifest.json,apps/pokehub-app/.next/app-build-manifest.json,apps/pokehub-app/.next/build-manifest.json,apps/pokehub-app/.next/react-loadable-manifest.json,apps/pokehub-app/.next/static/development/_buildManifest.js,apps/pokehub-app/.next/types/package.json,apps/pokehub-app/.next/static/development/_ssgManifest.js,apps/pokehub-app/.next/trace,apps/pokehub-app/.next/server/next-font-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.js,apps/pokehub-app/.next/server/server-reference-manifest.js,apps/pokehub-app/.next/server/middleware-build-manifest.js,apps/pokehub-app/.next/server/interception-route-rewrite-manifest.js,apps/pokehub-app/.next/server/middleware-manifest.json,apps/pokehub-app/.next/static/chunks/polyfills.js,apps/pokehub-app/.next/server/pages-manifest.json,apps/pokehub-app/.next/server/middleware-react-loadable-manifest.js,apps/pokehub-app/.next/server/app-paths-manifest.json
+[NX Daemon Server] - 2024-09-22T00:46:14.954Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:14.959Z - Time taken for 'hash changed files from watcher' 0.7482500076293945ms
+[NX Daemon Server] - 2024-09-22T00:46:14.972Z - Time taken for 'build-project-configs' 13.989083051681519ms
+[NX Daemon Server] - 2024-09-22T00:46:15.025Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.025Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.025Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.025Z - Time taken for 'total execution time for createProjectGraph()' 45.22916603088379ms
+[NX Daemon Server] - 2024-09-22T00:46:15.058Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T00:46:15.058Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T00:46:15.059Z - Time taken for 'total for creating and serializing project graph' 0.19079208374023438ms
+[NX Daemon Server] - 2024-09-22T00:46:15.062Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T00:46:15.062Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 4.
+[NX Daemon Server] - 2024-09-22T00:46:15.083Z - [WATCHER]: 0 file(s) created or restored, 16 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:15.083Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:15.185Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:15.185Z - [REQUEST]: apps/pokehub-app/.next/react-loadable-manifest.json,apps/pokehub-app/.next/server/middleware-manifest.json,apps/pokehub-app/.next/types/package.json,apps/pokehub-app/.next/server/server-reference-manifest.js,apps/pokehub-app/.next/build-manifest.json,apps/pokehub-app/.next/server/pages-manifest.json,apps/pokehub-app/.next/static/development/_buildManifest.js,apps/pokehub-app/.next/app-build-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.json,apps/pokehub-app/.next/server/middleware-build-manifest.js,apps/pokehub-app/.next/server/server-reference-manifest.json,apps/pokehub-app/.next/server/interception-route-rewrite-manifest.js,apps/pokehub-app/.next/server/middleware-react-loadable-manifest.js,apps/pokehub-app/.next/static/development/_ssgManifest.js,apps/pokehub-app/.next/server/next-font-manifest.js,apps/pokehub-app/.next/server/app-paths-manifest.json
+[NX Daemon Server] - 2024-09-22T00:46:15.185Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:15.187Z - Time taken for 'hash changed files from watcher' 0.46137499809265137ms
+[NX Daemon Server] - 2024-09-22T00:46:15.214Z - Time taken for 'build-project-configs' 19.208207964897156ms
+[NX Daemon Server] - 2024-09-22T00:46:15.248Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.248Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.248Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:15.248Z - Time taken for 'total execution time for createProjectGraph()' 35.830583930015564ms
+[NX Daemon Server] - 2024-09-22T00:46:16.544Z - [WATCHER]: 3 file(s) created or restored, 0 file(s) modified, 2 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:16.545Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:16.647Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:16.647Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz,apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz.old,apps/pokehub-app/.next/cache/webpack/client-development/0.pack.gz
+[NX Daemon Server] - 2024-09-22T00:46:16.647Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz_,apps/pokehub-app/.next/cache/webpack/client-development/0.pack.gz_
+[NX Daemon Server] - 2024-09-22T00:46:16.652Z - Time taken for 'hash changed files from watcher' 0.8071249723434448ms
+[NX Daemon Server] - 2024-09-22T00:46:16.668Z - Time taken for 'build-project-configs' 14.664541959762573ms
+[NX Daemon Server] - 2024-09-22T00:46:16.699Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:16.699Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:16.699Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:16.699Z - Time taken for 'total execution time for createProjectGraph()' 25.361083984375ms
+[NX Daemon Server] - 2024-09-22T00:46:29.923Z - [WATCHER]: 11 file(s) created or restored, 5 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:29.923Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:30.026Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:30.026Z - [REQUEST]: apps/pokehub-app/.next/server/vendor-chunks/class-variance-authority.js,apps/pokehub-app/.next/server/vendor-chunks/tailwind-merge.js,apps/pokehub-app/.next/types/app/page.ts,apps/pokehub-app/.next/server/app/page.js,apps/pokehub-app/.next/types/app/layout.ts,apps/pokehub-app/.next/server/vendor-chunks/classnames.js,apps/pokehub-app/.next/server/webpack-runtime.js,apps/pokehub-app/.next/server/vendor-chunks/clsx.js,apps/pokehub-app/.next/server/vendor-chunks/@radix-ui.js,apps/pokehub-app/.next/server/vendor-chunks/next.js,apps/pokehub-app/.next/server/vendor-chunks/@tanstack.js,apps/pokehub-app/.next/types/package.json,apps/pokehub-app/.next/server/server-reference-manifest.json,apps/pokehub-app/.next/server/app-paths-manifest.json,apps/pokehub-app/.next/server/server-reference-manifest.js,apps/pokehub-app/.next/server/pages-manifest.json
+[NX Daemon Server] - 2024-09-22T00:46:30.026Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:30.029Z - Time taken for 'hash changed files from watcher' 1.1944169998168945ms
+[NX Daemon Server] - 2024-09-22T00:46:30.044Z - Time taken for 'build-project-configs' 12.356500029563904ms
+[NX Daemon Server] - 2024-09-22T00:46:30.098Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:30.098Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:30.098Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:30.098Z - Time taken for 'total execution time for createProjectGraph()' 50.03699994087219ms
+[NX Daemon Server] - 2024-09-22T00:46:31.234Z - [WATCHER]: 9 file(s) created or restored, 9 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:31.234Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:31.339Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:31.339Z - [REQUEST]: apps/pokehub-app/.next/static/chunks/webpack.js,apps/pokehub-app/.next/static/chunks/app/page.js,apps/pokehub-app/.next/server/app/page_client-reference-manifest.js,apps/pokehub-app/.next/static/css/app/layout.css,apps/pokehub-app/.next/static/chunks/app-pages-internals.js,apps/pokehub-app/.next/static/chunks/main-app.js,apps/pokehub-app/.next/static/webpack/633457081244afec._.hot-update.json,apps/pokehub-app/.next/static/chunks/app/layout.js,apps/pokehub-app/.next/static/chunks/_app-pages-browser_node_modules_tanstack_query-devtools_build_Devtools_A6DP7BKI_js.js,apps/pokehub-app/.next/static/development/_ssgManifest.js,apps/pokehub-app/.next/server/middleware-react-loadable-manifest.js,apps/pokehub-app/.next/app-build-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.js,apps/pokehub-app/.next/react-loadable-manifest.json,apps/pokehub-app/.next/build-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.json,apps/pokehub-app/.next/server/middleware-build-manifest.js,apps/pokehub-app/.next/static/development/_buildManifest.js
+[NX Daemon Server] - 2024-09-22T00:46:31.339Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:31.345Z - Time taken for 'hash changed files from watcher' 2.956416964530945ms
+[NX Daemon Server] - 2024-09-22T00:46:31.359Z - Time taken for 'build-project-configs' 14.13779103755951ms
+[NX Daemon Server] - 2024-09-22T00:46:31.432Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.432Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.432Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.432Z - Time taken for 'total execution time for createProjectGraph()' 68.33445799350739ms
+[NX Daemon Server] - 2024-09-22T00:46:31.505Z - [WATCHER]: 6 file(s) created or restored, 9 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:31.505Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:31.607Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:31.607Z - [REQUEST]: apps/pokehub-app/.next/static/webpack/app/layout.1f6c6b7fa419cc8f.hot-update.js,apps/pokehub-app/.next/static/chunks/app/layout.js,apps/pokehub-app/.next/server/app/page_client-reference-manifest.js,apps/pokehub-app/.next/static/webpack/1f6c6b7fa419cc8f.webpack.hot-update.json,apps/pokehub-app/.next/static/webpack/webpack.1f6c6b7fa419cc8f.hot-update.js,apps/pokehub-app/.next/static/chunks/webpack.js,apps/pokehub-app/.next/static/development/_ssgManifest.js,apps/pokehub-app/.next/react-loadable-manifest.json,apps/pokehub-app/.next/app-build-manifest.json,apps/pokehub-app/.next/static/development/_buildManifest.js,apps/pokehub-app/.next/server/middleware-react-loadable-manifest.js,apps/pokehub-app/.next/server/middleware-build-manifest.js,apps/pokehub-app/.next/server/next-font-manifest.json,apps/pokehub-app/.next/build-manifest.json,apps/pokehub-app/.next/server/next-font-manifest.js
+[NX Daemon Server] - 2024-09-22T00:46:31.607Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:31.609Z - Time taken for 'hash changed files from watcher' 0.6060420274734497ms
+[NX Daemon Server] - 2024-09-22T00:46:31.624Z - Time taken for 'build-project-configs' 12.563584089279175ms
+[NX Daemon Server] - 2024-09-22T00:46:31.687Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.688Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.688Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:31.688Z - Time taken for 'total execution time for createProjectGraph()' 59.04650008678436ms
+[NX Daemon Server] - 2024-09-22T00:46:32.698Z - [WATCHER]: 2 file(s) created or restored, 0 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:32.699Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:32.800Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:32.800Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/server-development/0.pack.gz_,apps/pokehub-app/.next/cache/webpack/server-development/index.pack.gz_
+[NX Daemon Server] - 2024-09-22T00:46:32.800Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:32.803Z - Time taken for 'hash changed files from watcher' 0.48866701126098633ms
+[NX Daemon Server] - 2024-09-22T00:46:32.814Z - Time taken for 'build-project-configs' 9.939000010490417ms
+[NX Daemon Server] - 2024-09-22T00:46:32.872Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:32.872Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:32.872Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:32.873Z - Time taken for 'total execution time for createProjectGraph()' 53.73883402347565ms
+[NX Daemon Server] - 2024-09-22T00:46:34.305Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:34.307Z - [WATCHER]: 2 file(s) created or restored, 1 file(s) modified, 2 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:34.410Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:34.410Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/server-development/index.pack.gz,apps/pokehub-app/.next/cache/webpack/server-development/index.pack.gz.old,apps/pokehub-app/.next/cache/webpack/server-development/0.pack.gz
+[NX Daemon Server] - 2024-09-22T00:46:34.410Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/server-development/index.pack.gz_,apps/pokehub-app/.next/cache/webpack/server-development/0.pack.gz_
+[NX Daemon Server] - 2024-09-22T00:46:34.413Z - Time taken for 'hash changed files from watcher' 1.7791249752044678ms
+[NX Daemon Server] - 2024-09-22T00:46:34.446Z - Time taken for 'build-project-configs' 31.042333006858826ms
+[NX Daemon Server] - 2024-09-22T00:46:34.509Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.510Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.511Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.511Z - Time taken for 'total execution time for createProjectGraph()' 52.430750012397766ms
+[NX Daemon Server] - 2024-09-22T00:46:34.560Z - [WATCHER]: 2 file(s) created or restored, 0 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:34.560Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:34.662Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:34.662Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz_,apps/pokehub-app/.next/cache/webpack/client-development/1.pack.gz_
+[NX Daemon Server] - 2024-09-22T00:46:34.662Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:34.664Z - Time taken for 'hash changed files from watcher' 1.858665943145752ms
+[NX Daemon Server] - 2024-09-22T00:46:34.675Z - Time taken for 'build-project-configs' 9.29533302783966ms
+[NX Daemon Server] - 2024-09-22T00:46:34.734Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.734Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.734Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:34.734Z - Time taken for 'total execution time for createProjectGraph()' 50.067999958992004ms
+[NX Daemon Server] - 2024-09-22T00:46:34.930Z - [WATCHER]: 3 file(s) created or restored, 0 file(s) modified, 2 file(s) deleted
+[NX Daemon Server] - 2024-09-22T00:46:34.930Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:35.041Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:35.042Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz.old,apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz,apps/pokehub-app/.next/cache/webpack/client-development/1.pack.gz
+[NX Daemon Server] - 2024-09-22T00:46:35.042Z - [REQUEST]: apps/pokehub-app/.next/cache/webpack/client-development/index.pack.gz_,apps/pokehub-app/.next/cache/webpack/client-development/1.pack.gz_
+[NX Daemon Server] - 2024-09-22T00:46:35.049Z - Time taken for 'hash changed files from watcher' 9.536499977111816ms
+[NX Daemon Server] - 2024-09-22T00:46:35.098Z - Time taken for 'build-project-configs' 46.598999977111816ms
+[NX Daemon Server] - 2024-09-22T00:46:35.158Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:35.158Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:35.158Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:35.159Z - Time taken for 'total execution time for createProjectGraph()' 55.124791979789734ms
+[NX Daemon Server] - 2024-09-22T00:46:41.551Z - Closed a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T00:46:41.552Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T00:46:41.565Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T00:46:41.629Z - [WATCHER]: apps/pokehub-app/.next/trace was modified
+[NX Daemon Server] - 2024-09-22T00:46:41.629Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:46:41.834Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:46:41.835Z - [REQUEST]: apps/pokehub-app/.next/trace
+[NX Daemon Server] - 2024-09-22T00:46:41.835Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:46:41.841Z - Time taken for 'hash changed files from watcher' 1.8796249628067017ms
+[NX Daemon Server] - 2024-09-22T00:46:41.866Z - Time taken for 'build-project-configs' 23.379500031471252ms
+[NX Daemon Server] - 2024-09-22T00:46:41.934Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:46:41.935Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:46:41.935Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:46:41.935Z - Time taken for 'total execution time for createProjectGraph()' 64.53862500190735ms
+[NX Daemon Server] - 2024-09-22T00:50:35.945Z - [WATCHER]: .github/workflows/.swpx was deleted
+[NX Daemon Server] - 2024-09-22T00:50:35.945Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:50:36.353Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:50:36.353Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:50:36.353Z - [REQUEST]: .github/workflows/.swpx
+[NX Daemon Server] - 2024-09-22T00:50:36.362Z - Time taken for 'hash changed files from watcher' 1.1210830211639404ms
+[NX Daemon Server] - 2024-09-22T00:50:36.389Z - Time taken for 'build-project-configs' 28.822499990463257ms
+[NX Daemon Server] - 2024-09-22T00:50:36.426Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:50:36.426Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:50:36.426Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:50:36.426Z - Time taken for 'total execution time for createProjectGraph()' 25.12504208087921ms
+[NX Daemon Server] - 2024-09-22T00:50:47.047Z - [WATCHER]: .github/workflows/.build-pr.yaml.swx was deleted
+[NX Daemon Server] - 2024-09-22T00:50:47.048Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:50:47.854Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:50:47.854Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:50:47.854Z - [REQUEST]: .github/workflows/.build-pr.yaml.swx
+[NX Daemon Server] - 2024-09-22T00:50:47.859Z - Time taken for 'hash changed files from watcher' 1.2251670360565186ms
+[NX Daemon Server] - 2024-09-22T00:50:47.892Z - Time taken for 'build-project-configs' 28.822792053222656ms
+[NX Daemon Server] - 2024-09-22T00:50:47.914Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:50:47.914Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:50:47.914Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:50:47.914Z - Time taken for 'total execution time for createProjectGraph()' 20.398458003997803ms
+[NX Daemon Server] - 2024-09-22T00:52:52.798Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:52:57.593Z - [WATCHER]: .github/workflows/.build-dev.yaml.swx was deleted
+[NX Daemon Server] - 2024-09-22T00:52:57.593Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:52:59.198Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:52:59.198Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:52:59.198Z - [REQUEST]: .github/workflows/.build-dev.yaml.swx
+[NX Daemon Server] - 2024-09-22T00:52:59.203Z - Time taken for 'hash changed files from watcher' 0.4760420322418213ms
+[NX Daemon Server] - 2024-09-22T00:52:59.234Z - Time taken for 'build-project-configs' 30.084707975387573ms
+[NX Daemon Server] - 2024-09-22T00:52:59.260Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:52:59.260Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:52:59.260Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:52:59.260Z - Time taken for 'total execution time for createProjectGraph()' 19.687875032424927ms
+[NX Daemon Server] - 2024-09-22T00:53:09.832Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:53:13.958Z - [WATCHER]: .github/workflows/.build-release.yaml.swx was deleted
+[NX Daemon Server] - 2024-09-22T00:53:13.958Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T00:53:17.165Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T00:53:17.165Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T00:53:17.165Z - [REQUEST]: .github/workflows/.build-release.yaml.swx
+[NX Daemon Server] - 2024-09-22T00:53:17.170Z - Time taken for 'hash changed files from watcher' 0.9877910614013672ms
+[NX Daemon Server] - 2024-09-22T00:53:17.207Z - Time taken for 'build-project-configs' 34.82012498378754ms
+[NX Daemon Server] - 2024-09-22T00:53:17.230Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T00:53:17.230Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T00:53:17.230Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T00:53:17.230Z - Time taken for 'total execution time for createProjectGraph()' 18.788124918937683ms
+[NX Daemon Server] - 2024-09-22T00:53:47.322Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:28:46.449Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:28:46.456Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:28:46.458Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:28:46.466Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:28:46.472Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:28:46.485Z - Time taken for 'total for creating and serializing project graph' 5.619750022888184ms
+[NX Daemon Server] - 2024-09-22T04:28:46.487Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:28:46.488Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 7. Response time: 16.
+[NX Daemon Server] - 2024-09-22T04:28:46.492Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:30:18.595Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:18.596Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:30:18.596Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:18.599Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:30:18.599Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:30:18.603Z - Time taken for 'total for creating and serializing project graph' 0.5503751039505005ms
+[NX Daemon Server] - 2024-09-22T04:30:18.604Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:30:18.604Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 5.
+[NX Daemon Server] - 2024-09-22T04:30:18.609Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:30:41.656Z - [WATCHER]: package.json was modified
+[NX Daemon Server] - 2024-09-22T04:30:41.657Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:30:41.765Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:30:41.765Z - [REQUEST]: package.json
+[NX Daemon Server] - 2024-09-22T04:30:41.765Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:30:41.784Z - Time taken for 'hash changed files from watcher' 6.079334020614624ms
+[NX Daemon Server] - 2024-09-22T04:30:41.839Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:30:41.840Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (sources)
+[NX Daemon Server] - 2024-09-22T04:30:41.840Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (outputs)
+[NX Daemon Server] - 2024-09-22T04:30:41.843Z - Server stopped because: "LOCK_FILES_CHANGED"
+[NX Daemon Server] - 2024-09-22T04:30:42.959Z - Started listening on: /var/folders/3m/dpbp49ss6bsbmgs4dmq479f00000gn/T/42cb238d00c76e1dc6d1/d.sock
+[NX Daemon Server] - 2024-09-22T04:30:42.960Z - [WATCHER]: Subscribed to changes within: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (native)
+[NX Daemon Server] - 2024-09-22T04:30:42.962Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:42.962Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:30:42.963Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:42.964Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:30:43.021Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:30:43.121Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:30:43.121Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:30:43.121Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:30:43.127Z - Time taken for 'loadNxPlugins' 156.01487493515015ms
+[NX Daemon Server] - 2024-09-22T04:30:43.161Z - Time taken for 'build-project-configs' 25.555500030517578ms
+[NX Daemon Server] - 2024-09-22T04:30:43.318Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:30:43.318Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:30:43.320Z - Time taken for 'total for creating and serializing project graph' 354.1411670446396ms
+[NX Daemon Server] - 2024-09-22T04:30:43.321Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:30:43.322Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 354. Response time: 4.
+[NX Daemon Server] - 2024-09-22T04:30:43.938Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:30:45.788Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:30:45.828Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:30:54.410Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:54.411Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:30:54.412Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:30:54.413Z - [REQUEST]: Responding to the client with an error. Daemon outdated LOCK_FILES_CHANGED
+Error: LOCK_FILES_CHANGED
+    at handleMessage (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/server.js:92:88)
+    at /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/server.js:72:15
+    at Socket.<anonymous> (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/utils/consume-messages-from-socket.js:13:17)
+    at Socket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:324:12)
+    at readableAddChunk (node:internal/streams/readable:297:9)
+    at Readable.push (node:internal/streams/readable:234:10)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)
+[NX Daemon Server] - 2024-09-22T04:30:54.413Z - Done responding to the client null
+[NX Daemon Server] - 2024-09-22T04:30:54.414Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:30:54.414Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:30:54.415Z - Time taken for 'total for creating and serializing project graph' 0.16291701793670654ms
+Error: write EPIPE
+    at WriteWrap.onWriteComplete [as oncomplete] (node:internal/stream_base_commons:94:16) {
+  errno: -32,
+  code: 'EPIPE',
+  syscall: 'write'
+}
+[NX Daemon Server] - 2024-09-22T04:30:54.417Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:30:54.417Z - Socket error
+Error: write EPIPE
+    at WriteWrap.onWriteComplete [as oncomplete] (node:internal/stream_base_commons:94:16) {
+  errno: -32,
+  code: 'EPIPE',
+  syscall: 'write'
+}
+[NX Daemon Server] - 2024-09-22T04:30:54.417Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:30:54.417Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:31:03.844Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:03.846Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:31:03.847Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:03.849Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:03.849Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:03.851Z - Time taken for 'total for creating and serializing project graph' 0.2530829906463623ms
+[NX Daemon Server] - 2024-09-22T04:31:03.857Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:03.857Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 8.
+[NX Daemon Server] - 2024-09-22T04:31:12.587Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:12.587Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.589Z - Time taken for 'total for creating and serializing project graph' 0.49287497997283936ms
+[NX Daemon Server] - 2024-09-22T04:31:12.602Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.602Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 15.
+[NX Daemon Server] - 2024-09-22T04:31:12.625Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:12.625Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.627Z - Time taken for 'total for creating and serializing project graph' 0.15862500667572021ms
+[NX Daemon Server] - 2024-09-22T04:31:12.627Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.627Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:31:12.639Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:12.639Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.642Z - Time taken for 'total for creating and serializing project graph' 0.24508404731750488ms
+[NX Daemon Server] - 2024-09-22T04:31:12.643Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.643Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 4.
+[NX Daemon Server] - 2024-09-22T04:31:12.664Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:12.664Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.666Z - Time taken for 'total for creating and serializing project graph' 0.2594999074935913ms
+[NX Daemon Server] - 2024-09-22T04:31:12.666Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.666Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:31:12.675Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:12.675Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.676Z - Time taken for 'total for creating and serializing project graph' 0.1348329782485962ms
+[NX Daemon Server] - 2024-09-22T04:31:12.677Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:12.677Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:31:13.303Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:31:13.304Z - [WATCHER]: 27 file(s) created or restored, 2 file(s) modified, 0 file(s) deleted
+[NX Daemon Server] - 2024-09-22T04:31:13.406Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:31:13.406Z - [REQUEST]: apps/pokehub-api/src/assets/.gitkeep,apps/pokehub-api/src/app/app.service.spec.ts,apps/pokehub-api/src/main.ts,apps/pokehub-api-e2e/jest.config.ts,apps/pokehub-api/.eslintrc.json,.eslintignore,apps/pokehub-api-e2e/src/pokehub-api/pokehub-api.spec.ts,apps/pokehub-api/tsconfig.spec.json,apps/pokehub-api-e2e/src/support/global-setup.ts,apps/pokehub-api/src/app/app.service.ts,apps/pokehub-api/jest.config.ts,apps/pokehub-api/tsconfig.app.json,apps/pokehub-api-e2e/.eslintrc.json,apps/pokehub-api-e2e/project.json,apps/pokehub-api/src/app/app.module.ts,apps/pokehub-api-e2e/tsconfig.json,apps/pokehub-api/project.json,apps/pokehub-api-e2e/src/support/test-setup.ts,apps/pokehub-api/webpack.config.js,.prettierrc,.prettierignore,.eslintrc.json,apps/pokehub-api/src/app/app.controller.ts,apps/pokehub-api-e2e/tsconfig.spec.json,apps/pokehub-api-e2e/src/support/global-teardown.ts,apps/pokehub-api/src/app/app.controller.spec.ts,apps/pokehub-api/tsconfig.json,package.json,nx.json
+[NX Daemon Server] - 2024-09-22T04:31:13.406Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:31:13.410Z - Time taken for 'hash changed files from watcher' 0.6367079019546509ms
+[NX Daemon Server] - 2024-09-22T04:31:13.450Z - Time taken for 'build-project-configs' 37.79979205131531ms
+[NX Daemon Server] - 2024-09-22T04:31:13.664Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:13.665Z - Established a connection. Number of open connections: 3
+[NX Daemon Server] - 2024-09-22T04:31:13.665Z - Closed a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:13.666Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:13.682Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:31:13.683Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T04:31:13.683Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.684Z - Time taken for 'total execution time for createProjectGraph()' 226.5544160604477ms
+[NX Daemon Server] - 2024-09-22T04:31:13.686Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.686Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 17. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:31:13.690Z - [REQUEST]: Responding to the client. handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:31:13.690Z - Done responding to the client handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:31:13.690Z - Handled GET_CONTEXT_FILE_DATA. Handling time: 1. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:31:13.691Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:13.865Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:13.865Z - Established a connection. Number of open connections: 3
+[NX Daemon Server] - 2024-09-22T04:31:13.865Z - Closed a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:13.866Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:13.866Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.868Z - Time taken for 'total for creating and serializing project graph' 0.24362504482269287ms
+[NX Daemon Server] - 2024-09-22T04:31:13.872Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.872Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 6.
+[NX Daemon Server] - 2024-09-22T04:31:13.876Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:13.876Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.877Z - Time taken for 'total for creating and serializing project graph' 0.20324993133544922ms
+[NX Daemon Server] - 2024-09-22T04:31:13.878Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:13.879Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:31:13.881Z - Established a connection. Number of open connections: 3
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - Closed a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (sources)
+[NX Daemon Server] - 2024-09-22T04:31:21.851Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (outputs)
+[NX Daemon Server] - 2024-09-22T04:31:21.852Z - Server stopped because: "LOCK_FILES_CHANGED"
+[NX Daemon Server] - 2024-09-22T04:31:22.099Z - Started listening on: /var/folders/3m/dpbp49ss6bsbmgs4dmq479f00000gn/T/42cb238d00c76e1dc6d1/d.sock
+[NX Daemon Server] - 2024-09-22T04:31:22.101Z - [WATCHER]: Subscribed to changes within: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (native)
+[NX Daemon Server] - 2024-09-22T04:31:22.110Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:22.110Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:31:22.111Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:31:22.111Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:22.161Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:31:22.257Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:31:22.257Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:31:22.257Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:31:22.261Z - Time taken for 'loadNxPlugins' 144.65591700000002ms
+[NX Daemon Server] - 2024-09-22T04:31:22.288Z - Time taken for 'build-project-configs' 18.407291999999984ms
+[NX Daemon Server] - 2024-09-22T04:31:22.377Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:31:22.377Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:22.379Z - Time taken for 'total for creating and serializing project graph' 265.930625ms
+[NX Daemon Server] - 2024-09-22T04:31:22.381Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:22.384Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 266. Response time: 7.
+[NX Daemon Server] - 2024-09-22T04:31:22.385Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:31:22.385Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:31:22.386Z - Time taken for 'total for creating and serializing project graph' 0.13175000000001091ms
+[NX Daemon Server] - 2024-09-22T04:31:22.389Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:31:22.389Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 4.
+[NX Daemon Server] - 2024-09-22T04:31:22.392Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:32:09.118Z - [WATCHER]: apps/pokehub-api/.swpx was deleted
+[NX Daemon Server] - 2024-09-22T04:32:09.120Z - [REQUEST]: Responding to the client. File watch changed
+[NX Daemon Server] - 2024-09-22T04:32:09.120Z - Done responding to the client File watch changed
+[NX Daemon Server] - 2024-09-22T04:32:09.120Z - Handled FILE-WATCH-CHANGED. Handling time: 0. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:32:09.120Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:32:09.120Z - Time taken for 'changed-projects' 0.2412079999994603ms
+[NX Daemon Server] - 2024-09-22T04:32:09.223Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:32:09.223Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:32:09.223Z - [REQUEST]: apps/pokehub-api/.swpx
+[NX Daemon Server] - 2024-09-22T04:32:09.229Z - Time taken for 'hash changed files from watcher' 0.6981659999946714ms
+[NX Daemon Server] - 2024-09-22T04:32:09.251Z - Time taken for 'build-project-configs' 20.320666999999958ms
+[NX Daemon Server] - 2024-09-22T04:32:09.280Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:32:09.280Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T04:32:09.280Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T04:32:09.280Z - Time taken for 'total execution time for createProjectGraph()' 24.325792000003275ms
+[NX Daemon Server] - 2024-09-22T04:32:10.131Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:32:10.131Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.135Z - Time taken for 'total for creating and serializing project graph' 0.4710830000040005ms
+[NX Daemon Server] - 2024-09-22T04:32:10.139Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.139Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 8.
+[NX Daemon Server] - 2024-09-22T04:32:10.147Z - [REQUEST]: Responding to the client. handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:32:10.147Z - Done responding to the client handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:32:10.147Z - Handled GET_CONTEXT_FILE_DATA. Handling time: 1. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:32:10.148Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:32:10.219Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:32:10.221Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:32:10.221Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:32:10.221Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:32:10.222Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:32:10.222Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.223Z - Time taken for 'total for creating and serializing project graph' 0.11166699999739649ms
+[NX Daemon Server] - 2024-09-22T04:32:10.224Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.224Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:32:10.227Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:32:10.227Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.228Z - Time taken for 'total for creating and serializing project graph' 0.12325000000419095ms
+[NX Daemon Server] - 2024-09-22T04:32:10.229Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:32:10.229Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:32:10.231Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:33:22.494Z - [WATCHER]: .gitignore.swx was deleted
+[NX Daemon Server] - 2024-09-22T04:33:22.494Z - [REQUEST]: Responding to the client. File watch changed
+[NX Daemon Server] - 2024-09-22T04:33:22.494Z - Done responding to the client File watch changed
+[NX Daemon Server] - 2024-09-22T04:33:22.494Z - Handled FILE-WATCH-CHANGED. Handling time: 0. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:33:22.495Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:33:22.495Z - Time taken for 'changed-projects' 0.16358300000138115ms
+[NX Daemon Server] - 2024-09-22T04:33:22.597Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:33:22.597Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:33:22.597Z - [REQUEST]: .gitignore.swx
+[NX Daemon Server] - 2024-09-22T04:33:22.601Z - Time taken for 'hash changed files from watcher' 0.38979200000176206ms
+[NX Daemon Server] - 2024-09-22T04:33:22.626Z - Time taken for 'build-project-configs' 23.858250000004773ms
+[NX Daemon Server] - 2024-09-22T04:33:22.648Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:33:22.648Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T04:33:22.648Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T04:33:22.648Z - Time taken for 'total execution time for createProjectGraph()' 18.936625000002095ms
+[NX Daemon Server] - 2024-09-22T04:33:23.514Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:33:23.515Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.519Z - Time taken for 'total for creating and serializing project graph' 0.5468330000003334ms
+[NX Daemon Server] - 2024-09-22T04:33:23.521Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.522Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 7.
+[NX Daemon Server] - 2024-09-22T04:33:23.529Z - [REQUEST]: Responding to the client. handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:33:23.529Z - Done responding to the client handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:33:23.529Z - Handled GET_CONTEXT_FILE_DATA. Handling time: 1. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:33:23.530Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:23.583Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:33:23.584Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:23.584Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:33:23.584Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:23.584Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:33:23.585Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.586Z - Time taken for 'total for creating and serializing project graph' 0.11174999999639113ms
+[NX Daemon Server] - 2024-09-22T04:33:23.586Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.587Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:33:23.589Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:33:23.589Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.590Z - Time taken for 'total for creating and serializing project graph' 0.10249999999359716ms
+[NX Daemon Server] - 2024-09-22T04:33:23.595Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:33:23.595Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 6.
+[NX Daemon Server] - 2024-09-22T04:33:23.600Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:33:33.217Z - [WATCHER]: 1 file(s) created or restored, 0 file(s) modified, 1 file(s) deleted
+[NX Daemon Server] - 2024-09-22T04:33:33.218Z - [REQUEST]: Responding to the client. File watch changed
+Error [ERR_STREAM_DESTROYED]: Cannot call write after a stream was destroyed
+    at _write (node:internal/streams/writable:483:11)
+    at Writable.write (node:internal/streams/writable:502:10)
+    at /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/shutdown-utils.js:71:16
+    at new Promise (<anonymous>)
+    at respondToClient (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/shutdown-utils.js:67:12)
+    at handleResult (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/server.js:175:52)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Promise.all (index 0)
+    at async /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/file-watching/file-watcher-sockets.js:27:9
+    at async /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/utils/promised-based-queue.js:19:21 {
+  code: 'ERR_STREAM_DESTROYED'
+}
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - Done responding to the client File watch changed
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - Handled FILE-WATCH-CHANGED. Handling time: 0. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - Time taken for 'changed-projects' 0.09924999999930151ms
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:33:33.221Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (sources)
+[NX Daemon Server] - 2024-09-22T04:33:33.222Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (outputs)
+[NX Daemon Server] - 2024-09-22T04:33:33.222Z - Server stopped because: "Stopping the daemon the set of ignored files changed (native)"
+[NX Daemon Server] - 2024-09-22T04:33:33.524Z - Started listening on: /var/folders/3m/dpbp49ss6bsbmgs4dmq479f00000gn/T/42cb238d00c76e1dc6d1/d.sock
+[NX Daemon Server] - 2024-09-22T04:33:33.525Z - [WATCHER]: Subscribed to changes within: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (native)
+[NX Daemon Server] - 2024-09-22T04:33:33.531Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:33.531Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:33:33.532Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:33:33.533Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:33:33.586Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:33:33.675Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:33:33.675Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:33:33.675Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:33:33.679Z - Time taken for 'loadNxPlugins' 141.580542ms
+[NX Daemon Server] - 2024-09-22T04:33:33.702Z - Time taken for 'build-project-configs' 13.671709000000021ms
+[NX Daemon Server] - 2024-09-22T04:33:33.741Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:33:33.741Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:33:33.742Z - Time taken for 'total for creating and serializing project graph' 208.52787499999997ms
+[NX Daemon Server] - 2024-09-22T04:33:33.743Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:33:33.743Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 208. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:33:33.746Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:33:33.746Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:33:33.747Z - Time taken for 'total for creating and serializing project graph' 0.11262500000003683ms
+[NX Daemon Server] - 2024-09-22T04:33:33.752Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:33:33.752Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 6.
+[NX Daemon Server] - 2024-09-22T04:33:33.754Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:34:11.773Z - [WATCHER]: .gitignore.swx was deleted
+[NX Daemon Server] - 2024-09-22T04:34:11.774Z - [REQUEST]: Responding to the client. File watch changed
+[NX Daemon Server] - 2024-09-22T04:34:11.774Z - Done responding to the client File watch changed
+[NX Daemon Server] - 2024-09-22T04:34:11.774Z - Handled FILE-WATCH-CHANGED. Handling time: 0. Response time: 0.
+[NX Daemon Server] - 2024-09-22T04:34:11.774Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:34:11.774Z - Time taken for 'changed-projects' 0.20300000000133878ms
+[NX Daemon Server] - 2024-09-22T04:34:11.877Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:34:11.877Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:34:11.877Z - [REQUEST]: .gitignore.swx
+[NX Daemon Server] - 2024-09-22T04:34:11.883Z - Time taken for 'hash changed files from watcher' 1.1024170000018785ms
+[NX Daemon Server] - 2024-09-22T04:34:11.898Z - Time taken for 'build-project-configs' 16.181750000003376ms
+[NX Daemon Server] - 2024-09-22T04:34:11.927Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:34:11.927Z - [SYNC]: project graph hash is the same, not collecting task sync generators
+[NX Daemon Server] - 2024-09-22T04:34:11.927Z - [SYNC]: nx.json hash is the same, not collecting global sync generators
+[NX Daemon Server] - 2024-09-22T04:34:11.927Z - Time taken for 'total execution time for createProjectGraph()' 18.919624999994994ms
+[NX Daemon Server] - 2024-09-22T04:34:12.784Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:34:12.785Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.788Z - Time taken for 'total for creating and serializing project graph' 0.6345000000001164ms
+[NX Daemon Server] - 2024-09-22T04:34:12.790Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.790Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 5.
+[NX Daemon Server] - 2024-09-22T04:34:12.798Z - [REQUEST]: Responding to the client. handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:34:12.799Z - Done responding to the client handleContextFileData
+[NX Daemon Server] - 2024-09-22T04:34:12.799Z - Handled GET_CONTEXT_FILE_DATA. Handling time: 0. Response time: 1.
+[NX Daemon Server] - 2024-09-22T04:34:12.800Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:12.847Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:34:12.848Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:12.848Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:34:12.848Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:12.848Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:34:12.848Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.850Z - Time taken for 'total for creating and serializing project graph' 0.10808299999916926ms
+[NX Daemon Server] - 2024-09-22T04:34:12.851Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.851Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:34:12.853Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:34:12.854Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.855Z - Time taken for 'total for creating and serializing project graph' 0.20650000000023283ms
+[NX Daemon Server] - 2024-09-22T04:34:12.856Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:34:12.856Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 1. Response time: 2.
+[NX Daemon Server] - 2024-09-22T04:34:12.858Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:34:27.879Z - [WATCHER]: 1 file(s) created or restored, 0 file(s) modified, 1 file(s) deleted
+[NX Daemon Server] - 2024-09-22T04:34:27.880Z - [REQUEST]: Responding to the client. File watch changed
+Error [ERR_STREAM_DESTROYED]: Cannot call write after a stream was destroyed
+    at _write (node:internal/streams/writable:483:11)
+    at Writable.write (node:internal/streams/writable:502:10)
+    at /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/shutdown-utils.js:71:16
+    at new Promise (<anonymous>)
+    at respondToClient (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/shutdown-utils.js:67:12)
+    at handleResult (/Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/server.js:175:52)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Promise.all (index 0)
+    at async /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/daemon/server/file-watching/file-watcher-sockets.js:27:9
+    at async /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/node_modules/nx/src/utils/promised-based-queue.js:19:21 {
+  code: 'ERR_STREAM_DESTROYED'
+}
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - Done responding to the client File watch changed
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - Handled FILE-WATCH-CHANGED. Handling time: 0. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - Time taken for 'changed-projects' 0.11733300000196323ms
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - Closed a connection. Number of open connections: 0
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (sources)
+[NX Daemon Server] - 2024-09-22T04:34:27.883Z - [WATCHER]: Stopping the watcher for /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (outputs)
+[NX Daemon Server] - 2024-09-22T04:34:27.884Z - Server stopped because: "Stopping the daemon the set of ignored files changed (native)"
+[NX Daemon Server] - 2024-09-22T04:34:28.176Z - Started listening on: /var/folders/3m/dpbp49ss6bsbmgs4dmq479f00000gn/T/42cb238d00c76e1dc6d1/d.sock
+[NX Daemon Server] - 2024-09-22T04:34:28.177Z - [WATCHER]: Subscribed to changes within: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App (native)
+[NX Daemon Server] - 2024-09-22T04:34:28.183Z - Established a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:28.183Z - Established a connection. Number of open connections: 2
+[NX Daemon Server] - 2024-09-22T04:34:28.184Z - Closed a connection. Number of open connections: 1
+[NX Daemon Server] - 2024-09-22T04:34:28.184Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:34:28.238Z - [WATCHER]: Processing file changes in outputs
+[NX Daemon Server] - 2024-09-22T04:34:28.327Z - [REQUEST]: Updated workspace context based on watched changes, recomputing project graph...
+[NX Daemon Server] - 2024-09-22T04:34:28.327Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:34:28.327Z - [REQUEST]: 
+[NX Daemon Server] - 2024-09-22T04:34:28.331Z - Time taken for 'loadNxPlugins' 141.845ms
+[NX Daemon Server] - 2024-09-22T04:34:28.353Z - Time taken for 'build-project-configs' 12.687459000000047ms
+[NX Daemon Server] - 2024-09-22T04:34:28.395Z - [SYNC]: collect registered sync generators
+[NX Daemon Server] - 2024-09-22T04:34:28.396Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:34:28.397Z - Time taken for 'total for creating and serializing project graph' 211.282458ms
+[NX Daemon Server] - 2024-09-22T04:34:28.399Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:34:28.399Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 212. Response time: 3.
+[NX Daemon Server] - 2024-09-22T04:34:28.403Z - [REQUEST]: Client Request for Project Graph Received
+[NX Daemon Server] - 2024-09-22T04:34:28.403Z - [REQUEST]: Responding to the client. project-graph
+[NX Daemon Server] - 2024-09-22T04:34:28.405Z - Time taken for 'total for creating and serializing project graph' 0.2676660000000197ms
+[NX Daemon Server] - 2024-09-22T04:34:28.410Z - Done responding to the client project-graph
+[NX Daemon Server] - 2024-09-22T04:34:28.410Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 0. Response time: 7.
+[NX Daemon Server] - 2024-09-22T04:34:28.413Z - Established a connection. Number of open connections: 2

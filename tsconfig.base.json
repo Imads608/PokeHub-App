@@ -17,20 +17,48 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@pokehub/frontend/pokehub-auth-forms": ["packages/frontend/pokehub-auth-forms/src/index.ts"],
-      "@pokehub/frontend/pokehub-auth-forms/server": ["packages/frontend/pokehub-auth-forms/src/server.ts"],
-      "@pokehub/frontend/pokehub-nav-components": ["packages/frontend/pokehub-nav-components/src/index.ts"],
-      "@pokehub/frontend/shared-app-bootstrapper": ["packages/frontend/shared-app-bootstrapper/src/index.ts"],
-      "@pokehub/frontend/shared-app-router": ["packages/frontend/shared-app-router/src/index.ts"],
-      "@pokehub/frontend/shared-auth-context": ["packages/frontend/shared-auth-context/src/index.ts"],
-      "@pokehub/frontend/shared-context": ["packages/frontend/shared-context/src/index.ts"],
-      "@pokehub/frontend/shared-data-provider": ["packages/frontend/shared-data-provider/src/index.ts"],
-      "@pokehub/frontend/shared-form-components": ["packages/frontend/shared-form-components/src/index.ts"],
-      "@pokehub/frontend/shared-query-client-provider": ["packages/frontend/shared-query-client-provider/src/index.ts"],
-      "@pokehub/frontend/shared-ui-components": ["packages/frontend/shared-ui-components/src/index.ts"],
-      "@pokehub/frontend/shared-ui-icons": ["packages/frontend/shared-ui-icons/src/index.ts"],
-      "@pokehub/shared/shared-auth-models": ["packages/shared/shared-auth-models/src/index.ts"],
-      "@pokehub/shared/shared-user-models": ["packages/shared/shared-user-models/src/index.ts"]
+      "@pokehub/frontend/pokehub-auth-forms": [
+        "packages/frontend/pokehub-auth-forms/src/index.ts"
+      ],
+      "@pokehub/frontend/pokehub-auth-forms/server": [
+        "packages/frontend/pokehub-auth-forms/src/server.ts"
+      ],
+      "@pokehub/frontend/pokehub-nav-components": [
+        "packages/frontend/pokehub-nav-components/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-app-bootstrapper": [
+        "packages/frontend/shared-app-bootstrapper/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-app-router": [
+        "packages/frontend/shared-app-router/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-auth-context": [
+        "packages/frontend/shared-auth-context/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-context": [
+        "packages/frontend/shared-context/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-data-provider": [
+        "packages/frontend/shared-data-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-form-components": [
+        "packages/frontend/shared-form-components/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-query-client-provider": [
+        "packages/frontend/shared-query-client-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-ui-components": [
+        "packages/frontend/shared-ui-components/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-ui-icons": [
+        "packages/frontend/shared-ui-icons/src/index.ts"
+      ],
+      "@pokehub/shared/shared-auth-models": [
+        "packages/shared/shared-auth-models/src/index.ts"
+      ],
+      "@pokehub/shared/shared-user-models": [
+        "packages/shared/shared-user-models/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

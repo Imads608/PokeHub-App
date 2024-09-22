@@ -1,4 +1,4 @@
-// File: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/pokehub/apps/pokehub-app/app/page.tsx
+// File: /Users/imadsheriff/Documents/Projects/Pokemon/PokeHub-App/PokeHub-App/apps/pokehub-app/app/page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
