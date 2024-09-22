@@ -1,1 +1,0 @@
-nx run-many --target=serve --projects=api-gateway,auth-gateway,chat-events-gateway,chat-notif-service,chat-service,chat-socket-service,chat-tcp-gateway,mail-gateway,next-app,user-events-gateway,user-notif-service,user-rest-gateway,user-service,user-socket-service,user-tcp-gateway --parallel=15

@@ -1,5 +1,0 @@
-export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
-export const AUTH_FAILURE = 'LOGIN_FAILURE';
-export const RESET_AUTH_FAILURE = 'RESET_AUTH_FAILURE';
-export const LOGOUT = 'LOGOUT';
-export const AUTH_LOADED = 'AUTH_LOADED';
