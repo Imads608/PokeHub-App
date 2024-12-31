@@ -1,0 +1,6 @@
+dependencies:
+- name: edge-stack
+  repository: https://app.getambassador.io
+  version: 8.12.1
+digest: sha256:19e79d51861b2c45d5546ff45bea70c39c0eeb30bf96eeffcf7954df85c4d551
+generated: "2024-12-30T16:14:00.222095-08:00"

@@ -1,0 +1,50 @@
+host:
+  name: pokehub
+  namespace: ambassador
+  hostname: pokehub.space
+  acmeEmail: imadsheriff97@gmail.com
+  tlsSecretName: ambassador-certs
+
+listener:
+  namespace: ambassador
+  http:
+    name: edge-stack-listener-8080
+    port: 8080
+  https:
+    name: edge-stack-listener-8443
+    port: 8443
+
+mapping:
+  name: quote-backend
+  namespace: ambassador
+  hostname: pokehub.space
+  prefix: /backend/
+  service: quote
+  docsPath: "/.ambassador-internal/openapi-docs"
+
+clusterIssuer:
+  name: letsencrypt-prod
+  acmeEmail: imadsheriff97@gmail.com
+  server: https://acme-v02.api.letsencrypt.org/directory
+  privateKeySecretName: letsencrypt-prod
+  dns01:
+    azureDNS:
+      subscriptionID: fc24fb67-c494-48a0-b6af-3075eeb257fc
+      resourceGroupName: pokehub_group
+      hostedZoneName: pokehub.space
+      environment: AzurePublicCloud
+      dnsZones:
+        - pokehub.space
+
+certificate:
+  name: pokehub.space
+  namespace: ambassador
+  secretName: ambassador-certs
+  commonName: pokehub.space
+  dnsNames:
+    - pokehub.space
+
+edge-stack:
+  emissary-ingress:
+    agent:
+      cloudConnectToken: YOUR_CLOUD_CONNECT_TOKEN

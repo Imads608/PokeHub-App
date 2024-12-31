@@ -42,6 +42,7 @@ Thumbs.db
 **/node_modules
 **/*.pem
 **/.next
-**/.nx
+**/.nx/*
 pokehub.code-workspace
 /.legacy
+**/*.tgz
