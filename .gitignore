@@ -46,3 +46,6 @@ Thumbs.db
 pokehub.code-workspace
 /.legacy
 **/*.tgz
+
+# Index files
+tags
