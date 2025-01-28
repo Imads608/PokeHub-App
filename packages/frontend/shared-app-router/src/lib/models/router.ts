@@ -3,6 +3,7 @@ import { UserCoreAccountRole } from '@pokehub/shared/shared-user-models';
 export interface PrivilegedAuthRoute {
   route: string;
   rolesAllowed?: UserCoreAccountRole[];
+  allowSubRoutes?: boolean;
 }
 
 export interface PublicRoute {

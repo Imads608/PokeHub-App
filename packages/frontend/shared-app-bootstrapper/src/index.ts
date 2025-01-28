@@ -1,1 +1,2 @@
-export { SharedAppBootstrapper, type SharedAppBootstrapperProps, type Provider } from './lib/bootstrap';
+export { type Provider } from './lib/utils/bootstrap';
+export { SharedAppBootstrapper } from './lib/app-bootstrapper';

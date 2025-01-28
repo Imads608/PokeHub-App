@@ -35,6 +35,12 @@
       "@pokehub/frontend/shared-auth-context": [
         "packages/frontend/shared-auth-context/src/index.ts"
       ],
+      "@pokehub/frontend/shared-auth-provider": [
+        "packages/frontend/shared-auth-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-auth-provider/server": [
+        "packages/frontend/shared-auth-provider/src/server.ts"
+      ],
       "@pokehub/frontend/shared-context": [
         "packages/frontend/shared-context/src/index.ts"
       ],
