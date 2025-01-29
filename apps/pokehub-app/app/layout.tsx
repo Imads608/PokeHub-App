@@ -1,6 +1,5 @@
 import { AppBootstrapper } from './(components)/bootstrapper';
 import './global.css';
-import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
 
 export const metadata = {
   title: 'Welcome to pokehub-app',

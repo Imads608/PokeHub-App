@@ -5,7 +5,7 @@ import {
   SharedAppBootstrapper,
   type Provider,
 } from '@pokehub/frontend/shared-app-bootstrapper';
-import { AuthContextProvider } from '@pokehub/frontend/shared-auth-context';
+import { AuthContextProvider } from '@pokehub/frontend/shared-auth-provider';
 import { QueryProvider } from '@pokehub/frontend/shared-query-client-provider';
 import { useMemo } from 'react';
 
