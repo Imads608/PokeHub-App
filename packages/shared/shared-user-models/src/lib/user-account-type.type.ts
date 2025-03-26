@@ -1,1 +1,1 @@
-export type UserAccountType = 'GOOGLE' | 'LOCAL';
+export type UserAccountType = 'GOOGLE';

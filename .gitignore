@@ -49,3 +49,6 @@ pokehub.code-workspace
 
 # Index files
 tags
+
+# Env Files
+**/.env.local

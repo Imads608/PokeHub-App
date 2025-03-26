@@ -1,15 +1,12 @@
 'use client';
 
 import { Button, Input } from '@pokehub/frontend/shared-ui-components';
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
 export const LoginForm = () => {
-  const [isServer] = useState(false);
-  useEffect(() => {
-    console.log('IsServersss: ', isServer, typeof window === 'undefined');
-  });
+  console.log('this is the Login Form');
 
   return (
     <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-8">
@@ -29,17 +26,30 @@ export const LoginForm = () => {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6" action="#" method="POST">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-grey">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium leading-6 text-grey"
+            >
               Email address
             </label>
             <div className="mt-2">
-              <Input id="email" name="email" type="email" autoComplete="email" required placeholder="email" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="email"
+              />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-grey-text">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium leading-6 text-grey-text"
+              >
                 Password
               </label>
               <div className="text-sm">
@@ -52,7 +62,26 @@ export const LoginForm = () => {
               </div>
             </div>
             <div className="mt-2">
-              <Input id="password" name="password" type="password" autoComplete="current-password" required />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <div>
+              <Button
+                type="submit"
+                variant="default"
+                color="indigo-main-bold"
+                size="full"
+                className="my-2"
+                disabled={false}
+                onClick={() => signIn('google')}
+              >
+                Sign In With Google
+              </Button>
             </div>
           </div>
 
@@ -72,7 +101,10 @@ export const LoginForm = () => {
 
         <p className="mt-10 text-center text-sm text-gray-main">
           Not a member?{' '}
-          <Link href="/register" className="font-semibold leading-6 text-indigo-main-bold hover:text-indigo-main">
+          <Link
+            href="/register"
+            className="font-semibold leading-6 text-indigo-main-bold hover:text-indigo-main"
+          >
             Register Now!
           </Link>
         </p>

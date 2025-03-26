@@ -1,1 +1,1 @@
-export type UserCoreAccountRole = 'ADMIN' | 'USER';
+export type UserAccountRole = 'ADMIN' | 'USER';

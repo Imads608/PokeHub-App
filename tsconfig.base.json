@@ -17,6 +17,21 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
+      "@pokehub/backend/pokehub-postgres": [
+        "packages/backend/pokehub-postgres/src/index.ts"
+      ],
+      "@pokehub/backend/pokehub-users-db": [
+        "packages/backend/pokehub-users-db/src/index.ts"
+      ],
+      "@pokehub/backend/shared-auth-utils": [
+        "packages/backend/shared-auth-utils/src/index.ts"
+      ],
+      "@pokehub/backend/shared-exceptions": [
+        "packages/backend/shared-exceptions/src/index.ts"
+      ],
+      "@pokehub/backend/shared-logger": [
+        "packages/backend/shared-logger/src/index.ts"
+      ],
       "@pokehub/frontend/pokehub-auth-forms": [
         "packages/frontend/pokehub-auth-forms/src/index.ts"
       ],
@@ -56,6 +71,7 @@
       "@pokehub/frontend/shared-ui-icons": [
         "packages/frontend/shared-ui-icons/src/index.ts"
       ],
+      "@pokehub/nest-custom-plugin": ["tools/nest-custom-plugin/src/index.ts"],
       "@pokehub/shared/shared-auth-models": [
         "packages/shared/shared-auth-models/src/index.ts"
       ],
