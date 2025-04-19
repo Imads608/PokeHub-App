@@ -1,8 +1,9 @@
-import { UserCoreAccountRole } from '@pokehub/shared/shared-user-models';
+import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
+import type { Session } from 'next-auth';
 
 export interface PrivilegedAuthRoute {
   route: string;
-  rolesAllowed?: UserCoreAccountRole[];
+  rolesAllowed?: UserAccountRole[];
   allowSubRoutes?: boolean;
 }
 
@@ -12,11 +13,11 @@ export interface PublicRoute {
 }
 
 export type RedirectRoute = {
-  [role in UserCoreAccountRole]: string;
+  [role in UserAccountRole]: string;
 };
 
 export type NavAuthRoutes = {
-  [role in UserCoreAccountRole]: { path: string; name: string }[];
+  [role in UserAccountRole]: { path: string; name: string }[];
 };
 
 export interface AppRouter {
@@ -24,6 +25,7 @@ export interface AppRouter {
   navAuthRoutes: NavAuthRoutes;
   redirectOnLogin: RedirectRoute;
   privilegedRoutes: PrivilegedAuthRoute[];
+  createUsernameRoute: string;
 }
 
 export interface RouteGuardProps {
@@ -33,4 +35,9 @@ export interface RouteGuardProps {
   loginPath: string;
   children: JSX.Element | React.ReactNode;
   onLogout?: () => void;
+}
+
+export interface ServerRouteGuardProps {
+  getSessionCallback: () => Promise<Session | null>;
+  router: AppRouter;
 }

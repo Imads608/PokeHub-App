@@ -1,22 +1,51 @@
-import { UserCoreWithAccessToken } from '@pokehub/shared/shared-user-models';
+import type {
+  AppRouter,
+  PrivilegedAuthRoute,
+  PublicRoute,
+  ServerRouteGuardProps,
+} from './models/router';
+import '@pokehub/frontend/global-next-types';
+import type { UserCore } from '@pokehub/shared/shared-user-models';
+import type { Session } from 'next-auth';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { AppRouter, PrivilegedAuthRoute, PublicRoute } from './models/router';
+let routerInfo: AppRouter;
+let getSessionCallback: () => Promise<Session | null>;
 
-export const handleServerAuth = async (
-  authRes: UserCoreWithAccessToken | undefined,
-  currentRoute: string,
-  routerInfo: AppRouter
-) => {
-  console.log(`${handleServerAuth.name} - Starting to Handle Server Authentication for ${currentRoute}`);
+export const initServerRouteGuard = (props: ServerRouteGuardProps) => {
+  if (!routerInfo && !getSessionCallback) {
+    routerInfo = props.router;
+    getSessionCallback = props.getSessionCallback;
+  }
+};
+
+export const handleServerAuth = async () => {
+  if (!routerInfo || !getSessionCallback) {
+    return;
+  }
+
+  const session = await getSessionCallback();
+
+  const currentRoute = headers().get('x-path') || '/';
+  console.log(
+    `${
+      handleServerAuth.name
+    } - Starting to Handle Server Authentication for ${currentRoute} ${
+      session?.user ? JSON.stringify(session.user) : ''
+    }`
+  );
 
   const publicRouteInfo = routerInfo.publicRoutes.find(
     (route) =>
-      (route.route === '/' && currentRoute === '/') || (route.route !== '/' && currentRoute.startsWith(route.route))
+      (route.route === '/' && currentRoute === '/') ||
+      (route.route !== '/' && currentRoute.startsWith(route.route))
   );
-  const privateRouteInfo = routerInfo.privilegedRoutes.find((route) => currentRoute.startsWith(route.route));
+  const privateRouteInfo = routerInfo.privilegedRoutes.find((route) =>
+    currentRoute.startsWith(route.route)
+  );
 
-  if (!authRes) {
+  if (!session?.user) {
     if (publicRouteInfo) {
       console.log(
         `${handleServerAuth.name} - Route ${currentRoute} is public and authRes is undefined. Proceeding to show route`
@@ -26,17 +55,17 @@ export const handleServerAuth = async (
     redirect(`/login`);
   }
 
-  if (publicRouteInfo && !authRes) {
+  if (publicRouteInfo && !session.user) {
     console.log(
       `${handleServerAuth.name} - Route ${currentRoute} is public and authRes status is not 200. Proceeding to show route`
     );
     return;
-  } else if (publicRouteInfo) {
+  } else if (publicRouteInfo && session.user) {
     console.log(
       `${handleServerAuth.name} - Route ${currentRoute} is public and authRes status is 200. Checking if Route is Auth Accessible`
     );
-    handlePublicRoute(publicRouteInfo, routerInfo, authRes);
-  } else if (!authRes) {
+    handlePublicRoute(publicRouteInfo, routerInfo, session.user);
+  } else if (!session) {
     console.log(
       `${handleServerAuth.name} - Route ${currentRoute} is private and authRes status is not 200. Redirecting to /login`
     );
@@ -45,34 +74,45 @@ export const handleServerAuth = async (
     console.log(
       `${handleServerAuth.name} - Route ${currentRoute} is private and authRes status is 200. Checking if Route is User Role has permissions`
     );
-    handlePrivateRouteInfo(privateRouteInfo, routerInfo, authRes);
+    handlePrivateRouteInfo(privateRouteInfo, routerInfo, session.user);
   }
 };
 
-const handlePublicRoute = (publicRoute: PublicRoute, routerInfo: AppRouter, userData: UserCoreWithAccessToken) => {
+const handlePublicRoute = (
+  publicRoute: PublicRoute,
+  routerInfo: AppRouter,
+  userData: UserCore
+) => {
   if (!publicRoute.isAuthAccessible) {
     console.log(
-      `${handlePublicRoute.name} - Route ${publicRoute.route} is not auth accessible. Redirecting to ${userData.user.accountRole}'s redirectOnLogin config`
+      `${handlePublicRoute.name} - Route ${publicRoute.route} is not auth accessible. Redirecting to ${userData.accountRole}'s redirectOnLogin config`
     );
-    redirect(routerInfo.redirectOnLogin[userData.user.accountRole]);
+    redirect(routerInfo.redirectOnLogin[userData.accountRole]);
   }
-  console.log(`${handlePublicRoute.name} - Route ${publicRoute.route} is auth accessible. Proceeding to show route`);
+  console.log(
+    `${handlePublicRoute.name} - Route ${publicRoute.route} is auth accessible. Proceeding to show route`
+  );
 };
 
 const handlePrivateRouteInfo = (
   privateRouteInfo: PrivilegedAuthRoute,
   routerInfo: AppRouter,
-  userData: UserCoreWithAccessToken
+  user: UserCore
 ) => {
-  if (privateRouteInfo.rolesAllowed && !privateRouteInfo.rolesAllowed.includes(userData.user.accountRole)) {
+  if (
+    privateRouteInfo.rolesAllowed &&
+    !privateRouteInfo.rolesAllowed.includes(user.accountRole)
+  ) {
     console.log(
-      `${handlePrivateRouteInfo} - Route ${privateRouteInfo.route} is not accessible by ${
-        userData.user.accountRole
-      }. Redirecting to ${routerInfo.redirectOnLogin[userData.user.accountRole]}}`
+      `${handlePrivateRouteInfo} - Route ${
+        privateRouteInfo.route
+      } is not accessible by ${user.accountRole}. Redirecting to ${
+        routerInfo.redirectOnLogin[user.accountRole]
+      }}`
     );
-    redirect(routerInfo.redirectOnLogin[userData.user.accountRole]);
+    redirect(routerInfo.redirectOnLogin[user.accountRole]);
   }
   console.log(
-    `${handlePrivateRouteInfo} - Route ${privateRouteInfo.route} is accessible by ${userData.user.accountRole}. Proceeding to show route`
+    `${handlePrivateRouteInfo} - Route ${privateRouteInfo.route} is accessible by ${user.accountRole}. Proceeding to show route`
   );
 };

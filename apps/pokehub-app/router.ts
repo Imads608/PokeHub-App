@@ -1,4 +1,4 @@
-import { AppRouter } from '@pokehub/frontend/shared-app-router';
+import type { AppRouter } from '@pokehub/frontend/shared-app-router';
 
 export const PokeHubRouter: AppRouter = {
   publicRoutes: [
@@ -25,7 +25,7 @@ export const PokeHubRouter: AppRouter = {
     USER: [
       {
         name: 'Dashboard',
-        path: '/dash',
+        path: '/dashboard',
       },
     ],
   },
@@ -37,7 +37,8 @@ export const PokeHubRouter: AppRouter = {
     },
   ],
   redirectOnLogin: {
-    ADMIN: '/dash',
-    USER: '/dash',
+    ADMIN: '/dashboard',
+    USER: '/dashboard',
   },
+  createUsernameRoute: '/create-username',
 };

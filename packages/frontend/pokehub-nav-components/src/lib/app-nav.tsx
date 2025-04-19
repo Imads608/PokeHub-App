@@ -1,19 +1,84 @@
-import { TopNav } from '@pokehub/frontend/shared-ui-components';
-import { DrawerIcon } from '@pokehub/frontend/shared-ui-icons';
-import Link from 'next/link';
+'use client';
 
-export const AppNav = () => {
+//import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DesktopNavItems } from './components/desktop';
+import { MobileMenuItems } from './components/mobile';
+import { ThemeToggle } from './components/theme-toggle';
+import { Button } from '@pokehub/frontend/shared-ui-components';
+import { LogoIcon } from '@pokehub/frontend/shared-ui-icons';
+import { Menu, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+
+export function AppNav() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isChatOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { data: session } = useSession();
+  const pathname = usePathname();
+
+  console.log('isChatOpen', isChatOpen);
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // const handleSignOut = () => {
+  //   signOut({ callbackUrl: '/' });
+  // };
+
   return (
-    <TopNav assetPath="./images/logo.svg">
-      <ul className="flex flex-row-reverse gap-8 items-center flex-grow mr-10">
-        <Link className="transition ease-in-out duration-200 transform hover:scale-125" href="/login">
-          Log In
+    <nav
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? 'glass py-2 shadow-lg'
+          : 'bg-background/80 py-4 backdrop-blur-sm'
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3">
+          <div className="relative h-10 w-10  rounded-full shadow-md">
+            <LogoIcon assetPath={'./images/logo.svg'} />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            <span className="text-primary">Poké</span>
+            <span className="text-foreground">Hub</span>
+          </span>
         </Link>
-        <Link className="transition ease-in-out duration-200 transform hover:scale-125" href="/register">
-          Sign Up
-        </Link>
-      </ul>
-      <DrawerIcon className="sm:hidden block" />
-    </TopNav>
+
+        {/* Desktop Navigation */}
+        <DesktopNavItems
+          isAuthenticated={!!session?.user}
+          activePath={pathname}
+        />
+
+        {/* Mobile Menu Button */}
+        <div className="flex items-center">
+          <ThemeToggle className="md:hidden" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-foreground hover:bg-muted md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && <MobileMenuItems isAuthenticated={!!session?.user} />}
+    </nav>
   );
-};
+}

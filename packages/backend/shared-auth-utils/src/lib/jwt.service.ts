@@ -15,7 +15,6 @@ import {
 import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import type { TokenType } from '@pokehub/shared/shared-auth-models';
-import type { UserCore } from '@pokehub/shared/shared-user-models';
 
 @Injectable()
 export class JwtAuthService implements IJwtAuthService {
@@ -28,27 +27,20 @@ export class JwtAuthService implements IJwtAuthService {
   }
 
   async generateAccessAndRefreshTokens(
-    user: UserCore
+    user: UserJwtData
   ): Promise<{ accessToken: string; refreshToken: string }> {
     this.logger.log(
       `${this.generateAccessAndRefreshTokens.name}: Creating Access And Refresh Tokens for User`
     );
 
-    const userJwtPayload: UserJwtData = {
-      id: user.id,
-      email: user.email,
-      accountType: user.accountType,
-      accountRole: user.accountRole,
-    };
-
     const secretsConfig = this.configService.get('secrets', { infer: true });
 
     try {
-      const accessToken = this.jwtService.sign(userJwtPayload, {
+      const accessToken = this.jwtService.sign(user, {
         secret: secretsConfig.ACCESS_TOKEN.value,
         expiresIn: `${secretsConfig.ACCESS_TOKEN.expiryMinutes * 60}s`,
       });
-      const refreshToken = this.jwtService.sign(userJwtPayload, {
+      const refreshToken = this.jwtService.sign(user, {
         secret: secretsConfig.REFRESH_TOKEN.value,
         expiresIn: `${secretsConfig.REFRESH_TOKEN.expiryMinutes * 60}s`,
       });
@@ -69,7 +61,10 @@ export class JwtAuthService implements IJwtAuthService {
     }
   }
 
-  async generateToken(user: UserCore, tokenType: TokenType): Promise<string> {
+  async generateToken(
+    user: UserJwtData,
+    tokenType: TokenType
+  ): Promise<string> {
     this.logger.log(
       `${this.generateToken.name}: Creating Token of type ${tokenType} for User`
     );
@@ -111,6 +106,12 @@ export class JwtAuthService implements IJwtAuthService {
     );
 
     const secretsConfig = this.configService.get('secrets', { infer: true });
+
+    this.logger.log(
+      `${this.validateToken.name}: Secrets Config: ${JSON.stringify(
+        secretsConfig
+      )}`
+    );
 
     try {
       const payload = this.jwtService.verify<UserJwtData>(token, {

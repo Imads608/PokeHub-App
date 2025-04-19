@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/backend/shared-logger';
-import { OAuth2Client } from 'google-auth-library';
+import { LoginTicket, OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class GoogleOAuthGuard implements CanActivate {
@@ -25,6 +25,9 @@ export class GoogleOAuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    this.logger.log(
+      `${this.canActivate.name}: Checking if request is authorized`
+    );
     const request = context.switchToHttp().getRequest<OAuthRequest>();
     const authHeader = request.headers.authorization;
     if (!authHeader) {
@@ -34,11 +37,19 @@ export class GoogleOAuthGuard implements CanActivate {
       return false;
     }
     const token = authHeader.split(' ')[1];
+    let data: LoginTicket;
 
-    const data = await this.oauthClient.verifyIdToken({
-      idToken: token,
-      audience: this.clientId,
-    });
+    try {
+      data = await this.oauthClient.verifyIdToken({
+        idToken: token,
+        audience: this.clientId,
+      });
+    } catch (err) {
+      this.logger.error(
+        `${this.canActivate.name}: Error verifying token: ${err}`
+      );
+      return false;
+    }
     const email = data.getPayload()?.email;
 
     if (!email) {

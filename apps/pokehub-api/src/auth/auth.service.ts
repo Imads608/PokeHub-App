@@ -4,9 +4,13 @@ import { Inject, Injectable, type Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { IUsersDBService } from '@pokehub/backend/pokehub-users-db';
 import { USERS_DB_SERVICE } from '@pokehub/backend/pokehub-users-db';
-import type { IJwtAuthService } from '@pokehub/backend/shared-auth-utils';
+import type {
+  IJwtAuthService,
+  UserJwtData,
+} from '@pokehub/backend/shared-auth-utils';
 import { JWT_AUTH_SERVICE } from '@pokehub/backend/shared-auth-utils';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import { AccessToken } from '@pokehub/shared/shared-auth-models';
 import type { OAuthLoginResponse } from '@pokehub/shared/shared-user-models';
 
 @Injectable()
@@ -22,18 +26,32 @@ class AuthService implements IAuthService {
 
   async createOrLoginUser(email: string): Promise<OAuthLoginResponse> {
     this.logger.log(`User logged in ${email}`);
-    const user = await this.usersDBService.createUser(email, 'GOOGLE');
+    let user = await this.usersDBService.getUserByEmail(email);
+    this.logger.log(`User found: ${JSON.stringify(user)}`);
+    if (!user) {
+      user = await this.usersDBService.createUser(email, 'GOOGLE');
+    }
     const tokens = await this.jwtService.generateAccessAndRefreshTokens(user);
     const secretsConfig = this.configService.get('secrets', { infer: true });
     return {
       user,
       tokens: {
-        accessToken: tokens.accessToken,
-        refreshToken: {
-          value: tokens.refreshToken,
-          expirySeconds: secretsConfig.REFRESH_TOKEN.expiryMinutes * 60,
+        refreshToken: tokens.refreshToken,
+        accessToken: {
+          value: tokens.accessToken,
+          expirySeconds: secretsConfig.ACCESS_TOKEN.expiryMinutes * 60,
         },
       },
+    };
+  }
+
+  async refreshAccessToken(user: UserJwtData): Promise<AccessToken> {
+    this.logger.log(`User ${user.email} requested access token`);
+    const token = await this.jwtService.generateToken(user, 'ACCESS_TOKEN');
+    const secretsConfig = this.configService.get('secrets', { infer: true });
+    return {
+      value: token,
+      expirySeconds: secretsConfig.ACCESS_TOKEN.expiryMinutes * 60,
     };
   }
 }

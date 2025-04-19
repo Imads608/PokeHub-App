@@ -8,3 +8,5 @@ export interface UserCore {
   accountRole: UserAccountRole;
   accountType: UserAccountType;
 }
+
+export type UserJwtData = UserCore;

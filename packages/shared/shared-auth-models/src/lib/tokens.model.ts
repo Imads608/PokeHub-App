@@ -1,9 +1,9 @@
 export interface Tokens {
-  accessToken: string;
-  refreshToken: RefreshToken;
+  accessToken: AccessToken;
+  refreshToken: string;
 }
 
-export interface RefreshToken {
+export interface AccessToken {
   value: string;
   expirySeconds: number;
 }

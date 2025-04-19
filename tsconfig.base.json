@@ -32,11 +32,23 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
+      "@pokehub/frontend/shared-utils": [
+        "packages/frontend/shared-utils/src/index.ts"
+      ],
+      "@pokehub/frontend/dex-data-provider": [
+        "packages/frontend/dex-data-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/global-next-types": [
+        "packages/frontend/global-next-types/src/index.ts"
+      ],
       "@pokehub/frontend/pokehub-auth-forms": [
         "packages/frontend/pokehub-auth-forms/src/index.ts"
       ],
-      "@pokehub/frontend/pokehub-auth-forms/server": [
-        "packages/frontend/pokehub-auth-forms/src/server.ts"
+      "@pokehub/frontend/pokehub-dex-components": [
+        "packages/frontend/pokehub-dex-components/src/index.ts"
+      ],
+      "@pokehub/frontend/pokehub-dex-components/server": [
+        "packages/frontend/pokehub-dex-components/src/server.ts"
       ],
       "@pokehub/frontend/pokehub-nav-components": [
         "packages/frontend/pokehub-nav-components/src/index.ts"
@@ -64,6 +76,9 @@
       ],
       "@pokehub/frontend/shared-query-client-provider": [
         "packages/frontend/shared-query-client-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-theme-context": [
+        "packages/frontend/shared-theme-context/src/index.ts"
       ],
       "@pokehub/frontend/shared-ui-components": [
         "packages/frontend/shared-ui-components/src/index.ts"

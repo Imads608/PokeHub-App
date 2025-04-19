@@ -12,6 +12,9 @@ const nextConfig = {
     // See: https://github.com/gregberge/svgr
     svgr: false,
   },
+  images: {
+    domains: ['play.pokemonshowdown.com'], // Add the external domain here
+  },
 };
 
 const plugins = [

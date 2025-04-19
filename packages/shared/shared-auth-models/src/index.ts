@@ -1,4 +1,7 @@
-export type { GoogleOAuthRequest } from './lib/google-oauth-request.model';
-export { createGoogleOAuthReqSchema } from './lib/google-oauth-request.model';
-export type { Tokens, RefreshToken } from './lib/tokens.model.ts';
+export type { Tokens, AccessToken } from './lib/tokens.model.ts';
 export type { TokenType } from './lib/tokens.type';
+export {
+  createGoogleOAuthReqSchema,
+  type GoogleOAuthRequest,
+  type AccessTokenRefreshResponse,
+} from './lib/auth-requests.model';

@@ -39,6 +39,7 @@ testem.log
 .DS_Store
 Thumbs.db
 **/.env
+**/.env.local
 **/node_modules
 **/*.pem
 **/.next
@@ -49,6 +50,3 @@ pokehub.code-workspace
 
 # Index files
 tags
-
-# Env Files
-**/.env.local

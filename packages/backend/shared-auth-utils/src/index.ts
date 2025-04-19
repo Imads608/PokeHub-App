@@ -8,3 +8,5 @@ export {
   type IJwtAuthService,
 } from './lib/jwt-service.interface';
 export type { JwtAppConfiguration } from './lib/jwt-app-config.model';
+export { TokenAuthGuard } from './lib/token-auth.guard';
+export { TokenAuth } from './lib/token-auth.decorator';

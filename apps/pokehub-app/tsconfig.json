@@ -16,10 +16,7 @@
         "name": "next"
       }
     ],
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["jest", "node"]
   },
   "include": [
     "**/*.ts",
@@ -29,6 +26,7 @@
     "../../apps/pokehub-app/.next/types/**/*.ts",
     "../../dist/apps/pokehub-app/.next/types/**/*.ts",
     "next-env.d.ts",
+    "new-types.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [

@@ -6,5 +6,5 @@ export interface LogoIconProps {
 }
 
 export const LogoIcon = ({ assetPath, className }: LogoIconProps) => {
-  return <Image className={className} width={50} height={50} src={assetPath} alt="Logo" />;
+  return <Image className={className} width={60} height={60} src={assetPath} alt="Logo" />;
 };

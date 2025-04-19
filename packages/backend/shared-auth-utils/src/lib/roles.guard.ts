@@ -1,3 +1,4 @@
+import { Roles } from './roles.decorator';
 import {
   type CanActivate,
   type ExecutionContext,
@@ -5,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AppLogger } from '@pokehub/backend/shared-logger';
-import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -17,10 +17,7 @@ export class RolesGuard implements CanActivate {
   }
 
   canActivate(context: ExecutionContext): boolean {
-    const roles = this.reflector.get<UserAccountRole>(
-      'roles',
-      context.getHandler()
-    );
+    const roles = this.reflector.get(Roles, context.getHandler());
     if (!roles) {
       return true;
     }

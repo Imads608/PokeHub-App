@@ -1,6 +1,5 @@
+import type { SharedAuthContext } from './auth.context.model';
 import { createContext } from 'react';
-
-import { SharedAuthContext } from './auth.context.model';
 
 export const AuthContext = createContext<SharedAuthContext<'ReadWrite'>>({
   isAuthenticated: {

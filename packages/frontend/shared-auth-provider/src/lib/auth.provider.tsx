@@ -2,7 +2,7 @@ import {
   AuthContext,
   type SharedAuthContext,
 } from '@pokehub/frontend/shared-auth-context';
-import { UserCoreAccountRole } from '@pokehub/shared/shared-user-models';
+import { UserAccountRole } from '@pokehub/shared/shared-user-models';
 import { useState } from 'react';
 
 export interface AuthContextProviderProps {
@@ -23,7 +23,7 @@ export const AuthContextProvider = ({
   );
   const [loading, setLoading] = useState(values.loading.value);
   const [userAccountRole, setUserAccountRole] = useState<
-    UserCoreAccountRole | undefined
+    UserAccountRole | undefined
   >(values.accountRole.value);
 
   return (
