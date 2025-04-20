@@ -13,7 +13,7 @@ const nextConfig = {
     svgr: false,
   },
   images: {
-    domains: ['play.pokemonshowdown.com'], // Add the external domain here
+    domains: ['play.pokemonshowdown.com', 'raw.githubusercontent.com'], // Add the external domain here
   },
 };
 

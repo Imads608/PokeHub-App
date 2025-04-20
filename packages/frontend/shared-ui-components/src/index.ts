@@ -39,3 +39,15 @@ export {
   AccordionContent,
 } from './lib/accordion/accordion';
 export { Badge } from './lib/badge/badge';
+export {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+  SelectContent,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+} from './lib/select/select';
