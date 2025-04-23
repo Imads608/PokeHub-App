@@ -2,3 +2,7 @@
 export { DexSearchContainer } from './lib/search/dex-search-container';
 export { DexSearchProvider } from './lib/search/context/dex-search.provider';
 export { usePokemonDetails } from './lib/pokemon/hooks/usePokemonDetails';
+export {
+  PokemonDetailsContainer,
+  PokemonDetailsContainerProps,
+} from './lib/pokemon/pokemon-details-container';

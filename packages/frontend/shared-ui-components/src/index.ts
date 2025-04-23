@@ -51,3 +51,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 } from './lib/select/select';
+export { Progress } from './lib/progress/progress';
