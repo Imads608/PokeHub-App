@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "default-generator": {
+      "factory": "./src/generators/default-generator/generator",
+      "schema": "./src/generators/default-generator/schema.json",
+      "description": "default-generator generator"
+    }
+  }
+}

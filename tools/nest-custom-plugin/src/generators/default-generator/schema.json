@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "DefaultGenerator",
+  "title": "",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What name would you like to use?"
+    },
+    "projectType": {
+      "type": "string",
+      "enum": ["application", "library"],
+      "default": "application",
+      "description": "The type of Nest project to generate."
+    },
+    "directory": {
+      "type": "string",
+      "description": "The custom directory in which to generate the project. For example, for libraries, use 'packages/backend'. If not provided, defaults will be applied (i.e. 'apps' for applications and 'packages/backend' for libraries)."
+    }
+  },
+  "required": ["name"]
+}

@@ -1,5 +1,0 @@
-@use '../../../styles/common/content.scss';
-
-.content {
-    @include content.flexContentCenter(column);
-}

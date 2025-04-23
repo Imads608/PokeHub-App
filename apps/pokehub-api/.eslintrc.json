@@ -1,0 +1,20 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": { "@typescript-eslint/consistent-type-imports": "off" }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "decorator-position/decorator-position": "error"
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "rules": {}
+    }
+  ]
+}

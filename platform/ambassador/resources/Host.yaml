@@ -1,0 +1,15 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Host
+metadata:
+  name: pokehub
+  namespace: ambassador
+spec:
+  hostname: pokehub.space
+  acmeProvider:
+    email: imadsheriff97@gmail.com
+  tlsSecret:
+    name: ambassador-certs
+  requestPolicy:
+    insecure:
+      action: Route
+

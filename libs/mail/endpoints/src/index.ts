@@ -1,1 +1,0 @@
-export * from './lib/mail-gateway-tcp-endpoints.enum';
