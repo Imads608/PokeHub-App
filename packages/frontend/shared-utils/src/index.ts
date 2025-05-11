@@ -7,3 +7,4 @@ export {
   getTypeEffectivenessForTypes,
   getTypeEffectiveness,
 } from './lib/type-effectiveness';
+export { isBaseForme } from './lib/forme-utils';

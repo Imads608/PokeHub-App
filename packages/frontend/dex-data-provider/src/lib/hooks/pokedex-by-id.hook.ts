@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export const usePokedexByID = () => {
   return useQuery({
-    queryKey: ['pokedex-search', { type: 'PokedexByID' }],
+    queryKey: ['pokedex-search', { type: 'PokedexByID', provider: 'PkmnDex' }],
     queryFn: () => {
       const results: { [id: number]: Species } = {};
 

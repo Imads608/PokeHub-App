@@ -32,8 +32,8 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
-      "@pokehub/frontend/shared-utils": [
-        "packages/frontend/shared-utils/src/index.ts"
+      "@pokehub/frontend/shared-types": [
+        "packages/frontend/shared-types/src/index.ts"
       ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
@@ -85,6 +85,9 @@
       ],
       "@pokehub/frontend/shared-ui-icons": [
         "packages/frontend/shared-ui-icons/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-utils": [
+        "packages/frontend/shared-utils/src/index.ts"
       ],
       "@pokehub/nest-custom-plugin": ["tools/nest-custom-plugin/src/index.ts"],
       "@pokehub/shared/shared-auth-models": [

@@ -1,14 +1,14 @@
 'use client';
 
-import buildProviderTree, { Provider } from './utils/bootstrap';
-import { useMemo } from 'react';
-import { SessionProvider } from 'next-auth/react';
+import buildProviderTree, { type Provider } from './utils/bootstrap';
 import type { Session } from 'next-auth';
+import { SessionProvider } from 'next-auth/react';
+import { useMemo } from 'react';
 
 export const SharedAppBootstrapper = ({
   children,
   providers,
-  session
+  session,
 }: {
   children: React.ReactNode;
   providers: Provider[];
@@ -16,9 +16,9 @@ export const SharedAppBootstrapper = ({
 }) => {
   const Providers = useMemo(() => buildProviderTree(providers), [providers]);
 
-  return (<SessionProvider session={session}>
-          <Providers>
-            {children}
-          </Providers>
-        </SessionProvider>);
+  return (
+    <SessionProvider session={session}>
+      <Providers>{children}</Providers>
+    </SessionProvider>
+  );
 };

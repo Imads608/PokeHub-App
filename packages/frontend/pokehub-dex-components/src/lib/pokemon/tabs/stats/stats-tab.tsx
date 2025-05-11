@@ -1,4 +1,4 @@
-import { GenerationNum, Species } from '@pkmn/dex';
+import { usePokemonDexDetailsContext } from '../../context/pokemon-dex-details.context';
 import {
   Badge,
   Card,
@@ -17,18 +17,17 @@ import {
 import { Shield, Swords } from 'lucide-react';
 import { useMemo } from 'react';
 
-export interface PokemonStatsTabProps {
-  generation: GenerationNum;
-  pokemonDetails: Species;
-}
-
-export const PokemonStatsTab = ({
-  generation,
-  pokemonDetails,
-}: PokemonStatsTabProps) => {
+export const PokemonStatsTab = () => {
+  const {
+    selectedForm: { pokemon },
+    selectedGeneration,
+  } = usePokemonDexDetailsContext();
   const { weakTo, immuneTo, resistantTo } = useMemo(
-    () => getTypeEffectivenessForTypes(pokemonDetails.types),
-    [pokemonDetails.types]
+    () =>
+      pokemon.value
+        ? getTypeEffectivenessForTypes(pokemon.value.types)
+        : { weakTo: [], immuneTo: [], resistantTo: [] },
+    [pokemon.value]
   );
 
   return (
@@ -46,10 +45,12 @@ export const PokemonStatsTab = ({
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-medium">HP</span>
-                  <span className="text-sm">{pokemonDetails.baseStats.hp}</span>
+                  <span className="text-sm">{pokemon.value?.baseStats.hp}</span>
                 </div>
                 <Progress
-                  value={(pokemonDetails.baseStats.hp / 255) * 100}
+                  value={
+                    pokemon.value ? (pokemon.value.baseStats.hp / 255) * 100 : 0
+                  }
                   className="h-2"
                 />
               </div>
@@ -58,11 +59,15 @@ export const PokemonStatsTab = ({
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-medium">Attack</span>
                   <span className="text-sm">
-                    {pokemonDetails.baseStats.atk}
+                    {pokemon.value?.baseStats.atk}
                   </span>
                 </div>
                 <Progress
-                  value={(pokemonDetails.baseStats.atk / 255) * 100}
+                  value={
+                    pokemon.value
+                      ? (pokemon.value.baseStats.atk / 255) * 100
+                      : 0
+                  }
                   className="h-2"
                 />
               </div>
@@ -70,25 +75,33 @@ export const PokemonStatsTab = ({
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-medium">Defense</span>
                   <span className="text-sm">
-                    {pokemonDetails.baseStats.def}
+                    {pokemon.value?.baseStats.def}
                   </span>
                 </div>
                 <Progress
-                  value={(pokemonDetails.baseStats.def / 255) * 100}
+                  value={
+                    pokemon.value
+                      ? (pokemon.value.baseStats.def / 255) * 100
+                      : 0
+                  }
                   className="h-2"
                 />
               </div>
-              {generation > 1 ? (
+              {selectedGeneration.value > 1 ? (
                 <>
                   <div>
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm font-medium">Sp. Attack</span>
                       <span className="text-sm">
-                        {pokemonDetails.baseStats.spa}
+                        {pokemon.value?.baseStats.spa}
                       </span>
                     </div>
                     <Progress
-                      value={(pokemonDetails.baseStats.spa / 255) * 100}
+                      value={
+                        pokemon.value
+                          ? (pokemon.value.baseStats.spa / 255) * 100
+                          : 0
+                      }
                       className="h-2"
                     />
                   </div>
@@ -96,11 +109,15 @@ export const PokemonStatsTab = ({
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm font-medium">Sp. Defense</span>
                       <span className="text-sm">
-                        {pokemonDetails.baseStats.spd}
+                        {pokemon.value?.baseStats.spd}
                       </span>
                     </div>
                     <Progress
-                      value={(pokemonDetails.baseStats.spd / 255) * 100}
+                      value={
+                        pokemon.value
+                          ? (pokemon.value.baseStats.spd / 255) * 100
+                          : 0
+                      }
                       className="h-2"
                     />
                   </div>
@@ -110,11 +127,15 @@ export const PokemonStatsTab = ({
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-sm font-medium">Special</span>
                     <span className="text-sm">
-                      {pokemonDetails.baseStats.spa}
+                      {pokemon.value?.baseStats.spa}
                     </span>
                   </div>
                   <Progress
-                    value={(pokemonDetails.baseStats.spa / 255) * 100}
+                    value={
+                      pokemon.value
+                        ? (pokemon.value.baseStats.spa / 255) * 100
+                        : 0
+                    }
                     className="h-2"
                   />
                 </div>
@@ -123,11 +144,15 @@ export const PokemonStatsTab = ({
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-medium">Speed</span>
                   <span className="text-sm">
-                    {pokemonDetails.baseStats.spe}
+                    {pokemon.value?.baseStats.spe}
                   </span>
                 </div>
                 <Progress
-                  value={(pokemonDetails.baseStats.spe / 255) * 100}
+                  value={
+                    pokemon.value
+                      ? (pokemon.value.baseStats.spe / 255) * 100
+                      : 0
+                  }
                   className="h-2"
                 />
               </div>
@@ -136,10 +161,10 @@ export const PokemonStatsTab = ({
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm font-medium">Total</span>
-                  <span className="text-sm">{pokemonDetails.bst}</span>
+                  <span className="text-sm">{pokemon.value?.bst}</span>
                 </div>
                 <Progress
-                  value={(pokemonDetails.bst / 1530) * 100}
+                  value={pokemon.value ? (pokemon.value.bst / 1530) * 100 : 0}
                   className="h-2"
                 />
               </div>

@@ -1,25 +1,22 @@
 'use client';
 
-import { GenerationNum, ID } from '@pkmn/dex';
+import type { ID } from '@pkmn/dex';
+import { usePokemonDetails } from '@pokehub/frontend/dex-data-provider';
 import {
   PokemonDetailsContainer,
-  usePokemonDetails,
+  PokemonDexDetailsProvider,
 } from '@pokehub/frontend/pokehub-dex-components';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
 
 export default function PokemonPage() {
   const params = useParams();
 
-  const id = params.id as string;
-
-  const [selectedGeneration, setSelectedGeneration] =
-    useState<GenerationNum>(9);
+  const id = params.id as ID;
 
   const { data: pokemonDetails, isLoading: isPokemonDetailsLoading } =
-    usePokemonDetails(id as ID, { generation: selectedGeneration });
+    usePokemonDetails(id, { generation: 9 });
 
   if (isPokemonDetailsLoading) {
     return (
@@ -46,11 +43,8 @@ export default function PokemonPage() {
     );
   }
   return (
-    <PokemonDetailsContainer
-      pokemonDetails={pokemonDetails}
-      id={id}
-      generation={selectedGeneration}
-      setGeneration={setSelectedGeneration}
-    />
+    <PokemonDexDetailsProvider id={id}>
+      <PokemonDetailsContainer />
+    </PokemonDexDetailsProvider>
   );
 }
