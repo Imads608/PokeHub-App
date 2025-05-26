@@ -1,27 +1,30 @@
 'use client';
 
+import { usePokemonDexDetails } from '../hooks/usePokemonDexDetails';
 import { usePokemonEvolutionLine } from '../hooks/usePokemonEvolutionLine';
 import { PokemonDexDetailsContext } from './pokemon-dex-details.context';
 import type { GenerationNum, ID, Species } from '@pkmn/dex';
-import { usePokemonDetails } from '@pokehub/frontend/dex-data-provider';
 import { isBaseForme } from '@pokehub/frontend/shared-utils';
 import type { Pokemon } from 'pokeapi-js-wrapper';
 import { useEffect, useState } from 'react';
 
 export interface PokemonDexDetailsProviderProps {
-  id: ID;
   children: React.ReactNode;
 }
 
 export const PokemonDexDetailsProvider = ({
-  id,
   children,
 }: PokemonDexDetailsProviderProps) => {
   const [generation, setGeneration] = useState<GenerationNum>(9);
+  const [dexID, setDexID] = useState<ID | undefined>(undefined);
 
-  const { data: pokemon } = usePokemonDetails(id, { generation });
+  const { data: pokemonDexDetails } = usePokemonDexDetails(dexID, {
+    generation,
+  });
 
-  const [species, setSpecies] = useState<Species | undefined>(pokemon);
+  const [species, setSpecies] = useState<Species | undefined>(
+    pokemonDexDetails?.baseSpecies
+  );
   const [selectedPokemon, setSelectedPokemon] = useState<Species | undefined>(
     species
   );
@@ -31,6 +34,14 @@ export const PokemonDexDetailsProvider = ({
 
   const [formIndex, setFormIndex] = useState<number | undefined>(undefined);
 
+  const [selectedTab, setSelectedTab] = useState<
+    'Stats' | 'Evolution' | 'Moves' | 'Details'
+  >('Stats');
+
+  const [pokemonForms, setPokemonForms] = useState<
+    { dex: Species; pokeAPI: Pokemon }[]
+  >([]);
+
   // Prefetches
   usePokemonEvolutionLine(
     selectedPokemon && isBaseForme(selectedPokemon) ? selectedPokemon : species,
@@ -38,20 +49,22 @@ export const PokemonDexDetailsProvider = ({
   );
 
   useEffect(() => {
-    pokemon && setSpecies(pokemon);
-  }, [pokemon, generation]);
+    pokemonDexDetails && setSpecies(pokemonDexDetails.baseSpecies);
+  }, [pokemonDexDetails, generation]);
 
   useEffect(() => {
-    species &&
-      (!selectedPokemon || selectedPokemon.id === species.id) &&
-      setSelectedPokemon(species);
-  }, [species, selectedPokemon, generation]);
+    pokemonDexDetails &&
+      !selectedPokemon &&
+      setSelectedPokemon(pokemonDexDetails.pokemon);
+  }, [pokemonDexDetails, selectedPokemon, generation]);
 
   return (
     <PokemonDexDetailsContext.Provider
       value={{
+        id: { value: dexID, setValue: setDexID },
         species: { value: species, setValue: setSpecies },
         selectedGeneration: { value: generation, setValue: setGeneration },
+        selectedTab: { value: selectedTab, setValue: setSelectedTab },
         selectedForm: {
           pokemon: {
             value: selectedPokemon,
@@ -66,18 +79,10 @@ export const PokemonDexDetailsProvider = ({
             setValue: setFormIndex,
           },
         },
+        forms: { value: pokemonForms, setValue: setPokemonForms },
       }}
     >
-      {!selectedPokemon ? (
-        <div className="flex min-h-screen items-center justify-center bg-background pt-20">
-          <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p>Loading Pokémon data...</p>
-          </div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </PokemonDexDetailsContext.Provider>
   );
 };

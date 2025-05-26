@@ -21,6 +21,8 @@ export const PokemonHeaderContainer = ({
   } = usePokemonDexDetailsContext();
   const [pokemonCategory, setPokemonCategory] = useState<string>('-');
 
+  console.log('Details: ', pokemon, pokemonForms);
+
   useEffect(() => {
     if (pokeAPISpecies) {
       const category = pokeAPISpecies.genera.find(
@@ -97,14 +99,20 @@ export const PokemonHeaderContainer = ({
             </div>
           </div>
         </div>
-        <div className="flex-col items-center justify-center">
-          <div className="flex items-center justify-center">
+        <div className="flex-col items-center justify-center ">
+          <div className="relative flex h-full w-full items-center justify-center">
+            {!pokemonPokeAPI.value && (
+              <div className="absolute inset-0 animate-pulse rounded-md bg-gray-200/10" />
+            )}
             <Image
               src={
                 pokemonPokeAPI.value?.sprites.other['official-artwork']
                   .front_default ||
                 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAACH5BAEAAAEALAAAAAAQABAAAAIgjI+py+0Po5y02ouzPgUAOw=='
               }
+              className={`rounded-md object-contain transition-opacity duration-300 ${
+                !pokemonPokeAPI.value ? 'opacity-0' : 'opacity-100'
+              }`}
               height={200}
               width={300}
               alt={pokemon.value?.name || ''}

@@ -1,34 +1,13 @@
+import type { EvoChain } from '../models/evo-chain.model';
+import type { SpeciesName } from '@pkmn/dex';
 import { Dex, type Species, type GenerationNum } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
+import type { Pokemon } from 'pokeapi-js-wrapper';
+import { Pokedex } from 'pokeapi-js-wrapper';
 
 export interface PokemonEvolutionDetailsOptions {
   generation: GenerationNum;
 }
-
-// export const usePokemonEvolutionDetails = (pokemon: Species, species: PokemonSpecies, options: PokemonEvolutionDetailsOptions = { generation: 9}) => {
-//   return useQuery({
-// 		queryKey: ["pokedex-search", pokemon.name, { type: "tabs-details", generation: options.generation }],
-//     queryFn: async () => {
-// 			let gmaxPokemon: Pokemon | undefined;
-//       let megaPokemon: Pokemon | undefined;
-//
-//       const pokedex = new Pokedex();
-//       const evoLine:
-//
-//       species.varieties.forEach(async (variety) => {
-// 				if (variety.pokemon.name.includes("gmax")) {
-//           gmaxPokemon = await pokedex.getPokemonByName(variety.pokemon.name);
-//         }	else if (variety.pokemon.name.includes("mega")) {
-//           megaPokemon = await pokedex.getPokemonByName(variety.pokemon.name);
-//         }
-//       });
-//
-//       const moddedDex = Dex.forGen(options.generation);
-//      	pokemon.pre
-//
-//     }
-//   })
-// }
 
 export const usePokemonEvolutionLine = (
   pokemon?: Species,
@@ -38,29 +17,39 @@ export const usePokemonEvolutionLine = (
     queryKey: [
       'pokedex-search',
       pokemon?.id,
-      { type: 'Evolutions', provider: 'PkmnDex', ...options },
+      { type: 'Evolutions', provider: ['PkmnDex', 'PokeAPI'], ...options },
     ],
     queryFn: () => {
       pokemon = pokemon as Species;
       const moddedDex = Dex.forGen(options.generation);
-      const evoLine: Species[] = [];
+      const pokedex = new Pokedex();
 
-      let currPokemon = pokemon;
-      while (currPokemon.prevo) {
-        currPokemon = moddedDex.species.get(currPokemon.prevo);
-        if (currPokemon.exists && options.generation >= currPokemon.gen) {
-          evoLine.unshift(currPokemon);
-        }
+      const transformChain = async (name: string) => {
+        const species = moddedDex.species.get(name);
+        const pokeAPI = await pokedex.getPokemonByName(
+          species.name.toLowerCase()
+        );
+        const evo: EvoChain<{ pokeAPI: Pokemon; dex: Species }> = {
+          evos: [],
+          pokemon: { pokeAPI, dex: species },
+        };
+
+        evo.evos = await Promise.all(
+          (species.evos ?? []).map(async (node: SpeciesName) =>
+            transformChain(node)
+          )
+        );
+        return evo;
+      };
+
+      let baseEvo = pokemon;
+
+      while (baseEvo.prevo) {
+        baseEvo = moddedDex.species.get(baseEvo.prevo);
       }
-      evoLine.push(pokemon);
-      pokemon.evos?.forEach((evo) => {
-        const currPokemon = moddedDex.species.get(evo);
-        if (currPokemon.exists && options.generation >= currPokemon.gen) {
-          evoLine.push(currPokemon);
-        }
-      });
 
-      return evoLine;
+      const evoChain = transformChain(baseEvo.name);
+      return evoChain;
     },
     enabled: !!pokemon,
   });

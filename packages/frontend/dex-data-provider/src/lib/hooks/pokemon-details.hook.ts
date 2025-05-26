@@ -7,7 +7,7 @@ export interface PokemonDetailsOptions {
 }
 
 export const getQueryKey = (
-  id: ID,
+  id?: ID,
   options: PokemonDetailsOptions = { generation: 9 }
 ) => {
   return [
@@ -18,11 +18,12 @@ export const getQueryKey = (
 };
 
 export const usePokemonDetails = (
-  id: ID,
+  id?: ID,
   options: PokemonDetailsOptions = { generation: 9 }
 ) => {
   return useQuery({
     queryKey: getQueryKey(id, options),
-    queryFn: () => getPokemonDetails(id, options.generation),
+    queryFn: () => getPokemonDetails(id as ID, options.generation),
+    enabled: !!id,
   });
 };

@@ -1,24 +1,41 @@
 'use client';
 
 import type { ID } from '@pkmn/dex';
-import { usePokemonDetails } from '@pokehub/frontend/dex-data-provider';
 import {
   PokemonDetailsContainer,
-  PokemonDexDetailsProvider,
+  usePokemonDexDetails,
+  usePokemonDexDetailsContext,
 } from '@pokehub/frontend/pokehub-dex-components';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function PokemonPage() {
   const params = useParams();
 
   const id = params.id as ID;
+  const {
+    id: pokemonID,
+    species,
+    selectedForm: { pokemon: selectedPokemon },
+  } = usePokemonDexDetailsContext();
 
-  const { data: pokemonDetails, isLoading: isPokemonDetailsLoading } =
-    usePokemonDetails(id, { generation: 9 });
+  const { isLoading: isPokemonDetailsLoading, data } = usePokemonDexDetails(
+    id,
+    {
+      generation: 9,
+    }
+  );
 
-  if (isPokemonDetailsLoading) {
+  useEffect(() => {
+    id && pokemonID.setValue(id);
+  }, [id]);
+
+  if (
+    isPokemonDetailsLoading ||
+    (data && (!species.value || !selectedPokemon.value))
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background pt-20">
         <div className="text-center">
@@ -27,7 +44,7 @@ export default function PokemonPage() {
         </div>
       </div>
     );
-  } else if (!pokemonDetails) {
+  } else if (!species.value || !selectedPokemon.value) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background pt-20">
         <div className="text-center">
@@ -42,9 +59,5 @@ export default function PokemonPage() {
       </div>
     );
   }
-  return (
-    <PokemonDexDetailsProvider id={id}>
-      <PokemonDetailsContainer />
-    </PokemonDexDetailsProvider>
-  );
+  return <PokemonDetailsContainer />;
 }

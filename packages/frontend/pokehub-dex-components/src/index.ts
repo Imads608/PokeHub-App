@@ -2,5 +2,6 @@
 export { DexSearchContainer } from './lib/search/dex-search-container';
 export { DexSearchProvider } from './lib/search/context/dex-search.provider';
 export { PokemonDetailsContainer } from './lib/pokemon/pokemon-details-container';
-export { usePokemonEvolutionLine } from './lib/pokemon/hooks/usePokemonEvolutionLine';
 export { PokemonDexDetailsProvider } from './lib/pokemon/context/pokemon-dex-details.provider';
+export { usePokemonDexDetailsContext } from './lib/pokemon/context/pokemon-dex-details.context';
+export { usePokemonDexDetails } from './lib/pokemon/hooks/usePokemonDexDetails';

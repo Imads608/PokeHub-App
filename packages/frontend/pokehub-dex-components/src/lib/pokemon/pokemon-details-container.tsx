@@ -2,16 +2,10 @@
 
 import { usePokemonDexDetailsContext } from './context/pokemon-dex-details.context';
 import { PokemonHeaderContainer } from './header/pokemon-header';
-import { usePokeAPIFormsDetails } from './hooks/usePokeAPIFormsDetails';
-import { usePokemonForms } from './hooks/usePokemonForms';
+import { useDataProviders } from './hooks/useDataProviders';
 import { NavigationPanel } from './navigation/navigation-panel';
 import { PokemonTabsContainer } from './tabs/pokemon-tabs-container';
 import type { GenerationNum, Species } from '@pkmn/dex';
-import {
-  usePokedexByID,
-  usePokemonPokeAPIDetails,
-  usePokemonSpeciesPokeAPIDetails,
-} from '@pokehub/frontend/dex-data-provider';
 import {
   Alert,
   AlertDescription,
@@ -22,89 +16,82 @@ import {
   SelectValue,
 } from '@pokehub/frontend/shared-ui-components';
 import { getGenerationsData } from '@pokehub/frontend/shared-utils';
-import { Clock, History } from 'lucide-react';
+import { Clock, History, CircleAlert } from 'lucide-react';
 import type { Pokemon } from 'pokeapi-js-wrapper';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export function PokemonDetailsContainer() {
-  const { species, selectedGeneration, selectedForm } =
-    usePokemonDexDetailsContext();
+  const {
+    species,
+    forms: { value: pokemonForms, setValue: setPokemonForms },
+    selectedGeneration,
+    selectedForm,
+  } = usePokemonDexDetailsContext();
 
   const pokemon = species.value as Species;
 
-  // Species Specifc Providers
-  const pokemonPokeAPIResult = usePokemonPokeAPIDetails(pokemon.num);
-  const pokemonSpeciesPokeAPIResult = usePokemonSpeciesPokeAPIDetails(
-    pokemonPokeAPIResult.data?.species.name
-  );
-
-  const { data: pokedexByID } = usePokedexByID();
-
-  const pokemonFormsResult = usePokemonForms(pokemon);
-
-  const pokemonPokeAPIFormDetailResults = usePokeAPIFormsDetails(
-    pokemonSpeciesPokeAPIResult.data
-      ? pokemonSpeciesPokeAPIResult.data.varieties.map(
-          (variety) => variety.pokemon.name
-        )
-      : []
-  );
-
-  const [pokemonForms, setPokemonForms] = useState<
-    { dex: Species; pokeAPI: Pokemon }[]
-  >([]);
+  const {
+    pokedexByID,
+    pokeAPICoreRes,
+    pokemonFormsRes,
+    pokeAPISpeciesRes,
+    pokeAPIFormsCoreRes,
+  } = useDataProviders();
 
   useEffect(() => {
-    const pokemonFormsData = pokemonFormsResult.data;
-    const pokemonPokeAPIResultData = pokemonPokeAPIResult.data;
+    const pokemonFormsCore = pokemonFormsRes.data;
+    const pokeAPICore = pokeAPICoreRes.data;
 
     if (
-      !pokemonFormsData ||
-      !pokemonPokeAPIResultData ||
-      pokemonPokeAPIFormDetailResults.length === 0 ||
+      !pokemonFormsCore ||
+      !pokeAPICore ||
+      pokeAPIFormsCoreRes.length === 0 ||
       pokemonForms.length > 0
     ) {
       return;
     }
 
-    const isPokeAPIFormsPending = pokemonPokeAPIFormDetailResults.some(
-      (res) => !res.data
-    );
+    const isPokeAPIFormsPending = pokeAPIFormsCoreRes.some((res) => !res.data);
     if (isPokeAPIFormsPending) {
       return;
     }
 
-    const pokemonPokeAPIFormDetailData = pokemonPokeAPIFormDetailResults.map(
+    const pokeAPIFormsCore = pokeAPIFormsCoreRes.map(
       (res) => res.data as Pokemon
     );
 
-    const forms = [{ dex: pokemon, pokeAPI: pokemonPokeAPIResultData }];
+    const forms = [];
 
-    for (const pokemon of pokemonFormsData) {
-      const formName = pokemon.baseForme || pokemon.forme;
-      if (pokemon.name === pokemon.baseSpecies || !formName) {
+    for (const pokemon of pokemonFormsCore) {
+      const formName = pokemon.name.toLowerCase();
+      if (!formName) {
         continue;
       }
-      const pokeAPIForm = pokemonPokeAPIFormDetailData.find((form) =>
+      const pokeAPIForm = pokeAPIFormsCore.find((form) =>
         form.name.toLowerCase().includes(formName.toLowerCase())
       );
 
-      pokeAPIForm && forms.push({ dex: pokemon, pokeAPI: pokeAPIForm });
+      // Base Form should always be first in the list
+      if (pokeAPIForm && pokemon.name === pokemon.baseSpecies) {
+        forms.unshift({ dex: pokemon, pokeAPI: pokeAPIForm });
+      } else if (pokeAPIForm) {
+        forms.push({ dex: pokemon, pokeAPI: pokeAPIForm });
+      }
     }
     setPokemonForms(forms);
   }, [
-    pokemonFormsResult,
-    pokemonPokeAPIFormDetailResults,
-    pokemonPokeAPIResult,
+    pokemonFormsRes,
+    pokeAPIFormsCoreRes,
+    pokeAPICoreRes,
     pokemonForms.length,
     pokemon,
   ]);
 
   useEffect(() => {
-    if (pokemonPokeAPIResult.data && !selectedForm.pokemonPokeAPI.value) {
-      selectedForm.pokemonPokeAPI.setValue(pokemonPokeAPIResult.data);
+    if (pokeAPICoreRes.data && !selectedForm.pokemonPokeAPI.value) {
+      selectedForm.pokemonPokeAPI.setValue(pokeAPICoreRes.data);
     }
-  }, [pokemonPokeAPIResult, selectedForm.pokemonPokeAPI.value]);
+  }, [pokeAPICoreRes, selectedForm.pokemonPokeAPI.value]);
 
   return (
     <div className="min-h-screen bg-background pb-16 pt-20">
@@ -160,7 +147,7 @@ export function PokemonDetailsContainer() {
           <>
             <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
               <AlertDescription className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
-                <Clock className="h-4 w-4" />
+                <CircleAlert className="h-4 w-4" />
                 This Pokémon is not obtainable in this Generation.
               </AlertDescription>
             </Alert>
@@ -171,7 +158,7 @@ export function PokemonDetailsContainer() {
             <>
               <PokemonHeaderContainer
                 pokemonForms={pokemonForms}
-                pokeAPISpecies={pokemonSpeciesPokeAPIResult.data}
+                pokeAPISpecies={pokeAPISpeciesRes.data}
               />
               <PokemonTabsContainer />
             </>

@@ -1,5 +1,5 @@
-import { useQueries, type UseQueryResult } from '@tanstack/react-query';
-import { Pokedex, type Pokemon } from 'pokeapi-js-wrapper';
+import { useQueries } from '@tanstack/react-query';
+import { Pokedex } from 'pokeapi-js-wrapper';
 
 export const usePokeAPIFormsDetails = (names: string[]) => {
   return useQueries({
