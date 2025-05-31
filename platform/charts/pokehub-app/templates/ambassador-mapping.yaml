@@ -1,0 +1,11 @@
+
+apiVersion: getambassador.io/v3alpha1
+kind: Mapping
+metadata:
+  name: {{ include "pokehub-app.fullname" . }}-ambassador
+spec:
+  hostname: {{ .Values.ambassador.host }}
+  prefix: /
+  service: "{{ include "pokehub-app.fullname" . }}:{{ .Values.service.port }}"
+  # Optionally, add additional Ambassador Mapping settings here
+

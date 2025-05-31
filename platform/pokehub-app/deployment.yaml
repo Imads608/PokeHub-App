@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pokehub-app
+  namespace: pokehub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pokehub-app
+  template:
+    metadata:
+      labels:
+        app: pokehub-app
+    spec:
+      containers:
+        - name: pokehub-app
+          image: 'pokehub.azurecr.io/pokehub-app:dev'
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: AUTH_SECRET
+              value: test
+            - name: AUTH_GOOGLE_ID
+              value: test
+            - name: AUTH_GOOGLE_SECRET
+              value: test
+            - name: POKEHUB_API_URL
+              value: http://localhost:4000

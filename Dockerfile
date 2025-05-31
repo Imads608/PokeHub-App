@@ -12,5 +12,7 @@ COPY jest.preset.js jest.preset.js
 COPY nx.json nx.json
 COPY tsconfig.base.json tsconfig.base.json
 COPY jest.config.ts jest.config.ts
+COPY tailwind.config.js tailwind.config.js
+COPY tsconfig.base.json tsconfig.base.json
 COPY packages packages
 RUN npm install
