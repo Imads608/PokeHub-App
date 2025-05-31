@@ -26,7 +26,7 @@ export const PokemonDexDetailsProvider = ({
     pokemonDexDetails?.baseSpecies
   );
   const [selectedPokemon, setSelectedPokemon] = useState<Species | undefined>(
-    species
+    pokemonDexDetails?.pokemon
   );
   const [selectedPokemonPokeAPI, setSelectedPokemonPokeAPI] = useState<
     Pokemon | undefined
@@ -51,6 +51,11 @@ export const PokemonDexDetailsProvider = ({
   useEffect(() => {
     pokemonDexDetails && setSpecies(pokemonDexDetails.baseSpecies);
   }, [pokemonDexDetails, generation]);
+
+  useEffect(() => {
+    setSelectedPokemon(undefined);
+    setFormIndex(undefined);
+  }, [generation]);
 
   useEffect(() => {
     pokemonDexDetails &&

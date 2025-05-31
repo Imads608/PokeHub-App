@@ -12,11 +12,13 @@ import {
 import { isBaseForme } from '@pokehub/frontend/shared-utils';
 
 export const PokemonEvoTab = () => {
-  const { species, selectedForm } = usePokemonDexDetailsContext();
+  const { species, selectedForm, selectedGeneration } =
+    usePokemonDexDetailsContext();
   const { data: evolutions } = usePokemonEvolutionLine(
     selectedForm.pokemon.value && isBaseForme(selectedForm.pokemon.value)
       ? selectedForm.pokemon.value
-      : species.value
+      : species.value,
+    { generation: selectedGeneration.value }
   );
 
   return (

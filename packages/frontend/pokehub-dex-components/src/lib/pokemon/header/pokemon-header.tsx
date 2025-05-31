@@ -1,7 +1,7 @@
 import { usePokemonDexDetailsContext } from '../context/pokemon-dex-details.context';
 import type { Species } from '@pkmn/dex';
-import { Badge, Button } from '@pokehub/frontend/shared-ui-components';
-import { typeColors } from '@pokehub/frontend/shared-utils';
+import { PokemonTypeBadge } from '@pokehub/frontend/pokehub-ui-components';
+import { Button } from '@pokehub/frontend/shared-ui-components';
 import { Dna, Ruler, Weight } from 'lucide-react';
 import Image from 'next/image';
 import type { Pokemon, PokemonSpecies } from 'pokeapi-js-wrapper';
@@ -56,14 +56,7 @@ export const PokemonHeaderContainer = ({
           </div>
           <div className="mb-4 flex gap-2">
             {pokemon.value?.types.map((type) => (
-              <Badge
-                key={type}
-                className={`${
-                  typeColors[type as keyof typeof typeColors]
-                } text-sm capitalize`}
-              >
-                {type}
-              </Badge>
+              <PokemonTypeBadge pokemonType={type} className="text-sm" />
             ))}
           </div>
           <p className="mb-6 text-muted-foreground">
@@ -100,7 +93,7 @@ export const PokemonHeaderContainer = ({
           </div>
         </div>
         <div className="flex-col items-center justify-center ">
-          <div className="relative flex h-full w-full items-center justify-center">
+          <div className="relative">
             {!pokemonPokeAPI.value && (
               <div className="absolute inset-0 animate-pulse rounded-md bg-gray-200/10" />
             )}
@@ -110,7 +103,7 @@ export const PokemonHeaderContainer = ({
                   .front_default ||
                 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAACH5BAEAAAEALAAAAAAQABAAAAIgjI+py+0Po5y02ouzPgUAOw=='
               }
-              className={`rounded-md object-contain transition-opacity duration-300 ${
+              className={`justify-self-center rounded-md object-contain transition-opacity duration-300 ${
                 !pokemonPokeAPI.value ? 'opacity-0' : 'opacity-100'
               }`}
               height={200}

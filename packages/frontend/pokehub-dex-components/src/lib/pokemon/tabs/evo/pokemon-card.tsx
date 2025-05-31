@@ -1,7 +1,7 @@
 import { usePokemonDexDetailsContext } from '../../context/pokemon-dex-details.context';
 import type { Species } from '@pkmn/dex';
-import { Badge, Button } from '@pokehub/frontend/shared-ui-components';
-import { typeColors } from '@pokehub/frontend/shared-utils';
+import { PokemonTypeBadge } from '@pokehub/frontend/pokehub-ui-components';
+import { Button } from '@pokehub/frontend/shared-ui-components';
 import { useRouter } from 'next/navigation';
 import type { Pokemon } from 'pokeapi-js-wrapper';
 
@@ -65,14 +65,7 @@ export function PokemonCard({
           </p>
           <div className="mt-1 flex justify-center gap-1">
             {pokemon.types?.map((type) => (
-              <Badge
-                key={type}
-                className={`${
-                  typeColors[type as keyof typeof typeColors]
-                } text-xs capitalize`}
-              >
-                {type}
-              </Badge>
+              <PokemonTypeBadge pokemonType={type} />
             ))}
           </div>
         </div>

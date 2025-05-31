@@ -126,6 +126,8 @@ export const PokemonEvoTree = ({ evolutionChain }: PokemonEvoTreeProps) => {
     [evolutionChain]
   );
 
+  console.log('Structure: ', structure);
+
   if (structure.isManyBranched) {
     return <ManyBranchedEvolution node={evolutionChain} />;
   } else if (structure.hasComplexBranching) {
@@ -192,17 +194,15 @@ function SimpleBranchingEvolution({ node }: { node: PokemonEvoChain }) {
       <PokemonCard pokemon={node.pokemon.dex} pokeAPI={node.pokemon.pokeAPI} />
 
       {/* Branches */}
-      <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+      <div className="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-6">
         {node.evos.map((evolution, index) => (
           <div key={index} className="flex flex-col items-center">
             {/* Evolution arrow and condition */}
             <div className="my-2 flex items-center">
               <ChevronRight className="mx-1 h-5 w-5 rotate-90 text-muted-foreground" />
-              {
-                <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                  {getConditionIcon(evolution.pokemon.dex)}
-                </div>
-              }
+              <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                {getConditionIcon(evolution.pokemon.dex)}
+              </div>
             </div>
 
             {/* Evolution Pokémon */}
@@ -213,14 +213,12 @@ function SimpleBranchingEvolution({ node }: { node: PokemonEvoChain }) {
 
             {/* Further evolutions if any */}
             {evolution.evos && evolution.evos.length > 0 && (
-              <div className=" flex flex-col items-center">
+              <div className="mt-2 flex flex-col items-center">
                 <div className="my-2 flex items-center">
                   <ChevronRight className="mx-1 h-5 w-5 rotate-90 text-muted-foreground" />
-                  {evolution.evos[0] && (
-                    <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                      {getConditionIcon(evolution.evos[0].pokemon.dex)}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                    {getConditionIcon(evolution.evos[0].pokemon.dex)}
+                  </div>
                 </div>
                 <PokemonCard
                   pokemon={evolution.evos[0].pokemon.dex}
@@ -255,14 +253,10 @@ function ComplexBranchingEvolution({ node }: { node: PokemonEvoChain }) {
             // Pattern: A -> B -> [C, D] (like Ralts -> Kirlia -> [Gardevoir, Gallade])
             <div className="flex flex-col items-center">
               {/* Middle evolution */}
-              <div className="mb-4">
-                {
-                  <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                    {getConditionIcon(node.evos[0].pokemon.dex)}
-                  </div>
-                }
-                <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
+              <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                {getConditionIcon(node.evos[0].pokemon.dex)}
               </div>
+              <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
 
               <div className="mb-8">
                 <PokemonCard
@@ -275,11 +269,9 @@ function ComplexBranchingEvolution({ node }: { node: PokemonEvoChain }) {
               <div className="grid grid-cols-2 gap-x-16 gap-y-4">
                 {node.evos[0].evos.map((evolution, index) => (
                   <div key={index} className="flex flex-col items-center">
-                    {
-                      <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                        {getConditionIcon(evolution.pokemon.dex)}
-                      </div>
-                    }
+                    <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                      {getConditionIcon(evolution.pokemon.dex)}
+                    </div>
                     <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
                     <PokemonCard
                       pokemon={evolution.pokemon.dex}
@@ -361,11 +353,9 @@ function ComplexBranchingEvolution({ node }: { node: PokemonEvoChain }) {
                       key={index}
                       className="flex flex-col items-center rounded-lg border p-4"
                     >
-                      {
-                        <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                          {getConditionIcon(evolution.pokemon.dex)}
-                        </div>
-                      }
+                      <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                        {getConditionIcon(evolution.pokemon.dex)}
+                      </div>
                       <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
                       <PokemonCard
                         pokemon={evolution.pokemon.dex}
@@ -382,11 +372,9 @@ function ComplexBranchingEvolution({ node }: { node: PokemonEvoChain }) {
                   key={branchIndex}
                   className="flex flex-col items-center rounded-lg border p-4"
                 >
-                  {
-                    <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                      {getConditionIcon(branch.pokemon.dex)}
-                    </div>
-                  }
+                  <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                    {getConditionIcon(branch.pokemon.dex)}
+                  </div>
                   <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
                   <PokemonCard
                     pokemon={branch.pokemon.dex}
@@ -395,11 +383,9 @@ function ComplexBranchingEvolution({ node }: { node: PokemonEvoChain }) {
 
                   {branch.evos && branch.evos.length > 0 && (
                     <div className="mt-4 flex w-full flex-col items-center border-t pt-4">
-                      {
-                        <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                          {getConditionIcon(branch.evos[0].pokemon.dex)}
-                        </div>
-                      }
+                      <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                        {getConditionIcon(branch.evos[0].pokemon.dex)}
+                      </div>
                       <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
                       <PokemonCard
                         pokemon={branch.evos[0].pokemon.dex}
@@ -437,11 +423,9 @@ function ManyBranchedEvolution({ node }: { node: PokemonEvoChain }) {
             className="flex flex-col items-center rounded-lg border bg-background/50 p-4"
           >
             {/* Evolution condition */}
-            {
-              <div className="mb-3 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                {getConditionIcon(evolution.pokemon.dex)}
-              </div>
-            }
+            <div className="mb-3 flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+              {getConditionIcon(evolution.pokemon.dex)}
+            </div>
 
             {/* Arrow */}
             <ChevronRight className="mb-2 h-6 w-6 rotate-90 text-muted-foreground" />
@@ -456,11 +440,9 @@ function ManyBranchedEvolution({ node }: { node: PokemonEvoChain }) {
             {evolution.evos && evolution.evos.length > 0 && (
               <div className="mt-3 w-full border-t pt-3">
                 <div className="flex flex-col items-center">
-                  {
-                    <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs">
-                      {getConditionIcon(evolution.evos[0].pokemon.dex)}
-                    </div>
-                  }
+                  <div className="mb-2 flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs">
+                    {getConditionIcon(evolution.evos[0].pokemon.dex)}
+                  </div>
                   <ChevronRight className="mb-2 h-5 w-5 rotate-90 text-muted-foreground" />
                   <div className="scale-90">
                     <PokemonCard

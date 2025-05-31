@@ -32,8 +32,8 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
-      "@pokehub/frontend/shared-types": [
-        "packages/frontend/shared-types/src/index.ts"
+      "@pokehub/frontend/pokehub-ui-components": [
+        "packages/frontend/pokehub-ui-components/src/index.ts"
       ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
@@ -79,6 +79,9 @@
       ],
       "@pokehub/frontend/shared-theme-context": [
         "packages/frontend/shared-theme-context/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-types": [
+        "packages/frontend/shared-types/src/index.ts"
       ],
       "@pokehub/frontend/shared-ui-components": [
         "packages/frontend/shared-ui-components/src/index.ts"

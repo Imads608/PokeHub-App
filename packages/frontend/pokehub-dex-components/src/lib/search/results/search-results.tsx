@@ -1,5 +1,6 @@
-import { Species } from '@pkmn/dex';
+import type { Species } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
+import { PokemonTypeBadge } from '@pokehub/frontend/pokehub-ui-components';
 import {
   Badge,
   Button,
@@ -131,14 +132,7 @@ export const SearchResults = (props: SearchResultsProps) => {
                         </div>
                         <div className="mt-1 flex gap-1">
                           {pokemon.types.map((type) => (
-                            <Badge
-                              key={type}
-                              className={`${
-                                typeColors[type as keyof typeof typeColors]
-                              } capitalize`}
-                            >
-                              {type}
-                            </Badge>
+                            <PokemonTypeBadge pokemonType={type} />
                           ))}
                         </div>
                       </div>

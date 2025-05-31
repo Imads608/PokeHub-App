@@ -26,6 +26,11 @@ export const usePokemonEvolutionLine = (
 
       const transformChain = async (name: string) => {
         const species = moddedDex.species.get(name);
+
+        if (species.gen > options.generation) {
+          return undefined;
+        }
+
         const pokeAPI = await pokedex.getPokemonByName(
           species.name.toLowerCase()
         );
@@ -34,10 +39,15 @@ export const usePokemonEvolutionLine = (
           pokemon: { pokeAPI, dex: species },
         };
 
-        evo.evos = await Promise.all(
+        const evos = await Promise.all(
           (species.evos ?? []).map(async (node: SpeciesName) =>
             transformChain(node)
           )
+        );
+
+        evo.evos = evos.filter(
+          (evo): evo is EvoChain<{ pokeAPI: Pokemon; dex: Species }> =>
+            evo !== undefined
         );
         return evo;
       };

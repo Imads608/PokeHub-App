@@ -3,7 +3,7 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "lint"],
       "inputs": ["production", "^production"]
     },
     "@nx/jest:jest": {

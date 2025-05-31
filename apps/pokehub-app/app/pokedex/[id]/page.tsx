@@ -19,6 +19,7 @@ export default function PokemonPage() {
     id: pokemonID,
     species,
     selectedForm: { pokemon: selectedPokemon },
+    resetOnSpeciesNav,
   } = usePokemonDexDetailsContext();
 
   const { isLoading: isPokemonDetailsLoading, data } = usePokemonDexDetails(
@@ -29,7 +30,10 @@ export default function PokemonPage() {
   );
 
   useEffect(() => {
-    id && pokemonID.setValue(id);
+    if (id && (!pokemonID.value || pokemonID.value !== id)) {
+      resetOnSpeciesNav(true);
+      pokemonID.setValue(id);
+    }
   }, [id]);
 
   if (

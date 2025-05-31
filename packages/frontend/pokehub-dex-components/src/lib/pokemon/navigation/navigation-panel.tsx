@@ -1,4 +1,3 @@
-import { usePokemonDexDetailsContext } from '../context/pokemon-dex-details.context';
 import type { Species } from '@pkmn/dex';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,10 +14,8 @@ export const NavigationPanel = ({
   pokedexByID,
 }: NavigationPanelProps) => {
   const router = useRouter();
-  const { resetOnSpeciesNav } = usePokemonDexDetailsContext();
 
   const navigateToPokemon = (newId: string) => {
-    resetOnSpeciesNav(true);
     router.push(`/pokedex/${newId}`);
   };
   return (
