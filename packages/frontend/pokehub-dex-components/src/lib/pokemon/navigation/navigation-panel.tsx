@@ -1,4 +1,4 @@
-import { Species } from '@pkmn/dex';
+import type { Species } from '@pkmn/dex';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';

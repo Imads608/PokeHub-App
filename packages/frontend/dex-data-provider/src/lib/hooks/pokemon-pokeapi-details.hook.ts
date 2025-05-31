@@ -5,7 +5,11 @@ export const usePokemonPokeAPIDetails = (
   pokemonId: string | number | undefined
 ) => {
   return useQuery({
-    queryKey: ['pokedex-search', pokemonId, { type: 'PokeAPI' }],
+    queryKey: [
+      'pokedex-search',
+      pokemonId,
+      { type: 'Core', provider: 'PokeAPI' },
+    ],
     queryFn: async () => {
       const pokedex = new Pokedex();
       const pokemon = await pokedex.getPokemonByName(

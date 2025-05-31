@@ -1,13 +1,13 @@
 'use client';
 
-import {
+import type {
   PrivilegedAuthRoute,
   PublicRoute,
   RedirectRoute,
   RouteGuardProps,
 } from './models/router';
 import { AuthContext } from '@pokehub/frontend/shared-auth-context';
-import { UserCoreAccountRole } from '@pokehub/shared/shared-user-models';
+import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 
@@ -59,9 +59,7 @@ export const ClientRouteGuard = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, queryParams]);
 
-  const redirectToDefaultPrivilegedPage = (
-    accountRole: UserCoreAccountRole
-  ) => {
+  const redirectToDefaultPrivilegedPage = (accountRole: UserAccountRole) => {
     if (queryParams.get('from')) {
       const path = queryParams.get('from') as string;
       const routeType = checkActiveRouteType(
@@ -168,14 +166,14 @@ const checkActiveRouteType = (
 
 const getRedirectRoute = (
   redirectOnLogin: RedirectRoute,
-  accountRole: UserCoreAccountRole
+  accountRole: UserAccountRole
 ): string => {
   return redirectOnLogin[accountRole];
 };
 
 const isRoleAllowed = (
   rolesAllowed: PrivilegedAuthRoute['rolesAllowed'],
-  accountRole: UserCoreAccountRole
+  accountRole: UserAccountRole
 ): boolean => {
   return !!rolesAllowed?.includes(accountRole);
 };

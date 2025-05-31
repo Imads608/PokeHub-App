@@ -42,7 +42,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.error('Error getting user and tokens: ', err);
           throw new TypeError('Error getting user and tokens');
         }
-      } else if (Date.now() < token.expiresAt * 1000) {
+      } else if (Date.now() < token.expiresAt) {
+        console.log('Token is still valid');
         return token;
       } else {
         if (!token.refreshToken) {

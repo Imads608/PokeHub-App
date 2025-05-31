@@ -1,33 +1,48 @@
+import { usePokemonDexDetailsContext } from '../context/pokemon-dex-details.context';
+import { PokemonEvoTab } from './evo/evo-tab';
 import { PokemonStatsTab } from './stats/stats-tab';
-import { GenerationNum, Species } from '@pkmn/dex';
 import {
   Tabs,
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 
-export interface PokemonTabsContainerProps {
-  pokemonDetails: Species;
-  generation: GenerationNum;
-}
-
-export const PokemonTabsContainer = ({
-  pokemonDetails,
-  generation,
-}: PokemonTabsContainerProps) => {
+export const PokemonTabsContainer = () => {
+  const { selectedTab } = usePokemonDexDetailsContext();
   return (
-    <Tabs defaultValue="stats" className="mb-8">
-      <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-        <TabsTrigger value="stats">Stats</TabsTrigger>
-        <TabsTrigger value="evolution">Evolution</TabsTrigger>
-        <TabsTrigger value="moves">Moves</TabsTrigger>
-        <TabsTrigger value="location">Location</TabsTrigger>
-        <TabsTrigger value="details">Details</TabsTrigger>
+    <Tabs
+      defaultValue="stats"
+      value={selectedTab.value.toLowerCase()}
+      className="mb-8"
+    >
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsTrigger
+          onClick={() => selectedTab.setValue('Stats')}
+          value="stats"
+        >
+          Stats
+        </TabsTrigger>
+        <TabsTrigger
+          onClick={() => selectedTab.setValue('Evolution')}
+          value="evolution"
+        >
+          Evolution
+        </TabsTrigger>
+        <TabsTrigger
+          onClick={() => selectedTab.setValue('Moves')}
+          value="moves"
+        >
+          Moves
+        </TabsTrigger>
+        <TabsTrigger
+          onClick={() => selectedTab.setValue('Details')}
+          value="details"
+        >
+          Details
+        </TabsTrigger>
       </TabsList>
-      <PokemonStatsTab
-        generation={generation}
-        pokemonDetails={pokemonDetails}
-      />
+      <PokemonStatsTab />
+      <PokemonEvoTab />
     </Tabs>
   );
 };

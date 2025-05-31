@@ -1,27 +1,45 @@
 'use client';
 
-import { GenerationNum, ID } from '@pkmn/dex';
+import type { ID } from '@pkmn/dex';
 import {
   PokemonDetailsContainer,
-  usePokemonDetails,
+  usePokemonDexDetails,
+  usePokemonDexDetailsContext,
 } from '@pokehub/frontend/pokehub-dex-components';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 export default function PokemonPage() {
   const params = useParams();
 
-  const id = params.id as string;
+  const id = params.id as ID;
+  const {
+    id: pokemonID,
+    species,
+    selectedForm: { pokemon: selectedPokemon },
+    resetOnSpeciesNav,
+  } = usePokemonDexDetailsContext();
 
-  const [selectedGeneration, setSelectedGeneration] =
-    useState<GenerationNum>(9);
+  const { isLoading: isPokemonDetailsLoading, data } = usePokemonDexDetails(
+    id,
+    {
+      generation: 9,
+    }
+  );
 
-  const { data: pokemonDetails, isLoading: isPokemonDetailsLoading } =
-    usePokemonDetails(id as ID, { generation: selectedGeneration });
+  useEffect(() => {
+    if (id && (!pokemonID.value || pokemonID.value !== id)) {
+      resetOnSpeciesNav(true);
+      pokemonID.setValue(id);
+    }
+  }, [id]);
 
-  if (isPokemonDetailsLoading) {
+  if (
+    isPokemonDetailsLoading ||
+    (data && (!species.value || !selectedPokemon.value))
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background pt-20">
         <div className="text-center">
@@ -30,7 +48,7 @@ export default function PokemonPage() {
         </div>
       </div>
     );
-  } else if (!pokemonDetails) {
+  } else if (!species.value || !selectedPokemon.value) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background pt-20">
         <div className="text-center">
@@ -45,12 +63,5 @@ export default function PokemonPage() {
       </div>
     );
   }
-  return (
-    <PokemonDetailsContainer
-      pokemonDetails={pokemonDetails}
-      id={id}
-      generation={selectedGeneration}
-      setGeneration={setSelectedGeneration}
-    />
-  );
+  return <PokemonDetailsContainer />;
 }

@@ -52,3 +52,5 @@ export const DexSearchProvider = ({
     </DexSearchFiltersContext.Provider>
   );
 };
+
+DexSearchProvider.displayName = 'DexSearchProvider';
