@@ -15,6 +15,7 @@ const nextConfig = {
   images: {
     domains: ['play.pokemonshowdown.com', 'raw.githubusercontent.com'], // Add the external domain here
   },
+  output: undefined,
 };
 
 const plugins = [
