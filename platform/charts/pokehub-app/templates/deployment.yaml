@@ -25,3 +25,5 @@ spec:
               value: {{ .Values.env.AUTH_GOOGLE_ID | quote }}
             - name: AUTH_GOOGLE_SECRET
               value: {{ .Values.env.AUTH_GOOGLE_SECRET | quote }}
+            - name: POKEHUB_API_URL
+              value: {{ .Values.env.POKEHUB_API_URL | quote }}
