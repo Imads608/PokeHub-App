@@ -1,7 +1,7 @@
 'use client';
 
 import { DexSearchFiltersContext } from './dex-search.context';
-import { TypeName, GenerationNum } from '@pkmn/dex';
+import type { TypeName, GenerationNum } from '@pkmn/dex';
 import { useState } from 'react';
 
 export const DexSearchProvider = ({

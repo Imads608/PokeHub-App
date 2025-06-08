@@ -151,7 +151,10 @@ export function PokemonDetailsContainer() {
                 This Pokémon is not obtainable in this Generation.
               </AlertDescription>
             </Alert>
-            <PokemonHeaderContainer pokemonForms={pokemonForms} />
+            <PokemonHeaderContainer
+              pokemonForms={pokemonForms}
+              pokeAPISpecies={pokeAPISpeciesRes.data}
+            />
           </>
         ) : (
           pokemon && (
