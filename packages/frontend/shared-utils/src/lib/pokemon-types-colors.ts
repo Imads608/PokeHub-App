@@ -17,7 +17,7 @@ export const typeColors: { [key in TypeName]: string } = {
   Ghost: 'bg-purple-700 text-white',
   Dragon: 'bg-indigo-600 text-white',
   Dark: 'bg-gray-700 text-white',
-  Steel: 'bg-gray-400 text-white',
+  Steel: 'bg-gray-500 text-white',
   Fairy: 'bg-pink-300 text-black',
   '???': '',
   Stellar: '',

@@ -1,5 +1,6 @@
 import { usePokemonDexDetailsContext } from '../context/pokemon-dex-details.context';
 import { PokemonEvoTab } from './evo/evo-tab';
+import { PokemonMovesTab } from './moves/moves-tab';
 import { PokemonStatsTab } from './stats/stats-tab';
 import {
   Tabs,
@@ -43,6 +44,7 @@ export const PokemonTabsContainer = () => {
       </TabsList>
       <PokemonStatsTab />
       <PokemonEvoTab />
+      <PokemonMovesTab />
     </Tabs>
   );
 };
