@@ -12,3 +12,11 @@ export {
   usePokemonDetails,
   type PokemonDetailsOptions,
 } from './lib/hooks/pokemon-details.hook';
+export {
+  type PokemonLearnsetOptions,
+  usePokemonLearnset,
+} from './lib/hooks/pokemon-learnset.hook';
+export {
+  type PokemonMovesFromLearnsetOptions,
+  usePokemonMovesFromLearnset,
+} from './lib/hooks/pokemon-moves-from-learnset.hook';

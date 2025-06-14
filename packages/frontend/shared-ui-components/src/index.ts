@@ -52,3 +52,4 @@ export {
   SelectScrollDownButton,
 } from './lib/select/select';
 export { Progress } from './lib/progress/progress';
+export { ScrollBar, ScrollArea } from './lib/scroll-area/scroll-area';

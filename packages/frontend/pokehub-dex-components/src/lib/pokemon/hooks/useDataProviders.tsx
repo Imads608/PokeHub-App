@@ -5,6 +5,7 @@ import { usePokemonForms } from './usePokemonForms';
 import type { Species } from '@pkmn/dex';
 import {
   usePokedexByID,
+  usePokemonLearnset,
   usePokemonPokeAPIDetails,
   usePokemonSpeciesPokeAPIDetails,
 } from '@pokehub/frontend/dex-data-provider';
@@ -46,6 +47,13 @@ export const useDataProviders = () => {
     selectedPokemon && isBaseForme(selectedPokemon)
       ? selectedPokemon
       : baseSpecies,
+    { generation }
+  );
+
+  usePokemonLearnset(
+    selectedPokemon && isBaseForme(selectedPokemon)
+      ? selectedPokemon.id
+      : baseSpecies.id,
     { generation }
   );
 
