@@ -1,7 +1,8 @@
 import type { EvoChain } from '../../models/evo-chain.model';
 import { PokemonCard } from './pokemon-card';
 import type { Species } from '@pkmn/dex';
-import { ChevronRight, Heart, Moon, Sun } from 'lucide-react';
+import { Icons } from '@pkmn/img';
+import { ChevronRight, Heart, Moon, Sun, CloudRain } from 'lucide-react';
 import type { Pokemon } from 'pokeapi-js-wrapper';
 import { useMemo } from 'react';
 
@@ -61,63 +62,111 @@ const analyzeEvolutionStructure = (node: PokemonEvoChain) => {
 
 // Helper function to get condition icon
 const getConditionIcon = (species: Species) => {
-  // switch (type) {
-  //   case 'level':
-  //     return <span className="text-yellow-500">Lv.</span>;
-  //   case 'item':
-  //     return <span className="text-blue-500">🔮</span>;
-  //   case 'trade':
-  //     return <span className="text-green-500">↔️</span>;
-  //   case 'friendship':
-  //     return <span className="text-pink-500">❤️</span>;
-  //   case 'gender':
-  //     return <span className="text-purple-500">⚥</span>;
-  //   case 'location':
-  //     return <span className="text-teal-500">📍</span>;
-  //   case 'day':
-  //     return <span className="text-yellow-400">☀️</span>;
-  //   case 'night':
-  //     return <span className="text-indigo-400">🌙</span>;
-  //   default:
-  //     return <span className="text-gray-500">✨</span>;
-  // }
-  //
-
-  let message = '';
+  let message: JSX.Element | string = '';
 
   if (species.evoType === 'levelFriendship') {
-    message += species.evoLevel
-      ? `Level up to ${species.evoLevel} with high friendship`
-      : 'Level up with high friendship';
+    message = (
+      <>
+        Level up {species.evoLevel ? `to ${species.evoLevel}` : ''} with{' '}
+        <span className="group relative">
+          <Heart className="mx-2" color="red" />
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {'High Friendship'}
+          </span>
+        </span>
+      </>
+    );
   } else if (species.evoType === 'trade') {
     message = 'Trade to evolve';
   } else if (species.evoType === 'useItem') {
-    message = `Use ${species.evoItem} to evolve`;
+    const icon = Icons.getItem(species.evoItem as string);
+    message = (
+      <>
+        Use{' '}
+        <span
+          style={{
+            ...icon.css,
+          }}
+          className="group relative mx-2"
+        >
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {species.evoItem}
+          </span>
+        </span>{' '}
+        to evolve
+      </>
+    );
   } else if (species.evoType === 'levelMove') {
-    message = species.evoLevel
-      ? `Level up to ${species.evoLevel} while knowing ${species.evoMove}`
-      : `Level up while knowing ${species.evoMove}`;
+    message = (
+      <>
+        Level up {species.evoLevel ? `to ${species.evoLevel}` : ''} while
+        knowing <span className="text-blue-500">{species.evoMove}</span>
+      </>
+    );
   } else if (species.evoType === 'levelHold') {
-    message = species.evoLevel
-      ? `Level up to ${species.evoLevel} while holding ${species.evoItem}`
-      : `Level up while holding ${species.evoItem}`;
-  } else if (species.evoType === 'levelExtra') {
-    message = `Level up with extra conditions`;
+    message = (
+      <>
+        Level up {species.evoLevel ? `to ${species.evoLevel}` : ''} while
+        holding <span className="text-green-500">{species.evoItem}</span>
+      </>
+    );
   } else if (species.evoLevel) {
-    message = 'Level up to ' + species.evoLevel;
+    message = 'Level up to ' + species.evoLevel + ' ';
   }
-  message += species.evoCondition ? ` ${species.evoCondition}` : '';
 
-  return (
-    <>
-      <div className="flex items-center gap-1">
-        {species.evoType === 'levelFriendship' && <Heart color="red" />}
-        {species.evoCondition === 'during the day' && <Sun color="orange" />}
-        {species.evoCondition === 'at night' && <Moon color="grey" />}
+  if (species.evoCondition === 'during the day') {
+    message = (
+      <>
+        {message}
+        {'during '}
+
+        <span className="group relative">
+          <Sun className="mx-2" color="orange" />
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {'Day Time'}
+          </span>
+        </span>
+      </>
+    );
+  } else if (species.evoCondition === 'at night') {
+    message = (
+      <>
+        {message}
+        {'during '}
+
+        <span className="group relative">
+          <Moon className="mx-2 text-gray-800" />
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {'Night Time'}
+          </span>
+        </span>
+      </>
+    );
+  } else if (species.evoCondition === 'during rain') {
+    message = (
+      <>
+        {message}
+        {'during '}
+
+        <span className="group relative">
+          <CloudRain className="mx-2 text-blue-500" />
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {'Rain'}
+          </span>
+        </span>
+      </>
+    );
+  } else if (species.evoCondition) {
+    message = (
+      <div>
+        {species.evoType === 'levelExtra' ? 'Level up ' : ''}
+        {message}{' '}
+        <span className="text-yellow-500">{species.evoCondition}</span>
       </div>
-      <div>{message}</div>
-    </>
-  );
+    );
+  }
+
+  return <div className="flex">{message}</div>;
 };
 
 export const PokemonEvoTree = ({ evolutionChain }: PokemonEvoTreeProps) => {

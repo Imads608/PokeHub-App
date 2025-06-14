@@ -19,7 +19,7 @@ export const PokemonHeaderContainer = ({
   const {
     selectedForm: { pokemon, pokemonPokeAPI },
   } = usePokemonDexDetailsContext();
-  const [pokemonCategory, setPokemonCategory] = useState<string>('-');
+  const [pokemonCategory, setPokemonCategory] = useState<string>('');
 
   console.log('Details: ', pokemon, pokemonForms);
 
@@ -69,7 +69,11 @@ export const PokemonHeaderContainer = ({
                 Height
               </div>
               <p className="mt-1 text-lg font-semibold">
-                {pokemonPokeAPI.value ? pokemonPokeAPI.value.height / 10 : '-'}{' '}
+                {pokemonPokeAPI.value ? (
+                  pokemonPokeAPI.value.height / 10
+                ) : (
+                  <span className="block h-6 w-24 animate-pulse rounded-md bg-gray-200/10"></span>
+                )}{' '}
                 m
               </p>
             </div>
@@ -79,7 +83,11 @@ export const PokemonHeaderContainer = ({
                 Weight
               </div>
               <p className="mt-1 text-lg font-semibold">
-                {pokemonPokeAPI.value ? pokemonPokeAPI.value.weight / 10 : '-'}{' '}
+                {pokemonPokeAPI.value ? (
+                  pokemonPokeAPI.value.weight / 10
+                ) : (
+                  <span className="block h-6 w-24 animate-pulse rounded-md bg-gray-200/10"></span>
+                )}{' '}
                 kg
               </p>
             </div>
@@ -88,11 +96,17 @@ export const PokemonHeaderContainer = ({
                 <Dna className="h-4 w-4" />
                 Category
               </div>
-              <p className="mt-1 text-lg font-semibold">{pokemonCategory}</p>
+              <p className="mt-1 text-lg font-semibold">
+                {pokemonCategory ? (
+                  pokemonCategory
+                ) : (
+                  <span className="block h-6 w-24 animate-pulse rounded-md bg-gray-200/10"></span>
+                )}
+              </p>
             </div>
           </div>
         </div>
-        <div className="flex-col items-center justify-center ">
+        <div className="flex flex-col items-center justify-center">
           <div className="relative">
             {!pokemonPokeAPI.value && (
               <div className="absolute inset-0 animate-pulse rounded-md bg-gray-200/10" />
@@ -103,7 +117,7 @@ export const PokemonHeaderContainer = ({
                   .front_default ||
                 'data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAACH5BAEAAAEALAAAAAAQABAAAAIgjI+py+0Po5y02ouzPgUAOw=='
               }
-              className={`justify-self-center rounded-md object-contain transition-opacity duration-300 ${
+              className={`rounded-md object-contain transition-opacity duration-300 ${
                 !pokemonPokeAPI.value ? 'opacity-0' : 'opacity-100'
               }`}
               height={200}
