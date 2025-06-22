@@ -183,11 +183,11 @@ export const PokemonMovesTab = () => {
                 />
               </ScrollArea>
             </TabsContent>
-            <TabsContent value="event">
+            <TabsContent value="tutor">
               <ScrollArea className="h-[400px] pr-4">
                 <MovesTableContent
-                  learnType="Event"
-                  pokemonMoves={pokemonMoves['Event']}
+                  learnType="Tutor"
+                  pokemonMoves={pokemonMoves['Tutor']}
                 />
               </ScrollArea>
             </TabsContent>

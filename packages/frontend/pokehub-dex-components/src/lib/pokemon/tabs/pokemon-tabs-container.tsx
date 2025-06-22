@@ -16,7 +16,7 @@ export const PokemonTabsContainer = () => {
       value={selectedTab.value.toLowerCase()}
       className="mb-8"
     >
-      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
         <TabsTrigger
           onClick={() => selectedTab.setValue('Stats')}
           value="stats"
@@ -34,12 +34,6 @@ export const PokemonTabsContainer = () => {
           value="moves"
         >
           Moves
-        </TabsTrigger>
-        <TabsTrigger
-          onClick={() => selectedTab.setValue('Details')}
-          value="details"
-        >
-          Details
         </TabsTrigger>
       </TabsList>
       <PokemonStatsTab />

@@ -14,6 +14,6 @@ export interface PokemonDexDetails<T extends ContextFieldType> {
     index: ContextField<number | undefined, T>;
   };
   forms: ContextField<{ dex: Species; pokeAPI: Pokemon }[], T>;
-  selectedTab: ContextField<'Stats' | 'Evolution' | 'Moves' | 'Details', T>;
+  selectedTab: ContextField<'Stats' | 'Evolution' | 'Moves', T>;
   selectedGeneration: ContextField<GenerationNum, T>;
 }

@@ -21,8 +21,6 @@ export const PokemonHeaderContainer = ({
   } = usePokemonDexDetailsContext();
   const [pokemonCategory, setPokemonCategory] = useState<string>('');
 
-  console.log('Details: ', pokemon, pokemonForms);
-
   useEffect(() => {
     if (pokeAPISpecies) {
       const category = pokeAPISpecies.genera.find(
