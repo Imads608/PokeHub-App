@@ -35,7 +35,7 @@ export const PokemonDexDetailsProvider = ({
   const [formIndex, setFormIndex] = useState<number | undefined>(undefined);
 
   const [selectedTab, setSelectedTab] = useState<
-    'Stats' | 'Evolution' | 'Moves' | 'Details'
+    'Stats' | 'Evolution' | 'Moves'
   >('Stats');
 
   const [pokemonForms, setPokemonForms] = useState<
@@ -50,13 +50,16 @@ export const PokemonDexDetailsProvider = ({
 
   useEffect(() => {
     pokemonDexDetails && setSpecies(pokemonDexDetails.baseSpecies);
-  }, [pokemonDexDetails, generation]);
+  }, [pokemonDexDetails]);
 
+  // Reset Selected Pokemon when generation changes
   useEffect(() => {
     setSelectedPokemon(undefined);
+    setSelectedPokemonPokeAPI(undefined);
     setFormIndex(undefined);
   }, [generation]);
 
+  // Set Default Pokemon to one provided by DexID
   useEffect(() => {
     pokemonDexDetails &&
       !selectedPokemon &&
@@ -68,7 +71,10 @@ export const PokemonDexDetailsProvider = ({
       value={{
         id: { value: dexID, setValue: setDexID },
         species: { value: species, setValue: setSpecies },
-        selectedGeneration: { value: generation, setValue: setGeneration },
+        selectedGeneration: {
+          value: generation,
+          setValue: setGeneration,
+        },
         selectedTab: { value: selectedTab, setValue: setSelectedTab },
         selectedForm: {
           pokemon: {
