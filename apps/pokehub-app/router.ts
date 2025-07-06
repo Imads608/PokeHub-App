@@ -14,31 +14,26 @@ export const PokeHubRouter: AppRouter = {
       route: '/register',
       isAuthAccessible: false,
     },
+    {
+      route: '/pokedex',
+      isAuthAccessible: true,
+    },
   ],
-  navAuthRoutes: {
-    ADMIN: [
-      {
-        name: 'Dashboard',
-        path: '/dash',
-      },
-    ],
-    USER: [
-      {
-        name: 'Dashboard',
-        path: '/dashboard',
-      },
-    ],
-  },
   privilegedRoutes: [
     {
-      route: '/dash',
+      route: '/dashboard',
       rolesAllowed: ['ADMIN', 'USER'],
       allowSubRoutes: true,
+    },
+    {
+      route: '/create-profile',
+      rolesAllowed: ['USER'],
+      allowSubRoutes: false,
     },
   ],
   redirectOnLogin: {
     ADMIN: '/dashboard',
     USER: '/dashboard',
   },
-  createUsernameRoute: '/create-username',
+  createUsernameRoute: '/create-profile',
 };

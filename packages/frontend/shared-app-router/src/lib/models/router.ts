@@ -22,7 +22,7 @@ export type NavAuthRoutes = {
 
 export interface AppRouter {
   publicRoutes: PublicRoute[];
-  navAuthRoutes: NavAuthRoutes;
+  //navAuthRoutes: NavAuthRoutes;
   redirectOnLogin: RedirectRoute;
   privilegedRoutes: PrivilegedAuthRoute[];
   createUsernameRoute: string;

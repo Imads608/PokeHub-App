@@ -76,6 +76,8 @@ export const handleServerAuth = async () => {
     );
     handlePrivateRouteInfo(privateRouteInfo, routerInfo, session.user);
   }
+
+  return session;
 };
 
 const handlePublicRoute = (
@@ -104,15 +106,27 @@ const handlePrivateRouteInfo = (
     !privateRouteInfo.rolesAllowed.includes(user.accountRole)
   ) {
     console.log(
-      `${handlePrivateRouteInfo} - Route ${
+      `${handlePrivateRouteInfo.name} - Route ${
         privateRouteInfo.route
       } is not accessible by ${user.accountRole}. Redirecting to ${
         routerInfo.redirectOnLogin[user.accountRole]
       }}`
     );
     redirect(routerInfo.redirectOnLogin[user.accountRole]);
+  } else if (
+    privateRouteInfo.route === routerInfo.createUsernameRoute &&
+    !!user.username
+  ) {
+    console.log(
+      `${handlePrivateRouteInfo.name} - Route ${
+        privateRouteInfo.route
+      } is not accessible username ${!!user.username} is already created. Redirecting to ${
+        routerInfo.redirectOnLogin[user.accountRole]
+      }}`
+    );
+    redirect(routerInfo.redirectOnLogin[user.accountRole]);
   }
   console.log(
-    `${handlePrivateRouteInfo} - Route ${privateRouteInfo.route} is accessible by ${user.accountRole}. Proceeding to show route`
+    `${handlePrivateRouteInfo.name} - Route ${privateRouteInfo.route} is accessible by ${user.accountRole}. Proceeding to show route`
   );
 };

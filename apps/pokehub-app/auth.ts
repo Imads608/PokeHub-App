@@ -28,7 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = dataOrError as OAuthLoginResponse;
-          console.log('Data from backend', data);
+          console.log('Data from backend', !!data.user.username);
 
           return {
             ...token,
@@ -81,8 +81,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       //session.idToken = token.idToken;
       console.log('Session:', session, token);
       session.error = token.error;
-      token.user &&
-        (session.user = { ...token.user, emailVerified: new Date() });
+      if (token.user) {
+        session.user = { ...token.user, emailVerified: new Date() };
+        session.accessToken = token.accessToken;
+      }
       return session;
     },
   },

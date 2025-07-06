@@ -8,4 +8,6 @@ export interface IUsersDBService {
   createUser(email: string, accountType: User['accountType']): Promise<User>;
 
   getUser(id: string): Promise<User | undefined>;
+
+  getUserByUsername(username: string): Promise<User | undefined>;
 }

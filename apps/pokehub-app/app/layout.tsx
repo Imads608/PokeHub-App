@@ -2,7 +2,7 @@ import { auth } from '../auth';
 import { PokeHubRouter } from '../router';
 import { AppBootstrapper } from './(components)/bootstrapper';
 import './global.css';
-import { initServerRouteGuard } from '@pokehub/frontend/shared-app-router';
+import { initServerRouteGuard } from '@pokehub/frontend/shared-app-router/server';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 
 export const metadata = {

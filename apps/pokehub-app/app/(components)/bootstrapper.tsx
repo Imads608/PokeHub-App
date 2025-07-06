@@ -26,6 +26,7 @@ export const AppBootstrapper = ({
 
   useEffect(() => {
     createFetchClient('API', process.env.NEXT_PUBLIC_POKEHUB_API_URL);
+    //window.Dex = Dex;
   }, []);
 
   return (

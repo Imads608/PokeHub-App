@@ -66,6 +66,20 @@ class UsersDBService implements IUsersDBService {
     }
     return res[0];
   }
+
+  async getUserByUsername(username: string) {
+    const res = await this.dbService
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.username, username))
+      .execute();
+
+    if (res.length === 0) {
+      return undefined;
+    }
+
+    return res[0];
+  }
 }
 
 export const UsersDBProvider: Provider = {

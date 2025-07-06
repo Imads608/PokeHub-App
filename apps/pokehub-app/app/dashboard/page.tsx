@@ -1,4 +1,4 @@
-import { handleServerAuth } from '@pokehub/frontend/shared-app-router';
+import { handleServerAuth } from '@pokehub/frontend/shared-app-router/server';
 
 export default async function DashboardPage() {
   await handleServerAuth();

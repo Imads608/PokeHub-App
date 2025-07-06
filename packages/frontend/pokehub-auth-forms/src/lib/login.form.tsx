@@ -1,5 +1,6 @@
 'use client';
 
+import '@pokehub/frontend/global-next-types';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
