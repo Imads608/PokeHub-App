@@ -31,7 +31,7 @@ export class UsersService implements IUsersService {
         : await this.usersDbService.getUser(id);
 
     if (!user) {
-      this.logger.error(
+      this.logger.warn(
         `${this.getUserCore.name}: Failed to find user for ${id} with type ${dataType}`
       );
       return undefined;

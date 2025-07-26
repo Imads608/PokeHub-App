@@ -6,7 +6,9 @@ import {
   NotFoundException,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { TokenAuth, TokenAuthGuard } from '@pokehub/backend/shared-auth-utils';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 
 @Controller()
@@ -19,6 +21,8 @@ export class UsersController {
   }
 
   @Head(':id')
+  @UseGuards(TokenAuthGuard)
+  @TokenAuth('ACCESS_TOKEN')
   async getUserCore(
     @Param('id') id: string,
     @Query('dataType') dataType: 'username' | 'email' | 'id'

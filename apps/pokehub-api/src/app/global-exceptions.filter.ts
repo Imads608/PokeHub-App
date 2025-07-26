@@ -25,6 +25,7 @@ export class CatchEverythingFilter implements ExceptionFilter<unknown> {
     if (exception instanceof ServiceError) {
       this.handleServiceError(exception);
     } else if (exception instanceof HttpException) {
+      this.logger.log(`'Got HttpException, returning as it is`);
       response.status(exception.getStatus()).json(exception.getResponse());
     } else {
       response

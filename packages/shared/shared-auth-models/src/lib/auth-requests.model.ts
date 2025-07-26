@@ -8,6 +8,6 @@ export const createGoogleOAuthReqSchema = z.object({
 export type GoogleOAuthRequest = z.infer<typeof createGoogleOAuthReqSchema>;
 
 export interface AccessTokenRefreshResponse {
-  accessToken: string;
+  value: string;
   expirySeconds: number;
 }

@@ -32,11 +32,11 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
-      "@pokehub/frontend/shared-app-router": [
-        "packages/frontend/shared-app-router/src/index.ts"
+      "@pokehub/frontend/shared-auth": [
+        "packages/frontend/shared-auth/src/index.ts"
       ],
-      "@pokehub/frontend/shared-app-router/server": [
-        "packages/frontend/shared-app-router/src/server.ts"
+      "@pokehub/frontend/shared-auth/server": [
+        "packages/frontend/shared-auth/src/server.ts"
       ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
@@ -61,6 +61,12 @@
       ],
       "@pokehub/frontend/shared-app-bootstrapper": [
         "packages/frontend/shared-app-bootstrapper/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-app-router": [
+        "packages/frontend/shared-app-router/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-app-router/server": [
+        "packages/frontend/shared-app-router/src/server.ts"
       ],
       "@pokehub/frontend/shared-auth-context": [
         "packages/frontend/shared-auth-context/src/index.ts"

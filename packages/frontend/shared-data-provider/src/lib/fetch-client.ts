@@ -43,7 +43,7 @@ export const createFetchClient = (
 
   const url = new URL(host).toString().replace(/\/$/, ''); // remove the last backslash
 
-  const fetchClient = {
+  const fetchClient: FetchClient = {
     fetchApi: async <Data>(
       apiPath: string,
       init?: RequestInit | undefined

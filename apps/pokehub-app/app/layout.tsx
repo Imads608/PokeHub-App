@@ -1,9 +1,7 @@
-import { auth } from '../auth';
-import { PokeHubRouter } from '../router';
 import { AppBootstrapper } from './(components)/bootstrapper';
 import './global.css';
-import { initServerRouteGuard } from '@pokehub/frontend/shared-app-router/server';
-import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
+
+//import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 
 export const metadata = {
   title: 'Welcome to pokehub-app',
@@ -15,15 +13,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  createFetchClient('API', process.env.POKEHUB_API_URL);
-  initServerRouteGuard({ router: PokeHubRouter, getSessionCallback: auth });
-
-  const session = await auth();
+  //createFetchClient('API', process.env.POKEHUB_API_URL);
 
   return (
     <html lang="en">
       <body>
-        <AppBootstrapper session={session}>{children}</AppBootstrapper>
+        <AppBootstrapper>{children}</AppBootstrapper>
       </body>
     </html>
   );

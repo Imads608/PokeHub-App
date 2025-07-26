@@ -36,8 +36,3 @@ export interface RouteGuardProps {
   children: JSX.Element | React.ReactNode;
   onLogout?: () => void;
 }
-
-export interface ServerRouteGuardProps {
-  getSessionCallback: () => Promise<Session | null>;
-  router: AppRouter;
-}

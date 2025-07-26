@@ -8,4 +8,5 @@ export {
   doesClientExist,
   type AppFetchClients,
 } from './lib/fetch-client';
+export { withAuthRetry } from './lib/pokehub-api-client';
 export { createQueryClient, getServerQueryClient } from './lib/query-client';

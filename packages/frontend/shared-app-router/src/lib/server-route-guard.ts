@@ -2,30 +2,15 @@ import type {
   AppRouter,
   PrivilegedAuthRoute,
   PublicRoute,
-  ServerRouteGuardProps,
 } from './models/router';
 import '@pokehub/frontend/global-next-types';
+import { auth } from '@pokehub/frontend/shared-auth/server';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import type { Session } from 'next-auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-let routerInfo: AppRouter;
-let getSessionCallback: () => Promise<Session | null>;
-
-export const initServerRouteGuard = (props: ServerRouteGuardProps) => {
-  if (!routerInfo && !getSessionCallback) {
-    routerInfo = props.router;
-    getSessionCallback = props.getSessionCallback;
-  }
-};
-
-export const handleServerAuth = async () => {
-  if (!routerInfo || !getSessionCallback) {
-    return;
-  }
-
-  const session = await getSessionCallback();
+export const handleServerAuth = async (routerInfo: AppRouter) => {
+  const session = await auth();
 
   const currentRoute = headers().get('x-path') || '/';
   console.log(

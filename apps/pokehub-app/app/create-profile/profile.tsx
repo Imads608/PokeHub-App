@@ -33,7 +33,7 @@ import { z } from 'zod';
 const profileSchema = z.object({
   username: z
     .string()
-    .min(3, 'Username must be at least 3 characters')
+    .min(5, 'Username must be at least 3 characters')
     .max(15, 'Username must be less than 15 characters')
     .regex(
       /^[a-zA-Z0-9_]+$/,
@@ -46,8 +46,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function CreateProfileContainer() {
   const router = useRouter();
-  const [checkUsernameEnabled, setCheckUsernameEnabled] =
-    useState<boolean>(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const {
@@ -69,10 +67,13 @@ export function CreateProfileContainer() {
   const watchedUsername = watch('username');
   const watchedAvatar = watch('avatar');
 
-  const { error: usernameCheckError, status } = useCheckUsername(
-    watchedUsername,
-    checkUsernameEnabled
-  );
+  const [checkUsername, setCheckUsername] = useState<string>(watchedUsername);
+
+  const {
+    error: usernameCheckError,
+    status,
+    isLoading,
+  } = useCheckUsername(checkUsername);
 
   const mutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
@@ -140,7 +141,7 @@ export function CreateProfileContainer() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (watchedUsername && !errors.username) {
-        setCheckUsernameEnabled(true);
+        setCheckUsername(watchedUsername);
       }
     }, 500);
 
@@ -161,17 +162,17 @@ export function CreateProfileContainer() {
   };
 
   const getUsernameInputStatus = () => {
-    if (status === 'pending') {
+    if (isLoading) {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     }
     if (status === 'success') {
-      return <Check className="h-4 w-4 text-green-500" />;
+      return <X className="h-4 w-4 text-red-500" />;
     }
     if (
       status === 'error' &&
       (usernameCheckError as FetchApiError).status === 404
     ) {
-      return <X className="h-4 w-4 text-red-500" />;
+      return <Check className="h-4 w-4 text-green-500" />;
     }
     return null;
   };
@@ -255,7 +256,7 @@ export function CreateProfileContainer() {
                       }`}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {getUsernameInputStatus()}
+                      {!errors.username && getUsernameInputStatus()}
                     </div>
                   </div>
 
