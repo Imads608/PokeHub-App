@@ -24,6 +24,12 @@ export default (): PokeHubApiConfiguration => ({
     },
   },
   googleOAuth: {
-    clientId: process.env.GOOGLE_CLIENT_ID || 'sampleId',
+    clientId: process.env.GOOGLE_CLIENT_ID || 'sampleid',
+  },
+  azure: {
+    storageAccount: {
+      name: process.env.AZURE_STORAGE_ACCOUNT || 'pokehub',
+      avatarContainerName: process.env.AZURE_STORAGE_CONTAINER || 'avatars',
+    },
   },
 });
