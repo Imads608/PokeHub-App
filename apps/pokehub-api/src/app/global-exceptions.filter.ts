@@ -22,12 +22,15 @@ export class CatchEverythingFilter implements ExceptionFilter<unknown> {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
+    this.logger.error('An unhandled exception occurred', exception);
     if (exception instanceof ServiceError) {
+      this.logger.log(`'Got ServiceError, handling it'`);
       this.handleServiceError(exception);
     } else if (exception instanceof HttpException) {
       this.logger.log(`'Got HttpException, returning as it is`);
       response.status(exception.getStatus()).json(exception.getResponse());
     } else {
+      this.logger.log(`'Got unknown exception, returning 500'`);
       response
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json({ message: 'An Error Occurred' });

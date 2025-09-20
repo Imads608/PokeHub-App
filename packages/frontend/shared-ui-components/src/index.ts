@@ -54,3 +54,4 @@ export {
 export { Progress } from './lib/progress/progress';
 export { ScrollBar, ScrollArea } from './lib/scroll-area/scroll-area';
 export { Avatar, AvatarImage, AvatarFallback } from './lib/avatar/avatar';
+export { Toaster } from './lib/sonner/sonner';

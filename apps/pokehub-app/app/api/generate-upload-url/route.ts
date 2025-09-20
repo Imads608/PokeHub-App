@@ -4,7 +4,11 @@ import {
   BlobSASPermissions,
   generateBlobSASQueryParameters,
 } from '@azure/storage-blob';
-import { getSession } from 'next-auth/react';
+import { auth } from '@pokehub/frontend/shared-auth/server';
+import type { FetchApiError } from '@pokehub/frontend/shared-data-provider';
+import { getLogger } from '@pokehub/frontend/shared-logger/server';
+import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
+import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils/server';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const AZURE_STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
@@ -21,30 +25,57 @@ const sharedKeyCredential = new StorageSharedKeyCredential(
 );
 
 const blobServiceClient = new BlobServiceClient(
-  `https://{AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+  `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
   sharedKeyCredential
 );
 
+const logger = getLogger('GenerateUploadUrl');
+
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.accessToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    logger.info('Generating upload url: ', blobServiceClient.url);
+
+    const session = await auth();
+    if (!session?.accessToken || !session?.user) {
+      logger.error('Unauthorized access');
+      return NextResponse.json<FetchApiError>({
+        message: 'Unauthorized',
+        status: 401,
+        name: 'FetchApiError',
+      });
     }
 
     const { fileName, fileType } = await req.json();
-    if (!fileName || !fileType) {
-      return NextResponse.json(
-        { error: 'fileName and fileType are required' },
-        { status: 400 }
-      );
+    const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
+
+    logger.info('Successfully parsed request body. Validating file name...');
+    if (!isValidAvatarFileName(fileName)) {
+      logger.error('Invalid fileName');
+      return NextResponse.json<FetchApiError>({
+        message: 'Invalid fileName',
+        status: 400,
+        name: 'FetchApiError',
+      });
     }
+    if (!fileName || !fileType) {
+      logger.error('fileName or fileType is missing');
+      return NextResponse.json<FetchApiError>({
+        message: 'fileName and fileType are required',
+        status: 400,
+        name: 'FetchApiError',
+      });
+    }
+
+    logger.info('Proceessing file upload request');
 
     const containerClient =
       blobServiceClient.getContainerClient(CONTAINER_NAME);
     await containerClient.createIfNotExists();
 
-    const blobName = `${Date.now()}-${fileName}`;
+    logger.info('Container client created or already exists');
+
+    const userId = session.user.id;
+    const blobName = `${userId}/avatar${fileExtension}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     const sasToken = generateBlobSASQueryParameters(
@@ -60,12 +91,20 @@ export async function POST(req: NextRequest) {
 
     const uploadUrl = `${blockBlobClient.url}?${sasToken}`;
 
-    return NextResponse.json({ uploadUrl, blobUrl: blockBlobClient.url });
+    logger.info('Generated upload URL successfully');
+
+    const res: BlobStorageResponse = {
+      uploadUrl,
+      blobUrl: blockBlobClient.url,
+    };
+
+    return NextResponse.json(res);
   } catch (error) {
-    console.error('Error generating SAS URL:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate upload URL' },
-      { status: 500 }
-    );
+    logger.error({ error }, 'Error generating SAS URL');
+    return NextResponse.json<FetchApiError>({
+      message: 'Failed to generate upload URL',
+      status: 500,
+      name: 'FetchApiError',
+    });
   }
 }

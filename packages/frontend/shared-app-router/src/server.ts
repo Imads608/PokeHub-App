@@ -1,4 +1,1 @@
-export {
-  handleServerAuth,
-  initServerRouteGuard,
-} from './lib/server-route-guard';
+export { handleServerAuth } from './lib/server-route-guard';

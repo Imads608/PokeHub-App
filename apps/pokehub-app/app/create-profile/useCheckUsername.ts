@@ -16,18 +16,23 @@ export const useCheckUsername = (username: string) => {
       { queryType: 'availability', dataType: 'username' },
     ],
     queryFn: async () => {
-      const { accessToken } = data || {};
-      accessToken &&
-        (await withAuthRetry(accessToken, () =>
-          getFetchClient('API').fetchThrowsError(
-            `/users/${username}?dataType=username`,
-            {
-              method: 'HEAD',
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          )
-        ));
-      return null;
+      try {
+        const { accessToken } = data || {};
+        accessToken &&
+          (await withAuthRetry(accessToken, () =>
+            getFetchClient('API').fetchThrowsError(
+              `/users/${username}?dataType=username`,
+              {
+                method: 'HEAD',
+                headers: { Authorization: `Bearer ${accessToken}` },
+              }
+            )
+          ));
+        return null;
+      } catch (error) {
+        console.log('Error checking username availability:', error);
+        throw error;
+      }
     },
     enabled: !!username,
     retry: false,

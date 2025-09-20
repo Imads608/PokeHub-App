@@ -6,10 +6,10 @@ export interface FetchClient {
   fetchThrowsError<Data>(
     input: RequestInfo | URL,
     init?: RequestInit | undefined
-  ): Promise<FetchResponse<Data>>;
+  ): Promise<FetchResponseNoError<Data>>;
 }
 
-export type AppFetchClientKeys = 'API';
+export type AppFetchClientKeys = 'API' | 'NEXT_API';
 
 export interface FetchError {
   message: string;
@@ -22,7 +22,11 @@ export class FetchApiError extends Error {
 }
 
 export interface FetchResponse<Data> extends Response {
-  json(): Promise<Data | FetchError>;
+  json(): Promise<Data>;
+}
+
+export interface FetchResponseNoError<Data> extends Response {
+  json(): Promise<Data>;
 }
 
 export interface AppFetchClients {
@@ -50,6 +54,11 @@ export const createFetchClient = (
     ): Promise<FetchResponse<Data | FetchError>> => {
       const res = await fetch(`${url}${apiPath}`, {
         ...init,
+        headers: {
+          ...init?.headers,
+          'x-traceId': crypto.randomUUID(),
+          'Content-Type': 'application/json',
+        },
       });
 
       return res;
@@ -57,10 +66,23 @@ export const createFetchClient = (
     fetchThrowsError: async <Data>(
       apiPath: string,
       init?: RequestInit | undefined
-    ): Promise<FetchResponse<Data>> => {
-      const res = await fetch(`${url}${apiPath}`, { ...init });
+    ): Promise<FetchResponseNoError<Data>> => {
+      const res = await fetch(`${url}${apiPath}`, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          'x-traceId': crypto.randomUUID(),
+          'Content-Type': 'application/json',
+        },
+      });
       if (!res.ok || (res.status !== 200 && res.status !== 201)) {
-        throw new FetchApiError('Error fetching data', res.status);
+        if (init?.method === 'HEAD') {
+          throw new FetchApiError('HEAD request failed', res.status);
+        }
+        const jsonRes = await res.json();
+        console.log(`Error fetching ${apiPath}:`, jsonRes);
+        const err = (await res.json()) as FetchApiError;
+        throw err;
       }
       return res;
     },

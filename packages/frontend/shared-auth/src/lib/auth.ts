@@ -1,22 +1,31 @@
 import '@pokehub/frontend/global-next-types';
 import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
+import { getLogger } from '@pokehub/frontend/shared-logger/server';
 import type {
   AccessToken,
   AccessTokenRefreshResponse,
 } from '@pokehub/shared/shared-auth-models';
-import type { OAuthLoginResponse } from '@pokehub/shared/shared-user-models';
+import { type OAuthLoginResponse } from '@pokehub/shared/shared-user-models';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
+
+const logger = getLogger('Authjs');
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, trigger, session }) {
       // Persist the OAuth access token to the token right after signin
       //console.log('Got Data back', token, account, profile);
       // On Initial Sign In
-      console.log('JWT Callback called');
-      if (account) {
+      logger.info(`JWT Callback called: ${trigger}`);
+      if (trigger === 'update' && session) {
+        logger.info('Session is available, updating token with user data');
+        return {
+          ...token,
+          user: session.user,
+        };
+      } else if (account) {
         // Call backend service to get tokens
         try {
           const response = await getFetchClient(
@@ -27,12 +36,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const dataOrError = await response.json();
           if (!response.ok) {
-            console.log('Error getting user and tokens: ', response);
+            logger.error(
+              'Response not ok. Error getting user and tokens: ',
+              dataOrError
+            );
             throw dataOrError;
           }
 
           const data = dataOrError as OAuthLoginResponse;
-          console.log('Data from backend', !!data.user.username);
+          logger.info('Data from backend', !!data.user.username);
 
           return {
             ...token,
@@ -43,16 +55,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               Date.now() + data.tokens.accessToken.expirySeconds * 1000,
           };
         } catch (err) {
-          console.error('Error getting user and tokens: ', err);
+          logger.error('Error getting user and tokens: ', err);
           throw new TypeError('Error getting user and tokens');
         }
       } else if (Date.now() < token.expiresAt) {
-        console.log('Token is still valid');
+        logger.info('Token is still valid');
         return token;
       } else {
-        console.log('Checking token');
+        logger.info('Checking token');
         if (!token.refreshToken) {
-          console.error('No Refresh token found');
+          logger.error('No Refresh token found');
           throw new TypeError('No refresh token found');
         }
 
@@ -65,10 +77,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const dataOrError = await response.json();
           if (!response.ok) {
-            console.error('Unable to refresh access token: ', response);
+            logger.error('Unable to refresh access token: ', response);
             throw dataOrError;
           }
-          console.log('Data from access token refresh', dataOrError);
+          logger.info('Data from access token refresh', dataOrError);
 
           const data = dataOrError as AccessToken;
           return {
@@ -77,7 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             expiresAt: data.expirySeconds,
           };
         } catch (err) {
-          console.error('Error refreshing access token', err);
+          logger.error('Error refreshing access token', err);
           throw new TypeError('Error refreshing access token');
         }
       }

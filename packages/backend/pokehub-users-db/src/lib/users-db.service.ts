@@ -12,6 +12,7 @@ import {
 } from '@pokehub/backend/pokehub-postgres';
 import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import { IUpdateUserProfile } from '@pokehub/shared/shared-user-models';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
@@ -21,6 +22,30 @@ class UsersDBService implements IUsersDBService {
     @Inject(POSTGRES_SERVICE) private readonly dbService: PostgresService
   ) {
     this.logger.setContext(UsersDBService.name);
+  }
+
+  async updateUserProfile(
+    userId: string,
+    data: Omit<IUpdateUserProfile, 'avatar'> & { avatarFilename: string }
+  ) {
+    this.logger.log(`${this.updateUserProfile.name}: Updating User Profile`);
+    const res = await this.dbService
+      .update(usersTable)
+      .set({ username: data.username, avatarFilename: data.avatarFilename })
+      .where(eq(usersTable.id, userId))
+      .returning();
+
+    if (res.length === 0) {
+      this.logger.error(
+        `${this.updateUserProfile.name}: Unable to update user profile`
+      );
+      throw new ServiceError('ServiceError', 'Unable to update user profile');
+    }
+
+    this.logger.log(
+      `${this.updateUserProfile.name}: User Profile Updated Successfully`
+    );
+    return res[0];
   }
 
   async createUser(email: string, accountType: User['accountType']) {
@@ -41,6 +66,9 @@ class UsersDBService implements IUsersDBService {
   }
 
   async getUserByEmail(email: string) {
+    this.logger.log(
+      `${this.getUserByEmail.name}: Fetching User by Email: ${email}`
+    );
     const res = await this.dbService
       .select()
       .from(usersTable)
@@ -48,9 +76,15 @@ class UsersDBService implements IUsersDBService {
       .execute();
 
     if (res.length === 0) {
+      this.logger.log(
+        `${this.getUserByEmail.name}: No user found with email: ${email}`
+      );
       return undefined;
     }
 
+    this.logger.log(
+      `${this.getUserByEmail.name}: User found with email: ${email}`
+    );
     return res[0];
   }
 

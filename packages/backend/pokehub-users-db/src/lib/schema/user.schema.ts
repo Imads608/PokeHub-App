@@ -11,6 +11,7 @@ export const usersTable = pgTable(USERS_TABLE, {
   email: text('email').notNull().unique(),
   accountRole: accountRoleEnum('accountRole').notNull().default('USER'),
   accountType: accountTypeEnum('accountType').notNull(),
+  avatarFilename: text('avatarFilename'),
 });
 
 export type User = typeof usersTable.$inferSelect;

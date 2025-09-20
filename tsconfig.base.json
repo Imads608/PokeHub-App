@@ -32,12 +32,6 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
-      "@pokehub/frontend/shared-auth": [
-        "packages/frontend/shared-auth/src/index.ts"
-      ],
-      "@pokehub/frontend/shared-auth/server": [
-        "packages/frontend/shared-auth/src/server.ts"
-      ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
       ],
@@ -46,6 +40,9 @@
       ],
       "@pokehub/frontend/pokehub-auth-forms": [
         "packages/frontend/pokehub-auth-forms/src/index.ts"
+      ],
+      "@pokehub/frontend/pokehub-auth-forms/server": [
+        "packages/frontend/pokehub-auth-forms/src/server.ts"
       ],
       "@pokehub/frontend/pokehub-dex-components": [
         "packages/frontend/pokehub-dex-components/src/index.ts"
@@ -68,11 +65,17 @@
       "@pokehub/frontend/shared-app-router/server": [
         "packages/frontend/shared-app-router/src/server.ts"
       ],
+      "@pokehub/frontend/shared-auth": [
+        "packages/frontend/shared-auth/src/index.ts"
+      ],
       "@pokehub/frontend/shared-auth-context": [
         "packages/frontend/shared-auth-context/src/index.ts"
       ],
       "@pokehub/frontend/shared-auth-provider": [
         "packages/frontend/shared-auth-provider/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-auth/server": [
+        "packages/frontend/shared-auth/src/server.ts"
       ],
       "@pokehub/frontend/shared-context": [
         "packages/frontend/shared-context/src/index.ts"
@@ -82,6 +85,12 @@
       ],
       "@pokehub/frontend/shared-form-components": [
         "packages/frontend/shared-form-components/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-logger": [
+        "packages/frontend/shared-logger/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-logger/server": [
+        "packages/frontend/shared-logger/src/server.ts"
       ],
       "@pokehub/frontend/shared-query-client-provider": [
         "packages/frontend/shared-query-client-provider/src/index.ts"
@@ -100,6 +109,9 @@
       ],
       "@pokehub/frontend/shared-utils": [
         "packages/frontend/shared-utils/src/index.ts"
+      ],
+      "@pokehub/frontend/shared-utils/server": [
+        "packages/frontend/shared-utils/src/server.ts"
       ],
       "@pokehub/nest-custom-plugin": ["tools/nest-custom-plugin/src/index.ts"],
       "@pokehub/shared/shared-auth-models": [

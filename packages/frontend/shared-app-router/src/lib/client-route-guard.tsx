@@ -92,6 +92,15 @@ export const ClientRouteGuard = ({
         );
       } else if (
         authData?.user &&
+        isPrivateRoute(routeType) &&
+        url === '/create-profile' &&
+        authData.user.username
+      ) {
+        router.push(
+          getRedirectRoute(redirectOnLogin, authData.user.accountRole)
+        );
+      } else if (
+        authData?.user &&
         isPublicRoute(routeType) &&
         !routeType.isAuthAccessible
       ) {

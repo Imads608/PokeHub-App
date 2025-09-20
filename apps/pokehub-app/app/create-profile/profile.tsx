@@ -1,11 +1,10 @@
 'use client';
 
+import { type ProfileFormData, profileSchema } from './profile.models';
 import { useCheckUsername } from './useCheckUsername';
+import { useCreateProfile } from './useCreateProfile';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  type FetchApiError,
-  getFetchClient,
-} from '@pokehub/frontend/shared-data-provider';
+import { type FetchApiError } from '@pokehub/frontend/shared-data-provider';
 import {
   Input,
   Button,
@@ -20,32 +19,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@pokehub/frontend/shared-ui-components';
-import { useMutation } from '@tanstack/react-query';
 import { User, Upload, ChevronRight, Check, X, Loader2 } from 'lucide-react';
-import { getSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 // Validation schema
-const profileSchema = z.object({
-  username: z
-    .string()
-    .min(5, 'Username must be at least 3 characters')
-    .max(15, 'Username must be less than 15 characters')
-    .regex(
-      /^[a-zA-Z0-9_]+$/,
-      'Username can only contain letters, numbers, and underscores'
-    ),
-  avatar: z.string().optional(),
-});
-
-type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function CreateProfileContainer() {
-  const router = useRouter();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const {
@@ -53,8 +34,7 @@ export function CreateProfileContainer() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isSubmitting, isValid },
-    setError,
+    formState: { errors, isSubmitting, isValid, isSubmitSuccessful },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: 'onChange',
@@ -75,67 +55,7 @@ export function CreateProfileContainer() {
     isLoading,
   } = useCheckUsername(checkUsername);
 
-  const mutation = useMutation({
-    mutationFn: async (data: ProfileFormData) => {
-      if (!avatarFile) {
-        throw new Error('Avatar file not selected');
-      }
-
-      // 1. Get the secure upload URL
-      const uploadUrlResponse = await fetch('/api/generate-upload-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: avatarFile.name,
-          fileType: avatarFile.type,
-        }),
-      });
-
-      if (!uploadUrlResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-
-      const { uploadUrl, blobUrl } = await uploadUrlResponse.json();
-
-      // 2. Upload the file to Azure Blob Storage
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': avatarFile.type,
-        },
-        body: avatarFile,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload avatar');
-      }
-
-      // 3. Save the profile data to the backend
-      const session = await getSession();
-      if (!session?.accessToken) {
-        throw new Error('Unauthorized');
-      }
-
-      await getFetchClient('API').fetchApi('/user/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authentication: session.accessToken,
-        },
-        body: JSON.stringify({ username: data.username, avatar: blobUrl }),
-      });
-    },
-    onSuccess: () => {
-      router.push('/');
-    },
-    onError: (error) => {
-      console.error('Error creating profile:', error);
-      setError('username', { message: 'Failed to create profile' });
-    },
-  });
+  const { mutateAsync } = useCreateProfile(avatarFile);
 
   // Debounced username check
   useEffect(() => {
@@ -157,8 +77,8 @@ export function CreateProfileContainer() {
     }
   };
 
-  const onSubmit = (data: ProfileFormData) => {
-    mutation.mutate(data);
+  const onSubmit = async (data: ProfileFormData) => {
+    await mutateAsync(data);
   };
 
   const getUsernameInputStatus = () => {
@@ -228,7 +148,7 @@ export function CreateProfileContainer() {
                       <input
                         id="avatar-upload"
                         type="file"
-                        accept="image/*"
+                        accept=".png,.jpg,.jpeg,.gif"
                         className="hidden"
                         onChange={handleAvatarChange}
                       />
@@ -286,7 +206,7 @@ export function CreateProfileContainer() {
                 className="w-full gap-2"
                 size="lg"
                 onClick={handleSubmit(onSubmit)}
-                disabled={isSubmitting || !isFormReady}
+                disabled={isSubmitting || !isFormReady || isSubmitSuccessful}
               >
                 {isSubmitting ? (
                   <>

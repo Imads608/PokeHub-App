@@ -8,3 +8,4 @@ export {
   getTypeEffectiveness,
 } from './lib/type-effectiveness';
 export { isBaseForme } from './lib/forme-utils';
+export { isValidAvatarFileName } from './lib/validation';

@@ -2,7 +2,7 @@ export {
   type FetchClient,
   type FetchError,
   type FetchResponse,
-  type FetchApiError,
+  FetchApiError,
   createFetchClient,
   getFetchClient,
   doesClientExist,
