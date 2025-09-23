@@ -10,7 +10,7 @@ import { IsString, Length, Matches } from 'class-validator';
 export class UpdateUserProfileDTO implements IUpdateUserProfile {
   @IsString()
   @Length(3, 20)
-  username: string;
+  username!: string;
 
   @IsString()
   @Length(1, 255)
@@ -20,5 +20,5 @@ export class UpdateUserProfileDTO implements IUpdateUserProfile {
   @Matches(/\.(png|jpg|jpeg|gif)$/i, {
     message: 'Avatar filename has an invalid extension.',
   })
-  avatar: string;
+  avatar!: string;
 }

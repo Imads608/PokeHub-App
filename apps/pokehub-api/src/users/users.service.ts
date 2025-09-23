@@ -84,11 +84,10 @@ export class UsersService implements IUsersService {
       `${this.createUser.name}: Creating user with email ${email}`
     );
     const user = await this.usersDbService.createUser(email, accountType);
-    const AZURE_STORAGE_ACCOUNT = process.env.AZURE_STORAGE_ACCOUNT;
-    const AZURE_AVATAR_CONTAINER = process.env.AZURE_AVATAR_CONTAINER;
+    const azureConfig = this.configService.get('azure', { infer: true });
 
     const avatarUrl = user.avatarFilename
-      ? `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_AVATAR_CONTAINER}/${user.avatarFilename}`
+      ? `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${user.id}/${user.avatarFilename}`
       : null;
 
     return {

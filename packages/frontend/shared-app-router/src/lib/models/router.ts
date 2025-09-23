@@ -1,5 +1,4 @@
 import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
-import type { Session } from 'next-auth';
 
 export interface PrivilegedAuthRoute {
   route: string;

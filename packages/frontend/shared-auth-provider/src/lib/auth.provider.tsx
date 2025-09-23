@@ -2,7 +2,7 @@ import {
   AuthContext,
   type SharedAuthContext,
 } from '@pokehub/frontend/shared-auth-context';
-import { UserAccountRole } from '@pokehub/shared/shared-user-models';
+import { type UserAccountRole } from '@pokehub/shared/shared-user-models';
 import { useState } from 'react';
 
 export interface AuthContextProviderProps {

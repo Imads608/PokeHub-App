@@ -13,8 +13,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  //createFetchClient('API', process.env.POKEHUB_API_URL);
-
   return (
     <html lang="en">
       <body>
