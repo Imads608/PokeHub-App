@@ -1,18 +1,17 @@
 import { ThemeToggle } from './theme-toggle';
+import { UserDropdown } from './user-dropdown';
 import { Button } from '@pokehub/frontend/shared-ui-components';
+import type { UserCore } from '@pokehub/shared/shared-user-models';
 import { MessageCircle, Swords, Settings, LogOutIcon } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 
 export interface DesktopNavProps {
-  isAuthenticated: boolean;
+  user?: UserCore;
   activePath: string;
 }
 
-export const DesktopNavItems = ({
-  isAuthenticated,
-  activePath,
-}: DesktopNavProps) => {
+export const DesktopNavItems = ({ user, activePath }: DesktopNavProps) => {
   return (
     <>
       <div className="hidden items-center gap-1 md:flex">
@@ -27,7 +26,7 @@ export const DesktopNavItems = ({
             Pokedex
           </Button>
         </Link>
-        {isAuthenticated ? (
+        {user ? (
           <>
             <Link href="/dashboard">
               <Button
@@ -64,8 +63,9 @@ export const DesktopNavItems = ({
       <div className="hidden items-center gap-1 md:flex">
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          {isAuthenticated && (
+          {user && (
             <>
+              <UserDropdown user={user} />
               <Link href="/settings">
                 <Button
                   variant="ghost"

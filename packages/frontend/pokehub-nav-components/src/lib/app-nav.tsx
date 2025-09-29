@@ -1,8 +1,8 @@
 'use client';
 
-//import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DesktopNavItems } from './components/desktop';
 import { MobileMenuItems } from './components/mobile';
+import { NavSkeleton } from './components/nav-skeleton';
 import { ThemeToggle } from './components/theme-toggle';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { LogoIcon } from '@pokehub/frontend/shared-ui-icons';
@@ -16,7 +16,7 @@ export function AppNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isChatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
 
   console.log('isChatOpen', isChatOpen);
@@ -29,9 +29,9 @@ export function AppNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // const handleSignOut = () => {
-  //   signOut({ callbackUrl: '/' });
-  // };
+  if (status === 'loading') {
+    return <NavSkeleton />;
+  }
 
   return (
     <nav
@@ -54,10 +54,7 @@ export function AppNav() {
         </Link>
 
         {/* Desktop Navigation */}
-        <DesktopNavItems
-          isAuthenticated={!!session?.user}
-          activePath={pathname}
-        />
+        <DesktopNavItems user={session?.user} activePath={pathname} />
 
         {/* Mobile Menu Button */}
         <div className="flex items-center">
