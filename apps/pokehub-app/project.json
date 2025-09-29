@@ -20,11 +20,9 @@
       }
     },
     "serve": {
-      "executor": "@nx/next:server",
-      "defaultConfiguration": "development",
+      "executor": "nx:run-commands",
       "options": {
-        "buildTarget": "pokehub-app:build",
-        "dev": true
+        "command": "next dev apps/pokehub-app -p 4200 | pino-pretty"
       },
       "configurations": {
         "development": {

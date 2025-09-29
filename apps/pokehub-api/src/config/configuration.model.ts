@@ -8,4 +8,10 @@ export interface PokeHubApiConfiguration
   googleOAuth: {
     clientId: string;
   };
+  azure: {
+    storageAccount: {
+      name: string;
+      avatarContainerName: string;
+    };
+  };
 }

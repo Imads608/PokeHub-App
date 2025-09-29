@@ -2,33 +2,21 @@ import type {
   AppRouter,
   PrivilegedAuthRoute,
   PublicRoute,
-  ServerRouteGuardProps,
 } from './models/router';
 import '@pokehub/frontend/global-next-types';
+import { auth } from '@pokehub/frontend/shared-auth/server';
+import { getLogger } from '@pokehub/frontend/shared-logger/server';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import type { Session } from 'next-auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-let routerInfo: AppRouter;
-let getSessionCallback: () => Promise<Session | null>;
+const logger = getLogger('ServerRouteGuard');
 
-export const initServerRouteGuard = (props: ServerRouteGuardProps) => {
-  if (!routerInfo && !getSessionCallback) {
-    routerInfo = props.router;
-    getSessionCallback = props.getSessionCallback;
-  }
-};
-
-export const handleServerAuth = async () => {
-  if (!routerInfo || !getSessionCallback) {
-    return;
-  }
-
-  const session = await getSessionCallback();
+export const handleServerAuth = async (routerInfo: AppRouter) => {
+  const session = await auth();
 
   const currentRoute = headers().get('x-path') || '/';
-  console.log(
+  logger.info(
     `${
       handleServerAuth.name
     } - Starting to Handle Server Authentication for ${currentRoute} ${
@@ -47,7 +35,7 @@ export const handleServerAuth = async () => {
 
   if (!session?.user) {
     if (publicRouteInfo) {
-      console.log(
+      logger.info(
         `${handleServerAuth.name} - Route ${currentRoute} is public and authRes is undefined. Proceeding to show route`
       );
       return;
@@ -56,26 +44,28 @@ export const handleServerAuth = async () => {
   }
 
   if (publicRouteInfo && !session.user) {
-    console.log(
+    logger.info(
       `${handleServerAuth.name} - Route ${currentRoute} is public and authRes status is not 200. Proceeding to show route`
     );
     return;
   } else if (publicRouteInfo && session.user) {
-    console.log(
+    logger.info(
       `${handleServerAuth.name} - Route ${currentRoute} is public and authRes status is 200. Checking if Route is Auth Accessible`
     );
     handlePublicRoute(publicRouteInfo, routerInfo, session.user);
   } else if (!session) {
-    console.log(
+    logger.info(
       `${handleServerAuth.name} - Route ${currentRoute} is private and authRes status is not 200. Redirecting to /login`
     );
     redirect('/login');
   } else if (privateRouteInfo) {
-    console.log(
+    logger.info(
       `${handleServerAuth.name} - Route ${currentRoute} is private and authRes status is 200. Checking if Route is User Role has permissions`
     );
     handlePrivateRouteInfo(privateRouteInfo, routerInfo, session.user);
   }
+
+  return session;
 };
 
 const handlePublicRoute = (
@@ -84,12 +74,12 @@ const handlePublicRoute = (
   userData: UserCore
 ) => {
   if (!publicRoute.isAuthAccessible) {
-    console.log(
+    logger.info(
       `${handlePublicRoute.name} - Route ${publicRoute.route} is not auth accessible. Redirecting to ${userData.accountRole}'s redirectOnLogin config`
     );
     redirect(routerInfo.redirectOnLogin[userData.accountRole]);
   }
-  console.log(
+  logger.info(
     `${handlePublicRoute.name} - Route ${publicRoute.route} is auth accessible. Proceeding to show route`
   );
 };
@@ -103,16 +93,28 @@ const handlePrivateRouteInfo = (
     privateRouteInfo.rolesAllowed &&
     !privateRouteInfo.rolesAllowed.includes(user.accountRole)
   ) {
-    console.log(
-      `${handlePrivateRouteInfo} - Route ${
+    logger.info(
+      `${handlePrivateRouteInfo.name} - Route ${
         privateRouteInfo.route
       } is not accessible by ${user.accountRole}. Redirecting to ${
         routerInfo.redirectOnLogin[user.accountRole]
       }}`
     );
     redirect(routerInfo.redirectOnLogin[user.accountRole]);
+  } else if (
+    privateRouteInfo.route === routerInfo.createUsernameRoute &&
+    !!user.username
+  ) {
+    logger.info(
+      `${handlePrivateRouteInfo.name} - Route ${
+        privateRouteInfo.route
+      } is not accessible username ${!!user.username} is already created. Redirecting to ${
+        routerInfo.redirectOnLogin[user.accountRole]
+      }}`
+    );
+    redirect(routerInfo.redirectOnLogin[user.accountRole]);
   }
-  console.log(
-    `${handlePrivateRouteInfo} - Route ${privateRouteInfo.route} is accessible by ${user.accountRole}. Proceeding to show route`
+  logger.info(
+    `${handlePrivateRouteInfo.name} - Route ${privateRouteInfo.route} is accessible by ${user.accountRole}. Proceeding to show route`
   );
 };

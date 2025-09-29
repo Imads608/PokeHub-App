@@ -6,30 +6,22 @@ import type {
   RedirectRoute,
   RouteGuardProps,
 } from './models/router';
-import { AuthContext } from '@pokehub/frontend/shared-auth-context';
 import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
+import { useSession } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const ClientRouteGuard = ({
   children,
   loginPath,
   publicPaths,
   redirectOnLogin,
-  onLogout,
   privilegedRoutes,
 }: RouteGuardProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const queryParams = useSearchParams();
-  const {
-    isAuthenticated,
-    loading: authLoading,
-    accountRole,
-  } = useContext(AuthContext);
-  const [currAuthStatus, setCurrAuthStatus] = useState<boolean>(
-    !!isAuthenticated.value
-  );
+  const { data: authData, status } = useSession();
   const [authorized, setAuthorized] = useState<boolean>(() => {
     const routeType = checkActiveRouteType(
       pathname,
@@ -38,25 +30,18 @@ export const ClientRouteGuard = ({
     );
     return (
       isPublicRoute(routeType) &&
-      ((isAuthenticated.value &&
-        !authLoading.value &&
-        routeType.isAuthAccessible) ||
-        !isAuthenticated.value)
+      ((authData?.user && routeType.isAuthAccessible) || !authData?.user)
     );
   });
 
   /* Trigger on Authentication Change */
   useEffect(() => {
-    authCheck(pathname, true);
-    setCurrAuthStatus(!!isAuthenticated.value);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated.value, authLoading.value]);
+    authCheck(pathname);
+  }, [authData?.user, status]);
 
   /* Trigger on Page Change */
   useEffect(() => {
     authCheck(pathname);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, queryParams]);
 
   const redirectToDefaultPrivilegedPage = (accountRole: UserAccountRole) => {
@@ -85,7 +70,7 @@ export const ClientRouteGuard = ({
     }
   };
 
-  const authCheck = (url: string, authChange?: boolean) => {
+  const authCheck = (url: string) => {
     const path = url.split('?')[0];
     const routeType = checkActiveRouteType(
       path,
@@ -93,35 +78,47 @@ export const ClientRouteGuard = ({
       privilegedRoutes || []
     );
 
-    if (
-      !authLoading.value &&
-      !isAuthenticated.value &&
-      !isPublicRoute(routeType)
-    ) {
+    if (status === 'unauthenticated' && !isPublicRoute(routeType)) {
       setAuthorized(false);
       router.push(`${loginPath}?from=${path}`);
-    } else if (!authLoading.value) {
+    } else if (status !== 'loading') {
       if (
-        isAuthenticated.value &&
+        authData?.user &&
         isPrivateRoute(routeType) &&
-        accountRole.value &&
-        !isRoleAllowed(routeType.rolesAllowed, accountRole.value)
+        !isRoleAllowed(routeType.rolesAllowed, authData.user.accountRole)
       ) {
-        router.push(getRedirectRoute(redirectOnLogin, accountRole.value));
+        router.push(
+          getRedirectRoute(redirectOnLogin, authData.user.accountRole)
+        );
       } else if (
-        isAuthenticated.value &&
-        accountRole.value &&
+        authData?.user &&
+        isPrivateRoute(routeType) &&
+        url === '/create-profile' &&
+        authData.user.username
+      ) {
+        router.push(
+          getRedirectRoute(redirectOnLogin, authData.user.accountRole)
+        );
+      } else if (
+        authData?.user &&
         isPublicRoute(routeType) &&
         !routeType.isAuthAccessible
       ) {
-        redirectToDefaultPrivilegedPage(accountRole.value);
-      } else if (authChange && !isAuthenticated.value && currAuthStatus) {
-        onLogout?.();
-        router.refresh();
-        setAuthorized(true);
+        if (!authData.user.username) {
+          router.push('/create-profile');
+        } else {
+          redirectToDefaultPrivilegedPage(authData.user.accountRole);
+        }
       } else {
         setAuthorized(true);
       }
+      // else if (authChange && !isAuthenticated.value && currAuthStatus) {
+      //   onLogout?.();
+      //   router.refresh();
+      //   setAuthorized(true);
+      // } else {
+      //   setAuthorized(true);
+      // }
     }
   };
 

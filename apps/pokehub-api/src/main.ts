@@ -3,7 +3,7 @@
  * This is only a minimal backend to get started.
  */
 import { AppModule } from './app/app.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 
@@ -12,6 +12,8 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   app.useLogger(await app.resolve(AppLogger));
+  app.enableCors();
+  app.useGlobalPipes(new ValidationPipe());
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(

@@ -8,3 +8,5 @@ export {
   getTypeEffectiveness,
 } from './lib/type-effectiveness';
 export { isBaseForme } from './lib/forme-utils';
+export { isValidAvatarFileName } from './lib/validation';
+export { getPokeAPIName } from './lib/pokeapi-utils';

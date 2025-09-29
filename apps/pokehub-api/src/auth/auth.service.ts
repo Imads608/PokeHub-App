@@ -1,9 +1,8 @@
 import type { PokeHubApiConfiguration } from '../config/configuration.model';
+import { IUsersService, USERS_SERVICE } from '../users/users.service.interface';
 import { AUTH_SERVICE, type IAuthService } from './auth.service.interface';
 import { Inject, Injectable, type Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { IUsersDBService } from '@pokehub/backend/pokehub-users-db';
-import { USERS_DB_SERVICE } from '@pokehub/backend/pokehub-users-db';
 import type {
   IJwtAuthService,
   UserJwtData,
@@ -17,7 +16,7 @@ import type { OAuthLoginResponse } from '@pokehub/shared/shared-user-models';
 class AuthService implements IAuthService {
   constructor(
     private readonly logger: AppLogger,
-    @Inject(USERS_DB_SERVICE) private readonly usersDBService: IUsersDBService,
+    @Inject(USERS_SERVICE) private readonly usersService: IUsersService,
     @Inject(JWT_AUTH_SERVICE) private readonly jwtService: IJwtAuthService,
     private readonly configService: ConfigService<PokeHubApiConfiguration, true>
   ) {
@@ -26,10 +25,10 @@ class AuthService implements IAuthService {
 
   async createOrLoginUser(email: string): Promise<OAuthLoginResponse> {
     this.logger.log(`User logged in ${email}`);
-    let user = await this.usersDBService.getUserByEmail(email);
+    let user = await this.usersService.getUserCore(email, 'email');
     this.logger.log(`User found: ${JSON.stringify(user)}`);
     if (!user) {
-      user = await this.usersDBService.createUser(email, 'GOOGLE');
+      user = await this.usersService.createUser(email, 'GOOGLE');
     }
     const tokens = await this.jwtService.generateAccessAndRefreshTokens(user);
     const secretsConfig = this.configService.get('secrets', { infer: true });

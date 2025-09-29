@@ -5,6 +5,7 @@ export interface UserCore {
   id: string;
   email: string;
   username?: string | null;
+  avatarUrl?: string | null;
   accountRole: UserAccountRole;
   accountType: UserAccountType;
 }
