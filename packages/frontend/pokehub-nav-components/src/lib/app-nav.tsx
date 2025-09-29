@@ -1,7 +1,7 @@
 'use client';
 
-import { DesktopNavItems } from './components/desktop';
-import { MobileMenuItems } from './components/mobile';
+import { DesktopNavItems } from './components/desktop/desktop';
+import { MobileMenuItems } from './components/mobile/mobile';
 import { NavSkeleton } from './components/nav-skeleton';
 import { ThemeToggle } from './components/theme-toggle';
 import { Button } from '@pokehub/frontend/shared-ui-components';

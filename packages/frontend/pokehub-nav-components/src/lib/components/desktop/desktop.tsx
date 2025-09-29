@@ -1,4 +1,4 @@
-import { ThemeToggle } from './theme-toggle';
+import { ThemeToggle } from '../theme-toggle';
 import { UserDropdown } from './user-dropdown';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
