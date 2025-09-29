@@ -2,8 +2,7 @@ import { ThemeToggle } from './theme-toggle';
 import { UserDropdown } from './user-dropdown';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import { MessageCircle, Swords, Settings, LogOutIcon } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { MessageCircle, Swords, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 export interface DesktopNavProps {
@@ -47,6 +46,16 @@ export const DesktopNavItems = ({ user, activePath }: DesktopNavProps) => {
                 Battle
               </Button>
             </Link>
+            <Link href="/team-builder">
+              <Button
+                variant="ghost"
+                className={`disabled:hover:none rounded-full text-sm font-medium text-foreground hover:bg-muted disabled:pointer-events-none disabled:bg-muted`}
+                disabled={activePath === '/team-builder'}
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Team Builder
+              </Button>
+            </Link>
           </>
         ) : (
           <Link href="/login">
@@ -66,24 +75,6 @@ export const DesktopNavItems = ({ user, activePath }: DesktopNavProps) => {
           {user && (
             <>
               <UserDropdown user={user} />
-              <Link href="/settings">
-                <Button
-                  variant="ghost"
-                  className={`disabled:hover:none rounded-full text-sm font-medium text-foreground hover:bg-muted disabled:pointer-events-none disabled:bg-muted`}
-                  disabled={activePath === '/settings'}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                className={`rounded-full text-sm font-bold text-destructive hover:bg-destructive/10 `}
-                onClick={() => signOut({ redirectTo: '/login' })}
-              >
-                <LogOutIcon className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"

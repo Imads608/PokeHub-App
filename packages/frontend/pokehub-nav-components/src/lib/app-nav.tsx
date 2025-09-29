@@ -75,7 +75,7 @@ export function AppNav() {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && <MobileMenuItems isAuthenticated={!!session?.user} />}
+      {isMenuOpen && <MobileMenuItems user={session?.user} />}
     </nav>
   );
 }
