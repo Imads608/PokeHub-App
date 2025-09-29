@@ -9,7 +9,7 @@ import {
   usePokemonPokeAPIDetails,
   usePokemonSpeciesPokeAPIDetails,
 } from '@pokehub/frontend/dex-data-provider';
-import { isBaseForme } from '@pokehub/frontend/shared-utils';
+import { getPokeAPIName, isBaseForme } from '@pokehub/frontend/shared-utils';
 
 export const useDataProviders = () => {
   const {
@@ -22,9 +22,11 @@ export const useDataProviders = () => {
 
   const baseSpecies = species.value as Species;
 
+  const pokemonName = selectedPokemon?.name.toLowerCase();
+
   // Species Specifc Providers
   const pokemonPokeAPIResult = usePokemonPokeAPIDetails(
-    selectedPokemon?.name.toLowerCase()
+    pokemonName ? getPokeAPIName(pokemonName) : undefined
   );
   const pokemonSpeciesPokeAPIResult = usePokemonSpeciesPokeAPIDetails(
     pokemonPokeAPIResult.data?.species.name
