@@ -4,10 +4,10 @@ import { DesktopNavItems } from './components/desktop/desktop';
 import { MobileMenuItems } from './components/mobile/mobile';
 import { NavSkeleton } from './components/nav-skeleton';
 import { ThemeToggle } from './components/theme-toggle';
+import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { LogoIcon } from '@pokehub/frontend/shared-ui-icons';
 import { Menu, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -16,7 +16,7 @@ export function AppNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isChatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuthSession();
   const pathname = usePathname();
 
   console.log('isChatOpen', isChatOpen);

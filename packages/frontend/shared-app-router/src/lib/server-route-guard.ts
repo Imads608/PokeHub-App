@@ -3,7 +3,6 @@ import type {
   PrivilegedAuthRoute,
   PublicRoute,
 } from './models/router';
-import '@pokehub/frontend/global-next-types';
 import { auth } from '@pokehub/frontend/shared-auth/server';
 import { getLogger } from '@pokehub/frontend/shared-logger/server';
 import type { UserCore } from '@pokehub/shared/shared-user-models';

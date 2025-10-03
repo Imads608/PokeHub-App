@@ -1,4 +1,5 @@
 import type { ProfileFormData } from './profile.models';
+import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import {
   FetchApiError,
   getFetchClient,
@@ -8,7 +9,6 @@ import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
 import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils';
 import type { IUpdateUserProfile } from '@pokehub/shared/shared-user-models';
 import { useMutation } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 export interface CreateProfileMutationOptions {
@@ -16,7 +16,7 @@ export interface CreateProfileMutationOptions {
 }
 
 export const useCreateProfile = (avatarFile: File | null) => {
-  const { data, update } = useSession();
+  const { data, update } = useAuthSession();
   return useMutation({
     mutationFn: async (profile: ProfileFormData) => {
       if (!avatarFile) {
