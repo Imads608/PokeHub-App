@@ -6,7 +6,7 @@ metadata:
   # cert-manager will put the resulting Secret in the same Kubernetes
   # namespace as the Certificate. You should create the certificate in
   # whichever namespace you want to configure a Host.
-  namespace: ambassador
+  namespace: emissary
 spec:
   secretName: ambassador-certs
   issuerRef:
@@ -14,4 +14,4 @@ spec:
     kind: ClusterIssuer
   commonName: pokehub.space
   dnsNames:
-  - pokehub.space
+    - pokehub.space
