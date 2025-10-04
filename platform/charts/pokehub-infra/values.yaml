@@ -1,26 +1,26 @@
 host:
   name: pokehub
-  namespace: ambassador
+  namespace: emissary
   hostname: pokehub.space
   acmeEmail: imadsheriff97@gmail.com
   tlsSecretName: ambassador-certs
 
 listener:
-  namespace: ambassador
+  namespace: emissary
   http:
-    name: edge-stack-listener-8080
+    name: emissary-ingress-listener-8080
     port: 8080
   https:
-    name: edge-stack-listener-8443
+    name: emissary-ingress-listener-8443
     port: 8443
 
 mapping:
   name: quote-backend
-  namespace: ambassador
+  namespace: emissary
   hostname: pokehub.space
   prefix: /backend/
   service: quote
-  docsPath: "/.ambassador-internal/openapi-docs"
+  docsPath: '/.ambassador-internal/openapi-docs'
 
 clusterIssuer:
   name: letsencrypt-prod
@@ -38,7 +38,7 @@ clusterIssuer:
 
 certificate:
   name: pokehub.space
-  namespace: ambassador
+  namespace: emissary
   secretName: ambassador-certs
   commonName: pokehub.space
   dnsNames:
