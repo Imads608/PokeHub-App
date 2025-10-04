@@ -14,12 +14,11 @@ import { useState, useEffect } from 'react';
 
 export function AppNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isChatOpen] = useState(false);
+  //const [isChatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { data: session, status } = useAuthSession();
   const pathname = usePathname();
 
-  console.log('isChatOpen', isChatOpen);
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -64,6 +63,7 @@ export function AppNav() {
             size="icon"
             className="rounded-full text-foreground hover:bg-muted md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
           >
             {isMenuOpen ? (
               <X className="h-6 w-6" />

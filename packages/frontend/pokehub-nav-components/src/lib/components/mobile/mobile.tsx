@@ -15,7 +15,7 @@ export const MobileMenuItems = ({ user }: { user?: UserCore }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (
-    <div className="glass mx-4 mt-2 overflow-hidden rounded-xl p-4 md:hidden">
+    <div className="glass mx-4 mt-2 overflow-hidden rounded-xl p-4 md:hidden" data-testid="mobile-menu">
       <div
         className={`grid flex-col gap-2 transition-transform duration-300 ease-in-out ${
           showProfileMenu ? '-translate-x-full' : ''
