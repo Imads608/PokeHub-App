@@ -1,7 +1,6 @@
 import type { FetchResponse } from './fetch-client';
 import { FetchApiError } from './fetch-client';
-import '@pokehub/frontend/global-next-types';
-import { getSession } from 'next-auth/react';
+import { getAuthSession } from '@pokehub/frontend/shared-auth';
 
 export const withAuthRetry = async <Data>(
   accessToken: string,
@@ -12,7 +11,7 @@ export const withAuthRetry = async <Data>(
     return res;
   } catch (error) {
     if ((error as FetchApiError).status === 401) {
-      const session = await getSession();
+      const session = await getAuthSession();
       if (!session?.accessToken) {
         throw new FetchApiError('Unauthorized', 401);
       }

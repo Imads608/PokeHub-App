@@ -1,25 +1,24 @@
 'use client';
 
-//import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DesktopNavItems } from './components/desktop';
-import { MobileMenuItems } from './components/mobile';
+import { DesktopNavItems } from './components/desktop/desktop';
+import { MobileMenuItems } from './components/mobile/mobile';
+import { NavSkeleton } from './components/nav-skeleton';
 import { ThemeToggle } from './components/theme-toggle';
+import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { LogoIcon } from '@pokehub/frontend/shared-ui-icons';
 import { Menu, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 export function AppNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isChatOpen] = useState(false);
+  //const [isChatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useAuthSession();
   const pathname = usePathname();
 
-  console.log('isChatOpen', isChatOpen);
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -29,9 +28,9 @@ export function AppNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // const handleSignOut = () => {
-  //   signOut({ callbackUrl: '/' });
-  // };
+  if (status === 'loading') {
+    return <NavSkeleton />;
+  }
 
   return (
     <nav
@@ -54,10 +53,7 @@ export function AppNav() {
         </Link>
 
         {/* Desktop Navigation */}
-        <DesktopNavItems
-          isAuthenticated={!!session?.user}
-          activePath={pathname}
-        />
+        <DesktopNavItems user={session?.user} activePath={pathname} />
 
         {/* Mobile Menu Button */}
         <div className="flex items-center">
@@ -67,6 +63,7 @@ export function AppNav() {
             size="icon"
             className="rounded-full text-foreground hover:bg-muted md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
           >
             {isMenuOpen ? (
               <X className="h-6 w-6" />
@@ -78,7 +75,7 @@ export function AppNav() {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && <MobileMenuItems isAuthenticated={!!session?.user} />}
+      {isMenuOpen && <MobileMenuItems user={session?.user} />}
     </nav>
   );
 }

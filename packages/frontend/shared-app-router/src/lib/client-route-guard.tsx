@@ -6,8 +6,8 @@ import type {
   RedirectRoute,
   RouteGuardProps,
 } from './models/router';
+import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
-import { useSession } from 'next-auth/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -21,7 +21,7 @@ export const ClientRouteGuard = ({
   const router = useRouter();
   const pathname = usePathname();
   const queryParams = useSearchParams();
-  const { data: authData, status } = useSession();
+  const { data: authData, status } = useAuthSession();
   const [authorized, setAuthorized] = useState<boolean>(() => {
     const routeType = checkActiveRouteType(
       pathname,
