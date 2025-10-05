@@ -1,0 +1,21 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: imadsheriff97@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - dns01:
+        azureDNS:
+          subscriptionID: fc24fb67-c494-48a0-b6af-3075eeb257fc
+          resourceGroupName: pokehub_group
+          hostedZoneName: pokehub.space
+          environment: AzurePublicCloud
+      selector:
+        dnsZones:
+          - 'pokehub.space'

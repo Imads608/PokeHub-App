@@ -1,0 +1,9 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Mapping
+metadata:
+  name: pokehub-app
+  namespace: pokehub
+spec:
+  hostname: pokehub.space
+  prefix: /
+  service: 'pokehub-app:3000'

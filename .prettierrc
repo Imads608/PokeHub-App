@@ -1,3 +1,10 @@
 {
-  "singleQuote": true
+  "singleQuote": true,
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-organize-imports",
+    "prettier-plugin-merge"
+  ],
+  "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"]
 }

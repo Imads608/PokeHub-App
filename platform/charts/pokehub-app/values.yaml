@@ -1,0 +1,14 @@
+image:
+  repository: pokehub.azurecr.io/pokehub-app
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+env:
+  AUTH_SECRET: ''
+  AUTH_GOOGLE_ID: ''
+  AUTH_GOOGLE_SECRET: ''
+  POKEHUB_API_URL: 'http://localhost:4000/api'

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pokehub-app.fullname" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "pokehub-app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "pokehub-app.name" . }}
+    spec:
+      containers:
+        - name: pokehub-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          env:
+            - name: AUTH_SECRET
+              value: {{ .Values.env.AUTH_SECRET | quote }}
+            - name: AUTH_GOOGLE_ID
+              value: {{ .Values.env.AUTH_GOOGLE_ID | quote }}
+            - name: AUTH_GOOGLE_SECRET
+              value: {{ .Values.env.AUTH_GOOGLE_SECRET | quote }}
+            - name: POKEHUB_API_URL
+              value: {{ .Values.env.POKEHUB_API_URL | quote }}

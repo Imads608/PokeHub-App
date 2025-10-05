@@ -1,0 +1,14 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Host
+metadata:
+  name: {{ .Values.host.name }}
+  namespace: {{ .Values.host.namespace }}
+spec:
+  hostname: {{ .Values.host.hostname }}
+  acmeProvider:
+    email: {{ .Values.host.acmeEmail }}
+  tlsSecret:
+    name: {{ .Values.host.tlsSecretName }}
+  requestPolicy:
+    insecure:
+      action: Route

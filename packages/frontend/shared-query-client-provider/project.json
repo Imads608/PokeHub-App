@@ -1,0 +1,19 @@
+{
+  "name": "frontend-shared-query-client-provider",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/frontend/shared-query-client-provider/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/frontend/shared-query-client-provider/jest.config.ts"
+      }
+    }
+  }
+}

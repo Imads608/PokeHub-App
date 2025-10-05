@@ -1,0 +1,26 @@
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Listener
+metadata:
+  name: {{ .Values.listener.http.name }}
+  namespace: {{ .Values.listener.namespace }}
+spec:
+  port: {{ .Values.listener.http.port }}
+  protocol: HTTP
+  securityModel: XFP
+  hostBinding:
+    namespace:
+      from: ALL
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Listener
+metadata:
+  name: {{ .Values.listener.https.name }}
+  namespace: {{ .Values.listener.namespace }}
+spec:
+  port: {{ .Values.listener.https.port }}
+  protocol: HTTPS
+  securityModel: XFP
+  hostBinding:
+    namespace:
+      from: ALL

@@ -1,0 +1,19 @@
+{
+  "name": "frontend-shared-ui-icons",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/frontend/shared-ui-icons/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/frontend/shared-ui-icons/jest.config.ts"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+apiVersion: getambassador.io/v3alpha1
+kind: Mapping
+metadata:
+  name: {{ .Values.mapping.name }}
+  namespace: {{ .Values.mapping.namespace }}
+spec:
+  hostname: {{ .Values.mapping.hostname }}
+  prefix: {{ .Values.mapping.prefix }}
+  service: {{ .Values.mapping.service }}
+  docs:
+    path: "{{ .Values.mapping.docsPath }}"

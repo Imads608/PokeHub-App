@@ -18,7 +18,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    environment: production
+    environment: development
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -34,9 +34,9 @@ jobs:
           main-branch-name: 'dev'
 
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
       - name: Install Project Dependencies
         run: npm install
 
