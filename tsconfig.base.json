@@ -32,6 +32,9 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
+      "@pokehub/frontend/pokehub-data-provider": [
+        "packages/frontend/pokehub-data-provider/src/index.ts"
+      ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
       ],
@@ -53,8 +56,20 @@
       "@pokehub/frontend/pokehub-nav-components": [
         "packages/frontend/pokehub-nav-components/src/index.ts"
       ],
+      "@pokehub/frontend/pokehub-team-builder": [
+        "packages/frontend/pokehub-team-builder/src/index.ts"
+      ],
+      "@pokehub/frontend/pokehub-team-builder/server": [
+        "packages/frontend/pokehub-team-builder/src/server.ts"
+      ],
       "@pokehub/frontend/pokehub-ui-components": [
         "packages/frontend/pokehub-ui-components/src/index.ts"
+      ],
+      "@pokehub/frontend/pokemon-static-data": [
+        "packages/frontend/pokemon-static-data/src/index.ts"
+      ],
+      "@pokehub/frontend/pokemon-types": [
+        "packages/frontend/pokemon-types/src/index.ts"
       ],
       "@pokehub/frontend/shared-app-bootstrapper": [
         "packages/frontend/shared-app-bootstrapper/src/index.ts"

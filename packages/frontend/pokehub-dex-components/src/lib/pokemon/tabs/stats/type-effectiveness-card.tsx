@@ -1,4 +1,5 @@
 import { usePokemonDexDetailsContext } from '../../context/pokemon-dex-details.context';
+import { getTypeEffectivenessForTypes } from '@pokehub/frontend/pokemon-static-data';
 import {
   Badge,
   Card,
@@ -7,10 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@pokehub/frontend/shared-ui-components';
-import {
-  getTypeEffectivenessForTypes,
-  typeColors,
-} from '@pokehub/frontend/shared-utils';
+import { typeColors } from '@pokehub/frontend/shared-utils';
 import { Shield, Swords } from 'lucide-react';
 import { useMemo } from 'react';
 

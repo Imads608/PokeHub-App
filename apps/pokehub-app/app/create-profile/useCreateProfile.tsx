@@ -1,9 +1,9 @@
 import type { ProfileFormData } from './profile.models';
+import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import {
   FetchApiError,
   getFetchClient,
-  withAuthRetry,
 } from '@pokehub/frontend/shared-data-provider';
 import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
 import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils';
