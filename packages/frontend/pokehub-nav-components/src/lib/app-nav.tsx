@@ -44,7 +44,7 @@ export function AppNav() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <div className="relative h-10 w-10  rounded-full shadow-md">
-            <LogoIcon assetPath={'./images/logo.svg'} />
+            <LogoIcon assetPath={'/images/logo.svg'} />
           </div>
           <span className="text-xl font-bold tracking-tight">
             <span className="text-primary">Poké</span>
