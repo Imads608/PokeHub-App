@@ -171,37 +171,48 @@ export const PokemonSelector = ({ generation, tier }: PokemonSelectorProps) => {
                   Array.from({ length: 20 }).map((_, index) => (
                     <PokemonCardSkeleton key={`skeleton-${index}`} />
                   ))
-                : data?.slice(0, itemsToShow).map((pokemon) => (
-                    <div
-                      key={pokemon.id}
-                      className="flex cursor-pointer flex-col items-center rounded-lg border p-2 transition-colors hover:bg-muted"
-                      onClick={() => console.log('Implement')}
-                    >
-                      <div className="mb-2 text-xs text-muted-foreground">
-                        #{pokemon.id}
-                      </div>
-                      <span
-                        style={{
-                          ...Icons.getPokemon(pokemon.name).css,
-                        }}
-                      />
-                      <div className="mt-2 text-sm font-medium">
-                        {pokemon.name}
-                      </div>
-                      <div className="mt-1 flex gap-1">
-                        {pokemon.types.map((type: string) => (
+                : data?.slice(0, itemsToShow).map((pokemon) => {
+                    const pokemonTier = tier.id.startsWith('D')
+                      ? pokemon.doublesTier
+                      : pokemon.tier;
+                    return (
+                      <div
+                        key={pokemon.id}
+                        className="flex cursor-pointer flex-col items-center rounded-lg border p-2 transition-colors hover:bg-muted"
+                        onClick={() => console.log('Implement')}
+                      >
+                        <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>#{pokemon.num}</span>
                           <Badge
-                            key={type}
-                            className={`${
-                              typeColors[type as TypeName]
-                            } text-xs capitalize`}
+                            variant="outline"
+                            className="text-xs font-semibold"
                           >
-                            {type}
+                            {pokemonTier}
                           </Badge>
-                        ))}
+                        </div>
+                        <span
+                          style={{
+                            ...Icons.getPokemon(pokemon.name).css,
+                          }}
+                        />
+                        <div className="mt-2 text-sm font-medium">
+                          {pokemon.name}
+                        </div>
+                        <div className="mt-1 flex gap-1">
+                          {pokemon.types.map((type: string) => (
+                            <Badge
+                              key={type}
+                              className={`${
+                                typeColors[type as TypeName]
+                              } text-xs capitalize`}
+                            >
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
               {!isLoading && data?.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-12">
