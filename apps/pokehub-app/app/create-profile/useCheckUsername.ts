@@ -1,10 +1,8 @@
 'use client';
 
+import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
-import {
-  getFetchClient,
-  withAuthRetry,
-} from '@pokehub/frontend/shared-data-provider';
+import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { useQuery } from '@tanstack/react-query';
 
 export const useCheckUsername = (username: string) => {

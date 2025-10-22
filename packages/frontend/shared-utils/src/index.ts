@@ -1,12 +1,4 @@
 export { typeColors } from './lib/pokemon-types-colors';
-export {
-  type GenerationDetails,
-  getGenerationsData,
-} from './lib/generation-details';
-export {
-  getTypeEffectivenessForTypes,
-  getTypeEffectiveness,
-} from './lib/type-effectiveness';
 export { isBaseForme } from './lib/forme-utils';
 export { isValidAvatarFileName } from './lib/validation';
 export { getPokeAPIName } from './lib/pokeapi-utils';

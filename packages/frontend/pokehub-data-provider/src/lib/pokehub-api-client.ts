@@ -1,6 +1,6 @@
-import type { FetchResponse } from './fetch-client';
-import { FetchApiError } from './fetch-client';
 import { getAuthSession } from '@pokehub/frontend/shared-auth';
+import type { FetchResponse } from '@pokehub/frontend/shared-data-provider';
+import { FetchApiError } from '@pokehub/frontend/shared-data-provider';
 
 export const withAuthRetry = async <Data>(
   accessToken: string,
