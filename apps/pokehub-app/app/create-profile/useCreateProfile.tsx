@@ -59,29 +59,34 @@ export const useCreateProfile = (avatarFile: File | null) => {
 
       // 3. Save the profile data to the backend
       const { accessToken, user } = data || {};
-      accessToken &&
-        user &&
-        (await withAuthRetry(accessToken, () =>
-          getFetchClient('API').fetchThrowsError(`/users/${user.id}/profile`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              username: profile.username,
-              avatar: avatarFile.name,
-            } as IUpdateUserProfile),
-          })
-        ));
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      await update({ ...data, user: { ...user, username: profile.username } });
+      if (accessToken && user) {
+        const resData = await withAuthRetry(accessToken, () =>
+          getFetchClient('API').fetchThrowsError<IUpdateUserProfile>(
+            `/users/${user.id}/profile`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({
+                username: profile.username,
+                avatar: avatarFile.name,
+              } as IUpdateUserProfile),
+            }
+          )
+        );
+        const res = await resData.json();
+        await update({
+          ...data,
+          user: { ...user, username: profile.username, avatarUrl: res.avatar },
+        });
+      }
     },
     onSuccess: async () => {
       toast.success('Profile was updated successfully');
     },
     onError: (error) => {
+      toast.error('Uh oh. Something went wrong :(');
       console.error('Error creating profile:', error);
       //setError('username', { message: 'Failed to create profile' });
     },

@@ -26,7 +26,7 @@ export class UsersService implements IUsersService {
   async updateUserProfile(
     userId: string,
     data: IUpdateUserProfile
-  ): Promise<void> {
+  ): Promise<IUpdateUserProfile> {
     this.logger.log(
       `${this.updateUserProfile.name}: Updating user profile for user ${userId}`
     );
@@ -36,6 +36,16 @@ export class UsersService implements IUsersService {
       username: data.username,
       avatarFilename: `avatar.${fileExt}`, // Assuming data.avatar holds the filename
     });
+
+    if (data.avatar) {
+      const azureConfig = this.configService.get('azure', { infer: true });
+      return {
+        ...data,
+        avatar: `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${userId}/avatar.${fileExt}`,
+      };
+    }
+
+    return data;
   }
 
   async getUserCore(
