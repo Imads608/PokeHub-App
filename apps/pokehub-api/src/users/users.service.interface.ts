@@ -13,7 +13,7 @@ export interface IUsersService {
    * @param userId The ID of the user.
    * @returns A promise that resolves to the full avatar URL, or undefined if not found.
    */
-  getAvatarUrl(userId: string): Promise<string | undefined>;
+  getAvatarUrl(userId: string, avatarFileName: string): string;
 
   /**
    * Updates a user's profile with the given data.
