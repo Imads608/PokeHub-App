@@ -81,7 +81,7 @@ export const createFetchClient = (
         }
         const jsonRes = await res.json();
         console.log(`Error fetching ${apiPath}:`, jsonRes);
-        const err = (await res.json()) as FetchApiError;
+        const err = jsonRes as FetchApiError;
         throw err;
       }
       return res;
