@@ -1,12 +1,11 @@
-import type { GenerationNum, Species, TypeName } from '@pkmn/dex';
-import type { BattleTier } from '@pokehub/frontend/pokemon-types';
+import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
 
 export interface FilterPokemonListOptions {
   searchTerm?: string;
   types: TypeName[];
   generation: GenerationNum;
-  tier: BattleTier<'Singles' | 'Doubles'>;
+  tier: Tier.Singles | Tier.Doubles;
 }
 
 export const useFilterPokemonList = (

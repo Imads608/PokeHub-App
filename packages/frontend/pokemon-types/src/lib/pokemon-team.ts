@@ -1,4 +1,4 @@
-import type { BattleFormat, BattleTier } from './battle';
+import type { BattleFormat } from './battle';
 import type {
   SpeciesName,
   ItemName,
@@ -6,23 +6,28 @@ import type {
   PokemonSet,
   GenerationNum,
   MoveName,
+  Tier,
+  NatureName,
+  GenderName,
 } from '@pkmn/dex';
 
 export interface PokemonInTeam extends PokemonSet {
-  name: string;
   species: SpeciesName;
   item: ItemName;
   ability: AbilityName;
+  nature: NatureName;
+  gender: GenderName;
   moves: MoveName[];
 }
 
 export interface PokemonTeam<Format extends BattleFormat> {
+  name: string;
   pokemon: PokemonInTeam[];
   generation: GenerationNum;
   format: BattleFormat;
   tier: Format extends 'Singles'
-    ? BattleTier<'Singles'>
+    ? Tier.Singles
     : Format extends 'Doubles'
-    ? BattleTier<'Doubles'>
+    ? Tier.Doubles
     : never;
 }

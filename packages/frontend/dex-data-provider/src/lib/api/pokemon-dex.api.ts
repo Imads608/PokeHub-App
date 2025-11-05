@@ -1,6 +1,14 @@
-import type { GenerationNum, ItemName, MoveName, Species } from '@pkmn/dex';
+import type {
+  AbilityName,
+  GenerationNum,
+  ItemName,
+  MoveName,
+  NatureName,
+  Species,
+  StatID,
+  Tier,
+} from '@pkmn/dex';
 import { Dex, type SpeciesName, type ID } from '@pkmn/dex';
-import type { BattleTier } from '@pokehub/frontend/pokemon-types';
 import {
   getSinglesBattleTierHierarchy,
   getDoublesBattleTierHierarchy,
@@ -45,7 +53,10 @@ export function getPokemonAbilitiesDetails(
   return abilitiesDetails;
 }
 
-export function getAbilityDetails(ability: string, generation?: GenerationNum) {
+export function getAbilityDetails(
+  ability: AbilityName,
+  generation?: GenerationNum
+) {
   const moddedDex = getModdedDex(generation);
 
   const abilityData = moddedDex.abilities.get(ability);
@@ -62,7 +73,7 @@ export function getMoveDetails(move: MoveName, generation?: GenerationNum) {
   return moveDetails;
 }
 
-export function getItemName(itemName: ItemName, generation?: GenerationNum) {
+export function getItemDetails(itemName: ItemName, generation?: GenerationNum) {
   const moddedDex = getModdedDex(generation);
   const itemDetails = moddedDex.items.get(itemName);
 
@@ -72,15 +83,37 @@ export function getItemName(itemName: ItemName, generation?: GenerationNum) {
   return itemDetails;
 }
 
+export function getNatureDetails(
+  nature: NatureName,
+  generation?: GenerationNum
+) {
+  const moddedDex = getModdedDex(generation);
+  const natureDetails = moddedDex.natures.get(nature);
+  if (!natureDetails.exists) {
+    return undefined;
+  }
+  return natureDetails;
+}
+
+export function getStatName(statId: StatID, generation?: GenerationNum) {
+  const moddedDex = getModdedDex(generation);
+  return moddedDex.stats.names[statId];
+}
+
+export function getStats(generation?: GenerationNum) {
+  const moddedDex = getModdedDex(generation);
+  return moddedDex.stats.ids();
+}
+
 export function getPokemonCompetitive(
   gen: GenerationNum,
-  tier: BattleTier<'Singles' | 'Doubles'>
+  tier: Tier.Singles | Tier.Doubles
 ) {
   const moddedDex = getModdedDex(gen);
   const filteredSpecies: Species[] = [];
 
   // Determine if this is a singles or doubles tier by checking the id
-  const isDoublesTier = tier.id.startsWith('D');
+  const isDoublesTier = tier.startsWith('D');
   const hierarchy = isDoublesTier
     ? getDoublesBattleTierHierarchy()
     : getSinglesBattleTierHierarchy();
@@ -91,7 +124,7 @@ export function getPokemonCompetitive(
   };
 
   // Find the index of the selected tier in the hierarchy
-  const normalizedSelectedTier = normalizeTier(tier.id);
+  const normalizedSelectedTier = normalizeTier(tier);
   const selectedTierIndex = hierarchy.findIndex(
     (t) => normalizeTier(t) === normalizedSelectedTier
   );

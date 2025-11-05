@@ -1,11 +1,20 @@
 'use client';
 
-import type { GenerationNum, TypeName } from '@pkmn/dex';
+import type {
+  GenerationNum,
+  NatureName,
+  SpeciesName,
+  TypeName,
+} from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
-  getPokemonDetailsByName,
-  getMoveDetails,
   getAbilityDetails,
+  getItemDetails,
+  getMoveDetails,
+  getNatureDetails,
+  getPokemonDetailsByName,
+  getStatName,
+  getStats,
 } from '@pokehub/frontend/dex-data-provider';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import {
@@ -21,290 +30,293 @@ import {
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
 import { Edit, Trash2, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 interface PokemonCardProps {
-  pokemon: PokemonInTeam;
+  speciesName: SpeciesName;
+  pokemon: Partial<PokemonInTeam>;
   generation: GenerationNum;
   onRemove: () => void;
-  onUpdate: (updates: any) => void;
+  onUpdate: (updates: unknown) => void;
   onEdit?: () => void;
 }
 
 export function PokemonCard({
+  speciesName,
   pokemon,
   generation,
   onRemove,
   onUpdate,
   onEdit,
 }: PokemonCardProps) {
-  // Data being used
-  const [currPokemonAbility] = useState(getAbilityDetails(pokemon.ability));
-  const [currPokemonItem] = useState(getAbilityDetails(pokemon.item));
-  const [currPokemonMoves] = useState(() =>
-    pokemon.moves.map((move) => getMoveDetails(move))
+  // Data being usedj
+  const [currPokemonAbility] = useState(pokemon?.ability || undefined);
+  const [currPokemonItem] = useState(pokemon?.item || undefined);
+  const [currPokemonMoves] = useState(
+    pokemon?.moves || [undefined, undefined, undefined, undefined]
   );
+  const [currPokemonNature] = useState<NatureName>(pokemon.nature || 'Adamant');
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
-  // Search states
-  const [abilitySearch, setAbilitySearch] = useState('');
-  const [itemSearch, setItemSearch] = useState('');
-  const [moveSearch, setMoveSearch] = useState(['', '', '', '']);
-  const [natureSearch, setNatureSearch] = useState('');
-
-  // Filtered data based on search
-  const [filteredAbilities, setFilteredAbilities] = useState(pokemon.abilities);
-  const [filteredItems, setFilteredItems] = useState(items);
-  const [filteredMoves, setFilteredMoves] = useState(moves);
-  const [filteredNatures, setFilteredNatures] = useState(natures);
-
-  // Update filtered abilities when search changes
-  useEffect(() => {
-    if (!abilitySearch.trim()) {
-      setFilteredAbilities(pokemon.abilities);
-    } else {
-      const searchTerm = abilitySearch.toLowerCase();
-      setFilteredAbilities(
-        pokemon.abilities.filter((ability: string) =>
-          ability.toLowerCase().includes(searchTerm)
-        )
-      );
-    }
-  }, [abilitySearch, pokemon.abilities]);
-
-  // Update filtered items when search changes
-  useEffect(() => {
-    if (!itemSearch.trim()) {
-      setFilteredItems(items);
-    } else {
-      const searchTerm = itemSearch.toLowerCase();
-      setFilteredItems(
-        items.filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchTerm) ||
-            item.description.toLowerCase().includes(searchTerm)
-        )
-      );
-    }
-  }, [itemSearch]);
-
-  // Update filtered moves when search changes
-  useEffect(() => {
-    if (!moveSearch.some((s) => s.trim())) {
-      setFilteredMoves(moves);
-    } else {
-      setFilteredMoves(
-        moves.filter((move) => {
-          // If any search field is non-empty, check if the move matches
-          return moveSearch.some((search, index) => {
-            if (!search.trim()) return false;
-            const searchTerm = search.toLowerCase();
-            return (
-              move.name.toLowerCase().includes(searchTerm) ||
-              move.type.toLowerCase().includes(searchTerm) ||
-              move.description.toLowerCase().includes(searchTerm) ||
-              (move.category &&
-                move.category.toLowerCase().includes(searchTerm))
-            );
-          });
-        })
-      );
-    }
-  }, [moveSearch]);
-
-  // Update filtered natures when search changes
-  useEffect(() => {
-    if (!natureSearch.trim()) {
-      setFilteredNatures(natures);
-    } else {
-      const searchTerm = natureSearch.toLowerCase();
-      setFilteredNatures(
-        natures.filter(
-          (nature) =>
-            nature.name.toLowerCase().includes(searchTerm) ||
-            nature.description.toLowerCase().includes(searchTerm)
-        )
-      );
-    }
-  }, [natureSearch]);
-
-  // Reset search when dialog closes
-  useEffect(() => {
-    if (!isEditing) {
-      setAbilitySearch('');
-      setItemSearch('');
-      setMoveSearch(['', '', '', '']);
-      setNatureSearch('');
-    }
-  }, [isEditing]);
-
-  // Calculate stat totals with nature and EVs
-  const calculateStat = (
-    baseStat: number,
-    ev: number,
-    iv: number,
-    level: number,
-    nature: string,
-    statName: string
-  ) => {
-    // Simplified calculation for demonstration
-    let value = Math.floor(
-      ((2 * baseStat + iv + Math.floor(ev / 4)) * level) / 100
-    );
-
-    if (statName === 'hp') {
-      value = value + level + 10;
-    } else {
-      value = value + 5;
-
-      // Apply nature modifier
-      const natureObj = natures.find((n) => n.name === nature);
-      if (natureObj && natureObj.effect.increases === statName) {
-        value = Math.floor(value * 1.1);
-      }
-      if (natureObj && natureObj.effect.decreases === statName) {
-        value = Math.floor(value * 0.9);
-      }
-    }
-
-    return value;
-  };
-
-  const stats = {
-    hp: calculateStat(
-      pokemon.stats.hp,
-      pokemon.evs.hp,
-      pokemon.ivs.hp,
-      pokemon.level,
-      pokemon.nature,
-      'hp'
-    ),
-    attack: calculateStat(
-      pokemon.stats.attack,
-      pokemon.evs.attack,
-      pokemon.ivs.attack,
-      pokemon.level,
-      pokemon.nature,
-      'attack'
-    ),
-    defense: calculateStat(
-      pokemon.stats.defense,
-      pokemon.evs.defense,
-      pokemon.ivs.defense,
-      pokemon.level,
-      pokemon.nature,
-      'defense'
-    ),
-    spAttack: calculateStat(
-      pokemon.stats.spAttack,
-      pokemon.evs.spAttack,
-      pokemon.ivs.spAttack,
-      pokemon.level,
-      pokemon.nature,
-      'spAttack'
-    ),
-    spDefense: calculateStat(
-      pokemon.stats.spDefense,
-      pokemon.evs.spDefense,
-      pokemon.ivs.spDefense,
-      pokemon.level,
-      pokemon.nature,
-      'spDefense'
-    ),
-    speed: calculateStat(
-      pokemon.stats.speed,
-      pokemon.evs.speed,
-      pokemon.ivs.speed,
-      pokemon.level,
-      pokemon.nature,
-      'speed'
-    ),
-  };
-
-  // Format stat name
-  const formatStatName = (stat: string) => {
-    switch (stat) {
-      case 'hp':
-        return 'HP';
-      case 'attack':
-        return 'Attack';
-      case 'defense':
-        return 'Defense';
-      case 'spAttack':
-        return 'Sp. Atk';
-      case 'spDefense':
-        return 'Sp. Def';
-      case 'speed':
-        return 'Speed';
-      default:
-        return stat;
-    }
-  };
-
-  // Get nature effect on stat
-  const getNatureEffect = (nature: string, stat: string) => {
-    const natureObj = natures.find((n) => n.name === nature);
-    if (!natureObj || !natureObj.effect.increases) return 'neutral';
-
-    if (natureObj.effect.increases === stat) return 'positive';
-    if (natureObj.effect.decreases === stat) return 'negative';
-    return 'neutral';
-  };
-
-  // Update EVs with validation
-  const updateEVs = (stat: string, value: number) => {
-    const currentTotal = Object.values(pokemon.evs).reduce(
-      (sum, ev) => sum + (ev as number),
-      0
-    );
-    const currentStatValue = pokemon.evs[
-      stat as keyof typeof pokemon.evs
-    ] as number;
-    const difference = value - currentStatValue;
-
-    // Ensure total EVs don't exceed 510
-    if (currentTotal + difference > 510) {
-      // If exceeding, cap at 510 total
-      value = currentStatValue + (510 - currentTotal);
-    }
-
-    // Ensure individual stat doesn't exceed 252
-    value = Math.min(value, 252);
-
-    // Ensure value is not negative
-    value = Math.max(value, 0);
-
-    // Update the EVs
-    const newEvs = { ...pokemon.evs, [stat]: value };
-    onUpdate({ evs: newEvs });
-  };
-
-  // Update IVs with validation
-  const updateIVs = (stat: string, value: number) => {
-    // Ensure IV is between 0 and 31
-    value = Math.max(0, Math.min(31, value));
-
-    // Update the IVs
-    const newIvs = { ...pokemon.ivs, [stat]: value };
-    onUpdate({ ivs: newIvs });
-  };
-
-  // Update moves
-  const updateMove = (index: number, moveName: string) => {
-    const newMoves = [...pokemon.moves];
-    newMoves[index] = moveName;
-    onUpdate({ moves: newMoves });
-  };
-
-  // Update move search
-  const updateMoveSearch = (index: number, value: string) => {
-    const newMoveSearch = [...moveSearch];
-    newMoveSearch[index] = value;
-    setMoveSearch(newMoveSearch);
-  };
-
+  // const [isEditing, setIsEditing] = useState(false);
+  //
+  // // Search states
+  // const [abilitySearch, setAbilitySearch] = useState('');
+  // const [itemSearch, setItemSearch] = useState('');
+  // const [moveSearch, setMoveSearch] = useState(['', '', '', '']);
+  // const [natureSearch, setNatureSearch] = useState('');
+  //
+  // // Filtered data based on search
+  // const [filteredAbilities, setFilteredAbilities] = useState(pokemon.abilities);
+  // const [filteredItems, setFilteredItems] = useState(items);
+  // const [filteredMoves, setFilteredMoves] = useState(moves);
+  // const [filteredNatures, setFilteredNatures] = useState(natures);
+  //
+  // // Update filtered abilities when search changes
+  // useEffect(() => {
+  //   if (!abilitySearch.trim()) {
+  //     setFilteredAbilities(pokemon.abilities);
+  //   } else {
+  //     const searchTerm = abilitySearch.toLowerCase();
+  //     setFilteredAbilities(
+  //       pokemon.abilities.filter((ability: string) =>
+  //         ability.toLowerCase().includes(searchTerm)
+  //       )
+  //     );
+  //   }
+  // }, [abilitySearch, pokemon.abilities]);
+  //
+  // // Update filtered items when search changes
+  // useEffect(() => {
+  //   if (!itemSearch.trim()) {
+  //     setFilteredItems(items);
+  //   } else {
+  //     const searchTerm = itemSearch.toLowerCase();
+  //     setFilteredItems(
+  //       items.filter(
+  //         (item) =>
+  //           item.name.toLowerCase().includes(searchTerm) ||
+  //           item.description.toLowerCase().includes(searchTerm)
+  //       )
+  //     );
+  //   }
+  // }, [itemSearch]);
+  //
+  // // Update filtered moves when search changes
+  // useEffect(() => {
+  //   if (!moveSearch.some((s) => s.trim())) {
+  //     setFilteredMoves(moves);
+  //   } else {
+  //     setFilteredMoves(
+  //       moves.filter((move) => {
+  //         // If any search field is non-empty, check if the move matches
+  //         return moveSearch.some((search, index) => {
+  //           if (!search.trim()) return false;
+  //           const searchTerm = search.toLowerCase();
+  //           return (
+  //             move.name.toLowerCase().includes(searchTerm) ||
+  //             move.type.toLowerCase().includes(searchTerm) ||
+  //             move.description.toLowerCase().includes(searchTerm) ||
+  //             (move.category &&
+  //               move.category.toLowerCase().includes(searchTerm))
+  //           );
+  //         });
+  //       })
+  //     );
+  //   }
+  // }, [moveSearch]);
+  //
+  // // Update filtered natures when search changes
+  // useEffect(() => {
+  //   if (!natureSearch.trim()) {
+  //     setFilteredNatures(natures);
+  //   } else {
+  //     const searchTerm = natureSearch.toLowerCase();
+  //     setFilteredNatures(
+  //       natures.filter(
+  //         (nature) =>
+  //           nature.name.toLowerCase().includes(searchTerm) ||
+  //           nature.description.toLowerCase().includes(searchTerm)
+  //       )
+  //     );
+  //   }
+  // }, [natureSearch]);
+  //
+  // // Reset search when dialog closes
+  // useEffect(() => {
+  //   if (!isEditing) {
+  //     setAbilitySearch('');
+  //     setItemSearch('');
+  //     setMoveSearch(['', '', '', '']);
+  //     setNatureSearch('');
+  //   }
+  // }, [isEditing]);
+  //
+  // // Calculate stat totals with nature and EVs
+  // const calculateStat = (
+  //   baseStat: number,
+  //   ev: number,
+  //   iv: number,
+  //   level: number,
+  //   nature: string,
+  //   statName: string
+  // ) => {
+  //   // Simplified calculation for demonstration
+  //   let value = Math.floor(
+  //     ((2 * baseStat + iv + Math.floor(ev / 4)) * level) / 100
+  //   );
+  //
+  //   if (statName === 'hp') {
+  //     value = value + level + 10;
+  //   } else {
+  //     value = value + 5;
+  //
+  //     // Apply nature modifier
+  //     const natureObj = natures.find((n) => n.name === nature);
+  //     if (natureObj && natureObj.effect.increases === statName) {
+  //       value = Math.floor(value * 1.1);
+  //     }
+  //     if (natureObj && natureObj.effect.decreases === statName) {
+  //       value = Math.floor(value * 0.9);
+  //     }
+  //   }
+  //
+  //   return value;
+  // };
+  //
+  // const stats = {
+  //   hp: calculateStat(
+  //     pokemon.stats.hp,
+  //     pokemon.evs.hp,
+  //     pokemon.ivs.hp,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'hp'
+  //   ),
+  //   attack: calculateStat(
+  //     pokemon.stats.attack,
+  //     pokemon.evs.attack,
+  //     pokemon.ivs.attack,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'attack'
+  //   ),
+  //   defense: calculateStat(
+  //     pokemon.stats.defense,
+  //     pokemon.evs.defense,
+  //     pokemon.ivs.defense,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'defense'
+  //   ),
+  //   spAttack: calculateStat(
+  //     pokemon.stats.spAttack,
+  //     pokemon.evs.spAttack,
+  //     pokemon.ivs.spAttack,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'spAttack'
+  //   ),
+  //   spDefense: calculateStat(
+  //     pokemon.stats.spDefense,
+  //     pokemon.evs.spDefense,
+  //     pokemon.ivs.spDefense,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'spDefense'
+  //   ),
+  //   speed: calculateStat(
+  //     pokemon.stats.speed,
+  //     pokemon.evs.speed,
+  //     pokemon.ivs.speed,
+  //     pokemon.level,
+  //     pokemon.nature,
+  //     'speed'
+  //   ),
+  // };
+  //
+  // // Format stat name
+  // const formatStatName = (stat: string) => {
+  //   switch (stat) {
+  //     case 'hp':
+  //       return 'HP';
+  //     case 'attack':
+  //       return 'Attack';
+  //     case 'defense':
+  //       return 'Defense';
+  //     case 'spAttack':
+  //       return 'Sp. Atk';
+  //     case 'spDefense':
+  //       return 'Sp. Def';
+  //     case 'speed':
+  //       return 'Speed';
+  //     default:
+  //       return stat;
+  //   }
+  // };
+  //
+  // // Get nature effect on stat
+  // const getNatureEffect = (nature: string, stat: string) => {
+  //   const natureObj = natures.find((n) => n.name === nature);
+  //   if (!natureObj || !natureObj.effect.increases) return 'neutral';
+  //
+  //   if (natureObj.effect.increases === stat) return 'positive';
+  //   if (natureObj.effect.decreases === stat) return 'negative';
+  //   return 'neutral';
+  // };
+  //
+  // // Update EVs with validation
+  // const updateEVs = (stat: string, value: number) => {
+  //   const currentTotal = Object.values(pokemon.evs).reduce(
+  //     (sum, ev) => sum + (ev as number),
+  //     0
+  //   );
+  //   const currentStatValue = pokemon.evs[
+  //     stat as keyof typeof pokemon.evs
+  //   ] as number;
+  //   const difference = value - currentStatValue;
+  //
+  //   // Ensure total EVs don't exceed 510
+  //   if (currentTotal + difference > 510) {
+  //     // If exceeding, cap at 510 total
+  //     value = currentStatValue + (510 - currentTotal);
+  //   }
+  //
+  //   // Ensure individual stat doesn't exceed 252
+  //   value = Math.min(value, 252);
+  //
+  //   // Ensure value is not negative
+  //   value = Math.max(value, 0);
+  //
+  //   // Update the EVs
+  //   const newEvs = { ...pokemon.evs, [stat]: value };
+  //   onUpdate({ evs: newEvs });
+  // };
+  //
+  // // Update IVs with validation
+  // const updateIVs = (stat: string, value: number) => {
+  //   // Ensure IV is between 0 and 31
+  //   value = Math.max(0, Math.min(31, value));
+  //
+  //   // Update the IVs
+  //   const newIvs = { ...pokemon.ivs, [stat]: value };
+  //   onUpdate({ ivs: newIvs });
+  // };
+  //
+  // // Update moves
+  // const updateMove = (index: number, moveName: string) => {
+  //   const newMoves = [...pokemon.moves];
+  //   newMoves[index] = moveName;
+  //   onUpdate({ moves: newMoves });
+  // };
+  //
+  // // Update move search
+  // const updateMoveSearch = (index: number, value: string) => {
+  //   const newMoveSearch = [...moveSearch];
+  //   newMoveSearch[index] = value;
+  //   setMoveSearch(newMoveSearch);
+  // };
+  //
   // Find item details
 
   // Find ability details
@@ -313,11 +325,43 @@ export function PokemonCard({
 
   // Find nature details
 
-  const icon = useRef(Icons.getPokemon(pokemon.species));
-  const itemIcon = useRef(Icons.getItem(pokemon.item));
+  const icon = useRef(Icons.getPokemon(speciesName));
+  const itemIcon = useRef(
+    pokemon?.item ? Icons.getItem(pokemon.item) : undefined
+  );
 
-  const [species] = useState(
-    getPokemonDetailsByName(pokemon.species, generation)
+  const [species] = useState(() =>
+    getPokemonDetailsByName(speciesName, generation)
+  );
+  const [abilityDetails] = useState(
+    () =>
+      currPokemonAbility && getAbilityDetails(currPokemonAbility, generation)
+  );
+  const [itemDetails] = useState(
+    () => currPokemonItem && getItemDetails(currPokemonItem, generation)
+  );
+
+  const [movesDetails] = useState(() =>
+    currPokemonMoves.map((moveName) =>
+      moveName ? getMoveDetails(moveName, generation) : undefined
+    )
+  );
+
+  const [natureDetails] = useState(() =>
+    getNatureDetails(currPokemonNature, generation)
+  );
+
+  const [statsDetails] = useState(() => {
+    const stats = getStats();
+    const statNames = stats.map((statId) => getStatName(statId, generation));
+    return {
+      ids: stats,
+      names: statNames,
+    };
+  });
+
+  const [evs] = useState(() =>
+    statsDetails.ids.map((statId) => (pokemon.evs ? pokemon.evs[statId] : 0))
   );
 
   return (
@@ -354,11 +398,7 @@ export function PokemonCard({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onEdit || (() => setIsEditing(true))}
-            >
+            <Button variant="ghost" size="icon" onClick={onEdit}>
               <Edit className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={onRemove}>
@@ -387,7 +427,7 @@ export function PokemonCard({
               <div className="text-xs text-muted-foreground">Ability</div>
               <div className="truncate text-sm" title={pokemon.ability}>
                 {pokemon.ability || 'None'}
-                {currPokemonAbility && (
+                {abilityDetails && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -400,7 +440,7 @@ export function PokemonCard({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        {currPokemonAbility.desc}
+                        {abilityDetails.desc}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -413,15 +453,15 @@ export function PokemonCard({
                 className="flex items-center truncate text-sm"
                 title={pokemon.item}
               >
-                {currPokemonItem && (
+                {currPokemonItem && itemIcon && (
                   <span
                     style={{
-                      ...itemIcon.current.css,
+                      ...itemIcon.current?.css,
                     }}
                   />
                 )}
                 {pokemon.item || 'None'}
-                {currPokemonItem && (
+                {itemDetails && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -434,7 +474,7 @@ export function PokemonCard({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        {currPokemonItem.desc}
+                        {itemDetails.desc}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -445,137 +485,139 @@ export function PokemonCard({
 
           {/* Moves */}
           <div className="grid grid-cols-2 gap-2">
-            {pokemon.moves.map((move: string, index: number) => (
-              <div key={index} className="rounded-md bg-muted/50 px-2 py-1">
-                <div className="text-xs text-muted-foreground">
-                  Move {index + 1}
+            {movesDetails &&
+              currPokemonMoves.map((move, index: number) => (
+                <div key={index} className="rounded-md bg-muted/50 px-2 py-1">
+                  <div className="text-xs text-muted-foreground">
+                    Move {index + 1}
+                  </div>
+                  <div
+                    className="flex items-center truncate text-sm"
+                    title={move || ''}
+                  >
+                    {movesDetails[index] && (
+                      <Badge
+                        className={`${
+                          typeColors[movesDetails[index].type]
+                        } mr-1 h-3 w-3 p-0`}
+                        variant="outline"
+                      />
+                    )}
+                    {move || ''}
+                    {movesDetails[index] && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="ml-1 h-4 w-4 p-0"
+                            >
+                              <Info className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="font-medium">{move}</span>
+                                <Badge
+                                  className={
+                                    typeColors[movesDetails[index].type]
+                                  }
+                                >
+                                  {movesDetails[index].type}
+                                </Badge>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span>
+                                  Power: {movesDetails[index].basePower}
+                                </span>
+                                <span>
+                                  Accuracy: {movesDetails[index].accuracy}
+                                </span>
+                                <span>PP: {movesDetails[index].pp}</span>
+                              </div>
+                              <div className="text-xs">
+                                {movesDetails[index].desc}
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 </div>
-                <div
-                  className="flex items-center truncate text-sm"
-                  title={move}
-                >
-                  {
-                    <Badge
-                      className={`${
-                        typeColors[currPokemonMoves[index].type]
-                      } mr-1 h-3 w-3 p-0`}
-                      variant="outline"
-                    />
-                  }
-                  {move}
-                  {
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="ml-1 h-4 w-4 p-0"
-                          >
-                            <Info className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <div className="space-y-1">
-                            <div className="flex justify-between">
-                              <span className="font-medium">{move}</span>
-                              <Badge
-                                className={
-                                  typeColors[currPokemonMoves[index].type]
-                                }
-                              >
-                                {currPokemonMoves[index].type}
-                              </Badge>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                              <span>
-                                Power: {currPokemonMoves[index].basePower}
-                              </span>
-                              <span>
-                                Accuracy: {currPokemonMoves[index].accuracy}
-                              </span>
-                              <span>PP: {currPokemonMoves[index].pp}</span>
-                            </div>
-                            <div className="text-xs">
-                              {currPokemonMoves[index].desc}
-                            </div>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  }
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </CardContent>
 
       {/* Expanded content */}
-      {/* {isExpanded && ( */}
-      {/*   <CardContent className="border-t px-4 py-3"> */}
-      {/*     <div className="space-y-3"> */}
-      {/*       <div> */}
-      {/*         <div className="mb-1 text-sm font-medium">Nature</div> */}
-      {/*         <Badge variant="outline" className="flex items-center"> */}
-      {/*           {pokemon.nature} */}
-      {/*           {getNatureDetails(pokemon.nature) && ( */}
-      {/*             <TooltipProvider> */}
-      {/*               <Tooltip> */}
-      {/*                 <TooltipTrigger asChild> */}
-      {/*                   <Button */}
-      {/*                     variant="ghost" */}
-      {/*                     size="icon" */}
-      {/*                     className="ml-1 h-4 w-4 p-0" */}
-      {/*                   > */}
-      {/*                     <Info className="h-3 w-3" /> */}
-      {/*                   </Button> */}
-      {/*                 </TooltipTrigger> */}
-      {/*                 <TooltipContent className="max-w-xs"> */}
-      {/*                   {getNatureDetails(pokemon.nature)?.description} */}
-      {/*                 </TooltipContent> */}
-      {/*               </Tooltip> */}
-      {/*             </TooltipProvider> */}
-      {/*           )} */}
-      {/*         </Badge> */}
-      {/*       </div> */}
-      {/**/}
-      {/*       <div> */}
-      {/*         <div className="mb-1 text-sm font-medium">Stats</div> */}
-      {/*         <div className="space-y-1"> */}
-      {/*           {Object.entries(stats).map(([stat, value]) => { */}
-      {/*             const natureEffect = getNatureEffect(pokemon.nature, stat); */}
-      {/*             return ( */}
-      {/*               <div */}
-      {/*                 key={stat} */}
-      {/*                 className="flex items-center justify-between" */}
-      {/*               > */}
-      {/*                 <div className="flex items-center gap-1"> */}
-      {/*                   <span className="text-sm">{formatStatName(stat)}</span> */}
-      {/*                   {natureEffect === 'positive' && ( */}
-      {/*                     <span className="text-xs text-green-500">↑</span> */}
-      {/*                   )} */}
-      {/*                   {natureEffect === 'negative' && ( */}
-      {/*                     <span className="text-xs text-red-500">↓</span> */}
-      {/*                   )} */}
-      {/*                 </div> */}
-      {/*                 <div className="flex items-center gap-2"> */}
-      {/*                   <div className="text-xs text-muted-foreground"> */}
-      {/*                     {pokemon.evs[stat as keyof typeof pokemon.evs]} EV */}
-      {/*                   </div> */}
-      {/*                   <div className="w-12 text-right text-sm font-medium"> */}
-      {/*                     {value} */}
-      {/*                   </div> */}
-      {/*                 </div> */}
-      {/*               </div> */}
-      {/*             ); */}
-      {/*           })} */}
-      {/*         </div> */}
-      {/*       </div> */}
-      {/*     </div> */}
-      {/*   </CardContent> */}
-      {/* )} */}
-      {/**/}
+      {isExpanded && natureDetails && (
+        <CardContent className="border-t px-4 py-3">
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1 text-sm font-medium">Nature</div>
+              <Badge variant="outline" className="flex items-center">
+                {currPokemonNature}
+                {
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="ml-1 h-4 w-4 p-0"
+                        >
+                          <Info className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        {natureDetails.desc}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                }
+              </Badge>
+            </div>
+
+            <div>
+              <div className="mb-1 text-sm font-medium">Stats</div>
+              <div className="space-y-1">
+                {statsDetails.ids.map((stat, index) => {
+                  return (
+                    <div
+                      key={stat}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm">
+                          {statsDetails.names[index]}
+                        </span>
+                        {stat === natureDetails.plus && (
+                          <span className="text-xs text-green-500">↑</span>
+                        )}
+                        {stat === natureDetails.minus && (
+                          <span className="text-xs text-red-500">↓</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-muted-foreground">
+                          {statsDetails.names[index]} EV
+                        </div>
+                        <div className="w-12 text-right text-sm font-medium">
+                          {evs[index]}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      )}
+
       {/* {/* Edit Dialog */}
       {/* <Dialog open={isEditing} onOpenChange={setIsEditing}> */}
       {/*   <DialogContent className="max-w-4xl"> */}

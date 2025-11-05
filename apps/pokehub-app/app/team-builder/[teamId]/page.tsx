@@ -1,7 +1,11 @@
-import { TeamEditor } from '@pokehub/frontend/pokehub-team-builder';
+import {
+  TeamEditor,
+  TeamEditorProvider,
+} from '@pokehub/frontend/pokehub-team-builder';
 
 export default async function TeamEditPage() {
   await new Promise((resolve) => setTimeout(resolve, 1000));
+  // load team here
   return (
     <div className="min-h-screen bg-background pb-16 pt-20">
       <div className="mx-auto max-w-7xl px-4">
@@ -12,7 +16,9 @@ export default async function TeamEditPage() {
             Build and customize your competitive Pokémon team
           </p>
         </div>
-        <TeamEditor />
+        <TeamEditorProvider>
+          <TeamEditor />
+        </TeamEditorProvider>
       </div>
     </div>
   );

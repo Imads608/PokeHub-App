@@ -189,6 +189,19 @@ export const getBattleTiersForFormat = (
   return filterProps ? filterBattleTier(battleTier, filterProps) : battleTier;
 };
 
+export const getBattleTierInfo = (tier: Tier.Singles | Tier.Doubles) => {
+  let battleTierInfo:
+    | BattleTier<'Singles'>
+    | BattleTier<'Doubles'>
+    | undefined = singlesBattleTiers.find((val) => val.id === tier);
+  if (battleTierInfo) {
+    return battleTierInfo;
+  }
+  battleTierInfo = doublesBattleTiers.find((val) => val.id === tier);
+
+  return battleTierInfo;
+};
+
 export const getDoublesBattleTiers = (
   filterProps?: FilterProps
 ): BattleTier<'Doubles'>[] => {
