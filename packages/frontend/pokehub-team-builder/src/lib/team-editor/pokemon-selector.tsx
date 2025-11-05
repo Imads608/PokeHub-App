@@ -1,9 +1,8 @@
 import { useFilterPokemonList } from '../hooks/useFilterPokemonList';
 import { PokemonCardSkeleton } from './pokemon-card-skeleton';
-import type { GenerationNum, TypeName } from '@pkmn/dex';
+import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import { getPokemonCompetitive } from '@pokehub/frontend/dex-data-provider';
-import type { BattleTier } from '@pokehub/frontend/pokemon-types';
 import {
   Badge,
   Button,
@@ -20,10 +19,15 @@ import { useEffect, useState } from 'react';
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
-  tier: BattleTier<'Singles' | 'Doubles'>;
+  tier: Tier.Singles | Tier.Doubles;
+  onPokemonSelected: (val: Species) => void;
 }
 
-export const PokemonSelector = ({ generation, tier }: PokemonSelectorProps) => {
+export const PokemonSelector = ({
+  generation,
+  tier,
+  onPokemonSelected,
+}: PokemonSelectorProps) => {
   const [unfilteredResults] = useState(() =>
     getPokemonCompetitive(generation, tier)
   );
@@ -172,14 +176,14 @@ export const PokemonSelector = ({ generation, tier }: PokemonSelectorProps) => {
                     <PokemonCardSkeleton key={`skeleton-${index}`} />
                   ))
                 : data?.slice(0, itemsToShow).map((pokemon) => {
-                    const pokemonTier = tier.id.startsWith('D')
+                    const pokemonTier = tier.startsWith('D')
                       ? pokemon.doublesTier
                       : pokemon.tier;
                     return (
                       <div
                         key={pokemon.id}
                         className="flex cursor-pointer flex-col items-center rounded-lg border p-2 transition-colors hover:bg-muted"
-                        onClick={() => console.log('Implement')}
+                        onClick={() => onPokemonSelected(pokemon)}
                       >
                         <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                           <span>#{pokemon.num}</span>

@@ -1,6 +1,8 @@
 'use client';
 
 import { App } from './app';
+import type { ModdedDex } from '@pkmn/dex';
+import { Dex } from '@pkmn/dex';
 import {
   SharedAppBootstrapper,
   type Provider,
@@ -23,7 +25,7 @@ export const AppBootstrapper = ({
 
   useEffect(() => {
     createFetchClient('API', process.env.NEXT_PUBLIC_POKEHUB_API_URL);
-    //window.Dex = Dex;
+    (window as unknown as { Dex: ModdedDex }).Dex = Dex;
   }, []);
 
   return (

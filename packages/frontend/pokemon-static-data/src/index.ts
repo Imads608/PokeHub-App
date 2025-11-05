@@ -10,4 +10,5 @@ export {
   getBattleTiersForFormat,
   getDoublesBattleTierHierarchy,
   getSinglesBattleTierHierarchy,
+  getBattleTierInfo,
 } from './lib/battle-tiers';
