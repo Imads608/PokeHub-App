@@ -3,8 +3,8 @@
 import { useTeamEditorContext } from '../context/team-editor.context';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
-import { PokemonEditor } from './pokemon-editor';
-import { PokemonSelector } from './pokemon-selector';
+import { PokemonEditor } from './pokemon-editor/pokemon-editor';
+import { PokemonSelector } from './pokemon-selector/pokemon-selector';
 import { TeamConfigurationSection } from './team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';

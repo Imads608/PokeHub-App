@@ -1,4 +1,4 @@
-import { useFilterPokemonList } from '../hooks/useFilterPokemonList';
+import { useFilterPokemonList } from '../../hooks/useFilterPokemonList';
 import { PokemonCardSkeleton } from './pokemon-card-skeleton';
 import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';

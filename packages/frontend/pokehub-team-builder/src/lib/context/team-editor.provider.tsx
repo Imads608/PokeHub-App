@@ -63,6 +63,7 @@ export const TeamEditorProvider = ({
           value: pokemonTeam,
           setValue: setPokemonTeam,
         },
+        activePokemon: undefined,
       }}
     >
       {children}
