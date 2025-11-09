@@ -1,3 +1,7 @@
 // Use this file to export React client components (e.g. those with 'use client' directive) or other non-server utilities
 export { TeamViewer } from './lib/team-viewer/team-viewer';
 export { TeamEditor } from './lib/team-editor/team-editor';
+export {
+  TeamEditorProvider,
+  type TeamEditorProviderProps,
+} from './lib/context/team-editor.provider';

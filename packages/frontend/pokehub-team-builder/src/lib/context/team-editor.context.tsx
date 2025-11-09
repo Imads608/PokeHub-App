@@ -1,6 +1,8 @@
 'use client';
 
 import type { TeamEditorContextModel } from './team-editor.context.model';
+import type { AbilityName, ItemName, Species } from '@pkmn/dex';
+import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import { createContext, useContext } from 'react';
 
 export const TeamEditorContext = createContext<
@@ -36,8 +38,29 @@ export const TeamEditorContext = createContext<
       // Function needs to be set
     },
   },
+  activePokemon: {
+    value: undefined,
+    setValue: () => {
+      // Function needs to be set
+    },
+  },
 });
 
 export const useTeamEditorContext = () => {
-  return useContext(TeamEditorContext);
+  const { activePokemon, ...restProps } = useContext(TeamEditorContext);
+
+  const setActivePokemon = (pokemon: Partial<PokemonInTeam> | Species) => {
+    if ('baseSpecies' in pokemon) {
+      const species = pokemon as Species;
+      activePokemon.setValue({ species: species.name });
+    }
+  };
+
+  const setAbility = (ability: AbilityName) => {
+    activePokemon.setValue({ ...activePokemon.value, ability });
+  };
+
+  const setItem = (item: ItemName) => {
+    activePokemon.setValue({ ...activePokemon.value, item });
+  };
 };
