@@ -36,6 +36,20 @@ export function getPokemonDetailsByName(
   return species.exists ? species : undefined;
 }
 
+export function getPokemonAbilitiesDetailsFromSpecies(
+  species: Species,
+  generation?: GenerationNum
+) {
+  const abilities = [
+    species.abilities[0],
+    species.abilities[1],
+    species.abilities.S,
+    species.abilities.H,
+  ].filter((ability) => typeof ability === 'string');
+
+  return getPokemonAbilitiesDetails(abilities, generation);
+}
+
 export function getPokemonAbilitiesDetails(
   abilities: string[],
   generation?: GenerationNum
@@ -83,6 +97,12 @@ export function getItemDetails(itemName: ItemName, generation?: GenerationNum) {
   return itemDetails;
 }
 
+export function getItems(generation?: GenerationNum) {
+  const moddedDex = getModdedDex(generation);
+  const items = moddedDex.items.all();
+  return items;
+}
+
 export function getNatureDetails(
   nature: NatureName,
   generation?: GenerationNum
@@ -93,6 +113,12 @@ export function getNatureDetails(
     return undefined;
   }
   return natureDetails;
+}
+
+export function getNatures(generation?: GenerationNum) {
+  const moddedDex = getModdedDex();
+  const natures = moddedDex.natures.all();
+  return natures;
 }
 
 export function getStatName(statId: StatID, generation?: GenerationNum) {

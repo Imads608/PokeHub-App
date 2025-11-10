@@ -40,6 +40,10 @@ export const TeamEditorProvider = ({
     ]
   );
 
+  const [activePokemon, setActivePokemon] = useState<PokemonInTeam | undefined>(
+    undefined
+  );
+
   return (
     <TeamEditorContext.Provider
       value={{
@@ -63,7 +67,10 @@ export const TeamEditorProvider = ({
           value: pokemonTeam,
           setValue: setPokemonTeam,
         },
-        activePokemon: undefined,
+        activePokemon: {
+          value: activePokemon,
+          setValue: setActivePokemon,
+        },
       }}
     >
       {children}

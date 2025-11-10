@@ -11,6 +11,9 @@ export {
   getNatureDetails,
   getStatName,
   getStats,
+  getPokemonAbilitiesDetailsFromSpecies,
+  getNatures,
+  getItems,
 } from './lib/api/pokemon-dex.api';
 export { usePokemonPokeAPIDetails } from './lib/hooks/pokemon-pokeapi-details.hook';
 export { usePokedexByID } from './lib/hooks/pokedex-by-id.hook';

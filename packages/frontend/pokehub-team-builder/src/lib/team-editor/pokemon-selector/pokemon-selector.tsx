@@ -13,7 +13,11 @@ import {
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { typeColors } from '@pokehub/frontend/shared-utils';
+import {
+  typeColors,
+  useDebouncedSearch,
+  useInfiniteScroll,
+} from '@pokehub/frontend/shared-utils';
 import { Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -31,21 +35,13 @@ export const PokemonSelector = ({
   const [unfilteredResults] = useState(() =>
     getPokemonCompetitive(generation, tier)
   );
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  const { debouncedSearchTerm, searchTerm, setSearchTerm } = useDebouncedSearch(
+    { initialVal: '' }
+  );
   const [selectedTypes, setSelectedTypes] = useState<TypeName[]>([]);
   const [activeTab, setActiveTab] = useState('all');
-  const [itemsToShow, setItemsToShow] = useState(50); // Initial number of items to display
-  const itemsPerPage = 20; // Number of items to load per scroll
-
-  // Debounce search term
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300); // 300ms delay
-
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
+  const { itemsToShow, handleScroll, resetItems } = useInfiniteScroll({});
 
   const { isLoading, data } = useFilterPokemonList(unfilteredResults, {
     generation,
@@ -64,22 +60,12 @@ export const PokemonSelector = ({
     setSearchTerm('');
     setSelectedTypes([]);
     setActiveTab('all');
-    setItemsToShow(50);
-  };
-
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
-    if (
-      target.scrollHeight - target.scrollTop <=
-      target.clientHeight + 100 // Trigger 100px before bottom
-    ) {
-      setItemsToShow((prev) => prev + itemsPerPage);
-    }
+    resetItems();
   };
 
   // Reset pagination when filters change
   useEffect(() => {
-    setItemsToShow(50);
+    resetItems();
   }, [debouncedSearchTerm, selectedTypes, activeTab]);
 
   return (

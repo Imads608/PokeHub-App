@@ -8,6 +8,7 @@ import { PokemonSelector } from './pokemon-selector/pokemon-selector';
 import { TeamConfigurationSection } from './team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
+import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import {
   Badge,
@@ -23,22 +24,43 @@ import { useCallback, useState } from 'react';
 export const TeamEditor = () => {
   // State for team configuration
 
-  const { teamPokemon, generation, tier } = useTeamEditorContext();
+  const { teamPokemon, generation, tier, activePokemon } =
+    useTeamEditorContext();
   //const [, setIsTeamAnalysisOpen] = useState(false);
-  const [activeSlot, setActiveSlot] = useState<number | undefined>(1);
+  const [activeSlot, setActiveSlot] = useState<number>(1);
   const [isPokemonSelectorOpen, setIsPokemonSelectorOpen] = useState(false);
   const [isPokemonEditorOpen, setIsPokemonEditorOpen] = useState(false);
-  const [activePokemon, setActivePokemon] = useState<
-    { species: Species; pokemon?: Partial<PokemonInTeam> } | undefined
-  >(undefined);
+  const [speciesList] = useState<(Species | undefined)[]>([
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+  ]);
 
   const onPokemonSelected = useCallback(
-    (species: Species, pokemon?: Partial<PokemonInTeam>) => {
-      setActivePokemon({ species, pokemon });
+    (pokemon: Species | PokemonInTeam, slot?: number) => {
+      activePokemon.setValue(pokemon);
       setIsPokemonSelectorOpen(false);
       setIsPokemonEditorOpen(true);
+      slot && setActiveSlot(slot);
+      const currSlot = slot || activeSlot;
+
+      if (!speciesList[currSlot - 1]) {
+        if ('exists' in pokemon) {
+          pokemon = pokemon as Species;
+          speciesList[currSlot - 1] = pokemon;
+        } else {
+          pokemon = pokemon as PokemonInTeam;
+          speciesList[currSlot - 1] = getPokemonDetailsByName(
+            pokemon.species,
+            generation.value
+          );
+        }
+      }
     },
-    []
+    [activeSlot, generation.value]
   );
 
   return (
@@ -52,14 +74,10 @@ export const TeamEditor = () => {
           <div key={index}>
             {pokemon ? (
               <PokemonCard
-                speciesName={pokemon.species}
                 pokemon={pokemon}
                 generation={generation.value}
                 onRemove={() => console.log('implement')}
-                onUpdate={(updates) => console.log('implement')}
-                onEdit={() => {
-                  console.log('implement');
-                }}
+                onEdit={() => onPokemonSelected(pokemon, index + 1)}
               />
             ) : (
               <EmptySlot
@@ -123,25 +141,25 @@ export const TeamEditor = () => {
       {/*   </DialogContent> */}
       {/* </Dialog> */}
       {/* {/* Pokémon Edit Dialog */}
-      {activePokemon && (
+      {activePokemon.value && speciesList[activeSlot - 1] && (
         <Dialog
           open={isPokemonEditorOpen}
           onOpenChange={setIsPokemonEditorOpen}
         >
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="sm:max-w-4xl">
             <DialogHeader className="flex flex-row items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
                 <span
                   style={{
-                    ...Icons.getPokemon(activePokemon.species.name).css,
+                    ...Icons.getPokemon(activePokemon.value.species).css,
                   }}
                 />
                 <div>
                   <DialogTitle className="text-xl">
-                    {activePokemon.pokemon?.name || activePokemon.species.name}
+                    {activePokemon.value.name || activePokemon.value.species}
                   </DialogTitle>
                   <div className="mt-1 flex gap-1">
-                    {activePokemon.species.types.map((type: string) => (
+                    {speciesList[activeSlot - 1]?.types.map((type: string) => (
                       <Badge
                         key={type}
                         className={`${
@@ -151,13 +169,14 @@ export const TeamEditor = () => {
                         {type}
                       </Badge>
                     ))}
-                    /
                   </div>
-                  /
                 </div>
               </div>
             </DialogHeader>
-            <PokemonEditor activeSpecies={activePokemon.species} />
+            <PokemonEditor
+              activePokemon={activePokemon.value}
+              species={speciesList[activeSlot - 1] as Species}
+            />
             {/* <PokemonEditor */}
             {/*   pokemon={activePokemon.species} */}
             {/*   onUpdate={(updates) => updatePokemon(activePokemonIndex, updates)} */}
