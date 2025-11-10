@@ -14,5 +14,5 @@ export interface TeamEditorContextModel<T extends ContextFieldType> {
   format: ContextField<BattleFormat, T>;
   teamName: ContextField<string | undefined, T>;
   teamPokemon: ContextField<(PokemonInTeam | undefined)[], T>;
-  activePokemon: ContextField<Partial<PokemonInTeam> | undefined, T>;
+  activePokemon: ContextField<PokemonInTeam | undefined, T>;
 }

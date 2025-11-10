@@ -1,11 +1,6 @@
 'use client';
 
-import type {
-  GenerationNum,
-  NatureName,
-  SpeciesName,
-  TypeName,
-} from '@pkmn/dex';
+import type { GenerationNum, NatureName, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
   getAbilityDetails,
@@ -33,25 +28,21 @@ import { Edit, Trash2, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface PokemonCardProps {
-  speciesName: SpeciesName;
-  pokemon: Partial<PokemonInTeam>;
+  pokemon: PokemonInTeam;
   generation: GenerationNum;
   onRemove: () => void;
-  onUpdate: (updates: unknown) => void;
-  onEdit?: () => void;
+  onEdit: () => void;
 }
 
 export function PokemonCard({
-  speciesName,
   pokemon,
   generation,
   onRemove,
-  onUpdate,
   onEdit,
 }: PokemonCardProps) {
   // Data being usedj
-  const [currPokemonAbility] = useState(pokemon?.ability || undefined);
-  const [currPokemonItem] = useState(pokemon?.item || undefined);
+  const [currPokemonAbility] = useState(pokemon.ability || undefined);
+  const [currPokemonItem] = useState(pokemon.item || undefined);
   const [currPokemonMoves] = useState(
     pokemon?.moves || [undefined, undefined, undefined, undefined]
   );
@@ -325,13 +316,13 @@ export function PokemonCard({
 
   // Find nature details
 
-  const icon = useRef(Icons.getPokemon(speciesName));
+  const icon = useRef(Icons.getPokemon(pokemon.species));
   const itemIcon = useRef(
-    pokemon?.item ? Icons.getItem(pokemon.item) : undefined
+    pokemon.item ? Icons.getItem(pokemon.item) : undefined
   );
 
   const [species] = useState(() =>
-    getPokemonDetailsByName(speciesName, generation)
+    getPokemonDetailsByName(pokemon.species, generation)
   );
   const [abilityDetails] = useState(
     () =>

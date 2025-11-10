@@ -1,3 +1,12 @@
+import { useTeamEditorContext } from '../../context/team-editor.context';
+import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
+import { Icons } from '@pkmn/img';
+import {
+  getItems,
+  getNatures,
+  getPokemonAbilitiesDetailsFromSpecies,
+} from '@pokehub/frontend/dex-data-provider';
+import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import {
   Input,
   Label,
@@ -10,9 +19,83 @@ import {
   Slider,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
+import {
+  useDebouncedSearch,
+  useInfiniteScroll,
+} from '@pokehub/frontend/shared-utils';
 import { Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export const BasicTab = () => {
+export interface BasicTabProps {
+  pokemon: PokemonInTeam;
+  species: Species;
+}
+
+export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
+  const {
+    activePokemon: { setLevel, setName, setAbility, setItem, setNature },
+    generation,
+  } = useTeamEditorContext();
+
+  // Retrieve Data
+  const [abilities] = useState(() =>
+    getPokemonAbilitiesDetailsFromSpecies(species, generation.value)
+  );
+  const [natures] = useState(() => getNatures(generation.value));
+  const [items] = useState(() => getItems(generation.value));
+
+  // Search States
+  const {
+    searchTerm: itemSearch,
+    setSearchTerm: setItemSearch,
+    debouncedSearchTerm: debouncedItemSearch,
+  } = useDebouncedSearch({ initialVal: '' });
+  const {
+    searchTerm: natureSearch,
+    setSearchTerm: setNatureSearch,
+    debouncedSearchTerm: debouncedNatureSearch,
+  } = useDebouncedSearch({ initialVal: '' });
+
+  // Filtered data based on search
+  const [filteredItems, setFilteredItems] = useState(items);
+  const [filteredNatures, setFilteredNatures] = useState(natures);
+
+  // Update filtered items when search changes
+  useEffect(() => {
+    if (!debouncedItemSearch.trim()) {
+      setFilteredItems(items);
+    } else {
+      const searchTerm = debouncedItemSearch.toLowerCase();
+      setFilteredItems(
+        items.filter(
+          (item) =>
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.desc.toLowerCase().includes(searchTerm)
+        )
+      );
+    }
+  }, [debouncedItemSearch]);
+
+  // Update filtered natures when search changes
+  useEffect(() => {
+    if (!debouncedNatureSearch.trim()) {
+      setFilteredNatures(natures);
+    } else {
+      const searchTerm = debouncedNatureSearch.toLowerCase();
+      setFilteredNatures(
+        natures.filter(
+          (nature) =>
+            nature.name.toLowerCase().includes(searchTerm) ||
+            nature.desc.toLowerCase().includes(searchTerm)
+        )
+      );
+    }
+  }, [debouncedNatureSearch]);
+
+  const { itemsToShow, handleScroll: handleItemsScroll } = useInfiniteScroll(
+    {}
+  );
+
   return (
     <TabsContent value="basic" className="space-y-4 py-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -20,9 +103,9 @@ export const BasicTab = () => {
           <Label htmlFor="nickname">Nickname</Label>
           <Input
             id="nickname"
-            value={pokemon.nickname}
-            onChange={(e) => onUpdate({ nickname: e.target.value })}
-            placeholder={pokemon.name}
+            value={pokemon.name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={pokemon.species}
             className="mt-1"
           />
         </div>
@@ -36,7 +119,7 @@ export const BasicTab = () => {
               min={1}
               max={100}
               step={1}
-              onValueChange={(value) => onUpdate({ level: value[0] })}
+              onValueChange={(value) => setLevel(value[0])}
               className="flex-1"
             />
             <div className="w-12 text-center">{pokemon.level}</div>
@@ -47,59 +130,39 @@ export const BasicTab = () => {
           <Label htmlFor="ability">Ability</Label>
           <Select
             value={pokemon.ability}
-            onValueChange={(value) => onUpdate({ ability: value })}
+            onValueChange={(value) => setAbility(value as AbilityName)}
           >
             <SelectTrigger id="ability" className="mt-1">
               <SelectValue placeholder="Select ability" />
             </SelectTrigger>
             <SelectContent>
-              <div className="sticky top-0 z-10 flex items-center border-b bg-background px-2 py-1.5">
-                <Search className="mr-2 h-4 w-4 opacity-50" />
-                <Input
-                  placeholder="Search abilities..."
-                  value={abilitySearch}
-                  onChange={(e) => setAbilitySearch(e.target.value)}
-                  className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              </div>
               <ScrollArea className="h-[200px]">
-                {filteredAbilities.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    No abilities found.
-                  </div>
-                ) : (
-                  filteredAbilities.map((abilityName: string) => {
-                    const abilityData = getAbilityDetails(abilityName);
-                    return (
+                {abilities.map(
+                  (ability) =>
+                    ability && (
                       <SelectItem
-                        key={abilityName}
-                        value={abilityName}
+                        key={ability.id}
+                        value={ability.id}
                         className="py-2"
                       >
                         <div className="flex flex-col">
-                          <span className="font-medium">{abilityName}</span>
-                          {abilityData && (
-                            <span className="line-clamp-2 text-xs text-muted-foreground">
-                              {abilityData.description}
-                            </span>
-                          )}
+                          <span className="font-medium">{ability.name}</span>
+                          <span className="line-clamp-2 text-xs text-muted-foreground">
+                            {ability.desc}
+                          </span>
                         </div>
                       </SelectItem>
-                    );
-                  })
+                    )
                 )}
               </ScrollArea>
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label htmlFor="item">Item</Label>
           <Select
-            value={pokemon.item || 'none'}
-            onValueChange={(value) =>
-              onUpdate({ item: value === 'none' ? '' : value })
-            }
+            value={pokemon.item || ''}
+            onValueChange={(value) => setItem(value as ItemName)}
           >
             <SelectTrigger id="item" className="mt-1">
               <SelectValue placeholder="Select item" />
@@ -114,7 +177,7 @@ export const BasicTab = () => {
                   className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[300px]" onScroll={handleItemsScroll}>
                 <SelectItem value="none" className="py-2">
                   <div className="flex items-center">
                     <span className="font-medium">None</span>
@@ -125,22 +188,22 @@ export const BasicTab = () => {
                     No items found.
                   </div>
                 ) : (
-                  filteredItems.map((item) => (
+                  filteredItems.slice(0, itemsToShow).map((item) => (
                     <SelectItem
                       key={item.name}
                       value={item.name}
                       className="py-2"
                     >
                       <div className="flex items-start gap-2">
-                        <img
-                          src={item.image || '/placeholder.svg'}
-                          alt={item.name}
-                          className="mt-0.5 h-6 w-6"
+                        <span
+                          style={{
+                            ...Icons.getItem(item.name).css,
+                          }}
                         />
                         <div className="flex flex-col">
                           <span className="font-medium">{item.name}</span>
                           <span className="line-clamp-2 text-xs text-muted-foreground">
-                            {item.description}
+                            {item.desc}
                           </span>
                         </div>
                       </div>
@@ -156,7 +219,7 @@ export const BasicTab = () => {
           <Label htmlFor="nature">Nature</Label>
           <Select
             value={pokemon.nature}
-            onValueChange={(value) => onUpdate({ nature: value })}
+            onValueChange={(value) => setNature(value as NatureName)}
           >
             <SelectTrigger id="nature" className="mt-1">
               <SelectValue placeholder="Select nature" />
@@ -186,7 +249,7 @@ export const BasicTab = () => {
                       <div className="flex flex-col">
                         <span className="font-medium">{nature.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {nature.description}
+                          {nature.desc}
                         </span>
                       </div>
                     </SelectItem>
