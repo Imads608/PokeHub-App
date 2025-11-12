@@ -180,213 +180,211 @@ export function PokemonEditor({ activePokemon, species }: PokemonEditorProps) {
   // }
   //
   return (
-    activePokemon && (
-      <>
-        <Tabs defaultValue="basic">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">Basic</TabsTrigger>
-            <TabsTrigger value="moves">Moves</TabsTrigger>
-            <TabsTrigger value="evs">EVs</TabsTrigger>
-            <TabsTrigger value="ivs">IVs</TabsTrigger>
-          </TabsList>
+    <>
+      <Tabs defaultValue="basic">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="basic">Basic</TabsTrigger>
+          <TabsTrigger value="moves">Moves</TabsTrigger>
+          <TabsTrigger value="evs">EVs</TabsTrigger>
+          <TabsTrigger value="ivs">IVs</TabsTrigger>
+        </TabsList>
 
-          {/* Basic Tab */}
-          <BasicTab species={species} pokemon={activePokemon} />
+        {/* Basic Tab */}
+        <BasicTab species={species} pokemon={activePokemon} />
 
-          {/* Moves Tab */}
-          {/* <TabsContent value="moves" className="space-y-4 py-4"> */}
-          {/*   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> */}
-          {/*     {[0, 1, 2, 3].map((index) => ( */}
-          {/*       <div key={index}> */}
-          {/*         <Label htmlFor={`move-${index}`}>Move {index + 1}</Label> */}
-          {/*         <Select */}
-          {/*           value={pokemon.moves[index] || "none"} */}
-          {/*           onValueChange={(value) => updateMove(index, value === "none" ? "" : value)} */}
-          {/*         > */}
-          {/*           <SelectTrigger id={`move-${index}`} className="mt-1"> */}
-          {/*             <SelectValue placeholder="Select move" /> */}
-          {/*           </SelectTrigger> */}
-          {/*           <SelectContent> */}
-          {/*             <div className="flex items-center px-2 py-1.5 border-b sticky top-0 bg-background z-10"> */}
-          {/*               <Search className="w-4 h-4 mr-2 opacity-50" /> */}
-          {/*               <Input */}
-          {/*                 placeholder="Search moves..." */}
-          {/*                 value={moveSearch[index]} */}
-          {/*                 onChange={(e) => updateMoveSearch(index, e.target.value)} */}
-          {/*                 className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0" */}
-          {/*               /> */}
-          {/*             </div> */}
-          {/*             <ScrollArea className="h-[300px]"> */}
-          {/*               <SelectItem value="none" className="py-2"> */}
-          {/*                 <div className="flex items-center"> */}
-          {/*                   <span className="font-medium">None</span> */}
-          {/*                 </div> */}
-          {/*               </SelectItem> */}
-          {/*               {filteredMoves.length === 0 ? ( */}
-          {/*                 <div className="py-6 text-center text-sm text-muted-foreground">No moves found.</div> */}
-          {/*               ) : ( */}
-          {/*                 filteredMoves.map((move) => ( */}
-          {/*                   <SelectItem key={move.name} value={move.name} className="py-2"> */}
-          {/*                     <div className="flex items-start gap-2"> */}
-          {/*                       <Badge */}
-          {/*                         className={`${typeColors[move.type]} h-5 w-5 p-0 flex items-center justify-center mt-0.5`} */}
-          {/*                       > */}
-          {/*                         <span className="sr-only">{move.type}</span> */}
-          {/*                       </Badge> */}
-          {/*                       <div className="flex flex-col"> */}
-          {/*                         <div className="flex items-center gap-2"> */}
-          {/*                           <span className="font-medium">{move.name}</span> */}
-          {/*                           <span className="text-xs text-muted-foreground"> */}
-          {/*                             {move.power ? `${move.power} BP` : "Status"} */}
-          {/*                           </span> */}
-          {/*                         </div> */}
-          {/*                         <span className="text-xs text-muted-foreground line-clamp-2">{move.description}</span> */}
-          {/*                       </div> */}
-          {/*                     </div> */}
-          {/*                   </SelectItem> */}
-          {/*                 )) */}
-          {/*               )} */}
-          {/*             </ScrollArea> */}
-          {/*           </SelectContent> */}
-          {/*         </Select> */}
-          {/*       </div> */}
-          {/*     ))} */}
-          {/*   </div> */}
-          {/* </TabsContent> */}
+        {/* Moves Tab */}
+        {/* <TabsContent value="moves" className="space-y-4 py-4"> */}
+        {/*   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> */}
+        {/*     {[0, 1, 2, 3].map((index) => ( */}
+        {/*       <div key={index}> */}
+        {/*         <Label htmlFor={`move-${index}`}>Move {index + 1}</Label> */}
+        {/*         <Select */}
+        {/*           value={pokemon.moves[index] || "none"} */}
+        {/*           onValueChange={(value) => updateMove(index, value === "none" ? "" : value)} */}
+        {/*         > */}
+        {/*           <SelectTrigger id={`move-${index}`} className="mt-1"> */}
+        {/*             <SelectValue placeholder="Select move" /> */}
+        {/*           </SelectTrigger> */}
+        {/*           <SelectContent> */}
+        {/*             <div className="flex items-center px-2 py-1.5 border-b sticky top-0 bg-background z-10"> */}
+        {/*               <Search className="w-4 h-4 mr-2 opacity-50" /> */}
+        {/*               <Input */}
+        {/*                 placeholder="Search moves..." */}
+        {/*                 value={moveSearch[index]} */}
+        {/*                 onChange={(e) => updateMoveSearch(index, e.target.value)} */}
+        {/*                 className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0" */}
+        {/*               /> */}
+        {/*             </div> */}
+        {/*             <ScrollArea className="h-[300px]"> */}
+        {/*               <SelectItem value="none" className="py-2"> */}
+        {/*                 <div className="flex items-center"> */}
+        {/*                   <span className="font-medium">None</span> */}
+        {/*                 </div> */}
+        {/*               </SelectItem> */}
+        {/*               {filteredMoves.length === 0 ? ( */}
+        {/*                 <div className="py-6 text-center text-sm text-muted-foreground">No moves found.</div> */}
+        {/*               ) : ( */}
+        {/*                 filteredMoves.map((move) => ( */}
+        {/*                   <SelectItem key={move.name} value={move.name} className="py-2"> */}
+        {/*                     <div className="flex items-start gap-2"> */}
+        {/*                       <Badge */}
+        {/*                         className={`${typeColors[move.type]} h-5 w-5 p-0 flex items-center justify-center mt-0.5`} */}
+        {/*                       > */}
+        {/*                         <span className="sr-only">{move.type}</span> */}
+        {/*                       </Badge> */}
+        {/*                       <div className="flex flex-col"> */}
+        {/*                         <div className="flex items-center gap-2"> */}
+        {/*                           <span className="font-medium">{move.name}</span> */}
+        {/*                           <span className="text-xs text-muted-foreground"> */}
+        {/*                             {move.power ? `${move.power} BP` : "Status"} */}
+        {/*                           </span> */}
+        {/*                         </div> */}
+        {/*                         <span className="text-xs text-muted-foreground line-clamp-2">{move.description}</span> */}
+        {/*                       </div> */}
+        {/*                     </div> */}
+        {/*                   </SelectItem> */}
+        {/*                 )) */}
+        {/*               )} */}
+        {/*             </ScrollArea> */}
+        {/*           </SelectContent> */}
+        {/*         </Select> */}
+        {/*       </div> */}
+        {/*     ))} */}
+        {/*   </div> */}
+        {/* </TabsContent> */}
 
-          {/* EVs Tab */}
-          {/* <TabsContent value="evs" className="py-4"> */}
-          {/*   <div className="mb-4"> */}
-          {/*     <div className="flex items-center justify-between"> */}
-          {/*       <Label>EV Distribution</Label> */}
-          {/*       <div className="text-sm text-muted-foreground"> */}
-          {/*         {Object.values(pokemon.evs).reduce((sum, ev) => sum + (ev as number), 0)}/510 */}
-          {/*       </div> */}
-          {/*     </div> */}
-          {/*     <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted"> */}
-          {/*       <div */}
-          {/*         className="h-full bg-primary transition-all" */}
-          {/*         style={{ */}
-          {/*           width: `${(Object.values(pokemon.evs).reduce((sum, ev) => sum + (ev as number), 0) / 510) * 100}%`, */}
-          {/*         }} */}
-          {/*       /> */}
-          {/*     </div> */}
-          {/*   </div> */}
-          {/**/}
-          {/*   <div className="space-y-4"> */}
-          {/*     {Object.entries(pokemon.evs).map(([stat, value]) => ( */}
-          {/*       <div key={stat}> */}
-          {/*         <div className="flex items-center justify-between"> */}
-          {/*           <Label htmlFor={`ev-${stat}`}>{formatStatName(stat)}</Label> */}
-          {/*           <div className="text-sm">{value}/252</div> */}
-          {/*         </div> */}
-          {/*         <div className="flex items-center gap-2"> */}
-          {/*           <Slider */}
-          {/*             id={`ev-${stat}`} */}
-          {/*             value={[value as number]} */}
-          {/*             min={0} */}
-          {/*             max={252} */}
-          {/*             step={4} */}
-          {/*             onValueChange={(val) => updateEVs(stat, val[0])} */}
-          {/*             className="flex-1" */}
-          {/*           /> */}
-          {/*           <Input */}
-          {/*             type="number" */}
-          {/*             value={value as number} */}
-          {/*             onChange={(e) => updateEVs(stat, Number.parseInt(e.target.value) || 0)} */}
-          {/*             className="w-16" */}
-          {/*             min={0} */}
-          {/*             max={252} */}
-          {/*             step={4} */}
-          {/*           /> */}
-          {/*         </div> */}
-          {/*       </div> */}
-          {/*     ))} */}
-          {/*   </div> */}
-          {/* </TabsContent> */}
+        {/* EVs Tab */}
+        {/* <TabsContent value="evs" className="py-4"> */}
+        {/*   <div className="mb-4"> */}
+        {/*     <div className="flex items-center justify-between"> */}
+        {/*       <Label>EV Distribution</Label> */}
+        {/*       <div className="text-sm text-muted-foreground"> */}
+        {/*         {Object.values(pokemon.evs).reduce((sum, ev) => sum + (ev as number), 0)}/510 */}
+        {/*       </div> */}
+        {/*     </div> */}
+        {/*     <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted"> */}
+        {/*       <div */}
+        {/*         className="h-full bg-primary transition-all" */}
+        {/*         style={{ */}
+        {/*           width: `${(Object.values(pokemon.evs).reduce((sum, ev) => sum + (ev as number), 0) / 510) * 100}%`, */}
+        {/*         }} */}
+        {/*       /> */}
+        {/*     </div> */}
+        {/*   </div> */}
+        {/**/}
+        {/*   <div className="space-y-4"> */}
+        {/*     {Object.entries(pokemon.evs).map(([stat, value]) => ( */}
+        {/*       <div key={stat}> */}
+        {/*         <div className="flex items-center justify-between"> */}
+        {/*           <Label htmlFor={`ev-${stat}`}>{formatStatName(stat)}</Label> */}
+        {/*           <div className="text-sm">{value}/252</div> */}
+        {/*         </div> */}
+        {/*         <div className="flex items-center gap-2"> */}
+        {/*           <Slider */}
+        {/*             id={`ev-${stat}`} */}
+        {/*             value={[value as number]} */}
+        {/*             min={0} */}
+        {/*             max={252} */}
+        {/*             step={4} */}
+        {/*             onValueChange={(val) => updateEVs(stat, val[0])} */}
+        {/*             className="flex-1" */}
+        {/*           /> */}
+        {/*           <Input */}
+        {/*             type="number" */}
+        {/*             value={value as number} */}
+        {/*             onChange={(e) => updateEVs(stat, Number.parseInt(e.target.value) || 0)} */}
+        {/*             className="w-16" */}
+        {/*             min={0} */}
+        {/*             max={252} */}
+        {/*             step={4} */}
+        {/*           /> */}
+        {/*         </div> */}
+        {/*       </div> */}
+        {/*     ))} */}
+        {/*   </div> */}
+        {/* </TabsContent> */}
 
-          {/* IVs Tab */}
-          {/* <TabsContent value="ivs" className="py-4"> */}
-          {/*   <div className="space-y-4"> */}
-          {/*     {Object.entries(pokemon.ivs).map(([stat, value]) => ( */}
-          {/*       <div key={stat}> */}
-          {/*         <div className="flex items-center justify-between"> */}
-          {/*           <Label htmlFor={`iv-${stat}`}>{formatStatName(stat)}</Label> */}
-          {/*           <div className="text-sm">{value}/31</div> */}
-          {/*         </div> */}
-          {/*         <div className="flex items-center gap-2"> */}
-          {/*           <Slider */}
-          {/*             id={`iv-${stat}`} */}
-          {/*             value={[value as number]} */}
-          {/*             min={0} */}
-          {/*             max={31} */}
-          {/*             step={1} */}
-          {/*             onValueChange={(val) => updateIVs(stat, val[0])} */}
-          {/*             className="flex-1" */}
-          {/*           /> */}
-          {/*           <Input */}
-          {/*             type="number" */}
-          {/*             value={value as number} */}
-          {/*             onChange={(e) => updateIVs(stat, Number.parseInt(e.target.value) || 0)} */}
-          {/*             className="w-16" */}
-          {/*             min={0} */}
-          {/*             max={31} */}
-          {/*             step={1} */}
-          {/*           /> */}
-          {/*         </div> */}
-          {/*       </div> */}
-          {/*     ))} */}
-          {/**/}
-          {/*     <div className="flex justify-end gap-2"> */}
-          {/*       <Button */}
-          {/*         variant="outline" */}
-          {/*         onClick={() => */}
-          {/*           onUpdate({ */}
-          {/*             ivs: { */}
-          {/*               hp: 31, */}
-          {/*               attack: 31, */}
-          {/*               defense: 31, */}
-          {/*               spAttack: 31, */}
-          {/*               spDefense: 31, */}
-          {/*               speed: 31, */}
-          {/*             }, */}
-          {/*           }) */}
-          {/*         } */}
-          {/*       > */}
-          {/*         Max All */}
-          {/*       </Button> */}
-          {/*       <Button */}
-          {/*         variant="outline" */}
-          {/*         onClick={() => */}
-          {/*           onUpdate({ */}
-          {/*             ivs: { */}
-          {/*               hp: 31, */}
-          {/*               attack: 0, */}
-          {/*               defense: 31, */}
-          {/*               spAttack: 31, */}
-          {/*               spDefense: 31, */}
-          {/*               speed: 0, */}
-          {/*             }, */}
-          {/*           }) */}
-          {/*         } */}
-          {/*       > */}
-          {/*         Trick Room */}
-          {/*       </Button> */}
-          {/*     </div> */}
-          {/*   </div> */}
-          {/* </TabsContent> */}
-        </Tabs>
+        {/* IVs Tab */}
+        {/* <TabsContent value="ivs" className="py-4"> */}
+        {/*   <div className="space-y-4"> */}
+        {/*     {Object.entries(pokemon.ivs).map(([stat, value]) => ( */}
+        {/*       <div key={stat}> */}
+        {/*         <div className="flex items-center justify-between"> */}
+        {/*           <Label htmlFor={`iv-${stat}`}>{formatStatName(stat)}</Label> */}
+        {/*           <div className="text-sm">{value}/31</div> */}
+        {/*         </div> */}
+        {/*         <div className="flex items-center gap-2"> */}
+        {/*           <Slider */}
+        {/*             id={`iv-${stat}`} */}
+        {/*             value={[value as number]} */}
+        {/*             min={0} */}
+        {/*             max={31} */}
+        {/*             step={1} */}
+        {/*             onValueChange={(val) => updateIVs(stat, val[0])} */}
+        {/*             className="flex-1" */}
+        {/*           /> */}
+        {/*           <Input */}
+        {/*             type="number" */}
+        {/*             value={value as number} */}
+        {/*             onChange={(e) => updateIVs(stat, Number.parseInt(e.target.value) || 0)} */}
+        {/*             className="w-16" */}
+        {/*             min={0} */}
+        {/*             max={31} */}
+        {/*             step={1} */}
+        {/*           /> */}
+        {/*         </div> */}
+        {/*       </div> */}
+        {/*     ))} */}
+        {/**/}
+        {/*     <div className="flex justify-end gap-2"> */}
+        {/*       <Button */}
+        {/*         variant="outline" */}
+        {/*         onClick={() => */}
+        {/*           onUpdate({ */}
+        {/*             ivs: { */}
+        {/*               hp: 31, */}
+        {/*               attack: 31, */}
+        {/*               defense: 31, */}
+        {/*               spAttack: 31, */}
+        {/*               spDefense: 31, */}
+        {/*               speed: 31, */}
+        {/*             }, */}
+        {/*           }) */}
+        {/*         } */}
+        {/*       > */}
+        {/*         Max All */}
+        {/*       </Button> */}
+        {/*       <Button */}
+        {/*         variant="outline" */}
+        {/*         onClick={() => */}
+        {/*           onUpdate({ */}
+        {/*             ivs: { */}
+        {/*               hp: 31, */}
+        {/*               attack: 0, */}
+        {/*               defense: 31, */}
+        {/*               spAttack: 31, */}
+        {/*               spDefense: 31, */}
+        {/*               speed: 0, */}
+        {/*             }, */}
+        {/*           }) */}
+        {/*         } */}
+        {/*       > */}
+        {/*         Trick Room */}
+        {/*       </Button> */}
+        {/*     </div> */}
+        {/*   </div> */}
+        {/* </TabsContent> */}
+      </Tabs>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => console.log('implement')}>
-            Cancel
-          </Button>
-          <Button onClick={() => console.log('implemnent')}>
-            <Check className="mr-2 h-4 w-4" />
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </>
-    )
+      <DialogFooter>
+        <Button variant="outline" onClick={() => console.log('implement')}>
+          Cancel
+        </Button>
+        <Button onClick={() => console.log('implemnent')}>
+          <Check className="mr-2 h-4 w-4" />
+          Save Changes
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
