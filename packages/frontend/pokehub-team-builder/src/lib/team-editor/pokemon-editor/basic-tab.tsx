@@ -8,8 +8,12 @@ import {
 } from '@pokehub/frontend/dex-data-provider';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import {
+  Button,
   Input,
   Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   ScrollArea,
   Select,
   SelectContent,
@@ -23,7 +27,7 @@ import {
   useDebouncedSearch,
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
-import { Search } from 'lucide-react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface BasicTabProps {
@@ -59,6 +63,10 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   // Filtered data based on search
   const [filteredItems, setFilteredItems] = useState(items);
   const [filteredNatures, setFilteredNatures] = useState(natures);
+
+  // Popover open states
+  const [isItemOpen, setIsItemOpen] = useState(false);
+  const [isNatureOpen, setIsNatureOpen] = useState(false);
 
   // Update filtered items when search changes
   useEffect(() => {
@@ -160,16 +168,33 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
         </div>
         <div>
           <Label htmlFor="item">Item</Label>
-          <Select
-            value={pokemon.item || ''}
-            onValueChange={(value) => setItem(value as ItemName)}
-          >
-            <SelectTrigger id="item" className="mt-1">
-              <SelectValue placeholder="Select item" />
-            </SelectTrigger>
-            <SelectContent>
-              <div className="sticky top-0 z-10 flex items-center border-b bg-background px-2 py-1.5">
-                <Search className="mr-2 h-4 w-4 opacity-50" />
+          <Popover modal={true} open={isItemOpen} onOpenChange={setIsItemOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                id="item"
+                variant="outline"
+                role="combobox"
+                aria-expanded={isItemOpen}
+                className="mt-1 h-11 w-full justify-between"
+              >
+                {pokemon.item ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      style={{
+                        ...Icons.getItem(pokemon.item).css,
+                      }}
+                    />
+                    <span>{pokemon.item}</span>
+                  </div>
+                ) : (
+                  <span>Select item</span>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="start">
+              <div className="flex items-center border-b px-3 py-2">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <Input
                   placeholder="Search items..."
                   value={itemSearch}
@@ -177,56 +202,98 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                   className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
-              <ScrollArea className="h-[300px]" onScroll={handleItemsScroll}>
-                <SelectItem value="none" className="py-2">
-                  <div className="flex items-center">
-                    <span className="font-medium">None</span>
-                  </div>
-                </SelectItem>
-                {filteredItems.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    No items found.
-                  </div>
-                ) : (
-                  filteredItems.slice(0, itemsToShow).map((item) => (
-                    <SelectItem
-                      key={item.name}
-                      value={item.name}
-                      className="py-2"
-                    >
-                      <div className="flex items-start gap-2">
-                        <span
-                          style={{
-                            ...Icons.getItem(item.name).css,
-                          }}
+              <ScrollArea className="h-[300px]" onScrollCapture={handleItemsScroll}>
+                <div className="p-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setItem('' as ItemName);
+                      setIsItemOpen(false);
+                    }}
+                    className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <Check
+                      className={`mr-2 h-4 w-4 ${
+                        !pokemon.item ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    <span className="font-medium group-hover:text-accent-foreground">
+                      None
+                    </span>
+                  </Button>
+                  {filteredItems.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No items found.
+                    </div>
+                  ) : (
+                    filteredItems.slice(0, itemsToShow).map((item) => (
+                      <Button
+                        key={item.name}
+                        variant="ghost"
+                        onClick={() => {
+                          setItem(item.name as ItemName);
+                          setIsItemOpen(false);
+                        }}
+                        className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 shrink-0 ${
+                            pokemon.item === item.name
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          }`}
                         />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{item.name}</span>
-                          <span className="line-clamp-2 text-xs text-muted-foreground">
-                            {item.desc}
-                          </span>
+                        <div className="flex w-full items-center gap-3">
+                          <span
+                            className="flex-shrink-0"
+                            style={{
+                              ...Icons.getItem(item.name).css,
+                            }}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                            <span className="break-words font-medium group-hover:text-accent-foreground">
+                              {item.name}
+                            </span>
+                            <span className="whitespace-normal break-words text-xs leading-tight text-muted-foreground group-hover:text-accent-foreground">
+                              {item.desc}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
+                      </Button>
+                    ))
+                  )}
+                </div>
               </ScrollArea>
-            </SelectContent>
-          </Select>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
           <Label htmlFor="nature">Nature</Label>
-          <Select
-            value={pokemon.nature}
-            onValueChange={(value) => setNature(value as NatureName)}
+          <Popover
+            modal={true}
+            open={isNatureOpen}
+            onOpenChange={setIsNatureOpen}
           >
-            <SelectTrigger id="nature" className="mt-1">
-              <SelectValue placeholder="Select nature" />
-            </SelectTrigger>
-            <SelectContent>
-              <div className="sticky top-0 z-10 flex items-center border-b bg-background px-2 py-1.5">
-                <Search className="mr-2 h-4 w-4 opacity-50" />
+            <PopoverTrigger asChild>
+              <Button
+                id="nature"
+                variant="outline"
+                role="combobox"
+                aria-expanded={isNatureOpen}
+                className="mt-1 h-11 w-full justify-between"
+              >
+                {pokemon.nature ? (
+                  <span>{pokemon.nature}</span>
+                ) : (
+                  <span>Select nature</span>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="start">
+              <div className="flex items-center border-b px-3 py-2">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <Input
                   placeholder="Search natures..."
                   value={natureSearch}
@@ -234,30 +301,47 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                   className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
-              <ScrollArea className="h-[300px]">
-                {filteredNatures.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    No natures found.
-                  </div>
-                ) : (
-                  filteredNatures.map((nature) => (
-                    <SelectItem
-                      key={nature.name}
-                      value={nature.name}
-                      className="py-2"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">{nature.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {nature.desc}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
+              <ScrollArea className="h-[300px]" onScrollCapture={handleItemsScroll}>
+                <div className="p-1">
+                  {filteredNatures.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No natures found.
+                    </div>
+                  ) : (
+                    filteredNatures.map((nature) => (
+                      <Button
+                        key={nature.name}
+                        variant="ghost"
+                        onClick={() => {
+                          setNature(nature.name as NatureName);
+                          setIsNatureOpen(false);
+                        }}
+                        className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 shrink-0 ${
+                            pokemon.nature === nature.name
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          }`}
+                        />
+                        <div className="flex w-full items-center gap-3">
+                          <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                            <span className="break-words font-medium group-hover:text-accent-foreground">
+                              {nature.name}
+                            </span>
+                            <span className="whitespace-normal break-words text-xs leading-tight text-muted-foreground group-hover:text-accent-foreground">
+                              {nature.desc}
+                            </span>
+                          </div>
+                        </div>
+                      </Button>
+                    ))
+                  )}
+                </div>
               </ScrollArea>
-            </SelectContent>
-          </Select>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </TabsContent>

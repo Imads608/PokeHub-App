@@ -73,3 +73,9 @@ export {
   DialogTrigger,
   DialogDescription,
 } from './lib/dialog/dialog';
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverTrigger,
+  PopoverContent,
+} from './lib/popover/popover';
