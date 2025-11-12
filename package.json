@@ -146,5 +146,9 @@
     "tsx": "^4.19.3",
     "typescript": "5.9.3"
   },
+  "overrides": {
+    "@radix-ui/react-dismissable-layer": "^1.1.11",
+    "@radix-ui/react-focus-scope": "^1.1.7"
+  },
   "nx": {}
 }

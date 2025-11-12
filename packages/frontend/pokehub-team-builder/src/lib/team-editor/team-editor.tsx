@@ -177,12 +177,6 @@ export const TeamEditor = () => {
               activePokemon={activePokemon.value}
               species={speciesList[activeSlot - 1] as Species}
             />
-            {/* <PokemonEditor */}
-            {/*   pokemon={activePokemon.species} */}
-            {/*   onUpdate={(updates) => updatePokemon(activePokemonIndex, updates)} */}
-            {/*   onClose={() => setIsEditingPokemon(false)} */}
-            {/*   typeColors={typeColors} */}
-            {/* /> */}
           </DialogContent>
         </Dialog>
       )}
