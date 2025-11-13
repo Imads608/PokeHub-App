@@ -98,7 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Send properties to the client, like an access token and user id from a provider
       //session.accessToken = token.accessToken;
       //session.idToken = token.idToken;
-      console.log('Session:', session, token);
+      logger.info('Session:', session, token);
       session.error = token.error;
       if (token.user) {
         session.user = { ...token.user, emailVerified: new Date() };
