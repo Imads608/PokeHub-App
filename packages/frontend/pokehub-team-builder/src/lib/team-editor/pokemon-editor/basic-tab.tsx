@@ -3,6 +3,7 @@ import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
   getItems,
+  getNatureDescription,
   getNatures,
   getPokemonAbilitiesDetailsFromSpecies,
 } from '@pokehub/frontend/dex-data-provider';
@@ -19,7 +20,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
   Slider,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
@@ -28,7 +28,7 @@ import {
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface BasicTabProps {
   pokemon: PokemonInTeam;
@@ -67,6 +67,31 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   // Popover open states
   const [isItemOpen, setIsItemOpen] = useState(false);
   const [isNatureOpen, setIsNatureOpen] = useState(false);
+
+  // Track if we've already scrolled for this popover open
+  const hasScrolledRef = useRef(false);
+
+  // Reset scroll flag when popover state changes
+  useEffect(() => {
+    if (isItemOpen) {
+      hasScrolledRef.current = false;
+    }
+  }, [isItemOpen]);
+
+  // Callback ref that scrolls when the element is attached
+  const scrollToSelectedItem = (node: HTMLButtonElement | null) => {
+    if (node && isItemOpen && !hasScrolledRef.current) {
+      hasScrolledRef.current = true;
+      node.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  };
+
+  useEffect(() => {
+    abilities.length > 0 && abilities[0] && setAbility(abilities[0].name);
+  }, []);
 
   // Update filtered items when search changes
   useEffect(() => {
@@ -140,22 +165,26 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
             value={pokemon.ability}
             onValueChange={(value) => setAbility(value as AbilityName)}
           >
-            <SelectTrigger id="ability" className="mt-1">
-              <SelectValue placeholder="Select ability" />
+            <SelectTrigger id="ability" className="mt-1 h-11">
+              <div className="flex items-center">
+                <span className="truncate">
+                  {pokemon.ability || 'Select ability'}
+                </span>
+              </div>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="w-[400px]">
               <ScrollArea className="h-[200px]">
                 {abilities.map(
                   (ability) =>
                     ability && (
                       <SelectItem
                         key={ability.id}
-                        value={ability.id}
+                        value={ability.name}
                         className="py-2"
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{ability.name}</span>
-                          <span className="line-clamp-2 text-xs text-muted-foreground">
+                          <span className="whitespace-normal break-words text-xs leading-tight text-muted-foreground">
                             {ability.desc}
                           </span>
                         </div>
@@ -192,7 +221,7 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
+            <PopoverContent forceMount className="w-[400px] p-0" align="start">
               <div className="flex items-center border-b px-3 py-2">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <Input
@@ -202,7 +231,10 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                   className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
-              <ScrollArea className="h-[300px]" onScrollCapture={handleItemsScroll}>
+              <ScrollArea
+                className="h-[300px]"
+                onScrollCapture={handleItemsScroll}
+              >
                 <div className="p-1">
                   <Button
                     variant="ghost"
@@ -229,6 +261,11 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                     filteredItems.slice(0, itemsToShow).map((item) => (
                       <Button
                         key={item.name}
+                        ref={
+                          pokemon.item === item.name
+                            ? scrollToSelectedItem
+                            : null
+                        }
                         variant="ghost"
                         onClick={() => {
                           setItem(item.name as ItemName);
@@ -301,7 +338,10 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                   className="h-8 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
-              <ScrollArea className="h-[300px]" onScrollCapture={handleItemsScroll}>
+              <ScrollArea
+                className="h-[300px]"
+                onScrollCapture={handleItemsScroll}
+              >
                 <div className="p-1">
                   {filteredNatures.length === 0 ? (
                     <div className="py-6 text-center text-sm text-muted-foreground">
@@ -331,7 +371,10 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
                               {nature.name}
                             </span>
                             <span className="whitespace-normal break-words text-xs leading-tight text-muted-foreground group-hover:text-accent-foreground">
-                              {nature.desc}
+                              {getNatureDescription(
+                                nature.name,
+                                generation.value
+                              )}
                             </span>
                           </div>
                         </div>

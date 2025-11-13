@@ -121,6 +121,22 @@ export function getNatures(generation?: GenerationNum) {
   return natures;
 }
 
+export const getNatureDescription = (
+  nature: NatureName,
+  generation?: GenerationNum
+) => {
+  const natureDetails = getNatureDetails(nature, generation);
+  const statIncrease = natureDetails?.plus;
+  const statDecrease = natureDetails?.minus;
+
+  if (statIncrease && statDecrease) {
+    return `Increases ${getStatName(
+      statIncrease
+    )} while decreasing ${getStatName(statDecrease)}.`;
+  }
+  return 'No stat changes.';
+};
+
 export function getStatName(statId: StatID, generation?: GenerationNum) {
   const moddedDex = getModdedDex(generation);
   return moddedDex.stats.names[statId];
