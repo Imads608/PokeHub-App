@@ -79,3 +79,4 @@ export {
   PopoverTrigger,
   PopoverContent,
 } from './lib/popover/popover';
+export { Skeleton } from './lib/skeleton/skeleton';

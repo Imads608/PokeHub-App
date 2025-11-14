@@ -5,6 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   ScrollArea,
+  Skeleton,
 } from '@pokehub/frontend/shared-ui-components';
 import {
   useDebouncedSearch,
@@ -29,6 +30,8 @@ interface SearchableSelectProps<T extends SearchableSelectItem> {
   renderTriggerContent?: (selectedItem: T | undefined) => React.ReactNode;
   renderItemContent?: (item: T, isSelected: boolean) => React.ReactNode;
   filterItems?: (items: T[], searchTerm: string) => T[];
+  dropdownWidth?: string;
+  isLoading?: boolean;
 }
 
 export function SearchableSelect<T extends SearchableSelectItem>({
@@ -42,6 +45,8 @@ export function SearchableSelect<T extends SearchableSelectItem>({
   renderTriggerContent,
   renderItemContent,
   filterItems,
+  dropdownWidth = 'w-[400px]',
+  isLoading = false,
 }: SearchableSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const { searchTerm, setSearchTerm, debouncedSearchTerm } = useDebouncedSearch(
@@ -141,7 +146,7 @@ export function SearchableSelect<T extends SearchableSelectItem>({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className={`${dropdownWidth} p-0`} align="start">
           <div className="flex items-center border-b px-3 py-2">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Input
@@ -153,46 +158,66 @@ export function SearchableSelect<T extends SearchableSelectItem>({
           </div>
           <ScrollArea className="h-[300px]" onScrollCapture={handleScroll}>
             <div className="p-1">
-              {onClear && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    onClear();
-                    setIsOpen(false);
-                  }}
-                  className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
-                >
-                  <Check
-                    className={`mr-2 h-4 w-4 ${
-                      !value ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-                  <span className="font-medium group-hover:text-accent-foreground">
-                    None
-                  </span>
-                </Button>
-              )}
-              {filteredItems.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No {label.toLowerCase()} found.
-                </div>
+              {isLoading ? (
+                // Loading skeleton
+                <>
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 rounded-sm px-2 py-3"
+                    >
+                      <Skeleton className="h-4 w-4 shrink-0" />
+                      <div className="flex flex-1 flex-col gap-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    </div>
+                  ))}
+                </>
               ) : (
-                filteredItems.slice(0, itemsToShow).map((item) => (
-                  <Button
-                    key={item.name}
-                    ref={value === item.name ? scrollToSelectedItem : null}
-                    variant="ghost"
-                    onClick={() => {
-                      onValueChange(item.name);
-                      setIsOpen(false);
-                    }}
-                    className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
-                  >
-                    {renderItemContent
-                      ? renderItemContent(item, value === item.name)
-                      : defaultRenderItemContent(item, value === item.name)}
-                  </Button>
-                ))
+                <>
+                  {onClear && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        onClear();
+                        setIsOpen(false);
+                      }}
+                      className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <Check
+                        className={`mr-2 h-4 w-4 ${
+                          !value ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      <span className="font-medium group-hover:text-accent-foreground">
+                        None
+                      </span>
+                    </Button>
+                  )}
+                  {filteredItems.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No {label.toLowerCase()} found.
+                    </div>
+                  ) : (
+                    filteredItems.slice(0, itemsToShow).map((item) => (
+                      <Button
+                        key={item.name}
+                        ref={value === item.name ? scrollToSelectedItem : null}
+                        variant="ghost"
+                        onClick={() => {
+                          onValueChange(item.name);
+                          setIsOpen(false);
+                        }}
+                        className="group relative flex h-auto w-full cursor-default select-none items-center justify-start rounded-sm px-2 py-3 text-sm font-normal outline-none hover:bg-accent hover:text-accent-foreground"
+                      >
+                        {renderItemContent
+                          ? renderItemContent(item, value === item.name)
+                          : defaultRenderItemContent(item, value === item.name)}
+                      </Button>
+                    ))
+                  )}
+                </>
               )}
             </div>
           </ScrollArea>
