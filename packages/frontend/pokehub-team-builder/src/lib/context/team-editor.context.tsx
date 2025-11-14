@@ -7,6 +7,7 @@ import type {
   MoveName,
   NatureName,
   Species,
+  StatID,
 } from '@pkmn/dex';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import { createContext, useCallback, useContext } from 'react';
@@ -115,6 +116,34 @@ export const useTeamEditorContext = () => {
     [activePokemon]
   );
 
+  const setEV = useCallback(
+    (stat: StatID, value: number) => {
+      if (!activePokemon.value) return;
+
+      const currentTotal = Object.values(activePokemon.value.evs).reduce(
+        (sum, ev) => sum + ev,
+        0
+      );
+      const currentStatValue = activePokemon.value.evs[stat];
+      const difference = value - currentStatValue;
+
+      // Ensure total EVs don't exceed 510
+      if (currentTotal + difference > 510) {
+        value = currentStatValue + (510 - currentTotal);
+      }
+
+      // Ensure individual stat doesn't exceed 252
+      value = Math.min(value, 252);
+
+      // Ensure value is not negative
+      value = Math.max(value, 0);
+
+      const newEvs = { ...activePokemon.value.evs, [stat]: value };
+      activePokemon.setValue({ ...activePokemon.value, evs: newEvs });
+    },
+    [activePokemon]
+  );
+
   return {
     ...restProps,
     activePokemon: {
@@ -126,6 +155,7 @@ export const useTeamEditorContext = () => {
       setName,
       setNature,
       setMove,
+      setEV,
     },
   };
 };
