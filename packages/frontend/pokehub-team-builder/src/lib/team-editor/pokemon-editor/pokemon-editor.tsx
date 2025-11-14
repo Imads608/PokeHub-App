@@ -2,6 +2,7 @@
 
 import { BasicTab } from './basic-tab';
 import { MovesTab } from './moves-tab';
+import { EVsTab } from './evs-tab';
 import type { Species } from '@pkmn/dex';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import {
@@ -195,6 +196,9 @@ export function PokemonEditor({ activePokemon, species }: PokemonEditorProps) {
 
         {/* Moves Tab */}
         <MovesTab species={species} pokemon={activePokemon} />
+
+        {/* EVs Tab */}
+        <EVsTab pokemon={activePokemon} />
 
         {/* <TabsContent value="moves" className="space-y-4 py-4"> */}
         {/*   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> */}
