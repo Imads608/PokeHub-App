@@ -1,6 +1,7 @@
 import type {
   AbilityName,
   GenerationNum,
+  Item,
   ItemName,
   MoveName,
   NatureName,
@@ -97,10 +98,10 @@ export function getItemDetails(itemName: ItemName, generation?: GenerationNum) {
   return itemDetails;
 }
 
-export function getItems(generation?: GenerationNum) {
+export function getItems(generation?: GenerationNum): Item[] {
   const moddedDex = getModdedDex(generation);
   const items = moddedDex.items.all();
-  return items;
+  return items as Item[];
 }
 
 export function getNatureDetails(

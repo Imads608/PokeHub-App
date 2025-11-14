@@ -55,7 +55,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               Date.now() + data.tokens.accessToken.expirySeconds * 1000,
           };
         } catch (err) {
-          logger.error('Error getting user and tokens: ', err);
+          logger.error(
+            `Error getting user and tokens: ${(err as Error).message}`,
+            err
+          );
           throw new TypeError('Error getting user and tokens');
         }
       } else if (Date.now() < token.expiresAt) {
