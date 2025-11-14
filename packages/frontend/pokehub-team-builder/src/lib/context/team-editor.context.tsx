@@ -1,7 +1,13 @@
 'use client';
 
 import type { TeamEditorContextModel } from './team-editor.context.model';
-import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
+import type {
+  AbilityName,
+  ItemName,
+  MoveName,
+  NatureName,
+  Species,
+} from '@pkmn/dex';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import { createContext, useCallback, useContext } from 'react';
 
@@ -99,6 +105,16 @@ export const useTeamEditorContext = () => {
     [activePokemon]
   );
 
+  const setMove = useCallback(
+    (index: number, move: MoveName | '') => {
+      if (!activePokemon.value) return;
+      const newMoves = [...activePokemon.value.moves];
+      newMoves[index] = move as MoveName;
+      activePokemon.setValue({ ...activePokemon.value, moves: newMoves });
+    },
+    [activePokemon]
+  );
+
   return {
     ...restProps,
     activePokemon: {
@@ -109,6 +125,7 @@ export const useTeamEditorContext = () => {
       setAbility,
       setName,
       setNature,
+      setMove,
     },
   };
 };
@@ -137,7 +154,7 @@ const createNewPokemonFromSpecies = (species: Species): PokemonInTeam => {
       spe: 0,
     },
     level: 50,
-    moves: [],
+    moves: ['', '', '', ''] as MoveName[],
     nature: 'Adamant',
   };
 };
