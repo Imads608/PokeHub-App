@@ -15,6 +15,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.2",
+    "@next/bundle-analyzer": "^16.0.3",
     "@pkmn/data": "^0.9.33",
     "@pkmn/dex": "^0.9.33",
     "@pkmn/img": "^0.2.37",

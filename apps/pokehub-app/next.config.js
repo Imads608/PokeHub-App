@@ -14,9 +14,14 @@ const nextConfig = {
   output: undefined,
 };
 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const plugins = [
   // Add more Next.js plugins to this list if needed.
   withNx,
+  withBundleAnalyzer,
 ];
 
 module.exports = composePlugins(...plugins)(nextConfig);

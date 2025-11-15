@@ -1,11 +1,10 @@
 import { getPokemonCompetitive } from '../api/pokemon-dex.api';
-import type { GenerationNum } from '@pkmn/dex';
-import type { BattleTier } from '@pokehub/frontend/pokemon-types';
+import type { GenerationNum, Tier } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
 
 export interface PokemonByCompetiveFilter {
   generation: GenerationNum;
-  tier: BattleTier<'Singles' | 'Doubles'>;
+  tier: Tier.Singles | Tier.Doubles;
 }
 
 export const useGetPokemonByCompetiveFilter = ({
