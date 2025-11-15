@@ -13,7 +13,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { Check } from 'lucide-react';
 
 interface PokemonEditorProps {
   activePokemon: PokemonInTeam;
@@ -53,10 +52,7 @@ export function PokemonEditor({
         <Button variant="outline" onClick={() => console.log('implement')}>
           Cancel
         </Button>
-        <Button onClick={() => addPokemon()}>
-          <Check className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
+        <Button onClick={() => addPokemon()}>Add to Team</Button>
       </DialogFooter>
     </>
   );
