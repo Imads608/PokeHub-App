@@ -14,7 +14,7 @@ const logger = getLogger('Authjs');
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
   callbacks: {
-    async jwt({ token, account, profile, trigger, session }) {
+    async jwt({ token, account, /*profile,*/ trigger, session }) {
       // Persist the OAuth access token to the token right after signin
       //console.log('Got Data back', token, account, profile);
       // On Initial Sign In

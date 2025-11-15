@@ -78,7 +78,13 @@ export const TeamEditor = () => {
       tier: tier.value,
       pokemon: teamPokemon.value,
     });
-  }, [teamName.value, generation.value, format.value, tier.value, teamPokemon.value]);
+  }, [
+    teamName.value,
+    generation.value,
+    format.value,
+    tier.value,
+    teamPokemon.value,
+  ]);
 
   const onPokemonSelected = useCallback(
     (pokemon: Species | PokemonInTeam, slot?: number) => {
@@ -144,19 +150,6 @@ export const TeamEditor = () => {
         ))}
       </div>
 
-      {/* {/* Success Message */}
-      {/* {showSuccessMessage && ( */}
-      {/*   <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5"> */}
-      {/*     <Alert className="border-green-500 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300"> */}
-      {/*       <Sparkles className="h-4 w-4" /> */}
-      {/*       <AlertTitle>Success!</AlertTitle> */}
-      {/*       <AlertDescription> */}
-      {/*         {teamName} has been saved successfully. */}
-      {/*       </AlertDescription> */}
-      {/*     </Alert> */}
-      {/*   </div> */}
-      {/* )} */}
-      {/**/}
       {/* Pokémon Selector Dialog */}
       <Dialog
         open={isPokemonSelectorOpen}
@@ -173,7 +166,7 @@ export const TeamEditor = () => {
             fallback={
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+                  <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   <p className="text-sm text-muted-foreground">
                     Loading Pokémon list...
                   </p>
@@ -242,7 +235,7 @@ export const TeamEditor = () => {
               fallback={
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+                    <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">
                       Loading editor...
                     </p>
