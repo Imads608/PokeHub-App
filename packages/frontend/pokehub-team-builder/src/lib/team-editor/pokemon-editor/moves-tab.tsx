@@ -5,10 +5,14 @@ import {
   usePokemonLearnset,
   usePokemonMovesFromLearnset,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
-import { TabsContent } from '@pokehub/frontend/shared-ui-components';
+import { hasAtLeastOneMove, type PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import {
+  Alert,
+  AlertDescription,
+  TabsContent,
+} from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
-import { Check } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 
 export interface MovesTabProps {
   pokemon: PokemonInTeam;
@@ -49,8 +53,18 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
     return moves.filter((move) => !selectedMoves.includes(move.name as MoveName));
   };
 
+  const hasValidMoves = hasAtLeastOneMove(pokemon.moves);
+
   return (
     <TabsContent value="moves" className="space-y-4 py-4">
+      {!hasValidMoves && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Pokemon must have at least one move selected
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[0, 1, 2, 3].map((index) => (
           <SearchableSelect

@@ -4,7 +4,7 @@
 
 The Team Builder feature allows users to create and customize competitive Pokemon teams. It provides an intuitive interface for configuring Pokemon stats, moves, abilities, items, and other battle-relevant attributes.
 
-**Status**: In Development (Tabs 1-4 of 4 completed)
+**Status**: In Development (Core editing complete, validation implemented, persistence pending)
 
 ## Architecture
 
@@ -43,6 +43,8 @@ team-editor/
 - `setMove(index, move)` - Update move at specific slot (0-3)
 - `setEV(stat, value)` - Update EV for specific stat (validates 510 total, 252 max)
 - `setIV(stat, value)` - Update IV for specific stat (validates 0-31 range)
+- `clearTeam()` - Reset all Pokemon slots to undefined
+- `hasAnyPokemon()` - Check if team has any Pokemon
 
 ### Data Flow
 
@@ -87,6 +89,10 @@ team-editor/
 - **Searchable dropdown** for each slot
 - **Generation-aware learnset** - Uses `usePokemonLearnset` and `usePokemonMovesFromLearnset`
 - **Loading states** - Skeleton shimmer while fetching moves
+- **Duplicate prevention** - Cannot select the same move more than once
+  - Each slot filters out moves selected in other slots
+  - Cleared moves become available again
+- **Inline validation** - Error alert when no moves selected
 - **Rich move display**:
   - Type badge with color
   - Category (Physical/Special/Status)
@@ -102,6 +108,8 @@ team-editor/
 - Type colors from `@pokehub/frontend/shared-utils`
 - Loading state tracked via `isLoading` prop
 - Check icon matches other tabs' styling
+- `getAvailableMovesForSlot()` filters duplicates per slot
+- `hasAtLeastOneMove()` validates move requirement
 
 ### 3. EVs Tab ✅
 
@@ -148,6 +156,99 @@ team-editor/
 - Validation: 0-31 range per stat
 - Preset buttons use `setValue` to update all stats atomically
 - No total limit (unlike EVs)
+
+## Validation & Change Tracking ✅
+
+### Team Validation System
+
+**Purpose**: Ensure teams meet format requirements before saving
+
+**Implementation**:
+- **Zod Schemas** (`pokemon-team.validation.ts`):
+  - `pokemonInTeamSchema` - Validates individual Pokemon
+  - `pokemonTeamSchema` - Validates entire team
+
+**Validation Rules**:
+- **Required Fields**: Species, ability must be non-empty
+- **Moves**: At least 1 move required (max 4)
+- **EVs**: Total cannot exceed 510, max 252 per stat
+- **IVs**: Must be 0-31 range
+- **Team Name**: Optional but recommended
+
+**Validation Functions**:
+```typescript
+validateTeam(team): ValidationResult
+validatePokemon(pokemon, slotIndex): ValidationResult
+getPokemonSlotErrors(result, slotIndex): ValidationError[]
+getTeamLevelErrors(result): ValidationError[]
+hasAtLeastOneMove(moves): boolean
+```
+
+### Change Tracking
+
+**Purpose**: Detect unsaved changes to enable/disable Save button
+
+**Hook**: `useTeamChanges(currentTeamState)`
+
+**Features**:
+- Deep comparison of team state vs. saved state
+- Tracks all Pokemon properties (moves, EVs, IVs, etc.)
+- Provides change list for debugging
+
+**Returns**:
+```typescript
+{
+  hasChanges: boolean           // True if team differs from saved state
+  markAsSaved: () => void       // Update saved baseline after successful save
+  resetToSaved: () => TeamState // Discard changes, return to saved state
+  getChanges: string[]          // List of what changed
+  savedState: TeamState         // The baseline for comparison
+}
+```
+
+### UI Integration
+
+**1. Save Button** (`team-configuration-section.tsx`)
+- Disabled when:
+  - No changes detected
+  - Validation errors exist
+  - Save operation in progress
+- Tooltip explains why button is disabled
+- Shows loading spinner during save
+- Validates before allowing save attempt
+
+**2. Validation Summary Component**
+- Displays all validation errors above Save button
+- Groups errors by Pokemon slot (e.g., "Slot 1 (Pikachu)")
+- Shows team-level errors separately
+- Only visible when validation fails
+
+**3. Pokemon Card Indicators**
+- **Red border** when Pokemon has validation errors
+- **AlertCircle icon** next to Pokemon name
+- **Tooltip** shows all errors on hover
+- Provides immediate visual feedback
+
+**4. Inline Tab Validation**
+- Moves tab shows alert when no moves selected
+- Errors appear contextually where they occur
+
+### Generation Protection
+
+**Purpose**: Prevent accidental team loss when switching generations
+
+**Features**:
+- **Generation Lock**: Cannot change generation when team has Pokemon
+- **Confirmation Dialog**: Warns user that team will be cleared
+  - Explains why clearing is necessary (moves/abilities vary by generation)
+  - Shows target generation
+  - Requires explicit "Clear Team & Change Generation" action
+- **Success Feedback**: Toast notification confirms generation change
+- **Free Changes**: Generation can be changed freely when team is empty
+
+**Context Methods**:
+- `clearTeam()` - Resets all 6 Pokemon slots to undefined
+- `hasAnyPokemon()` - Returns true if any slot has a Pokemon
 
 ## Shared Components
 
@@ -289,18 +390,12 @@ interface PokemonInTeam extends PokemonSet {
    - Not currently handled
    - May need to be in Pokemon selector or Basic tab
 
-6. **Validation**
-   - No validation that Pokemon has at least 1 move
-   - No validation that required fields are filled
-   - No error states
-
-7. **Team Management**
+6. **Team Management**
    - No way to remove Pokemon from team
    - No way to reorder Pokemon
    - No team export/import
-   - No team name editing UI
 
-8. **Persistence**
+7. **Persistence**
    - No saving to backend
    - No local storage
    - Teams lost on page refresh
@@ -311,11 +406,7 @@ interface PokemonInTeam extends PokemonSet {
    - When changing generation, EVs in non-existent stats remain
    - Should reset or redistribute EVs when generation changes
 
-2. **Move Slots**
-   - Empty move slots show as empty strings
-   - Should have better empty state UI
-
-3. **Loading States**
+2. **Loading States**
    - Only Moves tab has loading state
    - Items/Natures could also benefit from loading indicators (though they're fast)
 
@@ -325,6 +416,10 @@ interface PokemonInTeam extends PokemonSet {
 - Single source of truth for team state
 - Exposes setter methods for controlled updates
 - Uses callbacks for performance
+- Team management methods:
+  - `clearTeam()` - Reset all Pokemon slots
+  - `hasAnyPokemon()` - Check if team has any Pokemon
+  - `addActivePokemonToTeam(slot)` - Add current Pokemon to team
 
 ### Component Composition
 - Tabs are independent components
@@ -397,7 +492,7 @@ interface PokemonInTeam extends PokemonSet {
    - Show shiny variant
    - Animate on hover
 
-6. **Team Validation**
+6. **Advanced Validation**
    - Check tier legality
    - Validate moveset (no illegal move combos)
    - Check ability legality
@@ -422,6 +517,8 @@ interface PokemonInTeam extends PokemonSet {
 - `useDebouncedSearch` - Debounced search input
 - `useInfiniteScroll` - Paginated list rendering
 - `useTeamEditorContext` - Access team state
+- `useTeamChanges` - Track unsaved changes to team
+- `useTiersStaticData` - Get available tiers for Singles/Doubles
 
 ## File Locations
 
@@ -429,6 +526,9 @@ interface PokemonInTeam extends PokemonSet {
 packages/frontend/pokehub-team-builder/src/lib/
 ├── team-editor/
 │   ├── team-editor.tsx
+│   ├── team-configuration-section.tsx
+│   ├── team-validation-summary.tsx
+│   ├── pokemon-card.tsx
 │   ├── pokemon-editor/
 │   │   ├── pokemon-editor.tsx
 │   │   ├── basic-tab.tsx
@@ -436,15 +536,35 @@ packages/frontend/pokehub-team-builder/src/lib/
 │   │   ├── evs-tab.tsx
 │   │   ├── ivs-tab.tsx
 │   │   └── searchable-select.tsx
-│   └── context/
-│       └── team-editor.context.tsx
+│   ├── context/
+│   │   └── team-editor.context.tsx
+│   └── hooks/
+│       ├── useTeamChanges.ts
+│       └── useTiersStaticData.tsx
 └── ...
+
+packages/frontend/pokemon-types/src/lib/
+├── pokemon-team.ts
+├── pokemon-team.validation.ts
+└── index.ts
 
 packages/frontend/shared-ui-components/src/lib/skeleton/
 └── skeleton.tsx
 ```
 
 ## Changelog
+
+### 2025-11-14
+- ✅ Implemented comprehensive team validation system with Zod schemas
+- ✅ Added change tracking hook for detecting unsaved changes
+- ✅ Created validation summary component with error grouping
+- ✅ Added visual error indicators to Pokemon cards (border, icon, tooltip)
+- ✅ Implemented duplicate move prevention in Moves tab
+- ✅ Added inline validation to Moves tab (requires at least one move)
+- ✅ Enhanced Save button with validation + change tracking
+- ✅ Added generation lock with confirmation dialog
+- ✅ Implemented team clearing on generation change
+- ✅ Added toast notifications for user feedback
 
 ### 2025-01-14
 - ✅ Created Basic Tab with ability, item, nature selection
