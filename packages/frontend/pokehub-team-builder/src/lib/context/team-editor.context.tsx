@@ -144,6 +144,19 @@ export const useTeamEditorContext = () => {
     [activePokemon]
   );
 
+  const setIV = useCallback(
+    (stat: StatID, value: number) => {
+      if (!activePokemon.value) return;
+
+      // Ensure IV is between 0 and 31
+      value = Math.max(0, Math.min(31, value));
+
+      const newIvs = { ...activePokemon.value.ivs, [stat]: value };
+      activePokemon.setValue({ ...activePokemon.value, ivs: newIvs });
+    },
+    [activePokemon]
+  );
+
   return {
     ...restProps,
     activePokemon: {
@@ -156,6 +169,7 @@ export const useTeamEditorContext = () => {
       setNature,
       setMove,
       setEV,
+      setIV,
     },
   };
 };
