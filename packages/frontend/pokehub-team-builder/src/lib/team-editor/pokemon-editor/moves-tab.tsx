@@ -38,6 +38,17 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
   const moves = movesData ? Object.values(movesData) : [];
   const isLoading = isLearnsetLoading || isMovesLoading;
 
+  // Filter out already-selected moves for each slot
+  const getAvailableMovesForSlot = (slotIndex: number) => {
+    // Get moves selected in OTHER slots (exclude current slot and empty moves)
+    const selectedMoves = pokemon.moves.filter(
+      (move, i) => i !== slotIndex && move !== ''
+    );
+
+    // Filter out already-selected moves
+    return moves.filter((move) => !selectedMoves.includes(move.name as MoveName));
+  };
+
   return (
     <TabsContent value="moves" className="space-y-4 py-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -48,7 +59,7 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
             label={`Move ${index + 1}`}
             placeholder="Select move"
             value={pokemon.moves[index]}
-            items={moves}
+            items={getAvailableMovesForSlot(index)}
             onValueChange={(value) => setMove(index, value as MoveName)}
             onClear={() => setMove(index, '' as MoveName)}
             dropdownWidth="w-[550px]"
