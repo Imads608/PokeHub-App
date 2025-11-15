@@ -117,7 +117,7 @@ export function getNatureDetails(
 }
 
 export function getNatures(generation?: GenerationNum) {
-  const moddedDex = getModdedDex();
+  const moddedDex = getModdedDex(generation);
   const natures = moddedDex.natures.all();
   return natures;
 }

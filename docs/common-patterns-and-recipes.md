@@ -17,6 +17,7 @@ This guide provides copy-paste-able code snippets for common patterns used throu
 7. [Debouncing & Throttling](#debouncing--throttling)
 8. [Authentication Patterns](#authentication-patterns)
 9. [Pokemon-Specific Patterns](#pokemon-specific-patterns)
+10. [Validation & Change Tracking Patterns](#validation--change-tracking-patterns)
 
 ---
 
@@ -966,6 +967,433 @@ export const EVSlider = ({ stat, value, onChange }: {
         />
       </div>
     </div>
+  );
+};
+```
+
+---
+
+## Validation & Change Tracking Patterns
+
+### Team Validation with Zod
+
+```typescript
+import { z } from 'zod';
+
+// 1. Define schemas with validation rules
+const pokemonInTeamSchema = z.object({
+  species: z.string().min(1, 'Species is required'),
+  ability: z.string().min(1, 'Ability is required'),
+  item: z.string(),
+  nature: z.string().min(1, 'Nature is required'),
+  gender: z.string(),
+  name: z.string(),
+  level: z.number().min(1).max(100),
+  moves: z
+    .array(z.string())
+    .min(1, 'Pokemon must have at least one move')
+    .max(4, 'Pokemon cannot have more than 4 moves')
+    .refine(
+      (moves) => moves.filter((m) => m !== '').length >= 1,
+      'Pokemon must have at least one move'
+    ),
+  evs: z
+    .object({
+      hp: z.number().min(0).max(252),
+      atk: z.number().min(0).max(252),
+      def: z.number().min(0).max(252),
+      spa: z.number().min(0).max(252),
+      spd: z.number().min(0).max(252),
+      spe: z.number().min(0).max(252),
+    })
+    .refine(
+      (evs) => Object.values(evs).reduce((sum, ev) => sum + ev, 0) <= 510,
+      { message: 'Total EVs cannot exceed 510' }
+    ),
+  ivs: z.object({
+    hp: z.number().min(0).max(31),
+    atk: z.number().min(0).max(31),
+    def: z.number().min(0).max(31),
+    spa: z.number().min(0).max(31),
+    spd: z.number().min(0).max(31),
+    spe: z.number().min(0).max(31),
+  }),
+});
+
+const teamSchema = z.object({
+  name: z.string().optional(),
+  generation: z.number(),
+  format: z.enum(['Singles', 'Doubles']),
+  tier: z.string(),
+  pokemon: z.array(pokemonInTeamSchema.optional()).length(6),
+});
+
+// 2. Create validation result type
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Array<{
+    path: (string | number)[];
+    message: string;
+  }>;
+}
+
+// 3. Validation functions
+export const validateTeam = (team: PokemonTeam): ValidationResult => {
+  try {
+    teamSchema.parse(team);
+    return { isValid: true, errors: [] };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        isValid: false,
+        errors: error.errors.map((err) => ({
+          path: err.path,
+          message: err.message,
+        })),
+      };
+    }
+    throw error;
+  }
+};
+
+// 4. Helper functions to get errors by slot
+export const getPokemonSlotErrors = (
+  result: ValidationResult,
+  slotIndex: number
+) => {
+  return result.errors.filter((error) => error.path[1] === slotIndex);
+};
+
+export const getTeamLevelErrors = (result: ValidationResult) => {
+  return result.errors.filter(
+    (error) => typeof error.path[1] !== 'number'
+  );
+};
+
+// 5. Usage in component
+const MyTeamEditor = () => {
+  const validationResult = useMemo(() => {
+    return validateTeam(currentTeam);
+  }, [currentTeam]);
+
+  const canSave = validationResult.isValid && hasChanges;
+
+  return (
+    <div>
+      {!validationResult.isValid && (
+        <Alert variant="destructive">
+          <AlertTitle>Validation Errors</AlertTitle>
+          <AlertDescription>
+            {validationResult.errors.map((error, i) => (
+              <div key={i}>{error.message}</div>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
+      <Button disabled={!canSave} onClick={handleSave}>
+        Save Team
+      </Button>
+    </div>
+  );
+};
+```
+
+### Change Tracking Hook
+
+```typescript
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+export interface TeamState {
+  teamName?: string;
+  generation: number;
+  format: string;
+  tier: string;
+  pokemon: (PokemonInTeam | undefined)[];
+}
+
+export const useTeamChanges = (currentTeamState: TeamState) => {
+  // Store the initial/saved state
+  const [savedState, setSavedState] = useState<TeamState>(currentTeamState);
+  const isFirstRender = useRef(true);
+
+  // Initialize saved state on mount
+  useEffect(() => {
+    if (isFirstRender.current) {
+      setSavedState(currentTeamState);
+      isFirstRender.current = false;
+    }
+  }, []);
+
+  // Deep comparison of two team states
+  const areTeamsEqual = useCallback(
+    (team1: TeamState, team2: TeamState): boolean => {
+      // Compare team configuration
+      if (
+        team1.teamName !== team2.teamName ||
+        team1.generation !== team2.generation ||
+        team1.format !== team2.format ||
+        team1.tier !== team2.tier
+      ) {
+        return false;
+      }
+
+      // Compare Pokemon array
+      for (let i = 0; i < team1.pokemon.length; i++) {
+        const p1 = team1.pokemon[i];
+        const p2 = team2.pokemon[i];
+
+        if (p1 === undefined && p2 === undefined) continue;
+        if (p1 === undefined || p2 === undefined) return false;
+
+        // Deep compare Pokemon properties (moves, EVs, IVs, etc.)
+        if (!arePokemonEqual(p1, p2)) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+    []
+  );
+
+  const arePokemonEqual = (
+    p1: PokemonInTeam,
+    p2: PokemonInTeam
+  ): boolean => {
+    // Compare basic properties
+    if (
+      p1.species !== p2.species ||
+      p1.ability !== p2.ability ||
+      p1.item !== p2.item ||
+      p1.nature !== p2.nature ||
+      p1.level !== p2.level
+    ) {
+      return false;
+    }
+
+    // Compare moves (order matters)
+    if (p1.moves.length !== p2.moves.length) return false;
+    for (let i = 0; i < p1.moves.length; i++) {
+      if (p1.moves[i] !== p2.moves[i]) return false;
+    }
+
+    // Compare EVs and IVs
+    const stats = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+    for (const stat of stats) {
+      if (p1.evs[stat] !== p2.evs[stat]) return false;
+      if (p1.ivs[stat] !== p2.ivs[stat]) return false;
+    }
+
+    return true;
+  };
+
+  // Check if there are unsaved changes
+  const hasChanges = useCallback((): boolean => {
+    return !areTeamsEqual(currentTeamState, savedState);
+  }, [currentTeamState, savedState, areTeamsEqual]);
+
+  // Mark current state as saved (call after successful save)
+  const markAsSaved = useCallback(() => {
+    setSavedState(currentTeamState);
+  }, [currentTeamState]);
+
+  // Reset to last saved state (discard changes)
+  const resetToSaved = useCallback((): TeamState => {
+    return savedState;
+  }, [savedState]);
+
+  return {
+    hasChanges: hasChanges(),
+    markAsSaved,
+    resetToSaved,
+    savedState,
+  };
+};
+
+// Usage
+const MyComponent = () => {
+  const { hasChanges, markAsSaved } = useTeamChanges({
+    teamName: teamName,
+    generation: generation,
+    format: format,
+    tier: tier,
+    pokemon: teamPokemon,
+  });
+
+  const handleSave = async () => {
+    await saveToBackend();
+    markAsSaved(); // Update baseline after successful save
+  };
+
+  return (
+    <Button disabled={!hasChanges} onClick={handleSave}>
+      Save Changes
+    </Button>
+  );
+};
+```
+
+### Inline Validation with Error Display
+
+```typescript
+import { useMemo } from 'react';
+import { Alert, AlertDescription } from '@pokehub/frontend/shared-ui-components';
+import { AlertCircle } from 'lucide-react';
+
+export const MovesTab = ({ pokemon }: { pokemon: PokemonInTeam }) => {
+  // Validate inline
+  const hasValidMoves = useMemo(() => {
+    return pokemon.moves.filter((m) => m !== '').length >= 1;
+  }, [pokemon.moves]);
+
+  return (
+    <div className="space-y-4">
+      {/* Show error inline */}
+      {!hasValidMoves && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Pokemon must have at least one move selected
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Form fields */}
+      <div className="grid grid-cols-2 gap-4">
+        {[0, 1, 2, 3].map((index) => (
+          <MoveSelect key={index} slotIndex={index} pokemon={pokemon} />
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+### Visual Error Indicators on Cards
+
+```typescript
+import { useMemo } from 'react';
+import { Card, Tooltip, TooltipContent, TooltipTrigger } from '@pokehub/frontend/shared-ui-components';
+import { AlertCircle } from 'lucide-react';
+
+export const PokemonCard = ({
+  pokemon,
+  validationResult,
+  slotIndex,
+}: {
+  pokemon: PokemonInTeam;
+  validationResult: ValidationResult;
+  slotIndex: number;
+}) => {
+  // Get errors for this Pokemon
+  const pokemonErrors = useMemo(
+    () => getPokemonSlotErrors(validationResult, slotIndex),
+    [validationResult, slotIndex]
+  );
+  const hasErrors = pokemonErrors.length > 0;
+
+  return (
+    <Card className={hasErrors ? 'border-destructive' : ''}>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{pokemon.species}</span>
+          {hasErrors && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <div className="space-y-1">
+                  <p className="font-medium">Validation Errors:</p>
+                  <ul className="list-disc list-inside">
+                    {pokemonErrors.map((error, index) => (
+                      <li key={index}>{error.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </CardHeader>
+      {/* Card content */}
+    </Card>
+  );
+};
+```
+
+### Confirmation Dialog for Destructive Actions
+
+```typescript
+import { useState, useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Button,
+} from '@pokehub/frontend/shared-ui-components';
+import { AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+
+export const GenerationSelector = () => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingGeneration, setPendingGeneration] = useState<number | null>(null);
+
+  const handleGenerationChange = useCallback((newGen: number) => {
+    // Check if action is destructive
+    if (teamHasPokemon()) {
+      setPendingGeneration(newGen);
+      setShowConfirmDialog(true);
+    } else {
+      // Safe to change
+      setGeneration(newGen);
+    }
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    if (pendingGeneration !== null) {
+      clearTeam();
+      setGeneration(pendingGeneration);
+      toast.success('Team cleared and generation changed', {
+        description: `Switched to Generation ${pendingGeneration}`,
+      });
+      setShowConfirmDialog(false);
+      setPendingGeneration(null);
+    }
+  }, [pendingGeneration]);
+
+  return (
+    <>
+      <Select value={String(generation)} onValueChange={(v) => handleGenerationChange(Number(v))}>
+        {/* Select content */}
+      </Select>
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <DialogTitle>Change Generation?</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Changing generations will <strong>clear your entire team</strong>.
+              All Pokemon, moves, and configurations will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirm}>
+              Clear Team & Change Generation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 ```

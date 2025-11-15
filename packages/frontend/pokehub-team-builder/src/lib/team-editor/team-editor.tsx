@@ -3,13 +3,12 @@
 import { useTeamEditorContext } from '../context/team-editor.context';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
-import { PokemonEditor } from './pokemon-editor/pokemon-editor';
-import { PokemonSelector } from './pokemon-selector/pokemon-selector';
 import { TeamConfigurationSection } from './team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import { validateTeam } from '@pokehub/frontend/pokemon-types';
 import {
   Badge,
   Dialog,
@@ -19,12 +18,32 @@ import {
   DialogTitle,
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
+
+// Lazy load dialog components for better performance
+// webpackPrefetch tells the browser to prefetch these during idle time
+const PokemonSelector = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    './pokemon-selector/pokemon-selector'
+  ).then((mod) => ({
+    default: mod.PokemonSelector,
+  }))
+);
+
+const PokemonEditor = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    './pokemon-editor/pokemon-editor'
+  ).then((mod) => ({
+    default: mod.PokemonEditor,
+  }))
+);
 
 export const TeamEditor = () => {
   // State for team configuration
 
-  const { teamPokemon, generation, tier, activePokemon } =
+  const { teamPokemon, generation, tier, activePokemon, teamName, format } =
     useTeamEditorContext();
   //const [, setIsTeamAnalysisOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(1);
@@ -38,6 +57,28 @@ export const TeamEditor = () => {
     undefined,
     undefined,
   ]);
+
+  // Prefetch functions for hover optimization
+  const prefetchPokemonSelector = useCallback(() => {
+    // Triggers download of PokemonSelector chunk in background
+    import('./pokemon-selector/pokemon-selector');
+  }, []);
+
+  const prefetchPokemonEditor = useCallback(() => {
+    // Triggers download of PokemonEditor chunk in background
+    import('./pokemon-editor/pokemon-editor');
+  }, []);
+
+  // Validate team
+  const validationResult = useMemo(() => {
+    return validateTeam({
+      name: teamName.value,
+      generation: generation.value,
+      format: format.value,
+      tier: tier.value,
+      pokemon: teamPokemon.value,
+    });
+  }, [teamName.value, generation.value, format.value, tier.value, teamPokemon.value]);
 
   const onPokemonSelected = useCallback(
     (pokemon: Species | PokemonInTeam, slot?: number) => {
@@ -84,6 +125,9 @@ export const TeamEditor = () => {
                 generation={generation.value}
                 onRemove={() => console.log('implement')}
                 onEdit={() => onPokemonSelected(pokemon, index + 1)}
+                onEditHover={prefetchPokemonEditor}
+                validationResult={validationResult}
+                slotIndex={index}
               />
             ) : (
               <EmptySlot
@@ -92,6 +136,8 @@ export const TeamEditor = () => {
                   setActiveSlot(index + 1);
                   setIsPokemonSelectorOpen(true);
                 }}
+                onMouseEnter={prefetchPokemonSelector}
+                onFocus={prefetchPokemonSelector}
               />
             )}
           </div>
@@ -123,11 +169,24 @@ export const TeamEditor = () => {
               Choose a Pokémon to add to slot {activeSlot ? activeSlot : ''}
             </DialogDescription>
           </DialogHeader>
-          <PokemonSelector
-            generation={generation.value}
-            tier={tier.value}
-            onPokemonSelected={onPokemonSelected}
-          />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    Loading Pokémon list...
+                  </p>
+                </div>
+              </div>
+            }
+          >
+            <PokemonSelector
+              generation={generation.value}
+              tier={tier.value}
+              onPokemonSelected={onPokemonSelected}
+            />
+          </Suspense>
         </DialogContent>
       </Dialog>
       {/**/}
@@ -179,11 +238,24 @@ export const TeamEditor = () => {
                 </div>
               </div>
             </DialogHeader>
-            <PokemonEditor
-              activePokemon={activePokemon.value}
-              species={speciesList[activeSlot - 1] as Species}
-              addPokemon={() => onAddPokemonToTeam()}
-            />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+                    <p className="text-sm text-muted-foreground">
+                      Loading editor...
+                    </p>
+                  </div>
+                </div>
+              }
+            >
+              <PokemonEditor
+                activePokemon={activePokemon.value}
+                species={speciesList[activeSlot - 1] as Species}
+                addPokemon={() => onAddPokemonToTeam()}
+              />
+            </Suspense>
           </DialogContent>
         </Dialog>
       )}

@@ -11,7 +11,8 @@ import {
   getStatName,
   getStats,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam, ValidationResult } from '@pokehub/frontend/pokemon-types';
+import { getPokemonSlotErrors } from '@pokehub/frontend/pokemon-types';
 import {
   Badge,
   Button,
@@ -24,15 +25,18 @@ import {
   TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
-import { Edit, Trash2, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { Edit, Trash2, ChevronDown, ChevronUp, Info, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 
 interface PokemonCardProps {
   pokemon: PokemonInTeam;
   generation: GenerationNum;
   onRemove: () => void;
   onEdit: () => void;
+  onEditHover?: () => void;
   isPokemonEditorOpen: boolean;
+  validationResult: ValidationResult;
+  slotIndex: number;
 }
 
 export function PokemonCard({
@@ -40,8 +44,18 @@ export function PokemonCard({
   generation,
   onRemove,
   onEdit,
+  onEditHover,
   isPokemonEditorOpen,
+  validationResult,
+  slotIndex,
 }: PokemonCardProps) {
+  // Get validation errors for this Pokemon
+  const pokemonErrors = useMemo(
+    () => getPokemonSlotErrors(validationResult, slotIndex),
+    [validationResult, slotIndex]
+  );
+  const hasErrors = pokemonErrors.length > 0;
+
   // Data being usedj
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -125,7 +139,7 @@ export function PokemonCard({
   }, [pokemon.evs, isPokemonEditorOpen]);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${hasErrors ? 'border-destructive' : ''}`}>
       <CardHeader className="pb-2 pt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -142,6 +156,25 @@ export function PokemonCard({
                 <span className="text-xs text-muted-foreground">
                   Lv.{pokemon.level}
                 </span>
+                {hasErrors && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <div className="space-y-1">
+                          <p className="font-medium">Validation Errors:</p>
+                          <ul className="list-disc list-inside space-y-1 text-sm">
+                            {pokemonErrors.map((error, index) => (
+                              <li key={index}>{error.message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
               <div className="flex gap-1">
                 {species?.types.map((type: string) => (
@@ -158,7 +191,13 @@ export function PokemonCard({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onEdit}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEdit}
+              onMouseEnter={onEditHover}
+              onFocus={onEditHover}
+            >
               <Edit className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={onRemove}>

@@ -1,11 +1,14 @@
 import { useTeamEditorContext } from '../context/team-editor.context';
+import { useTeamChanges } from '../hooks/useTeamChanges';
 import { useTiersStaticData } from '../hooks/useTiersStaticData';
+import { TeamValidationSummary } from './team-validation-summary';
 import type { GenerationNum, Tier } from '@pkmn/dex';
 import {
   getGenerationsData,
   getBattleTierInfo,
 } from '@pokehub/frontend/pokemon-static-data';
 import type { BattleFormat, BattleTier } from '@pokehub/frontend/pokemon-types';
+import { validateTeam } from '@pokehub/frontend/pokemon-types';
 import {
   Alert,
   AlertDescription,
@@ -29,9 +32,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { AlertTriangle, BarChart3, Download, Info, Save, Upload } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { AlertTriangle, BarChart3, Download, Info, Loader2, Save, Upload } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export const TeamConfigurationSection = () => {
@@ -53,6 +59,32 @@ export const TeamConfigurationSection = () => {
   const [pendingGeneration, setPendingGeneration] = useState<GenerationNum | null>(
     null
   );
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Validation
+  const validationResult = useMemo(() => {
+    return validateTeam({
+      name: teamName.value,
+      generation: generation.value,
+      format: format.value,
+      tier: tier.value,
+      pokemon: teamPokemon.value,
+    });
+  }, [teamName.value, generation.value, format.value, tier.value, teamPokemon.value]);
+
+  // Change tracking
+  const { hasChanges, markAsSaved } = useTeamChanges({
+    teamName: teamName.value,
+    generation: generation.value,
+    format: format.value,
+    tier: tier.value,
+    pokemon: teamPokemon.value,
+  });
+
+  // Get Pokemon names for validation summary
+  const pokemonNames = useMemo(() => {
+    return teamPokemon.value.map((p) => p?.species);
+  }, [teamPokemon.value]);
 
   const handleTierChange = useCallback((val: Tier.Singles | Tier.Doubles) => {
     setBattleTierInfo(getBattleTierInfo(val));
@@ -111,6 +143,44 @@ export const TeamConfigurationSection = () => {
     setPendingGeneration(null);
   }, []);
 
+  const handleSave = useCallback(async () => {
+    // Validate before saving
+    if (!validationResult.isValid) {
+      toast.error('Cannot save team with validation errors');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // TODO: Implement actual save to backend
+      // For now, just simulate save
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Mark as saved
+      markAsSaved();
+
+      // Show success message
+      toast.success('Team saved successfully!', {
+        description: teamName.value || 'Unnamed Team',
+      });
+    } catch (error) {
+      console.error('Error saving team:', error);
+      toast.error('Failed to save team', {
+        description: 'Please try again',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [validationResult, teamName.value, markAsSaved]);
+
+  // Determine button state
+  const canSave = hasChanges && validationResult.isValid && !isSaving;
+  const saveButtonTooltip = !hasChanges
+    ? 'No changes to save'
+    : !validationResult.isValid
+    ? 'Fix validation errors before saving'
+    : undefined;
+
   return (
     <div className="mb-8 grid gap-6 md:grid-cols-[1fr_auto]">
       <Card>
@@ -135,14 +205,38 @@ export const TeamConfigurationSection = () => {
                 <Upload className="mr-2 h-4 w-4" />
                 Import
               </Button>
-              <Button size="sm" onClick={() => console.log('Implement Save')}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Team
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={!canSave}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Team
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                {saveButtonTooltip && (
+                  <TooltipContent>{saveButtonTooltip}</TooltipContent>
+                )}
+              </Tooltip>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          <TeamValidationSummary
+            validationResult={validationResult}
+            pokemonNames={pokemonNames}
+          />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <Label htmlFor="team-name">Team Name</Label>
