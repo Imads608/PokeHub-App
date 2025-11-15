@@ -112,8 +112,15 @@ export const validateTeam = (team: {
   tier: string;
   pokemon: (unknown | undefined)[];
 }): ValidationResult => {
-  // Filter out undefined Pokemon
-  const definedPokemon = team.pokemon.filter((p) => p !== undefined);
+  // Create a mapping of filtered index to original slot position
+  const slotMapping: number[] = [];
+  const definedPokemon = team.pokemon.filter((p, originalIndex) => {
+    if (p !== undefined) {
+      slotMapping.push(originalIndex);
+      return true;
+    }
+    return false;
+  });
 
   // Check if team has at least one Pokemon
   if (definedPokemon.length === 0) {
@@ -147,7 +154,8 @@ export const validateTeam = (team: {
     let pokemonSlot: number | undefined;
 
     if (path[0] === 'pokemon' && typeof path[1] === 'number') {
-      pokemonSlot = path[1];
+      // Map filtered array index back to original slot position
+      pokemonSlot = slotMapping[path[1]];
     }
 
     return {
