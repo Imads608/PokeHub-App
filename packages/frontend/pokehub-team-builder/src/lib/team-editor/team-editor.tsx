@@ -25,6 +25,7 @@ import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
 const PokemonSelector = lazy(() =>
   import(
     /* webpackPrefetch: true */
+    /* webpackChunkName: "pokemon-selector" */
     './pokemon-selector/pokemon-selector'
   ).then((mod) => ({
     default: mod.PokemonSelector,
@@ -34,6 +35,7 @@ const PokemonSelector = lazy(() =>
 const PokemonEditor = lazy(() =>
   import(
     /* webpackPrefetch: true */
+    /* webpackChunkName: "pokemon-editor" */
     './pokemon-editor/pokemon-editor'
   ).then((mod) => ({
     default: mod.PokemonEditor,
@@ -57,17 +59,6 @@ export const TeamEditor = () => {
     undefined,
     undefined,
   ]);
-
-  // Prefetch functions for hover optimization
-  const prefetchPokemonSelector = useCallback(() => {
-    // Triggers download of PokemonSelector chunk in background
-    import('./pokemon-selector/pokemon-selector');
-  }, []);
-
-  const prefetchPokemonEditor = useCallback(() => {
-    // Triggers download of PokemonEditor chunk in background
-    import('./pokemon-editor/pokemon-editor');
-  }, []);
 
   // Validate team
   const validationResult = useMemo(() => {
@@ -129,9 +120,8 @@ export const TeamEditor = () => {
                 isPokemonEditorOpen
                 pokemon={pokemon}
                 generation={generation.value}
-                onRemove={() => console.log('implement')}
+                onRemove={() => teamPokemon.removePokemonFromTeam(index + 1)}
                 onEdit={() => onPokemonSelected(pokemon, index + 1)}
-                onEditHover={prefetchPokemonEditor}
                 validationResult={validationResult}
                 slotIndex={index}
               />
@@ -142,8 +132,6 @@ export const TeamEditor = () => {
                   setActiveSlot(index + 1);
                   setIsPokemonSelectorOpen(true);
                 }}
-                onMouseEnter={prefetchPokemonSelector}
-                onFocus={prefetchPokemonSelector}
               />
             )}
           </div>

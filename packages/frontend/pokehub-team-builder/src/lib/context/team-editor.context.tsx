@@ -167,6 +167,15 @@ export const useTeamEditorContext = () => {
     [teamPokemon, activePokemon]
   );
 
+  const removePokemonFromTeam = useCallback(
+    (slot: number) => {
+      const newTeam = [...teamPokemon.value];
+      newTeam[slot - 1] = undefined;
+      teamPokemon.setValue(newTeam);
+    },
+    [teamPokemon]
+  );
+
   const clearTeam = useCallback(() => {
     teamPokemon.setValue([
       undefined,
@@ -203,6 +212,7 @@ export const useTeamEditorContext = () => {
       addActivePokemonToTeam,
       clearTeam,
       hasAnyPokemon,
+      removePokemonFromTeam,
     },
   };
 };
