@@ -54,7 +54,8 @@ export const TeamEditorContext = createContext<
 });
 
 export const useTeamEditorContext = () => {
-  const { activePokemon, ...restProps } = useContext(TeamEditorContext);
+  const { activePokemon, teamPokemon, ...restProps } =
+    useContext(TeamEditorContext);
 
   const setActivePokemon = (pokemon: PokemonInTeam | Species) => {
     if ('baseSpecies' in pokemon) {
@@ -157,6 +158,31 @@ export const useTeamEditorContext = () => {
     [activePokemon]
   );
 
+  const addActivePokemonToTeam = useCallback(
+    (slot: number) => {
+      const newTeam = [...teamPokemon.value];
+      newTeam[slot - 1] = activePokemon.value;
+      teamPokemon.setValue(newTeam);
+    },
+    [teamPokemon, activePokemon]
+  );
+
+  const clearTeam = useCallback(() => {
+    teamPokemon.setValue([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    activePokemon.setValue(undefined);
+  }, [teamPokemon, activePokemon]);
+
+  const hasAnyPokemon = useCallback(() => {
+    return teamPokemon.value.some((pokemon) => pokemon !== undefined);
+  }, [teamPokemon]);
+
   return {
     ...restProps,
     activePokemon: {
@@ -170,6 +196,13 @@ export const useTeamEditorContext = () => {
       setMove,
       setEV,
       setIV,
+    },
+    teamPokemon: {
+      value: teamPokemon.value,
+      setValue: teamPokemon.setValue,
+      addActivePokemonToTeam,
+      clearTeam,
+      hasAnyPokemon,
     },
   };
 };
