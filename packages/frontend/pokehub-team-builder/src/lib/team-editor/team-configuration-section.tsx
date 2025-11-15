@@ -16,6 +16,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
   Label,
   Select,
@@ -24,13 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pokehub/frontend/shared-ui-components';
-import { BarChart3, Download, Info, Save, Upload } from 'lucide-react';
+import { AlertTriangle, BarChart3, Download, Info, Save, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 
 export const TeamConfigurationSection = () => {
   const { singlesTiers, doublesTiers } = useTiersStaticData();
 
-  const { teamName, generation, format, tier } = useTeamEditorContext();
+  const { teamName, generation, format, tier, teamPokemon } =
+    useTeamEditorContext();
 
   const [battleTierInfo, setBattleTierInfo] = useState(
     getBattleTierInfo(tier.value)
@@ -39,6 +47,12 @@ export const TeamConfigurationSection = () => {
   const [selectedFormatTiers, setSelectedFormatTiers] = useState<
     BattleTier<'Singles'>[] | BattleTier<'Doubles'>[]
   >(format.value === 'Singles' ? singlesTiers : doublesTiers);
+
+  const [showGenerationChangeDialog, setShowGenerationChangeDialog] =
+    useState(false);
+  const [pendingGeneration, setPendingGeneration] = useState<GenerationNum | null>(
+    null
+  );
 
   const handleTierChange = useCallback((val: Tier.Singles | Tier.Doubles) => {
     setBattleTierInfo(getBattleTierInfo(val));
@@ -54,6 +68,47 @@ export const TeamConfigurationSection = () => {
       handleTierChange(doublesTiers[0].id);
     }
     format.setValue(val);
+  }, []);
+
+  const handleGenerationChange = useCallback(
+    (newGeneration: string) => {
+      const gen = parseInt(newGeneration) as GenerationNum;
+
+      // Check if team has any Pokemon
+      if (teamPokemon.hasAnyPokemon()) {
+        // Show confirmation dialog
+        setPendingGeneration(gen);
+        setShowGenerationChangeDialog(true);
+      } else {
+        // No Pokemon, change freely
+        generation.setValue(gen);
+      }
+    },
+    [teamPokemon, generation]
+  );
+
+  const handleConfirmGenerationChange = useCallback(() => {
+    if (pendingGeneration !== null) {
+      // Clear the team
+      teamPokemon.clearTeam();
+
+      // Change generation
+      generation.setValue(pendingGeneration);
+
+      // Show success toast
+      toast.success('Team cleared and generation changed', {
+        description: `Switched to Generation ${pendingGeneration}`,
+      });
+
+      // Close dialog
+      setShowGenerationChangeDialog(false);
+      setPendingGeneration(null);
+    }
+  }, [pendingGeneration, teamPokemon, generation]);
+
+  const handleCancelGenerationChange = useCallback(() => {
+    setShowGenerationChangeDialog(false);
+    setPendingGeneration(null);
   }, []);
 
   return (
@@ -102,9 +157,7 @@ export const TeamConfigurationSection = () => {
               <Label htmlFor="generation">Generation</Label>
               <Select
                 value={generation.value.toString()}
-                onValueChange={(val) =>
-                  generation.setValue(parseInt(val) as GenerationNum)
-                }
+                onValueChange={handleGenerationChange}
               >
                 <SelectTrigger id="generation" className="mt-1">
                   <SelectValue placeholder="Select Generation" />
@@ -201,6 +254,54 @@ export const TeamConfigurationSection = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Generation Change Confirmation Dialog */}
+      <Dialog
+        open={showGenerationChangeDialog}
+        onOpenChange={setShowGenerationChangeDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <DialogTitle>Change Generation?</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Changing generations will <strong>clear your entire team</strong>.
+              All Pokemon, moves, and configurations will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md bg-muted p-4">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div className="space-y-1 text-sm">
+                <p className="font-medium">Why is this necessary?</p>
+                <p className="text-muted-foreground">
+                  Pokemon, moves, abilities, and items vary between generations.
+                  To ensure accuracy, your team must be rebuilt for the selected
+                  generation.
+                </p>
+              </div>
+            </div>
+          </div>
+          {pendingGeneration && (
+            <div className="text-sm">
+              <span className="text-muted-foreground">Switching to:</span>{' '}
+              <span className="font-medium">
+                Generation {pendingGeneration}
+              </span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelGenerationChange}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmGenerationChange}>
+              Clear Team & Change Generation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

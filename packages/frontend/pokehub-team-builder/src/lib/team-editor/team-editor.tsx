@@ -63,6 +63,11 @@ export const TeamEditor = () => {
     [activeSlot, generation.value]
   );
 
+  const onAddPokemonToTeam = useCallback(() => {
+    teamPokemon.addActivePokemonToTeam(activeSlot);
+    setIsPokemonEditorOpen(false);
+  }, [activeSlot, teamPokemon]);
+
   return (
     <>
       {/* Team Configuration */}
@@ -74,6 +79,7 @@ export const TeamEditor = () => {
           <div key={index}>
             {pokemon ? (
               <PokemonCard
+                isPokemonEditorOpen
                 pokemon={pokemon}
                 generation={generation.value}
                 onRemove={() => console.log('implement')}
@@ -176,6 +182,7 @@ export const TeamEditor = () => {
             <PokemonEditor
               activePokemon={activePokemon.value}
               species={speciesList[activeSlot - 1] as Species}
+              addPokemon={() => onAddPokemonToTeam()}
             />
           </DialogContent>
         </Dialog>
