@@ -157,6 +157,79 @@ team-editor/
 - Preset buttons use `setValue` to update all stats atomically
 - No total limit (unlike EVs)
 
+## Cancel Functionality ✅
+
+### Overview
+
+The Pokemon Editor includes smart cancel functionality that discards unsaved changes when the user cancels editing.
+
+### Implementation
+
+**State Management**:
+- `pokemonSnapshot` - Stores a deep copy of the Pokemon before editing begins
+- Snapshot captured in `onPokemonSelected` when editor opens
+- Includes all properties: species, ability, item, nature, moves, EVs, IVs
+
+**Change Detection**:
+- Uses `arePokemonEqual` from `useTeamChanges` hook
+- Deep comparison of all Pokemon properties
+- Only shows warning when actual changes exist
+
+**User Experience**:
+1. **No changes made**:
+   - User clicks Cancel or X button → Dialog closes immediately
+   - No warning shown (seamless experience)
+
+2. **Changes made**:
+   - User clicks Cancel or X button → Confirmation dialog appears
+   - Message: "You have unsaved changes. Are you sure you want to discard them?"
+   - **Confirm** → Changes discarded, Pokemon restored to snapshot, dialog closes
+   - **Cancel** → Dialog stays open, changes preserved
+
+**Dialog Behavior**:
+- Both Cancel button and X (close) button use same `onCancelEdit` logic
+- `handleDialogOpenChange` intercepts dialog close events
+- Consistent behavior across all close mechanisms
+
+**Code Flow**:
+```typescript
+// 1. Save snapshot when editor opens
+onPokemonSelected(pokemon) → setPokemonSnapshot(deepCopy(pokemon))
+
+// 2. User makes changes → activePokemon updated via context
+
+// 3. User clicks Cancel/X → onCancelEdit()
+//    - Check: arePokemonEqual(snapshot, activePokemon)
+//    - If different: show confirmation
+//    - If confirmed: activePokemon.setValue(snapshot)
+
+// 4. Dialog closes, snapshot cleared
+```
+
+### Technical Details
+
+**Deep Copy Implementation**:
+```typescript
+setPokemonSnapshot({
+  ...pokemonInTeam,
+  moves: [...pokemonInTeam.moves],      // Clone moves array
+  evs: { ...pokemonInTeam.evs },         // Clone EVs object
+  ivs: { ...pokemonInTeam.ivs },         // Clone IVs object
+});
+```
+
+**Files Modified**:
+- `pokemon-editor.tsx` - Added `onCancel` prop and wired Cancel button
+- `team-editor.tsx` - Added snapshot state, change detection, handlers
+- `useTeamChanges.ts` - Exported `arePokemonEqual` for reuse
+
+**Reused Logic**:
+- `arePokemonEqual(p1, p2)` - Deep comparison utility
+  - Compares all basic properties (species, ability, item, nature, gender, level, name)
+  - Compares moves array (order matters)
+  - Compares EVs object (all 6 stats)
+  - Compares IVs object (all 6 stats)
+
 ## Validation & Change Tracking ✅
 
 ### Team Validation System
@@ -366,10 +439,9 @@ interface PokemonInTeam extends PokemonSet {
 ### Missing Functionality
 
 1. **Save/Cancel Actions**
+   - ✅ Cancel button implemented with smart change detection
    - Save button currently logs to console
-   - Cancel button currently logs to console
    - Need to implement actual save to team array
-   - Need to handle dialog close
 
 2. **Gender Selection**
    - Not implemented in any tab
@@ -554,6 +626,14 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 
 ## Changelog
 
+### 2025-11-16
+- ✅ Implemented Cancel functionality with smart change detection
+- ✅ Added Pokemon snapshot state for restoring on cancel
+- ✅ Exported `arePokemonEqual` from `useTeamChanges` for reuse
+- ✅ Added confirmation dialog for unsaved changes
+- ✅ Implemented consistent behavior for Cancel button and X button
+- ✅ Added deep copy logic for Pokemon snapshot
+
 ### 2025-11-14
 - ✅ Implemented comprehensive team validation system with Zod schemas
 - ✅ Added change tracking hook for detecting unsaved changes
@@ -566,7 +646,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 - ✅ Implemented team clearing on generation change
 - ✅ Added toast notifications for user feedback
 
-### 2025-01-14
+### 2025-11-14
 - ✅ Created Basic Tab with ability, item, nature selection
 - ✅ Implemented SearchableSelect shared component
 - ✅ Added auto-scroll to selected item feature

@@ -12,6 +12,62 @@ export interface TeamState {
 }
 
 /**
+ * Deep comparison of two Pokemon
+ * Compares all properties including species, ability, item, nature, moves, EVs, and IVs
+ */
+export const arePokemonEqual = (
+  p1: PokemonInTeam,
+  p2: PokemonInTeam
+): boolean => {
+  // Compare basic properties
+  if (
+    p1.species !== p2.species ||
+    p1.ability !== p2.ability ||
+    p1.item !== p2.item ||
+    p1.nature !== p2.nature ||
+    p1.gender !== p2.gender ||
+    p1.level !== p2.level ||
+    p1.name !== p2.name
+  ) {
+    return false;
+  }
+
+  // Compare moves (order matters)
+  if (p1.moves.length !== p2.moves.length) return false;
+  for (let i = 0; i < p1.moves.length; i++) {
+    if (p1.moves[i] !== p2.moves[i]) return false;
+  }
+
+  // Compare EVs
+  const evStats: Array<keyof typeof p1.evs> = [
+    'hp',
+    'atk',
+    'def',
+    'spa',
+    'spd',
+    'spe',
+  ];
+  for (const stat of evStats) {
+    if (p1.evs[stat] !== p2.evs[stat]) return false;
+  }
+
+  // Compare IVs
+  const ivStats: Array<keyof typeof p1.ivs> = [
+    'hp',
+    'atk',
+    'def',
+    'spa',
+    'spd',
+    'spe',
+  ];
+  for (const stat of ivStats) {
+    if (p1.ivs[stat] !== p2.ivs[stat]) return false;
+  }
+
+  return true;
+};
+
+/**
  * Hook to track changes to a Pokemon team
  * Returns whether the team has unsaved changes
  */
@@ -75,60 +131,6 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
     []
   );
 
-  /**
-   * Deep comparison of two Pokemon
-   */
-  const arePokemonEqual = (
-    p1: PokemonInTeam,
-    p2: PokemonInTeam
-  ): boolean => {
-    // Compare basic properties
-    if (
-      p1.species !== p2.species ||
-      p1.ability !== p2.ability ||
-      p1.item !== p2.item ||
-      p1.nature !== p2.nature ||
-      p1.gender !== p2.gender ||
-      p1.level !== p2.level ||
-      p1.name !== p2.name
-    ) {
-      return false;
-    }
-
-    // Compare moves (order matters)
-    if (p1.moves.length !== p2.moves.length) return false;
-    for (let i = 0; i < p1.moves.length; i++) {
-      if (p1.moves[i] !== p2.moves[i]) return false;
-    }
-
-    // Compare EVs
-    const evStats: Array<keyof typeof p1.evs> = [
-      'hp',
-      'atk',
-      'def',
-      'spa',
-      'spd',
-      'spe',
-    ];
-    for (const stat of evStats) {
-      if (p1.evs[stat] !== p2.evs[stat]) return false;
-    }
-
-    // Compare IVs
-    const ivStats: Array<keyof typeof p1.ivs> = [
-      'hp',
-      'atk',
-      'def',
-      'spa',
-      'spd',
-      'spe',
-    ];
-    for (const stat of ivStats) {
-      if (p1.ivs[stat] !== p2.ivs[stat]) return false;
-    }
-
-    return true;
-  };
 
   /**
    * Check if there are unsaved changes

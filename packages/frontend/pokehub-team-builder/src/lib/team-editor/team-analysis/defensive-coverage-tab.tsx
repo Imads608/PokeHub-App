@@ -35,6 +35,11 @@ export const DefensiveCoverageTab = ({
   const hasCriticalWeaknesses = criticalWeaknesses.length > 0;
   const hasSharedWeaknesses = sharedWeaknesses.length > 0;
 
+  // Calculate thresholds for display
+  const criticalThreshold = Math.max(1, Math.floor(teamSize * 0.8));
+  const criticalPercentage = Math.round((criticalThreshold / teamSize) * 100);
+  const sharedThreshold = Math.max(1, Math.floor(teamSize * 0.5));
+
   return (
     <div className="space-y-4">
       {/* Critical Weaknesses Alert */}
@@ -43,8 +48,9 @@ export const DefensiveCoverageTab = ({
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Critical Weaknesses Detected!</AlertTitle>
           <AlertDescription>
-            The following types hit {teamSize >= 5 ? 'most' : 'all'} of your Pokemon.
-            Consider adding a Pokemon that resists these types.
+            The following types hit {criticalPercentage}% of your Pokemon (
+            {criticalThreshold} of {teamSize}). Consider adding a Pokemon that
+            resists these types.
           </AlertDescription>
         </Alert>
       )}
@@ -57,8 +63,8 @@ export const DefensiveCoverageTab = ({
             Critical Weaknesses
           </CardTitle>
           <CardDescription>
-            Types that hit {teamSize >= 5 ? '80%+' : 'all'} of your team (
-            {Math.max(1, Math.floor(teamSize * 0.8))}+ Pokemon)
+            Types that hit {criticalPercentage}% or more of your team (
+            {criticalThreshold}+ of {teamSize} Pokemon)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,9 +97,8 @@ export const DefensiveCoverageTab = ({
             Shared Weaknesses
           </CardTitle>
           <CardDescription>
-            Types that hit multiple Pokemon (
-            {Math.max(1, Math.floor(teamSize * 0.5))}-
-            {Math.max(1, Math.floor(teamSize * 0.8)) - 1} Pokemon)
+            Types that hit multiple Pokemon ({sharedThreshold}-
+            {criticalThreshold - 1} of {teamSize} Pokemon)
           </CardDescription>
         </CardHeader>
         <CardContent>

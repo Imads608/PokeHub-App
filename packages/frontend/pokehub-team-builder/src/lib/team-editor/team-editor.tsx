@@ -1,6 +1,10 @@
 'use client';
 
-import { useTeamEditorContext } from '../context/team-editor.context';
+import {
+  createNewPokemonFromSpecies,
+  useTeamEditorContext,
+} from '../context/team-editor.context';
+import { arePokemonEqual } from '../hooks/useTeamChanges';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
 import { TeamConfigurationSection } from './team-configuration-section';
@@ -61,6 +65,9 @@ export const TeamEditor = () => {
   const [activeSlot, setActiveSlot] = useState<number>(1);
   const [isPokemonSelectorOpen, setIsPokemonSelectorOpen] = useState(false);
   const [isPokemonEditorOpen, setIsPokemonEditorOpen] = useState(false);
+  const [pokemonSnapshot, setPokemonSnapshot] = useState<
+    PokemonInTeam | undefined
+  >(undefined);
   const [speciesList] = useState<(Species | undefined)[]>([
     undefined,
     undefined,
@@ -95,6 +102,21 @@ export const TeamEditor = () => {
       slot && setActiveSlot(slot);
       const currSlot = slot || activeSlot;
 
+      // Save snapshot for cancel functionality
+      if ('exists' in pokemon) {
+        // New Pokemon from species - snapshot will be the newly created Pokemon
+        setPokemonSnapshot(createNewPokemonFromSpecies(pokemon));
+      } else {
+        // Editing existing Pokemon - make deep copy for snapshot
+        const pokemonInTeam = pokemon as PokemonInTeam;
+        setPokemonSnapshot({
+          ...pokemonInTeam,
+          moves: [...pokemonInTeam.moves],
+          evs: { ...pokemonInTeam.evs },
+          ivs: { ...pokemonInTeam.ivs },
+        });
+      }
+
       if (!speciesList[currSlot - 1]) {
         if ('exists' in pokemon) {
           pokemon = pokemon as Species;
@@ -108,13 +130,54 @@ export const TeamEditor = () => {
         }
       }
     },
-    [activeSlot, generation.value]
+    [activeSlot, generation.value, activePokemon, speciesList]
   );
 
   const onAddPokemonToTeam = useCallback(() => {
     teamPokemon.addActivePokemonToTeam(activeSlot);
     setIsPokemonEditorOpen(false);
+    setPokemonSnapshot(undefined);
+    activePokemon.setValue(undefined);
   }, [activeSlot, teamPokemon]);
+
+  const onCancelEdit = useCallback(() => {
+    // Check if there are unsaved changes
+    const hasChanges =
+      pokemonSnapshot &&
+      activePokemon.value &&
+      !arePokemonEqual(pokemonSnapshot, activePokemon.value);
+
+    if (hasChanges) {
+      // Show confirmation dialog
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to discard them?'
+      );
+
+      if (!confirmed) {
+        return; // User cancelled, keep dialog open
+      }
+    }
+
+    // Restore snapshot and close
+    if (pokemonSnapshot) {
+      activePokemon.setValue(pokemonSnapshot);
+    }
+    setIsPokemonEditorOpen(false);
+    setPokemonSnapshot(undefined);
+    activePokemon.setValue(undefined);
+  }, [pokemonSnapshot, activePokemon]);
+
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        // User is trying to close - use cancel logic
+        onCancelEdit();
+      } else {
+        setIsPokemonEditorOpen(true);
+      }
+    },
+    [onCancelEdit]
+  );
 
   return (
     <>
@@ -197,7 +260,7 @@ export const TeamEditor = () => {
       {activePokemon.value && speciesList[activeSlot - 1] && (
         <Dialog
           open={isPokemonEditorOpen}
-          onOpenChange={setIsPokemonEditorOpen}
+          onOpenChange={handleDialogOpenChange}
         >
           <DialogContent className="sm:max-w-4xl">
             <DialogHeader className="flex flex-row items-center gap-2 sm:gap-4">
@@ -242,6 +305,7 @@ export const TeamEditor = () => {
                 activePokemon={activePokemon.value}
                 species={speciesList[activeSlot - 1] as Species}
                 addPokemon={() => onAddPokemonToTeam()}
+                onCancel={onCancelEdit}
               />
             </Suspense>
           </DialogContent>
