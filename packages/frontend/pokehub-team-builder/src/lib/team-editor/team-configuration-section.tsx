@@ -40,7 +40,11 @@ import { AlertTriangle, BarChart3, Download, Info, Loader2, Save, Upload } from 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export const TeamConfigurationSection = () => {
+export interface TeamConfigurationSectionProps {
+  onOpenTeamAnalysis?: () => void;
+}
+
+export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurationSectionProps = {}) => {
   const { singlesTiers, doublesTiers } = useTiersStaticData();
 
   const { teamName, generation, format, tier, teamPokemon } =
@@ -338,10 +342,8 @@ export const TeamConfigurationSection = () => {
           <Button
             variant="outline"
             className="w-full"
-            onClick={
-              () => console.log('TODO') /*() => setIsTeamAnalysisOpen(true)*/
-            }
-            disabled={false /*team.every((p) => p === null)*/}
+            onClick={onOpenTeamAnalysis}
+            disabled={!teamPokemon.hasAnyPokemon()}
           >
             <BarChart3 className="mr-2 h-4 w-4" />
             Analyze Team
