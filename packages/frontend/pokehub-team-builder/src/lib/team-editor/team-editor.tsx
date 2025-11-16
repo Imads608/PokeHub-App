@@ -22,7 +22,7 @@ import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
 
 // Lazy load dialog components for better performance
 // webpackPrefetch tells the browser to prefetch these during idle time
-const PokemonSelector = lazy(() =>
+const LazyPokemonSelector = lazy(() =>
   import(
     /* webpackPrefetch: true */
     /* webpackChunkName: "pokemon-selector" */
@@ -32,7 +32,7 @@ const PokemonSelector = lazy(() =>
   }))
 );
 
-const PokemonEditor = lazy(() =>
+const LazyPokemonEditor = lazy(() =>
   import(
     /* webpackPrefetch: true */
     /* webpackChunkName: "pokemon-editor" */
@@ -42,12 +42,22 @@ const PokemonEditor = lazy(() =>
   }))
 );
 
+const LazyTeamAnalysisDialog = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "team-analysis" */
+    './team-analysis'
+  ).then((mod) => ({
+    default: mod.TeamAnalysisDialog,
+  }))
+);
+
 export const TeamEditor = () => {
   // State for team configuration
 
   const { teamPokemon, generation, tier, activePokemon, teamName, format } =
     useTeamEditorContext();
-  //const [, setIsTeamAnalysisOpen] = useState(false);
+  const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(1);
   const [isPokemonSelectorOpen, setIsPokemonSelectorOpen] = useState(false);
   const [isPokemonEditorOpen, setIsPokemonEditorOpen] = useState(false);
@@ -109,7 +119,9 @@ export const TeamEditor = () => {
   return (
     <>
       {/* Team Configuration */}
-      <TeamConfigurationSection />
+      <TeamConfigurationSection
+        onOpenTeamAnalysis={() => setIsTeamAnalysisOpen(true)}
+      />
 
       {/* Team Builder */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -162,7 +174,7 @@ export const TeamEditor = () => {
               </div>
             }
           >
-            <PokemonSelector
+            <LazyPokemonSelector
               generation={generation.value}
               tier={tier.value}
               onPokemonSelected={onPokemonSelected}
@@ -170,23 +182,18 @@ export const TeamEditor = () => {
           </Suspense>
         </DialogContent>
       </Dialog>
-      {/**/}
-      {/* {/* Team Analysis Dialog */}
-      {/* <Dialog open={isTeamAnalysisOpen} onOpenChange={setIsTeamAnalysisOpen}> */}
-      {/*   <DialogContent className="max-w-4xl"> */}
-      {/*     <DialogHeader> */}
-      {/*       <DialogTitle>Team Analysis</DialogTitle> */}
-      {/*       <DialogDescription> */}
-      {/*         Detailed breakdown of your team's strengths and weaknesses */}
-      {/*       </DialogDescription> */}
-      {/*     </DialogHeader> */}
-      {/*     <TeamAnalysis */}
-      {/*       team={team.filter((p) => p !== null)} */}
-      {/*       typeColors={typeColors} */}
-      {/*     /> */}
-      {/*   </DialogContent> */}
-      {/* </Dialog> */}
-      {/* {/* Pokémon Edit Dialog */}
+
+      {/* Team Analysis Dialog */}
+      <Suspense fallback={null}>
+        <LazyTeamAnalysisDialog
+          open={isTeamAnalysisOpen}
+          onOpenChange={setIsTeamAnalysisOpen}
+          team={teamPokemon.value}
+          generation={generation.value}
+        />
+      </Suspense>
+
+      {/* Pokémon Edit Dialog */}
       {activePokemon.value && speciesList[activeSlot - 1] && (
         <Dialog
           open={isPokemonEditorOpen}
@@ -231,7 +238,7 @@ export const TeamEditor = () => {
                 </div>
               }
             >
-              <PokemonEditor
+              <LazyPokemonEditor
                 activePokemon={activePokemon.value}
                 species={speciesList[activeSlot - 1] as Species}
                 addPokemon={() => onAddPokemonToTeam()}
