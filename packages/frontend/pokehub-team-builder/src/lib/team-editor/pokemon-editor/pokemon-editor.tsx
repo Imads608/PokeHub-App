@@ -18,12 +18,14 @@ interface PokemonEditorProps {
   activePokemon: PokemonInTeam;
   species: Species;
   addPokemon: () => void;
+  onCancel: () => void;
 }
 
 export function PokemonEditor({
   activePokemon,
   species,
   addPokemon,
+  onCancel,
 }: PokemonEditorProps) {
   return (
     <>
@@ -49,10 +51,10 @@ export function PokemonEditor({
       </Tabs>
 
       <DialogFooter>
-        <Button variant="outline" onClick={() => console.log('implement')}>
+        <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={() => addPokemon()}>Add to Team</Button>
+        <Button onClick={() => addPokemon()}>Add/Update to Team</Button>
       </DialogFooter>
     </>
   );

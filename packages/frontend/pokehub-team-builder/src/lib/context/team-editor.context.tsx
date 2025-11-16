@@ -57,8 +57,10 @@ export const useTeamEditorContext = () => {
   const { activePokemon, teamPokemon, ...restProps } =
     useContext(TeamEditorContext);
 
-  const setActivePokemon = (pokemon: PokemonInTeam | Species) => {
-    if ('baseSpecies' in pokemon) {
+  const setActivePokemon = (pokemon: PokemonInTeam | Species | undefined) => {
+    if (pokemon === undefined) {
+      activePokemon.setValue(undefined);
+    } else if ('baseSpecies' in pokemon) {
       const species = pokemon as Species;
       activePokemon.setValue(createNewPokemonFromSpecies(species));
       return;
@@ -217,7 +219,9 @@ export const useTeamEditorContext = () => {
   };
 };
 
-const createNewPokemonFromSpecies = (species: Species): PokemonInTeam => {
+export const createNewPokemonFromSpecies = (
+  species: Species
+): PokemonInTeam => {
   return {
     species: species.name,
     name: species.name,
