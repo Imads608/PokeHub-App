@@ -8,7 +8,7 @@ import type {
 } from './models/router';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import type { UserAccountRole } from '@pokehub/shared/shared-user-models';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export const ClientRouteGuard = ({
@@ -20,7 +20,7 @@ export const ClientRouteGuard = ({
 }: RouteGuardProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const queryParams = useSearchParams();
+  // const queryParams = useSearchParams();
   const { data: authData, status } = useAuthSession();
   const [authorized, setAuthorized] = useState<boolean>(() => {
     const routeType = checkActiveRouteType(
@@ -42,32 +42,34 @@ export const ClientRouteGuard = ({
   /* Trigger on Page Change */
   useEffect(() => {
     authCheck(pathname);
-  }, [pathname, queryParams]);
+  }, [pathname /*, queryParams*/]);
 
   const redirectToDefaultPrivilegedPage = (accountRole: UserAccountRole) => {
-    if (queryParams.get('from')) {
-      const path = queryParams.get('from') as string;
-      const routeType = checkActiveRouteType(
-        path,
-        publicPaths,
-        privilegedRoutes || []
-      );
-      if (!(accountRole in redirectOnLogin)) {
-        return;
-      }
+    router.push(getRedirectRoute(redirectOnLogin, accountRole));
 
-      if (
-        isPublicRoute(routeType) ||
-        (isPrivateRoute(routeType) &&
-          isRoleAllowed(routeType.rolesAllowed, accountRole))
-      ) {
-        router.push(queryParams.get('from') as string);
-      } else {
-        router.push(getRedirectRoute(redirectOnLogin, accountRole));
-      }
-    } else {
-      router.push(getRedirectRoute(redirectOnLogin, accountRole));
-    }
+    // if (queryParams.get('from')) {
+    //   const path = queryParams.get('from') as string;
+    //   const routeType = checkActiveRouteType(
+    //     path,
+    //     publicPaths,
+    //     privilegedRoutes || []
+    //   );
+    //   if (!(accountRole in redirectOnLogin)) {
+    //     return;
+    //   }
+    //
+    //   if (
+    //     isPublicRoute(routeType) ||
+    //     (isPrivateRoute(routeType) &&
+    //       isRoleAllowed(routeType.rolesAllowed, accountRole))
+    //   ) {
+    //     router.push(queryParams.get('from') as string);
+    //   } else {
+    //     router.push(getRedirectRoute(redirectOnLogin, accountRole));
+    //   }
+    // } else {
+    //   router.push(getRedirectRoute(redirectOnLogin, accountRole));
+    // }
   };
 
   const authCheck = (url: string) => {

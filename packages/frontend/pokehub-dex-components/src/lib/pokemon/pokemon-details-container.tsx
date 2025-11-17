@@ -6,6 +6,7 @@ import { useDataProviders } from './hooks/useDataProviders';
 import { NavigationPanel } from './navigation/navigation-panel';
 import { PokemonTabsContainer } from './tabs/pokemon-tabs-container';
 import type { GenerationNum, Species } from '@pkmn/dex';
+import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
 import {
   Alert,
   AlertDescription,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pokehub/frontend/shared-ui-components';
-import { getGenerationsData } from '@pokehub/frontend/shared-utils';
 import { Clock, History, CircleAlert } from 'lucide-react';
 import type { Pokemon } from 'pokeapi-js-wrapper';
 import { useEffect } from 'react';

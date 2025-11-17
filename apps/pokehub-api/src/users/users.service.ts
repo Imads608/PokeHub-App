@@ -26,7 +26,7 @@ export class UsersService implements IUsersService {
   async updateUserProfile(
     userId: string,
     data: IUpdateUserProfile
-  ): Promise<void> {
+  ): Promise<IUpdateUserProfile> {
     this.logger.log(
       `${this.updateUserProfile.name}: Updating user profile for user ${userId}`
     );
@@ -36,6 +36,15 @@ export class UsersService implements IUsersService {
       username: data.username,
       avatarFilename: `avatar.${fileExt}`, // Assuming data.avatar holds the filename
     });
+
+    if (data.avatar) {
+      return {
+        ...data,
+        avatar: this.getAvatarUrl(userId, `avatar.${fileExt}`),
+      };
+    }
+
+    return data;
   }
 
   async getUserCore(
@@ -60,10 +69,8 @@ export class UsersService implements IUsersService {
       return undefined;
     }
 
-    const azureConfig = this.configService.get('azure', { infer: true });
-
     const avatarUrl = user.avatarFilename
-      ? `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${user.id}/${user.avatarFilename}`
+      ? this.getAvatarUrl(user.id, user.avatarFilename)
       : null;
 
     return {
@@ -84,10 +91,9 @@ export class UsersService implements IUsersService {
       `${this.createUser.name}: Creating user with email ${email}`
     );
     const user = await this.usersDbService.createUser(email, accountType);
-    const azureConfig = this.configService.get('azure', { infer: true });
 
     const avatarUrl = user.avatarFilename
-      ? `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${user.id}/${user.avatarFilename}`
+      ? this.getAvatarUrl(user.id, user.avatarFilename)
       : null;
 
     return {
@@ -100,7 +106,8 @@ export class UsersService implements IUsersService {
     };
   }
 
-  async getAvatarUrl(): Promise<string | undefined> {
-    return undefined;
+  getAvatarUrl(userId: string, avatarFileName: string): string {
+    const azureConfig = this.configService.get('azure', { infer: true });
+    return `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${userId}/${avatarFileName}`;
   }
 }

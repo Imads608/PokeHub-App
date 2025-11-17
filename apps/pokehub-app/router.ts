@@ -30,6 +30,11 @@ export const PokeHubRouter: AppRouter = {
       rolesAllowed: ['USER'],
       allowSubRoutes: false,
     },
+    {
+      route: '/team-editor',
+      rolesAllowed: ['USER'],
+      allowSubRoutes: true,
+    },
   ],
   redirectOnLogin: {
     ADMIN: '/dashboard',

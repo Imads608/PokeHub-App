@@ -9,7 +9,7 @@ PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive P
 - **Team Builder** - Craft competitive Pokemon teams with an intuitive interface
 - **Pokemon Explorer** - Browse and discover Pokemon with comprehensive data
 - **User Profiles** - Personalized user accounts with OAuth authentication
-- **Battle Simulator** - Experience strategic Pokemon battles
+- **Battle Simulator** - (In Development) Experience strategic Pokemon battles
 - **Responsive Design** - Seamless experience across desktop and mobile devices
 
 ## 🛠️ Tech Stack

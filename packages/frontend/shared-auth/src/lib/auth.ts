@@ -14,7 +14,7 @@ const logger = getLogger('Authjs');
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
   callbacks: {
-    async jwt({ token, account, profile, trigger, session }) {
+    async jwt({ token, account, /*profile,*/ trigger, session }) {
       // Persist the OAuth access token to the token right after signin
       //console.log('Got Data back', token, account, profile);
       // On Initial Sign In
@@ -55,7 +55,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               Date.now() + data.tokens.accessToken.expirySeconds * 1000,
           };
         } catch (err) {
-          logger.error('Error getting user and tokens: ', err);
+          logger.error(
+            `Error getting user and tokens: ${(err as Error).message}`,
+            err
+          );
           throw new TypeError('Error getting user and tokens');
         }
       } else if (Date.now() < token.expiresAt) {
@@ -98,7 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Send properties to the client, like an access token and user id from a provider
       //session.accessToken = token.accessToken;
       //session.idToken = token.idToken;
-      console.log('Session:', session, token);
+      logger.info('Session:', session, token);
       session.error = token.error;
       if (token.user) {
         session.user = { ...token.user, emailVerified: new Date() };

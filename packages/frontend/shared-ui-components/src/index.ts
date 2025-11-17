@@ -55,3 +55,28 @@ export { Progress } from './lib/progress/progress';
 export { ScrollBar, ScrollArea } from './lib/scroll-area/scroll-area';
 export { Avatar, AvatarImage, AvatarFallback } from './lib/avatar/avatar';
 export { Toaster } from './lib/sonner/sonner';
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from './lib/tooltip/tooltip';
+export {
+  Dialog,
+  DialogClose,
+  DialogTitle,
+  DialogFooter,
+  DialogHeader,
+  DialogPortal,
+  DialogContent,
+  DialogOverlay,
+  DialogTrigger,
+  DialogDescription,
+} from './lib/dialog/dialog';
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverTrigger,
+  PopoverContent,
+} from './lib/popover/popover';
+export { Skeleton } from './lib/skeleton/skeleton';

@@ -1,1 +1,1 @@
-export * from './lib/next-auth';
+export * from './lib/next-auth.d';

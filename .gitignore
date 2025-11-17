@@ -50,3 +50,5 @@ pokehub.code-workspace
 
 # Index files
 tags
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

@@ -1,6 +1,9 @@
 import { UpdateUserProfileDTO } from './dto/update-user-profile.dto';
 import { User } from '@pokehub/backend/pokehub-users-db';
-import type { UserCore } from '@pokehub/shared/shared-user-models';
+import type {
+  IUpdateUserProfile,
+  UserCore,
+} from '@pokehub/shared/shared-user-models';
 
 export const USERS_SERVICE = 'USERS_SERVICE';
 
@@ -10,7 +13,7 @@ export interface IUsersService {
    * @param userId The ID of the user.
    * @returns A promise that resolves to the full avatar URL, or undefined if not found.
    */
-  getAvatarUrl(userId: string): Promise<string | undefined>;
+  getAvatarUrl(userId: string, avatarFileName: string): string;
 
   /**
    * Updates a user's profile with the given data.
@@ -18,7 +21,10 @@ export interface IUsersService {
    * @param data The data to update the user profile with.
    * @returns A promise that resolves when the profile has been updated.
    */
-  updateUserProfile(userId: string, data: UpdateUserProfileDTO): Promise<void>;
+  updateUserProfile(
+    userId: string,
+    data: UpdateUserProfileDTO
+  ): Promise<IUpdateUserProfile>;
 
   /**
    * Retrieves a user's core information by username, email, or id.

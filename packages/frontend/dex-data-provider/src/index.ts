@@ -2,6 +2,19 @@ export { usePokemonTypes } from './lib/hooks/pokemon-types.hook';
 export {
   getAllPokemonTypes,
   getPokemonDetails,
+  getPokemonDetailsByName,
+  getPokemonAbilitiesDetails,
+  getMoveDetails,
+  getAbilityDetails,
+  getItemDetails,
+  getPokemonCompetitive,
+  getNatureDetails,
+  getStatName,
+  getStats,
+  getPokemonAbilitiesDetailsFromSpecies,
+  getNatures,
+  getItems,
+  getNatureDescription,
 } from './lib/api/pokemon-dex.api';
 export { usePokemonPokeAPIDetails } from './lib/hooks/pokemon-pokeapi-details.hook';
 export { usePokedexByID } from './lib/hooks/pokedex-by-id.hook';
@@ -20,3 +33,11 @@ export {
   type PokemonMovesFromLearnsetOptions,
   usePokemonMovesFromLearnset,
 } from './lib/hooks/pokemon-moves-from-learnset.hook';
+export {
+  useAbiltiesDetails,
+  type AbilitiesDetailsOptions,
+} from './lib/hooks/pokemon-abilities-details';
+export {
+  useGetPokemonByCompetiveFilter,
+  type PokemonByCompetiveFilter,
+} from './lib/hooks/pokemon-competitive.hook';

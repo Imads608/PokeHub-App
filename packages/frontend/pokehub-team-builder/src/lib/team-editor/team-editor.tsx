@@ -1,0 +1,316 @@
+'use client';
+
+import {
+  createNewPokemonFromSpecies,
+  useTeamEditorContext,
+} from '../context/team-editor.context';
+import { arePokemonEqual } from '../hooks/useTeamChanges';
+import { EmptySlot } from './empty-slot';
+import { PokemonCard } from './pokemon-card';
+import { TeamConfigurationSection } from './team-configuration-section';
+import type { Species, TypeName } from '@pkmn/dex';
+import { Icons } from '@pkmn/img';
+import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';
+import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import { validateTeam } from '@pokehub/frontend/pokemon-types';
+import {
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@pokehub/frontend/shared-ui-components';
+import { typeColors } from '@pokehub/frontend/shared-utils';
+import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
+
+// Lazy load dialog components for better performance
+// webpackPrefetch tells the browser to prefetch these during idle time
+const LazyPokemonSelector = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "pokemon-selector" */
+    './pokemon-selector/pokemon-selector'
+  ).then((mod) => ({
+    default: mod.PokemonSelector,
+  }))
+);
+
+const LazyPokemonEditor = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "pokemon-editor" */
+    './pokemon-editor/pokemon-editor'
+  ).then((mod) => ({
+    default: mod.PokemonEditor,
+  }))
+);
+
+const LazyTeamAnalysisDialog = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "team-analysis" */
+    './team-analysis'
+  ).then((mod) => ({
+    default: mod.TeamAnalysisDialog,
+  }))
+);
+
+export const TeamEditor = () => {
+  // State for team configuration
+
+  const { teamPokemon, generation, tier, activePokemon, teamName, format } =
+    useTeamEditorContext();
+  const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<number>(1);
+  const [isPokemonSelectorOpen, setIsPokemonSelectorOpen] = useState(false);
+  const [isPokemonEditorOpen, setIsPokemonEditorOpen] = useState(false);
+  const [pokemonSnapshot, setPokemonSnapshot] = useState<
+    PokemonInTeam | undefined
+  >(undefined);
+  const [speciesList] = useState<(Species | undefined)[]>([
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+  ]);
+
+  // Validate team
+  const validationResult = useMemo(() => {
+    return validateTeam({
+      name: teamName.value,
+      generation: generation.value,
+      format: format.value,
+      tier: tier.value,
+      pokemon: teamPokemon.value,
+    });
+  }, [
+    teamName.value,
+    generation.value,
+    format.value,
+    tier.value,
+    teamPokemon.value,
+  ]);
+
+  const onPokemonSelected = useCallback(
+    (pokemon: Species | PokemonInTeam, slot?: number) => {
+      activePokemon.setValue(pokemon);
+      setIsPokemonSelectorOpen(false);
+      setIsPokemonEditorOpen(true);
+      slot && setActiveSlot(slot);
+      const currSlot = slot || activeSlot;
+
+      // Save snapshot for cancel functionality
+      if ('exists' in pokemon) {
+        // New Pokemon from species - snapshot will be the newly created Pokemon
+        setPokemonSnapshot(createNewPokemonFromSpecies(pokemon));
+      } else {
+        // Editing existing Pokemon - make deep copy for snapshot
+        const pokemonInTeam = pokemon as PokemonInTeam;
+        setPokemonSnapshot({
+          ...pokemonInTeam,
+          moves: [...pokemonInTeam.moves],
+          evs: { ...pokemonInTeam.evs },
+          ivs: { ...pokemonInTeam.ivs },
+        });
+      }
+
+      if (!speciesList[currSlot - 1]) {
+        if ('exists' in pokemon) {
+          pokemon = pokemon as Species;
+          speciesList[currSlot - 1] = pokemon;
+        } else {
+          pokemon = pokemon as PokemonInTeam;
+          speciesList[currSlot - 1] = getPokemonDetailsByName(
+            pokemon.species,
+            generation.value
+          );
+        }
+      }
+    },
+    [activeSlot, generation.value, activePokemon, speciesList]
+  );
+
+  const onAddPokemonToTeam = useCallback(() => {
+    teamPokemon.addActivePokemonToTeam(activeSlot);
+    setIsPokemonEditorOpen(false);
+    setPokemonSnapshot(undefined);
+    activePokemon.setValue(undefined);
+  }, [activeSlot, teamPokemon]);
+
+  const onCancelEdit = useCallback(() => {
+    // Check if there are unsaved changes
+    const hasChanges =
+      pokemonSnapshot &&
+      activePokemon.value &&
+      !arePokemonEqual(pokemonSnapshot, activePokemon.value);
+
+    if (hasChanges) {
+      // Show confirmation dialog
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to discard them?'
+      );
+
+      if (!confirmed) {
+        return; // User cancelled, keep dialog open
+      }
+    }
+
+    // Restore snapshot and close
+    if (pokemonSnapshot) {
+      activePokemon.setValue(pokemonSnapshot);
+    }
+    setIsPokemonEditorOpen(false);
+    setPokemonSnapshot(undefined);
+    activePokemon.setValue(undefined);
+  }, [pokemonSnapshot, activePokemon]);
+
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        // User is trying to close - use cancel logic
+        onCancelEdit();
+      } else {
+        setIsPokemonEditorOpen(true);
+      }
+    },
+    [onCancelEdit]
+  );
+
+  return (
+    <>
+      {/* Team Configuration */}
+      <TeamConfigurationSection
+        onOpenTeamAnalysis={() => setIsTeamAnalysisOpen(true)}
+      />
+
+      {/* Team Builder */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {teamPokemon.value.map((pokemon, index) => (
+          <div key={index}>
+            {pokemon ? (
+              <PokemonCard
+                isPokemonEditorOpen
+                pokemon={pokemon}
+                generation={generation.value}
+                onRemove={() => teamPokemon.removePokemonFromTeam(index + 1)}
+                onEdit={() => onPokemonSelected(pokemon, index + 1)}
+                validationResult={validationResult}
+                slotIndex={index}
+              />
+            ) : (
+              <EmptySlot
+                index={index}
+                onClick={() => {
+                  setActiveSlot(index + 1);
+                  setIsPokemonSelectorOpen(true);
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Pokémon Selector Dialog */}
+      <Dialog
+        open={isPokemonSelectorOpen}
+        onOpenChange={setIsPokemonSelectorOpen}
+      >
+        <DialogContent className="sm:max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>Select a Pokémon</DialogTitle>
+            <DialogDescription>
+              Choose a Pokémon to add to slot {activeSlot ? activeSlot : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">
+                    Loading Pokémon list...
+                  </p>
+                </div>
+              </div>
+            }
+          >
+            <LazyPokemonSelector
+              generation={generation.value}
+              tier={tier.value}
+              onPokemonSelected={onPokemonSelected}
+            />
+          </Suspense>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Analysis Dialog */}
+      <Suspense fallback={null}>
+        <LazyTeamAnalysisDialog
+          open={isTeamAnalysisOpen}
+          onOpenChange={setIsTeamAnalysisOpen}
+          team={teamPokemon.value}
+          generation={generation.value}
+        />
+      </Suspense>
+
+      {/* Pokémon Edit Dialog */}
+      {activePokemon.value && speciesList[activeSlot - 1] && (
+        <Dialog
+          open={isPokemonEditorOpen}
+          onOpenChange={handleDialogOpenChange}
+        >
+          <DialogContent className="sm:max-w-4xl">
+            <DialogHeader className="flex flex-row items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-2">
+                <span
+                  style={{
+                    ...Icons.getPokemon(activePokemon.value.species).css,
+                  }}
+                />
+                <div>
+                  <DialogTitle className="text-xl">
+                    {activePokemon.value.name || activePokemon.value.species}
+                  </DialogTitle>
+                  <div className="mt-1 flex gap-1">
+                    {speciesList[activeSlot - 1]?.types.map((type: string) => (
+                      <Badge
+                        key={type}
+                        className={`${
+                          typeColors[type as TypeName]
+                        } text-xs capitalize`}
+                      >
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </DialogHeader>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-sm text-muted-foreground">
+                      Loading editor...
+                    </p>
+                  </div>
+                </div>
+              }
+            >
+              <LazyPokemonEditor
+                activePokemon={activePokemon.value}
+                species={speciesList[activeSlot - 1] as Species}
+                addPokemon={() => onAddPokemonToTeam()}
+                onCancel={onCancelEdit}
+              />
+            </Suspense>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+};
