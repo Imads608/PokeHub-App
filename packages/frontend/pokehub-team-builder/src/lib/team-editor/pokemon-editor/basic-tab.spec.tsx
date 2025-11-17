@@ -1,10 +1,5 @@
 import { BasicTab, type BasicTabProps } from './basic-tab';
 import type { Species } from '@pkmn/dex';
-import {
-  getItems,
-  getNatures,
-  getPokemonAbilitiesDetailsFromSpecies,
-} from '@pokehub/frontend/dex-data-provider';
 import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
 import { render, screen } from '@testing-library/react';
@@ -67,6 +62,14 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
     },
   ]),
 }));
+
+// Get references to mocked functions
+const { getItems, getNatures, getPokemonAbilitiesDetailsFromSpecies } =
+  jest.requireMock('@pokehub/frontend/dex-data-provider') as {
+    getItems: jest.Mock;
+    getNatures: jest.Mock;
+    getPokemonAbilitiesDetailsFromSpecies: jest.Mock;
+  };
 
 // Mock @pkmn/img
 jest.mock('@pkmn/img', () => ({
