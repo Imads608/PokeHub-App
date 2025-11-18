@@ -1,7 +1,7 @@
 'use client';
 
 import { useDexSearchFilters } from '../context/dex-search.context';
-import { GenerationNum, TypeName } from '@pkmn/dex';
+import type { GenerationNum, TypeName } from '@pkmn/dex';
 import {
   Badge,
   Button,

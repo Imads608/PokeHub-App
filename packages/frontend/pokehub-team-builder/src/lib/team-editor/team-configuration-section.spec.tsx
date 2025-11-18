@@ -415,7 +415,6 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should prevent save if validation errors exist', async () => {
-      const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
       mockValidateTeam.mockReturnValue({
         isValid: false,

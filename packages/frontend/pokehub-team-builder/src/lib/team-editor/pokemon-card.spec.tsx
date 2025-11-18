@@ -87,15 +87,15 @@ describe('PokemonCard', () => {
       id: 'pikachu',
       name: 'Pikachu',
       types: ['Electric'],
-    } as any);
+    });
 
     mockGetAbilityDetails.mockReturnValue({
       desc: 'Boosts Attack when hit by Electric-type moves.',
-    } as any);
+    });
 
     mockGetItemDetails.mockReturnValue({
       desc: 'Doubles Attack for Pikachu.',
-    } as any);
+    });
 
     mockGetMoveDetails.mockReturnValue({
       type: 'Electric',
@@ -103,13 +103,13 @@ describe('PokemonCard', () => {
       accuracy: 100,
       pp: 15,
       desc: 'May paralyze the foe.',
-    } as any);
+    });
 
     mockGetNatureDetails.mockReturnValue({
       desc: '+Speed, -Sp. Atk',
       plus: 'spe',
       minus: 'spa',
-    } as any);
+    });
 
     mockGetStatName.mockImplementation((statId: string) => {
       const names: Record<string, string> = {
@@ -123,7 +123,7 @@ describe('PokemonCard', () => {
       return names[statId] || statId;
     });
 
-    mockGetStats.mockReturnValue(['hp', 'atk', 'def', 'spa', 'spd', 'spe'] as any);
+    mockGetStats.mockReturnValue(['hp', 'atk', 'def', 'spa', 'spd', 'spe']);
 
     // Reset getPokemonSlotErrors to return empty array by default
     mockGetPokemonSlotErrors.mockReturnValue([]);
@@ -357,7 +357,7 @@ describe('PokemonCard', () => {
   describe('Expanded Content', () => {
     beforeEach(async () => {
       const user = userEvent.setup();
-      const { container } = render(<PokemonCard {...defaultProps} />);
+      render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
       const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
