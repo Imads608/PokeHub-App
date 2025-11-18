@@ -1,5 +1,5 @@
 {
-  "name": "dex-data-provider",
+  "name": "frontend-dex-data-provider",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/frontend/dex-data-provider/src",
   "projectType": "library",
