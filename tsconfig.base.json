@@ -134,6 +134,15 @@
       ],
       "@pokehub/shared/shared-user-models": [
         "packages/shared/shared-user-models/src/index.ts"
+      ],
+      "@pokehub/backend/pokehub-teams-db": [
+        "packages/backend/pokehub-teams-db/src/index.ts"
+      ],
+      "@pokehub/shared/shared-team-models": [
+        "packages/shared/shared-team-models/src/index.ts"
+      ],
+      "@pokehub/shared-shared-team-models": [
+        "packages/shared/shared-team-models/src/index.ts"
       ]
     }
   },

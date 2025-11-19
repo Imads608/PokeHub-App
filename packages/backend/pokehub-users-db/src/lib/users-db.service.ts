@@ -1,25 +1,25 @@
 import type { User } from './schema/user.schema';
 import { usersTable } from './schema/user.schema';
+import * as schema from './schema/user.schema';
 import {
   USERS_DB_SERVICE,
   type IUsersDBService,
 } from './users-db-service.interface';
 import type { Provider } from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  POSTGRES_SERVICE,
-  PostgresService,
-} from '@pokehub/backend/pokehub-postgres';
+import { POSTGRES_SERVICE } from '@pokehub/backend/pokehub-postgres';
 import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import { IUpdateUserProfile } from '@pokehub/shared/shared-user-models';
 import { eq } from 'drizzle-orm';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @Injectable()
 class UsersDBService implements IUsersDBService {
   constructor(
     private readonly logger: AppLogger,
-    @Inject(POSTGRES_SERVICE) private readonly dbService: PostgresService
+    @Inject(POSTGRES_SERVICE)
+    private readonly dbService: NodePgDatabase<typeof schema>
   ) {
     this.logger.setContext(UsersDBService.name);
   }
