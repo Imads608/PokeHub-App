@@ -135,11 +135,14 @@
       "@pokehub/shared/shared-user-models": [
         "packages/shared/shared-user-models/src/index.ts"
       ],
-      "@pokehub/shared/pokemon-types": [
-        "packages/shared/pokemon-types/src/index.ts"
+      "@pokehub/backend/pokehub-teams-db": [
+        "packages/backend/pokehub-teams-db/src/index.ts"
       ],
-      "@pokehub/shared/pokemon-showdown-validation": [
-        "packages/shared/pokemon-showdown-validation/src/index.ts"
+      "@pokehub/shared/shared-team-models": [
+        "packages/shared/shared-team-models/src/index.ts"
+      ],
+      "@pokehub/shared-shared-team-models": [
+        "packages/shared/shared-team-models/src/index.ts"
       ]
     }
   },
