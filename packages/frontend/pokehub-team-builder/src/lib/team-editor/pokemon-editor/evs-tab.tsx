@@ -1,6 +1,6 @@
 import { useTeamEditorContext } from '../../context/team-editor.context';
 import { getStats, getStatName } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Input,
   Label,

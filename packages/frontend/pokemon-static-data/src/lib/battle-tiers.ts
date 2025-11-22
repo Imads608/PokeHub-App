@@ -1,5 +1,5 @@
 import type { Tier } from '@pkmn/dex';
-import type { BattleTier, BattleFormat } from '@pokehub/frontend/pokemon-types';
+import type { BattleTier, BattleFormat } from '@pokehub/shared/pokemon-types';
 
 const singlesBattleTiers: BattleTier<'Singles'>[] = [
   {

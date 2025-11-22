@@ -11,8 +11,8 @@ import { TeamConfigurationSection } from './team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
-import { validateTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
+import { validateTeam } from '@pokehub/shared/pokemon-types';
 import {
   Badge,
   Dialog,
@@ -62,20 +62,13 @@ export const TeamEditor = () => {
   const { teamPokemon, generation, tier, activePokemon, teamName, format } =
     useTeamEditorContext();
   const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
-  const [activeSlot, setActiveSlot] = useState<number>(1);
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [isPokemonSelectorOpen, setIsPokemonSelectorOpen] = useState(false);
   const [isPokemonEditorOpen, setIsPokemonEditorOpen] = useState(false);
   const [pokemonSnapshot, setPokemonSnapshot] = useState<
     PokemonInTeam | undefined
   >(undefined);
-  const [speciesList] = useState<(Species | undefined)[]>([
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-  ]);
+  const [editingNewPokemon, setEditingNewPokemon] = useState(false);
 
   // Validate team
   const validationResult = useMemo(() => {
@@ -95,12 +88,20 @@ export const TeamEditor = () => {
   ]);
 
   const onPokemonSelected = useCallback(
-    (pokemon: Species | PokemonInTeam, slot?: number) => {
+    (pokemon: Species | PokemonInTeam, index?: number) => {
       activePokemon.setValue(pokemon);
       setIsPokemonSelectorOpen(false);
       setIsPokemonEditorOpen(true);
-      slot && setActiveSlot(slot);
-      const currSlot = slot || activeSlot;
+
+      // If index provided, we're editing existing Pokemon
+      // Otherwise, we're adding a new Pokemon
+      if (index !== undefined) {
+        setActiveIndex(index);
+        setEditingNewPokemon(false);
+      } else {
+        setActiveIndex(undefined);
+        setEditingNewPokemon(true);
+      }
 
       // Save snapshot for cancel functionality
       if ('exists' in pokemon) {
@@ -116,29 +117,27 @@ export const TeamEditor = () => {
           ivs: { ...pokemonInTeam.ivs },
         });
       }
-
-      if (!speciesList[currSlot - 1]) {
-        if ('exists' in pokemon) {
-          pokemon = pokemon as Species;
-          speciesList[currSlot - 1] = pokemon;
-        } else {
-          pokemon = pokemon as PokemonInTeam;
-          speciesList[currSlot - 1] = getPokemonDetailsByName(
-            pokemon.species,
-            generation.value
-          );
-        }
-      }
     },
-    [activeSlot, generation.value, activePokemon, speciesList]
+    [activePokemon]
   );
 
   const onAddPokemonToTeam = useCallback(() => {
-    teamPokemon.addActivePokemonToTeam(activeSlot);
+    if (!activePokemon.value) return;
+
+    if (editingNewPokemon) {
+      // Adding new Pokemon to team
+      teamPokemon.addActivePokemonToTeam();
+    } else if (activeIndex !== undefined) {
+      // Updating existing Pokemon
+      teamPokemon.updatePokemonInTeam(activeIndex, activePokemon.value);
+    }
+
     setIsPokemonEditorOpen(false);
     setPokemonSnapshot(undefined);
     activePokemon.setValue(undefined);
-  }, [activeSlot, teamPokemon]);
+    setActiveIndex(undefined);
+    setEditingNewPokemon(false);
+  }, [editingNewPokemon, activeIndex, teamPokemon, activePokemon]);
 
   const onCancelEdit = useCallback(() => {
     // Check if there are unsaved changes
@@ -165,6 +164,8 @@ export const TeamEditor = () => {
     setIsPokemonEditorOpen(false);
     setPokemonSnapshot(undefined);
     activePokemon.setValue(undefined);
+    setActiveIndex(undefined);
+    setEditingNewPokemon(false);
   }, [pokemonSnapshot, activePokemon]);
 
   const handleDialogOpenChange = useCallback(
@@ -179,6 +180,15 @@ export const TeamEditor = () => {
     [onCancelEdit]
   );
 
+  // Get species for active Pokemon
+  const activeSpecies = useMemo(() => {
+    if (!activePokemon.value) return null;
+    return getPokemonDetailsByName(
+      activePokemon.value.species,
+      generation.value
+    );
+  }, [activePokemon.value, generation.value]);
+
   return (
     <>
       {/* Team Configuration */}
@@ -190,27 +200,28 @@ export const TeamEditor = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {teamPokemon.value.map((pokemon, index) => (
           <div key={index}>
-            {pokemon ? (
-              <PokemonCard
-                isPokemonEditorOpen
-                pokemon={pokemon}
-                generation={generation.value}
-                onRemove={() => teamPokemon.removePokemonFromTeam(index + 1)}
-                onEdit={() => onPokemonSelected(pokemon, index + 1)}
-                validationResult={validationResult}
-                slotIndex={index}
-              />
-            ) : (
-              <EmptySlot
-                index={index}
-                onClick={() => {
-                  setActiveSlot(index + 1);
-                  setIsPokemonSelectorOpen(true);
-                }}
-              />
-            )}
+            <PokemonCard
+              isPokemonEditorOpen
+              pokemon={pokemon}
+              generation={generation.value}
+              onRemove={() => teamPokemon.removePokemonFromTeam(index)}
+              onEdit={() => onPokemonSelected(pokemon, index)}
+              validationResult={validationResult}
+              index={index}
+            />
           </div>
         ))}
+        {/* Show "Add Pokemon" button when team has less than 6 */}
+        {teamPokemon.value.length < 6 && (
+          <div>
+            <EmptySlot
+              index={teamPokemon.value.length}
+              onClick={() => {
+                setIsPokemonSelectorOpen(true);
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Pokémon Selector Dialog */}
@@ -222,7 +233,7 @@ export const TeamEditor = () => {
           <DialogHeader>
             <DialogTitle>Select a Pokémon</DialogTitle>
             <DialogDescription>
-              Choose a Pokémon to add to slot {activeSlot ? activeSlot : ''}
+              Choose a Pokémon to add to your team
             </DialogDescription>
           </DialogHeader>
           <Suspense
@@ -257,7 +268,7 @@ export const TeamEditor = () => {
       </Suspense>
 
       {/* Pokémon Edit Dialog */}
-      {activePokemon.value && speciesList[activeSlot - 1] && (
+      {activePokemon.value && activeSpecies && (
         <Dialog
           open={isPokemonEditorOpen}
           onOpenChange={handleDialogOpenChange}
@@ -275,7 +286,7 @@ export const TeamEditor = () => {
                     {activePokemon.value.name || activePokemon.value.species}
                   </DialogTitle>
                   <div className="mt-1 flex gap-1">
-                    {speciesList[activeSlot - 1]?.types.map((type: string) => (
+                    {activeSpecies.types.map((type: string) => (
                       <Badge
                         key={type}
                         className={`${
@@ -303,7 +314,7 @@ export const TeamEditor = () => {
             >
               <LazyPokemonEditor
                 activePokemon={activePokemon.value}
-                species={speciesList[activeSlot - 1] as Species}
+                species={activeSpecies}
                 addPokemon={() => onAddPokemonToTeam()}
                 onCancel={onCancelEdit}
               />

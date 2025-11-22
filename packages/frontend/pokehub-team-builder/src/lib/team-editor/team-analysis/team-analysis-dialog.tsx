@@ -8,7 +8,7 @@ import {
   getMoveDetails,
   getPokemonDetailsByName,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   calculateTeamDefensiveCoverage,
   calculateTeamOffensiveCoverage,
@@ -35,7 +35,7 @@ import { useMemo } from 'react';
 export interface TeamAnalysisDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  team: (PokemonInTeam | undefined)[];
+  team: PokemonInTeam[];
   generation: GenerationNum;
 }
 
@@ -45,17 +45,11 @@ export const TeamAnalysisDialog = ({
   team,
   generation,
 }: TeamAnalysisDialogProps) => {
-  // Filter out undefined Pokemon
-  const definedPokemon = useMemo(
-    () => team.filter((p): p is PokemonInTeam => p !== undefined),
-    [team]
-  );
-
   // Calculate defensive coverage - only when dialog is open
   const defensiveCoverage: TeamDefensiveCoverage | null = useMemo(() => {
     if (!open) return null; // Skip calculation when dialog is closed
 
-    const pokemonWithTypes = definedPokemon
+    const pokemonWithTypes = team
       .map((pokemon) => {
         const species = getPokemonDetailsByName(pokemon.species, generation);
         // species.types is [TypeName] | [TypeName, TypeName], cast to TypeName[] for the function
@@ -64,7 +58,7 @@ export const TeamAnalysisDialog = ({
       .filter((p): p is { types: TypeName[] } => p !== null);
 
     return calculateTeamDefensiveCoverage(pokemonWithTypes);
-  }, [open, definedPokemon, generation]);
+  }, [open, team, generation]);
 
   // Calculate offensive coverage - only when dialog is open
   const offensiveCoverage: TeamOffensiveCoverage | null = useMemo(() => {
@@ -72,7 +66,7 @@ export const TeamAnalysisDialog = ({
 
     const allMoves: MoveForCoverage[] = [];
 
-    definedPokemon.forEach((pokemon) => {
+    team.forEach((pokemon) => {
       // Get move details for each non-empty move
       pokemon.moves.forEach((moveName) => {
         if (moveName && moveName.trim() !== '') {
@@ -88,7 +82,7 @@ export const TeamAnalysisDialog = ({
     });
 
     return calculateTeamOffensiveCoverage(allMoves);
-  }, [open, definedPokemon, generation]);
+  }, [open, team, generation]);
 
   // Calculate summary statistics - only when dialog is open
   const summary = useMemo(() => {
@@ -98,7 +92,7 @@ export const TeamAnalysisDialog = ({
   }, [open, defensiveCoverage, offensiveCoverage]);
 
   // Show empty state if no Pokemon
-  if (definedPokemon.length === 0) {
+  if (team.length === 0) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
@@ -138,7 +132,7 @@ export const TeamAnalysisDialog = ({
             {defensiveCoverage && (
               <DefensiveCoverageTab
                 coverage={defensiveCoverage}
-                teamSize={definedPokemon.length}
+                teamSize={team.length}
               />
             )}
           </TabsContent>
@@ -147,7 +141,7 @@ export const TeamAnalysisDialog = ({
             {offensiveCoverage && (
               <OffensiveCoverageTab
                 coverage={offensiveCoverage}
-                teamSize={definedPokemon.length}
+                teamSize={team.length}
               />
             )}
           </TabsContent>
@@ -158,7 +152,7 @@ export const TeamAnalysisDialog = ({
                 summary={summary}
                 defensiveCoverage={defensiveCoverage}
                 offensiveCoverage={offensiveCoverage}
-                teamSize={definedPokemon.length}
+                teamSize={team.length}
               />
             )}
           </TabsContent>

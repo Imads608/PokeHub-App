@@ -7,7 +7,7 @@ import {
   getNatures,
   getPokemonAbilitiesDetailsFromSpecies,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Input,
   Label,

@@ -1,9 +1,9 @@
 import { PokemonCard } from './pokemon-card';
-import type { PokemonInTeam, ValidationResult } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam, ValidationResult } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Icons } from '@pkmn/img';
-import { getPokemonSlotErrors } from '@pokehub/frontend/pokemon-types';
+import { getPokemonSlotErrors } from '@pokehub/shared/pokemon-types';
 
 // Mock @pkmn/img
 jest.mock('@pkmn/img');
@@ -12,8 +12,8 @@ jest.mock('@pkmn/img');
 jest.mock('@pokehub/frontend/dex-data-provider');
 
 // Mock getPokemonSlotErrors
-jest.mock('@pokehub/frontend/pokemon-types', () => ({
-  ...jest.requireActual('@pokehub/frontend/pokemon-types'),
+jest.mock('@pokehub/shared/pokemon-types', () => ({
+  ...jest.requireActual('@pokehub/shared/pokemon-types'),
   getPokemonSlotErrors: jest.fn(),
 }));
 

@@ -1,6 +1,6 @@
 import { TeamEditor } from './team-editor';
 import type { GenerationNum, Species, Tier } from '@pkmn/dex';
-import type { BattleFormat, PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { BattleFormat, PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -63,7 +63,7 @@ jest.mock('../context/team-editor.context', () => ({
 }));
 
 // Mock validateTeam
-jest.mock('@pokehub/frontend/pokemon-types', () => ({
+jest.mock('@pokehub/shared/pokemon-types', () => ({
   validateTeam: jest.fn(() => ({
     isValid: true,
     errors: {},

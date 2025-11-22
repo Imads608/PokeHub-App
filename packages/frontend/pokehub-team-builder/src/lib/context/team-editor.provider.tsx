@@ -6,7 +6,7 @@ import type {
   BattleFormat,
   PokemonInTeam,
   PokemonTeam,
-} from '@pokehub/frontend/pokemon-types';
+} from '@pokehub/shared/pokemon-types';
 import { useState } from 'react';
 
 export interface TeamEditorProviderProps {
@@ -29,15 +29,8 @@ export const TeamEditorProvider = ({
   const [selectedTier, setSelectedTier] = useState<Tier.Singles | Tier.Doubles>(
     team?.tier || 'AG'
   );
-  const [pokemonTeam, setPokemonTeam] = useState<(PokemonInTeam | undefined)[]>(
-    team?.pokemon || [
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
+  const [pokemonTeam, setPokemonTeam] = useState<PokemonInTeam[]>(
+    team?.pokemon || []
   );
 
   const [activePokemon, setActivePokemon] = useState<PokemonInTeam | undefined>(
@@ -70,6 +63,18 @@ export const TeamEditorProvider = ({
         activePokemon: {
           value: activePokemon,
           setValue: setActivePokemon,
+        },
+        validation: {
+          state: {
+            isValid: true,
+            errors: [],
+            showdownFormatId: 'gen9anythinggoes',
+            timestamp: 0,
+          },
+          getTeamErrors: () => [],
+          getPokemonErrors: () => [],
+          isTeamValid: true,
+          showdownFormatId: 'gen9anythinggoes',
         },
       }}
     >

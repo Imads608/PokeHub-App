@@ -1,6 +1,6 @@
 import { TeamConfigurationSection, type TeamConfigurationSectionProps } from './team-configuration-section';
 import type { GenerationNum, Tier } from '@pkmn/dex';
-import type { BattleFormat } from '@pokehub/frontend/pokemon-types';
+import type { BattleFormat } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
@@ -78,7 +78,7 @@ jest.mock('@pokehub/frontend/pokemon-static-data', () => ({
 }));
 
 // Mock validateTeam
-jest.mock('@pokehub/frontend/pokemon-types', () => ({
+jest.mock('@pokehub/shared/pokemon-types', () => ({
   validateTeam: jest.fn(() => ({
     isValid: true,
     errors: {},
@@ -87,7 +87,7 @@ jest.mock('@pokehub/frontend/pokemon-types', () => ({
 }));
 
 // Get references to mocked functions
-const { validateTeam: mockValidateTeam } = jest.requireMock('@pokehub/frontend/pokemon-types') as {
+const { validateTeam: mockValidateTeam } = jest.requireMock('@pokehub/shared/pokemon-types') as {
   validateTeam: jest.Mock;
 };
 

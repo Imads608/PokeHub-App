@@ -1,0 +1,19 @@
+{
+  "name": "shared-pokemon-showdown-validation",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/shared/pokemon-showdown-validation/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/shared/pokemon-showdown-validation/jest.config.ts"
+      }
+    }
+  }
+}
