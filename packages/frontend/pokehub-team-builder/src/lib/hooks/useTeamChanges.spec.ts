@@ -1,6 +1,20 @@
+import {
+  useTeamChanges,
+  arePokemonEqual,
+  type TeamState,
+} from './useTeamChanges';
+import type {
+  AbilityName,
+  GenderName,
+  GenerationNum,
+  ItemName,
+  MoveName,
+  NatureName,
+  SpeciesName,
+  Tier,
+} from '@pkmn/dex';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { renderHook, act } from '@testing-library/react';
-import { useTeamChanges, arePokemonEqual, type TeamState } from './useTeamChanges';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 
 describe('arePokemonEqual', () => {
   const basePokemon: PokemonInTeam = {
@@ -11,7 +25,12 @@ describe('arePokemonEqual', () => {
     nature: 'Jolly' as PokemonInTeam['nature'],
     gender: 'M' as PokemonInTeam['gender'],
     level: 50,
-    moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'] as PokemonInTeam['moves'],
+    moves: [
+      'Thunder',
+      'Quick Attack',
+      'Iron Tail',
+      'Thunderbolt',
+    ] as PokemonInTeam['moves'],
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   };
@@ -48,7 +67,7 @@ describe('arePokemonEqual', () => {
 
   it('should return false when gender differs', () => {
     const pokemon1 = { ...basePokemon };
-    const pokemon2 = { ...basePokemon, gender: 'F' };
+    const pokemon2 = { ...basePokemon, gender: 'F' as GenderName };
     expect(arePokemonEqual(pokemon1, pokemon2)).toBe(false);
   });
 
@@ -157,19 +176,24 @@ describe('arePokemonEqual', () => {
 describe('useTeamChanges', () => {
   const baseTeamState: TeamState = {
     teamName: 'My Team',
-    generation: 9,
+    generation: 9 as GenerationNum,
     format: 'Singles',
-    tier: 'OU',
+    tier: 'OU' as Tier.Singles,
     pokemon: [
       {
-        species: 'Pikachu',
+        species: 'Pikachu' as SpeciesName,
         name: 'Pika',
-        ability: 'Static',
-        item: 'Light Ball',
-        nature: 'Jolly',
-        gender: 'M',
+        ability: 'Static' as AbilityName,
+        item: 'Light Ball' as ItemName,
+        nature: 'Jolly' as NatureName,
+        gender: 'M' as GenderName,
         level: 50,
-        moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'],
+        moves: [
+          'Thunder' as MoveName,
+          'Quick Attack' as MoveName,
+          'Iron Tail' as MoveName,
+          'Thunderbolt' as MoveName,
+        ],
         evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
       },
@@ -193,7 +217,7 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = { ...baseTeamState, teamName: 'New Team Name' };
+    const modifiedState: TeamState = { ...baseTeamState, teamName: 'New Team Name' };
     rerender({ teamState: modifiedState });
 
     expect(result.current.hasChanges).toBe(true);
@@ -206,7 +230,7 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = { ...baseTeamState, generation: 8 };
+    const modifiedState: TeamState = { ...baseTeamState, generation: 8 as GenerationNum };
     rerender({ teamState: modifiedState });
 
     expect(result.current.hasChanges).toBe(true);
@@ -220,21 +244,33 @@ describe('useTeamChanges', () => {
     );
 
     const newPokemon: PokemonInTeam = {
-      species: 'Charizard' as PokemonInTeam['species'],
+      species: 'Charizard' as SpeciesName,
       name: 'Charizard',
-      ability: 'Blaze' as PokemonInTeam['ability'],
-      item: '' as PokemonInTeam['item'],
-      nature: 'Adamant' as PokemonInTeam['nature'],
-      gender: 'M' as PokemonInTeam['gender'],
+      ability: 'Blaze' as AbilityName,
+      item: '' as ItemName,
+      nature: 'Adamant' as NatureName,
+      gender: 'M' as GenderName,
       level: 50,
-      moves: ['Flare Blitz', 'Dragon Claw', 'Earthquake', 'Roost'] as PokemonInTeam['moves'],
+      moves: [
+        'Flare Blitz' as MoveName,
+        'Dragon Claw' as MoveName,
+        'Earthquake' as MoveName,
+        'Roost' as MoveName,
+      ],
       evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
       ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
     };
 
-    const modifiedState = {
+    const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [baseTeamState.pokemon[0], newPokemon, undefined, undefined, undefined, undefined],
+      pokemon: [
+        baseTeamState.pokemon[0],
+        newPokemon,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      ],
     };
     rerender({ teamState: modifiedState });
 
@@ -248,9 +284,16 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = {
+    const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [undefined, undefined, undefined, undefined, undefined, undefined],
+      pokemon: [
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      ],
     };
     rerender({ teamState: modifiedState });
 
@@ -264,14 +307,26 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedPokemon = {
-      ...baseTeamState.pokemon[0]!,
-      ability: 'Lightning Rod',
+    const originalPokemon = baseTeamState.pokemon[0];
+    if (!originalPokemon) {
+      throw new Error('Expected pokemon at index 0 for test setup');
+    }
+
+    const modifiedPokemon: PokemonInTeam = {
+      ...originalPokemon,
+      ability: 'Lightning Rod' as AbilityName,
     };
 
-    const modifiedState = {
+    const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [modifiedPokemon, undefined, undefined, undefined, undefined, undefined],
+      pokemon: [
+        modifiedPokemon,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      ],
     };
     rerender({ teamState: modifiedState });
 
@@ -285,7 +340,7 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = { ...baseTeamState, teamName: 'New Team Name' };
+    const modifiedState: TeamState = { ...baseTeamState, teamName: 'New Team Name' };
     rerender({ teamState: modifiedState });
 
     expect(result.current.hasChanges).toBe(true);
@@ -303,7 +358,7 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = { ...baseTeamState, teamName: 'New Team Name' };
+    const modifiedState: TeamState = { ...baseTeamState, teamName: 'New Team Name' };
     rerender({ teamState: modifiedState });
 
     const savedState = result.current.resetToSaved();
@@ -318,10 +373,10 @@ describe('useTeamChanges', () => {
       { initialProps: { teamState: baseTeamState } }
     );
 
-    const modifiedState = {
+    const modifiedState: TeamState = {
       ...baseTeamState,
       teamName: 'New Name',
-      generation: 8,
+      generation: 8 as GenerationNum,
       format: 'Doubles' as const,
     };
     rerender({ teamState: modifiedState });
@@ -340,7 +395,7 @@ describe('useTeamChanges', () => {
 
     expect(result.current.savedState).toEqual(baseTeamState);
 
-    const modifiedState = { ...baseTeamState, teamName: 'New Team Name' };
+    const modifiedState: TeamState = { ...baseTeamState, teamName: 'New Team Name' };
     rerender({ teamState: modifiedState });
 
     // Saved state should remain the original

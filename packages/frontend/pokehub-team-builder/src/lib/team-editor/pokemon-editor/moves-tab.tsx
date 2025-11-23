@@ -5,7 +5,7 @@ import {
   usePokemonLearnset,
   usePokemonMovesFromLearnset,
 } from '@pokehub/frontend/dex-data-provider';
-import { hasAtLeastOneMove, type PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import { hasAtLeastOneMove, type PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Alert,
   AlertDescription,

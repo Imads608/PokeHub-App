@@ -7,8 +7,8 @@ import {
   getGenerationsData,
   getBattleTierInfo,
 } from '@pokehub/frontend/pokemon-static-data';
-import type { BattleFormat, BattleTier } from '@pokehub/frontend/pokemon-types';
-import { validateTeam } from '@pokehub/frontend/pokemon-types';
+import type { BattleFormat, BattleTier } from '@pokehub/shared/pokemon-types';
+import { validateTeam } from '@pokehub/shared/pokemon-types';
 import {
   Alert,
   AlertDescription,

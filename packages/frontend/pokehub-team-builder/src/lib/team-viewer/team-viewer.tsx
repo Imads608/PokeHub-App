@@ -2,7 +2,7 @@
 
 import { useTiersStaticData } from '../hooks/useTiersStaticData';
 import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
-import type { BattleTier, BattleFormat } from '@pokehub/frontend/pokemon-types';
+import type { BattleTier, BattleFormat } from '@pokehub/shared/pokemon-types';
 import {
   Button,
   Card,

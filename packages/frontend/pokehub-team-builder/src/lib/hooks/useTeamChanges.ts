@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import type { GenerationNum, Tier } from '@pkmn/dex';
-import type { BattleFormat } from '@pokehub/frontend/pokemon-types';
+import type {
+  PokemonInTeam,
+  BattleFormat,
+} from '@pokehub/shared/pokemon-types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface TeamState {
   teamName?: string;
@@ -130,7 +132,6 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
     },
     []
   );
-
 
   /**
    * Check if there are unsaved changes

@@ -1,8 +1,8 @@
-import type { ValidationResult } from '@pokehub/frontend/pokemon-types';
+import type { ValidationResult } from '@pokehub/shared/pokemon-types';
 import {
   getTeamLevelErrors,
   getPokemonSlotErrors,
-} from '@pokehub/frontend/pokemon-types';
+} from '@pokehub/shared/pokemon-types';
 import {
   Alert,
   AlertDescription,
@@ -12,7 +12,7 @@ import { AlertCircle } from 'lucide-react';
 
 export interface TeamValidationSummaryProps {
   validationResult: ValidationResult;
-  pokemonNames: (string | undefined)[]; // Array of Pokemon names for each slot
+  pokemonNames: string[]; // Array of Pokemon names
 }
 
 export const TeamValidationSummary = ({
@@ -24,7 +24,7 @@ export const TeamValidationSummary = ({
   }
 
   const teamErrors = getTeamLevelErrors(validationResult);
-  const pokemonErrors = Array.from({ length: 6 }, (_, i) =>
+  const pokemonErrors = Array.from({ length: pokemonNames.length }, (_, i) =>
     getPokemonSlotErrors(validationResult, i)
   );
 
@@ -47,20 +47,18 @@ export const TeamValidationSummary = ({
           )}
 
           {/* Pokemon-specific errors */}
-          {pokemonErrors.map((errors, slotIndex) => {
+          {pokemonErrors.map((errors, index) => {
             if (errors.length === 0) return null;
 
-            const pokemonName = pokemonNames[slotIndex];
-            const displayName = pokemonName
-              ? `Slot ${slotIndex + 1} (${pokemonName})`
-              : `Slot ${slotIndex + 1}`;
+            const pokemonName = pokemonNames[index];
+            const displayName = pokemonName || `Pokemon ${index + 1}`;
 
             return (
-              <div key={slotIndex}>
+              <div key={index}>
                 <p className="font-medium text-sm">{displayName}:</p>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {errors.map((error, index) => (
-                    <li key={index}>{error.message}</li>
+                  {errors.map((error, errorIndex) => (
+                    <li key={errorIndex}>{error.message}</li>
                   ))}
                 </ul>
               </div>

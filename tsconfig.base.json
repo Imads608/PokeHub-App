@@ -68,9 +68,6 @@
       "@pokehub/frontend/pokemon-static-data": [
         "packages/frontend/pokemon-static-data/src/index.ts"
       ],
-      "@pokehub/frontend/pokemon-types": [
-        "packages/frontend/pokemon-types/src/index.ts"
-      ],
       "@pokehub/frontend/shared-app-bootstrapper": [
         "packages/frontend/shared-app-bootstrapper/src/index.ts"
       ],
@@ -134,6 +131,12 @@
       ],
       "@pokehub/shared/shared-user-models": [
         "packages/shared/shared-user-models/src/index.ts"
+      ],
+      "@pokehub/shared/pokemon-types": [
+        "packages/shared/pokemon-types/src/index.ts"
+      ],
+      "@pokehub/shared/pokemon-showdown-validation": [
+        "packages/shared/pokemon-showdown-validation/src/index.ts"
       ]
     }
   },

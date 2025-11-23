@@ -1,5 +1,5 @@
 import { IVsTab, type IVsTabProps } from './ivs-tab';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

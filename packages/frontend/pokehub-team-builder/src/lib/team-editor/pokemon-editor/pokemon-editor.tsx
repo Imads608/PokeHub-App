@@ -5,7 +5,7 @@ import { EVsTab } from './evs-tab';
 import { IVsTab } from './ivs-tab';
 import { MovesTab } from './moves-tab';
 import type { Species } from '@pkmn/dex';
-import type { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Button,
   DialogFooter,

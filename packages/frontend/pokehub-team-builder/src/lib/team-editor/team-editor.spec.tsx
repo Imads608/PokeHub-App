@@ -1,6 +1,6 @@
 import { TeamEditor } from './team-editor';
 import type { GenerationNum, Species, Tier } from '@pkmn/dex';
-import type { BattleFormat, PokemonInTeam } from '@pokehub/frontend/pokemon-types';
+import type { BattleFormat, PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -12,8 +12,7 @@ const mockSetActivePokemon = jest.fn();
 const mockAddActivePokemonToTeam = jest.fn();
 const mockRemovePokemonFromTeam = jest.fn();
 
-const mockTeamPokemon: (PokemonInTeam | undefined)[] = [
-  undefined,
+const mockTeamPokemon: PokemonInTeam[] = [
   {
     species: 'Pikachu' as PokemonInTeam['species'],
     name: 'Sparky',
@@ -26,10 +25,6 @@ const mockTeamPokemon: (PokemonInTeam | undefined)[] = [
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   },
-  undefined,
-  undefined,
-  undefined,
-  undefined,
 ];
 
 jest.mock('../context/team-editor.context', () => ({
@@ -63,7 +58,7 @@ jest.mock('../context/team-editor.context', () => ({
 }));
 
 // Mock validateTeam
-jest.mock('@pokehub/frontend/pokemon-types', () => ({
+jest.mock('@pokehub/shared/pokemon-types', () => ({
   validateTeam: jest.fn(() => ({
     isValid: true,
     errors: {},
@@ -103,14 +98,14 @@ jest.mock('./pokemon-card', () => ({
     pokemon,
     onEdit,
     onRemove,
-    slotIndex,
+    index,
   }: {
     pokemon: PokemonInTeam;
     onEdit: () => void;
     onRemove: () => void;
-    slotIndex: number;
+    index: number;
   }) => (
-    <div data-testid={`pokemon-card-${slotIndex}`}>
+    <div data-testid={`pokemon-card-${index}`}>
       <div>{pokemon.species}</div>
       <button onClick={onEdit}>Edit</button>
       <button onClick={onRemove}>Remove</button>
@@ -205,18 +200,14 @@ describe('TeamEditor Integration Tests', () => {
       expect(screen.getByTestId('team-configuration-section')).toBeInTheDocument();
     });
 
-    it('should render 6 team slots', () => {
+    it('should render Pokemon and add slot', () => {
       render(<TeamEditor />);
 
-      // 1 Pokemon card (Pikachu in slot 2)
-      expect(screen.getByTestId('pokemon-card-1')).toBeInTheDocument();
+      // 1 Pokemon card (Pikachu at index 0)
+      expect(screen.getByTestId('pokemon-card-0')).toBeInTheDocument();
 
-      // 5 empty slots
-      expect(screen.getByTestId('empty-slot-0')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-slot-2')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-slot-3')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-slot-4')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-slot-5')).toBeInTheDocument();
+      // 1 empty slot for adding new Pokemon
+      expect(screen.getByTestId('empty-slot-1')).toBeInTheDocument();
     });
 
     it('should render Pokemon card with correct Pokemon', () => {
@@ -239,7 +230,7 @@ describe('TeamEditor Integration Tests', () => {
       const user = userEvent.setup();
       render(<TeamEditor />);
 
-      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 1/i });
+      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 2/i });
       await user.click(emptySlotButton);
 
       await waitFor(() => {
@@ -247,15 +238,15 @@ describe('TeamEditor Integration Tests', () => {
       });
     });
 
-    it('should show correct slot number in selector dialog', async () => {
+    it('should show correct dialog description when selector is opened', async () => {
       const user = userEvent.setup();
       render(<TeamEditor />);
 
-      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 3/i });
+      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 2/i });
       await user.click(emptySlotButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/Choose a Pokémon to add to slot 3/i)).toBeInTheDocument();
+        expect(screen.getByText(/Choose a Pokémon to add to your team/i)).toBeInTheDocument();
       });
     });
   });
@@ -266,7 +257,7 @@ describe('TeamEditor Integration Tests', () => {
       render(<TeamEditor />);
 
       // Open selector
-      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 1/i });
+      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 2/i });
       await user.click(emptySlotButton);
 
       await waitFor(() => {
@@ -287,7 +278,7 @@ describe('TeamEditor Integration Tests', () => {
       render(<TeamEditor />);
 
       // Open selector
-      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 1/i });
+      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 2/i });
       await user.click(emptySlotButton);
 
       await waitFor(() => {
@@ -323,7 +314,7 @@ describe('TeamEditor Integration Tests', () => {
       const editButton = screen.getByRole('button', { name: /^edit$/i });
       await user.click(editButton);
 
-      expect(mockSetActivePokemon).toHaveBeenCalledWith(mockTeamPokemon[1]);
+      expect(mockSetActivePokemon).toHaveBeenCalledWith(mockTeamPokemon[0]);
     });
   });
 
@@ -347,7 +338,7 @@ describe('TeamEditor Integration Tests', () => {
       const removeButton = screen.getByRole('button', { name: /remove/i });
       await user.click(removeButton);
 
-      expect(mockRemovePokemonFromTeam).toHaveBeenCalledWith(2); // Pikachu is in slot 2 (index 1)
+      expect(mockRemovePokemonFromTeam).toHaveBeenCalledWith(0); // Pikachu is at index 0
     });
   });
 
@@ -392,7 +383,7 @@ describe('TeamEditor Integration Tests', () => {
       render(<TeamEditor />);
 
       // Open selector
-      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 1/i });
+      const emptySlotButton = screen.getByRole('button', { name: /add pokemon slot 2/i });
       await user.click(emptySlotButton);
 
       await waitFor(() => {

@@ -11,8 +11,8 @@ import {
   getStatName,
   getStats,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam, ValidationResult } from '@pokehub/frontend/pokemon-types';
-import { getPokemonSlotErrors } from '@pokehub/frontend/pokemon-types';
+import type { PokemonInTeam, ValidationResult } from '@pokehub/shared/pokemon-types';
+import { getPokemonSlotErrors } from '@pokehub/shared/pokemon-types';
 import {
   Badge,
   Button,
@@ -36,7 +36,7 @@ interface PokemonCardProps {
   onEditHover?: () => void;
   isPokemonEditorOpen: boolean;
   validationResult: ValidationResult;
-  slotIndex: number;
+  index: number;
 }
 
 export function PokemonCard({
@@ -47,12 +47,12 @@ export function PokemonCard({
   onEditHover,
   isPokemonEditorOpen,
   validationResult,
-  slotIndex,
+  index,
 }: PokemonCardProps) {
   // Get validation errors for this Pokemon
   const pokemonErrors = useMemo(
-    () => getPokemonSlotErrors(validationResult, slotIndex),
-    [validationResult, slotIndex]
+    () => getPokemonSlotErrors(validationResult, index),
+    [validationResult, index]
   );
   const hasErrors = pokemonErrors.length > 0;
 
