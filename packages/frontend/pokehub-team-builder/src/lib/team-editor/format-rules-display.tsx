@@ -20,6 +20,9 @@ import {
   CardTitle,
   ScrollArea,
 } from '@pokehub/frontend/shared-ui-components';
+// Both this file (via LazyFormatRulesDisplay) and team-validation.provider are lazy-loaded,
+// so this package won't be in First Load JS. Whichever component loads first will load the package.
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import { getFormatRules } from '@pokehub/shared/pokemon-showdown-validation';
 import { Ban, Shield, Swords, Zap, Package } from 'lucide-react';
 import { useMemo } from 'react';

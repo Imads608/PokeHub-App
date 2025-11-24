@@ -27,7 +27,7 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
   const {
     activePokemon: { setMove },
     generation,
-    validation,
+    showdownFormatId,
   } = useTeamEditorContext();
 
   // Get Pokemon's learnset
@@ -49,7 +49,7 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
 
   // Get banned moves from format rules
   const bannedMoves = useBannedMoves(
-    validation.showdownFormatId,
+    showdownFormatId,
     generation.value
   );
 

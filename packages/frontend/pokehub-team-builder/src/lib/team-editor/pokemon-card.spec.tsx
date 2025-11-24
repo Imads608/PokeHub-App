@@ -11,12 +11,25 @@ jest.mock('@pkmn/img');
 jest.mock('@pokehub/frontend/dex-data-provider');
 
 // Mock team editor context
-const mockGetPokemonErrors = jest.fn(() => []);
 jest.mock('../context/team-editor.context', () => ({
-  useTeamEditorContext: () => ({
-    validation: {
-      getPokemonErrors: mockGetPokemonErrors,
+  useTeamEditorContext: () => ({}),
+}));
+
+// Mock team validation context
+const mockGetPokemonErrors = jest.fn(() => []);
+jest.mock('../context/team-validation.context', () => ({
+  useTeamValidationContext: () => ({
+    getPokemonErrors: mockGetPokemonErrors,
+    state: {
+      isValid: true,
+      errors: [],
+      showdownFormatId: 'gen9ou',
+      timestamp: 0,
     },
+    getTeamErrors: jest.fn(() => []),
+    isTeamValid: true,
+    showdownFormatId: 'gen9ou',
+    isReady: true,
   }),
 }));
 

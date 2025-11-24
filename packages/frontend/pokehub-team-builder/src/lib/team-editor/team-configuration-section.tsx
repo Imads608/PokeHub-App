@@ -1,4 +1,5 @@
 import { useTeamEditorContext } from '../context/team-editor.context';
+import { useTeamValidationContext } from '../context/team-validation.context';
 import { useTeamChanges } from '../hooks/useTeamChanges';
 import { useTiersStaticData } from '../hooks/useTiersStaticData';
 import type { GenerationNum, Tier } from '@pkmn/dex';
@@ -109,8 +110,10 @@ export const TeamConfigurationSection = ({
 }: TeamConfigurationSectionProps = {}) => {
   const { singlesTiers, doublesTiers } = useTiersStaticData();
 
-  const { teamName, generation, format, tier, teamPokemon, validation } =
+  const { teamName, generation, format, tier, teamPokemon, showdownFormatId } =
     useTeamEditorContext();
+
+  const validation = useTeamValidationContext();
 
   const [battleTierInfo, setBattleTierInfo] = useState(
     getBattleTierInfo(tier.value)
@@ -198,6 +201,12 @@ export const TeamConfigurationSection = ({
   }, []);
 
   const handleSave = useCallback(async () => {
+    // Check if validation is ready
+    if (!validation.isReady) {
+      toast.error('Please wait for validation to complete');
+      return;
+    }
+
     // Validate before saving
     if (!validation.isTeamValid) {
       toast.error('Cannot save team with validation errors');
@@ -225,12 +234,15 @@ export const TeamConfigurationSection = ({
     } finally {
       setIsSaving(false);
     }
-  }, [validation.isTeamValid, teamName.value, markAsSaved]);
+  }, [validation.isReady, validation.isTeamValid, teamName.value, markAsSaved]);
 
   // Determine button state
-  const canSave = hasChanges && validation.isTeamValid && !isSaving;
+  const canSave =
+    hasChanges && validation.isReady && validation.isTeamValid && !isSaving;
   const saveButtonTooltip = !hasChanges
     ? 'No changes to save'
+    : !validation.isReady
+    ? 'Validating team...'
     : !validation.isTeamValid
     ? 'Fix validation errors before saving'
     : undefined;
@@ -288,6 +300,7 @@ export const TeamConfigurationSection = ({
               <LazyTeamValidationSummary
                 validationResult={validation.state}
                 pokemonNames={pokemonNames}
+                isReady={validation.isReady}
               />
             </Suspense>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -406,7 +419,7 @@ export const TeamConfigurationSection = ({
       {/* Format Rules Display */}
       <Suspense fallback={<FormatRulesDisplayFallback />}>
         <LazyFormatRulesDisplay
-          showdownFormatId={validation.showdownFormatId}
+          showdownFormatId={showdownFormatId}
           generation={generation.value}
         />
       </Suspense>

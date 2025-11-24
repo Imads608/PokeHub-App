@@ -4,6 +4,7 @@ import {
   createNewPokemonFromSpecies,
   useTeamEditorContext,
 } from '../context/team-editor.context';
+import { TeamValidationProvider } from '../context/team-validation.provider';
 import { arePokemonEqual } from '../hooks/useTeamChanges';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
@@ -58,7 +59,7 @@ const LazyTeamAnalysisDialog = lazy(() =>
 export const TeamEditor = () => {
   // State for team configuration
 
-  const { teamPokemon, generation, tier, activePokemon, validation } =
+  const { teamPokemon, generation, tier, activePokemon, showdownFormatId } =
     useTeamEditorContext();
   const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
@@ -178,7 +179,7 @@ export const TeamEditor = () => {
   }, [activePokemon.value, generation.value]);
 
   return (
-    <>
+    <TeamValidationProvider>
       {/* Team Configuration */}
       <TeamConfigurationSection
         onOpenTeamAnalysis={() => setIsTeamAnalysisOpen(true)}
@@ -238,7 +239,7 @@ export const TeamEditor = () => {
             <LazyPokemonSelector
               generation={generation.value}
               tier={tier.value}
-              showdownFormatId={validation.showdownFormatId}
+              showdownFormatId={showdownFormatId}
               onPokemonSelected={onPokemonSelected}
             />
           </Suspense>
@@ -310,6 +311,6 @@ export const TeamEditor = () => {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </TeamValidationProvider>
   );
 };

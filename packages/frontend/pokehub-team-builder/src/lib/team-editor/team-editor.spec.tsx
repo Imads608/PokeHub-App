@@ -33,6 +33,7 @@ jest.mock('../context/team-editor.context', () => ({
     generation: { value: 9 as GenerationNum, setValue: jest.fn() },
     format: { value: 'Singles' as BattleFormat, setValue: jest.fn() },
     tier: { value: 'OU' as Tier.Singles, setValue: jest.fn() },
+    showdownFormatId: 'gen9ou',
     teamPokemon: {
       value: mockTeamPokemon,
       addActivePokemonToTeam: mockAddActivePokemonToTeam,
@@ -41,18 +42,6 @@ jest.mock('../context/team-editor.context', () => ({
     activePokemon: {
       value: undefined,
       setValue: mockSetActivePokemon,
-    },
-    validation: {
-      state: {
-        isValid: true,
-        errors: [],
-        showdownFormatId: 'gen9ou',
-        timestamp: 0,
-      },
-      getTeamErrors: () => [],
-      getPokemonErrors: () => [],
-      isTeamValid: true,
-      showdownFormatId: 'gen9ou',
     },
   }),
   createNewPokemonFromSpecies: jest.fn((species: Species) => ({
@@ -67,6 +56,28 @@ jest.mock('../context/team-editor.context', () => ({
     evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   })),
+}));
+
+// Mock team validation provider (used by TeamEditor)
+jest.mock('../context/team-validation.provider', () => ({
+  TeamValidationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// Mock team validation context (separate from team editor)
+jest.mock('../context/team-validation.context', () => ({
+  useTeamValidationContext: () => ({
+    state: {
+      isValid: true,
+      errors: [],
+      showdownFormatId: 'gen9ou',
+      timestamp: 0,
+    },
+    getTeamErrors: () => [],
+    getPokemonErrors: () => [],
+    isTeamValid: true,
+    showdownFormatId: 'gen9ou',
+    isReady: true,
+  }),
 }));
 
 // Mock validateTeam

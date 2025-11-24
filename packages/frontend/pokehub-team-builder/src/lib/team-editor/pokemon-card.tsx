@@ -1,6 +1,6 @@
 'use client';
 
-import { useTeamEditorContext } from '../context/team-editor.context';
+import { useTeamValidationContext } from '../context/team-validation.context';
 import type { GenerationNum, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
@@ -54,7 +54,7 @@ export function PokemonCard({
   isPokemonEditorOpen,
   index,
 }: PokemonCardProps) {
-  const { validation } = useTeamEditorContext();
+  const validation = useTeamValidationContext();
 
   // Get validation errors for this Pokemon from context
   const pokemonErrors = useMemo(

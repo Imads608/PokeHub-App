@@ -33,7 +33,7 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   const {
     activePokemon: { setLevel, setName, setAbility, setItem, setNature },
     generation,
-    validation,
+    showdownFormatId,
   } = useTeamEditorContext();
 
   // Retrieve Data
@@ -50,11 +50,11 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
 
   // Get banned abilities and items from format rules
   const bannedAbilities = useBannedAbilities(
-    validation.showdownFormatId,
+    showdownFormatId,
     generation.value
   );
   const bannedItems = useBannedItems(
-    validation.showdownFormatId,
+    showdownFormatId,
     generation.value
   );
 

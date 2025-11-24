@@ -40,17 +40,22 @@ jest.mock('../context/team-editor.context', () => ({
       hasAnyPokemon: mockHasAnyPokemon,
       clearTeam: mockClearTeam,
     },
-    validation: {
-      get state() {
-        return mockValidationState;
-      },
-      getTeamErrors: jest.fn(() => []),
-      getPokemonErrors: jest.fn(() => []),
-      get isTeamValid() {
-        return mockValidationState.isValid;
-      },
-      showdownFormatId: 'gen9ou',
+  }),
+}));
+
+// Mock team validation context
+jest.mock('../context/team-validation.context', () => ({
+  useTeamValidationContext: () => ({
+    get state() {
+      return mockValidationState;
     },
+    getTeamErrors: jest.fn(() => []),
+    getPokemonErrors: jest.fn(() => []),
+    get isTeamValid() {
+      return mockValidationState.isValid;
+    },
+    showdownFormatId: 'gen9ou',
+    isReady: true,
   }),
 }));
 

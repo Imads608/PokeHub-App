@@ -64,18 +64,7 @@ export const TeamEditorProvider = ({
           value: activePokemon,
           setValue: setActivePokemon,
         },
-        validation: {
-          state: {
-            isValid: true,
-            errors: [],
-            showdownFormatId: 'gen9anythinggoes',
-            timestamp: 0,
-          },
-          getTeamErrors: () => [],
-          getPokemonErrors: () => [],
-          isTeamValid: true,
-          showdownFormatId: 'gen9anythinggoes',
-        },
+        showdownFormatId: 'gen9anythinggoes',
       }}
     >
       {children}

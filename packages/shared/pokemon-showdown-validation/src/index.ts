@@ -1,10 +1,4 @@
 export {
-  getShowdownFormatId,
-  isValidShowdownFormatId,
-  parseShowdownFormatId,
-} from './lib/format-mapping';
-
-export {
   validateTeamForFormat,
   isPokemonBanned,
   isMoveBanned,
