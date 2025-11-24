@@ -80,7 +80,7 @@ export const TeamValidationSummary = ({
               {teamErrors.length > 0 && (
                 <div className="rounded-md bg-destructive/10 p-3">
                   <p className="font-semibold text-sm mb-2 flex items-center gap-2">
-                    Team Issues
+                    Format Rule Violations
                     <Badge variant="outline" className="text-xs">
                       {teamErrors.length}
                     </Badge>

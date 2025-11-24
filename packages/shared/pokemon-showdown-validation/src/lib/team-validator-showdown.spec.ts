@@ -298,14 +298,22 @@ describe('Team Validator (Showdown)', () => {
       ]);
       const result = validateTeamForFormat(team, 'gen9ou');
 
+      // Both Pokemon should have validation results initialized
       expect(result.pokemonResults.has(0)).toBe(true);
       expect(result.pokemonResults.has(1)).toBe(true);
 
       const pikachu = result.pokemonResults.get(0);
       const mewtwo = result.pokemonResults.get(1);
 
+      // Without explicit (pokemon X) slot markers, errors are team-level only
+      // So both individual Pokemon results should be valid
       expect(pikachu?.isValid).toBe(true);
-      expect(mewtwo?.isValid).toBe(false);
+      expect(mewtwo?.isValid).toBe(true);
+
+      // The ban error should be in team-level errors
+      expect(result.errors.some((e) => e.toLowerCase().includes('mewtwo'))).toBe(
+        true
+      );
     });
   });
 });

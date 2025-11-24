@@ -14,10 +14,4 @@ export {
   type TeamValidationResult,
 } from './lib/team-validator-showdown';
 
-export {
-  getFormatRules,
-  isRuleActive,
-  getRuleDescription,
-  getFormatClauses,
-  type FormatRules,
-} from './lib/format-rules';
+export { getFormatRules, type FormatRules } from './lib/format-rules';

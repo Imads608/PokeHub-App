@@ -564,6 +564,63 @@ const legalAbilities = abilities.filter(ab => !bannedAbilities.includes(ab.name)
 const legalItems = items.filter(item => !bannedItems.includes(item.name))
 ```
 
+### Dual Validation System
+
+**Purpose**: Comprehensive validation combining structural checks and format-specific rules
+
+The Team Builder uses **two complementary validation systems**:
+
+**1. Zod Validation** (Configuration/Structure)
+- **Package**: `@pokehub/shared/pokemon-types`
+- **Purpose**: Validates Pokemon configuration and data integrity
+- **Scope**: Pokemon-level errors (assigned to specific Pokemon slots)
+- **Examples**:
+  - Missing required fields (species, ability, nature)
+  - Invalid ranges (EVs > 510, IVs > 31, level > 100)
+  - Move requirements (at least 1 move)
+  - Data type validation
+
+**2. Pokemon Showdown Validation** (Format Rules)
+- **Package**: `@pokehub/shared/pokemon-showdown-validation`
+- **Purpose**: Validates against competitive format rules
+- **Scope**: Team-level errors (unless Showdown provides explicit `(pokemon X)` slot markers)
+- **Examples**:
+  - Banned Pokemon (e.g., "Mewtwo is banned in OU")
+  - Format clauses (e.g., "Species Clause violation")
+  - Team size violations
+  - Banned moves/abilities/items
+
+**Error Assignment Strategy**:
+- **Zod errors**: Always assigned to specific Pokemon slots (pokemonSlot set)
+- **Showdown errors**: Only assigned to Pokemon when explicit slot markers exist
+  - With marker: `"(pokemon 1) Pikachu's ability..."` → Assigned to slot 0
+  - Without marker: `"Mewtwo is banned"` → Team-level error
+- **Rationale**: Prevents incorrect error assignment with duplicate Pokemon (e.g., 2 Groudons)
+
+**Validation Flow**:
+```typescript
+// 1. Run both validators
+const zodResult = validateTeam({ ... })           // Zod validation
+const showdownResult = validateTeamForFormat(...)  // Showdown validation
+
+// 2. Merge errors with proper slot assignment
+const mergedErrors = [
+  ...zodResult.errors,                    // Zod: already has pokemonSlot
+  ...showdownResult.pokemonResults,       // Showdown: slot-specific errors
+  ...showdownResult.errors.filter(...)    // Showdown: team-level errors (no slot)
+]
+
+// 3. Components display by category
+const teamErrors = errors.filter(e => e.pokemonSlot === undefined)
+const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
+```
+
+**Benefits**:
+- **Comprehensive**: Catches both configuration issues and format violations
+- **Clear separation**: Users understand which errors are format-specific vs configuration
+- **Accurate**: Slot assignment only when reliable (prevents duplicate Pokemon bugs)
+- **Single source**: Both validations merged in context, computed once
+
 ### Enhanced Validation UI
 
 **Purpose**: Provide clear, actionable feedback on team validation status
@@ -573,6 +630,7 @@ const legalItems = items.filter(item => !bannedItems.includes(item.name))
 - Always visible (even when valid)
 - No visual hierarchy
 - Difficult to parse multiple errors
+- Ambiguous error categorization ("Team Issues" unclear)
 
 **New Implementation** (`team-validation-summary.tsx`):
 
@@ -623,20 +681,29 @@ const legalItems = items.filter(item => !bannedItems.includes(item.name))
 - Clear separation between error categories
 
 **5. Categorized Errors**
+
+Errors are now clearly categorized to help users understand the type of violation:
+
 ```
 ❌ Validation Errors [3 errors] 🔽
 
-Team Errors:
-• Team must have at least one Pokemon
+Format Rule Violations:           ← Showdown/format-specific rules
+• Mewtwo is banned
+• You may only bring up to 6 Pokémon
 
-Pokemon Errors:
+Pikachu [1 error]:                ← Pokemon configuration errors
+• Pokemon must have at least one move
 
-Slot 1 (Pikachu) [1 error]
-• At least one move is required
-
-Slot 3 (Charizard) [1 error]
-• Total EVs cannot exceed 510 (current: 520)
+Charizard [1 error]:
+• Total EVs cannot exceed 510
 ```
+
+**Label Improvements**:
+- **"Format Rule Violations"** (formerly "Team Issues") - Clearly indicates these are format-specific rules from Pokemon Showdown
+- **Pokemon names** - Configuration errors specific to that Pokemon from Zod validation
+- This distinction helps users understand:
+  - Format rules are about what's allowed in the competitive format
+  - Pokemon errors are about configuration/data validity
 
 **Type Safety**:
 ```typescript
@@ -1031,6 +1098,21 @@ interface PokemonInTeam extends PokemonSet {
    - No local storage
    - Teams lost on page refresh
 
+8. **Format Rules/Clauses Display**
+   - Format Rules Display currently only shows bans (Pokemon, moves, abilities, items)
+   - Could be enhanced to show active format clauses with descriptions
+   - Example clauses to display:
+     - "Species Clause" - Cannot have duplicate Pokemon
+     - "Sleep Clause Mod" - Cannot put more than one opponent to sleep
+     - "Dynamax Clause" - Cannot Dynamax
+     - "Team Preview" - See opponent's team before battle
+   - Implementation would require re-adding helper functions:
+     - `isRuleActive(formatId, rule)` - Check if a rule is active
+     - `getRuleDescription(rule)` - Get human-readable description
+     - `getFormatClauses(formatId)` - Get all clauses with descriptions
+   - These functions were removed from `pokemon-showdown-validation` package but can be restored if needed
+   - Would enhance user understanding of format rules beyond just knowing what's banned
+
 ### Known Issues
 
 1. **EV Distribution Edge Cases**
@@ -1185,7 +1267,23 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 
 ## Changelog
 
-### 2025-11-23
+### 2025-11-23 (Latest Updates)
+- ✅ **Fixed validation error parsing for duplicate Pokemon**
+  - Updated `parseValidationProblems` to only use explicit `(pokemon X)` slot markers from Showdown
+  - Removed species name matching that incorrectly assigned errors with duplicate Pokemon (e.g., 2 Groudons)
+  - Team-level errors now stay team-level unless Showdown explicitly marks them for a slot
+  - Prevents confusion where first Pokemon gets all errors when duplicates exist
+- ✅ **Improved validation UI clarity**
+  - Renamed "Team Issues" → "Format Rule Violations" to clarify error source
+  - Makes distinction clear between Showdown format rules and Zod configuration errors
+  - Updated documentation to explain dual validation system architecture
+- ✅ **Updated documentation**
+  - Added comprehensive "Dual Validation System" section explaining Zod vs Showdown
+  - Documented error assignment strategy and rationale
+  - Updated validation UI examples with new labels
+  - All 41 pokemon-showdown-validation tests passing
+
+### 2025-11-23 (Initial Showdown Integration)
 - ✅ Integrated Pokemon Showdown validation system
 - ✅ Added format mapping utilities (PokeHub → Showdown format IDs)
 - ✅ Implemented team validator with format-specific rules

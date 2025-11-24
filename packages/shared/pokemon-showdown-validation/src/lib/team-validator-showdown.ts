@@ -82,24 +82,10 @@ function parseValidationProblems(
 
       errors.push(cleanedProblem);
     } else {
-      // Try to extract Pokemon species name from error message
-      // Many errors start with the species name (e.g., "Mewtwo is tagged Uber...")
-      for (let i = 0; i < team.length; i++) {
-        const pokemon = team[i];
-        // Check if the error message starts with this Pokemon's species name
-        const speciesPattern = new RegExp(`^${pokemon.species}\\b`, 'i');
-        if (speciesPattern.test(problem)) {
-          const result = pokemonResults.get(i);
-          if (result) {
-            result.errors.push(problem);
-            result.isValid = false;
-            pokemonResults.set(i, result);
-          }
-          break;
-        }
-      }
-
-      // Add to overall errors
+      // If there's no explicit slot marker, keep it as a team-level error
+      // We don't try to guess which Pokemon the error belongs to by species name
+      // because this fails with duplicate Pokemon (e.g., two Groudons would both match the first one)
+      // Only Showdown's explicit "(pokemon X)" markers are reliable for per-Pokemon errors
       errors.push(problem);
     }
   });
