@@ -52,16 +52,14 @@ function toPokemonSet(pokemon: PokemonInTeam): PokemonSet {
  */
 function parseValidationProblems(
   problems: string[],
-  team: (PokemonInTeam | undefined)[]
+  team: PokemonInTeam[]
 ): { errors: string[]; pokemonResults: Map<number, PokemonValidationResult> } {
   const errors: string[] = [];
   const pokemonResults = new Map<number, PokemonValidationResult>();
 
-  // Initialize results for each actual Pokemon in the team (by their index position)
-  team.forEach((pokemon, index) => {
-    if (pokemon) {
-      pokemonResults.set(index, { isValid: true, errors: [], warnings: [] });
-    }
+  // Initialize results for each Pokemon in the team (by their index position)
+  team.forEach((_, index) => {
+    pokemonResults.set(index, { isValid: true, errors: [], warnings: [] });
   });
 
   problems.forEach((problem) => {
@@ -88,18 +86,16 @@ function parseValidationProblems(
       // Many errors start with the species name (e.g., "Mewtwo is tagged Uber...")
       for (let i = 0; i < team.length; i++) {
         const pokemon = team[i];
-        if (pokemon) {
-          // Check if the error message starts with this Pokemon's species name
-          const speciesPattern = new RegExp(`^${pokemon.species}\\b`, 'i');
-          if (speciesPattern.test(problem)) {
-            const result = pokemonResults.get(i);
-            if (result) {
-              result.errors.push(problem);
-              result.isValid = false;
-              pokemonResults.set(i, result);
-            }
-            break;
+        // Check if the error message starts with this Pokemon's species name
+        const speciesPattern = new RegExp(`^${pokemon.species}\\b`, 'i');
+        if (speciesPattern.test(problem)) {
+          const result = pokemonResults.get(i);
+          if (result) {
+            result.errors.push(problem);
+            result.isValid = false;
+            pokemonResults.set(i, result);
           }
+          break;
         }
       }
 
@@ -170,62 +166,6 @@ export function validateTeamForFormat(
       ],
       warnings: [],
       pokemonResults: new Map(),
-    };
-  }
-}
-
-/**
- * Validate a single Pokemon for format-specific bans
- *
- * @param pokemon - Pokemon to validate
- * @param formatId - Showdown format ID (e.g., 'gen9ou', 'gen9doublesou')
- * @returns Validation result with errors and warnings
- *
- * @example
- * const result = validatePokemonForFormat(myPokemon, 'gen9ou');
- * if (!result.isValid) {
- *   console.log('Errors:', result.errors);
- * }
- */
-export function validatePokemonForFormat(
-  pokemon: PokemonInTeam,
-  formatId: string
-): PokemonValidationResult {
-  try {
-    const format = Dex.formats.get(formatId);
-    if (!format.exists) {
-      return {
-        isValid: false,
-        errors: [`Format '${formatId}' does not exist`],
-        warnings: [],
-      };
-    }
-
-    // Convert to PokemonSet and validate using TeamValidator
-    const pokemonSet = toPokemonSet(pokemon);
-    const validator = TeamValidator.get(format);
-
-    // Validate the single Pokemon set
-    // validateSet requires teamHas object to track what the team has
-    const teamHas = {};
-    const problems = validator.validateSet(pokemonSet, teamHas);
-
-    const errors = problems || [];
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings: [],
-    };
-  } catch (error) {
-    return {
-      isValid: false,
-      errors: [
-        `Validation error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      ],
-      warnings: [],
     };
   }
 }

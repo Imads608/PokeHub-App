@@ -21,6 +21,14 @@ const mockSetTier = jest.fn();
 const mockClearTeam = jest.fn();
 const mockHasAnyPokemon = jest.fn();
 
+// Create mutable validation state for tests
+const mockValidationState = {
+  isValid: true,
+  errors: [] as Array<{ field: string; message: string }>,
+  showdownFormatId: 'gen9ou',
+  timestamp: Date.now(),
+};
+
 jest.mock('../context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     teamName: { value: 'My Team', setValue: mockSetTeamName },
@@ -31,6 +39,17 @@ jest.mock('../context/team-editor.context', () => ({
       value: [],
       hasAnyPokemon: mockHasAnyPokemon,
       clearTeam: mockClearTeam,
+    },
+    validation: {
+      get state() {
+        return mockValidationState;
+      },
+      getTeamErrors: jest.fn(() => []),
+      getPokemonErrors: jest.fn(() => []),
+      get isTeamValid() {
+        return mockValidationState.isValid;
+      },
+      showdownFormatId: 'gen9ou',
     },
   }),
 }));
@@ -77,26 +96,23 @@ jest.mock('@pokehub/frontend/pokemon-static-data', () => ({
   }),
 }));
 
-// Mock validateTeam
-jest.mock('@pokehub/shared/pokemon-types', () => ({
-  validateTeam: jest.fn(() => ({
-    isValid: true,
-    errors: {},
-    pokemonErrors: [],
-  })),
-}));
-
-// Get references to mocked functions
-const { validateTeam: mockValidateTeam } = jest.requireMock('@pokehub/shared/pokemon-types') as {
-  validateTeam: jest.Mock;
-};
-
 // Mock TeamValidationSummary component
 jest.mock('./team-validation-summary', () => ({
-  TeamValidationSummary: ({ validationResult }: { validationResult: { isValid: boolean } }) => (
+  TeamValidationSummary: ({
+    validationResult
+  }: {
+    validationResult: { isValid: boolean; errors: unknown[]; showdownFormatId: string; timestamp: number }
+  }) => (
     <div data-testid="validation-summary">
-      {validationResult.isValid ? 'Valid' : 'Invalid'}
+      {validationResult.isValid ? 'Team Valid' : 'Validation Errors'}
     </div>
+  ),
+}));
+
+// Mock FormatRulesDisplay component
+jest.mock('./format-rules-display', () => ({
+  FormatRulesDisplay: () => (
+    <div data-testid="format-rules-display">Format Rules</div>
   ),
 }));
 
@@ -348,24 +364,23 @@ describe('TeamConfigurationSection', () => {
 
     it('should be disabled when validation errors exist', () => {
       mockHasChanges.mockReturnValue(true);
-      mockValidateTeam.mockReturnValue({
-        isValid: false,
-        errors: { teamName: 'Team name is required' },
-        pokemonErrors: [],
-      });
+
+      // Set validation to invalid
+      mockValidationState.isValid = false;
+      mockValidationState.errors = [{ field: 'teamName', message: 'Team name is required' }];
+
       render(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       expect(saveButton).toBeDisabled();
+
+      // Reset validation state
+      mockValidationState.isValid = true;
+      mockValidationState.errors = [];
     });
 
     it('should be enabled when hasChanges and isValid', () => {
       mockHasChanges.mockReturnValue(true);
-      mockValidateTeam.mockReturnValue({
-        isValid: true,
-        errors: {},
-        pokemonErrors: [],
-      });
       render(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
@@ -375,11 +390,6 @@ describe('TeamConfigurationSection', () => {
     it('should show saving state', async () => {
       const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
-      mockValidateTeam.mockReturnValue({
-        isValid: true,
-        errors: {},
-        pokemonErrors: [],
-      });
       render(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
@@ -393,11 +403,6 @@ describe('TeamConfigurationSection', () => {
     it('should call markAsSaved and show success toast on save', async () => {
       const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
-      mockValidateTeam.mockReturnValue({
-        isValid: true,
-        errors: {},
-        pokemonErrors: [],
-      });
       render(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
@@ -416,17 +421,21 @@ describe('TeamConfigurationSection', () => {
 
     it('should prevent save if validation errors exist', async () => {
       mockHasChanges.mockReturnValue(true);
-      mockValidateTeam.mockReturnValue({
-        isValid: false,
-        errors: { teamName: 'Team name is required' },
-        pokemonErrors: [],
-      });
+
+      // Set validation to invalid
+      mockValidationState.isValid = false;
+      mockValidationState.errors = [{ field: 'teamName', message: 'Team name is required' }];
+
       render(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
 
       // Button should be disabled, so clicking it should not trigger save
       expect(saveButton).toBeDisabled();
+
+      // Reset validation state
+      mockValidationState.isValid = true;
+      mockValidationState.errors = [];
     });
   });
 
@@ -461,16 +470,13 @@ describe('TeamConfigurationSection', () => {
   });
 
   describe('Validation Integration', () => {
-    it('should call validateTeam with current team configuration', () => {
+    it('should use validation state from context', () => {
       render(<TeamConfigurationSection {...defaultProps} />);
 
-      expect(mockValidateTeam).toHaveBeenCalledWith({
-        name: 'My Team',
-        generation: 9,
-        format: 'Singles',
-        tier: 'OU',
-        pokemon: [],
-      });
+      // Component should render validation summary with state from context
+      const validationSummary = screen.getByTestId('validation-summary');
+      expect(validationSummary).toBeInTheDocument();
+      expect(validationSummary).toHaveTextContent('Team Valid');
     });
   });
 });

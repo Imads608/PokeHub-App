@@ -22,6 +22,9 @@ jest.mock('../../context/team-editor.context', () => ({
       setNature: mockSetNature,
     },
     generation: { value: 9 },
+    validation: {
+      showdownFormatId: 'gen9ou',
+    },
   }),
 }));
 
@@ -40,6 +43,8 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
     },
     { name: 'Leftovers', exists: true, desc: 'Restores HP every turn' },
   ]),
+  getAbilityDetails: jest.fn(() => undefined),
+  getItemDetails: jest.fn(() => undefined),
   getNatures: jest.fn(() => [
     { name: 'Jolly', plus: 'spe', minus: 'spa' },
     { name: 'Adamant', plus: 'atk', minus: 'spa' },

@@ -8,7 +8,6 @@ import {
   getMoveDetails,
   getPokemonDetailsByName,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   calculateTeamDefensiveCoverage,
   calculateTeamOffensiveCoverage,
@@ -30,6 +29,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { useMemo } from 'react';
 
 export interface TeamAnalysisDialogProps {
@@ -71,7 +71,7 @@ export const TeamAnalysisDialog = ({
       pokemon.moves.forEach((moveName) => {
         if (moveName && moveName.trim() !== '') {
           const moveDetails = getMoveDetails(moveName, generation);
-          if (moveDetails && moveDetails.exists) {
+          if (moveDetails) {
             allMoves.push({
               type: moveDetails.type,
               category: moveDetails.category,
@@ -112,12 +112,12 @@ export const TeamAnalysisDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Team Analysis</DialogTitle>
           <DialogDescription>
-            Comprehensive analysis of your team&apos;s strengths, weaknesses, and type
-            coverage
+            Comprehensive analysis of your team&apos;s strengths, weaknesses,
+            and type coverage
           </DialogDescription>
         </DialogHeader>
 

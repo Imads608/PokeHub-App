@@ -80,3 +80,8 @@ export {
   PopoverContent,
 } from './lib/popover/popover';
 export { Skeleton } from './lib/skeleton/skeleton';
+export {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from './lib/collapsible/collapsible';

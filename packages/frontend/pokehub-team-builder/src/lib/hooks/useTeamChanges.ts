@@ -10,7 +10,7 @@ export interface TeamState {
   generation: GenerationNum;
   format: BattleFormat;
   tier: Tier.Singles | Tier.Doubles;
-  pokemon: (PokemonInTeam | undefined)[];
+  pokemon: PokemonInTeam[];
 }
 
 /**
@@ -104,26 +104,13 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
       }
 
       // Compare Pokemon array length
-      const team1Pokemon = team1.pokemon.filter((p) => p !== undefined);
-      const team2Pokemon = team2.pokemon.filter((p) => p !== undefined);
-
-      if (team1Pokemon.length !== team2Pokemon.length) {
+      if (team1.pokemon.length !== team2.pokemon.length) {
         return false;
       }
 
-      // Compare each Pokemon slot
+      // Compare each Pokemon
       for (let i = 0; i < team1.pokemon.length; i++) {
-        const p1 = team1.pokemon[i];
-        const p2 = team2.pokemon[i];
-
-        // Both undefined - continue
-        if (p1 === undefined && p2 === undefined) continue;
-
-        // One undefined, one defined - not equal
-        if (p1 === undefined || p2 === undefined) return false;
-
-        // Compare Pokemon properties
-        if (!arePokemonEqual(p1, p2)) {
+        if (!arePokemonEqual(team1.pokemon[i], team2.pokemon[i])) {
           return false;
         }
       }
@@ -173,29 +160,26 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
       changes.push('Tier');
     }
 
-    // Check Pokemon changes
-    for (let i = 0; i < currentTeamState.pokemon.length; i++) {
-      const currentPokemon = currentTeamState.pokemon[i];
-      const savedPokemon = savedState.pokemon[i];
-
-      if (currentPokemon === undefined && savedPokemon === undefined) {
-        continue;
+    // Check if Pokemon were added or removed
+    if (currentTeamState.pokemon.length !== savedState.pokemon.length) {
+      const diff = currentTeamState.pokemon.length - savedState.pokemon.length;
+      if (diff > 0) {
+        changes.push(`Added ${diff} Pokemon`);
+      } else {
+        changes.push(`Removed ${Math.abs(diff)} Pokemon`);
       }
+    }
 
-      if (currentPokemon === undefined && savedPokemon !== undefined) {
-        changes.push(`Removed Pokemon from slot ${i + 1}`);
-        continue;
-      }
-
-      if (currentPokemon !== undefined && savedPokemon === undefined) {
-        changes.push(`Added ${currentPokemon.species} to slot ${i + 1}`);
-        continue;
-      }
-
-      if (currentPokemon && savedPokemon) {
-        if (!arePokemonEqual(currentPokemon, savedPokemon)) {
-          changes.push(`Modified ${currentPokemon.species} in slot ${i + 1}`);
-        }
+    // Check for modifications to existing Pokemon
+    const minLength = Math.min(
+      currentTeamState.pokemon.length,
+      savedState.pokemon.length
+    );
+    for (let i = 0; i < minLength; i++) {
+      if (!arePokemonEqual(currentTeamState.pokemon[i], savedState.pokemon[i])) {
+        changes.push(
+          `Modified ${currentTeamState.pokemon[i].species} in slot ${i + 1}`
+        );
       }
     }
 

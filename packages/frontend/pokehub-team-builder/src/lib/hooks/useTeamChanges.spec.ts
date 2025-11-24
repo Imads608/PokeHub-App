@@ -197,11 +197,6 @@ describe('useTeamChanges', () => {
         evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
       },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
     ],
   };
 
@@ -263,19 +258,12 @@ describe('useTeamChanges', () => {
 
     const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [
-        baseTeamState.pokemon[0],
-        newPokemon,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      ],
+      pokemon: [baseTeamState.pokemon[0], newPokemon],
     };
     rerender({ teamState: modifiedState });
 
     expect(result.current.hasChanges).toBe(true);
-    expect(result.current.getChanges).toContain('Added Charizard to slot 2');
+    expect(result.current.getChanges).toContain('Added 1 Pokemon');
   });
 
   it('should detect changes when Pokemon is removed', () => {
@@ -286,19 +274,12 @@ describe('useTeamChanges', () => {
 
     const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      ],
+      pokemon: [],
     };
     rerender({ teamState: modifiedState });
 
     expect(result.current.hasChanges).toBe(true);
-    expect(result.current.getChanges).toContain('Removed Pokemon from slot 1');
+    expect(result.current.getChanges).toContain('Removed 1 Pokemon');
   });
 
   it('should detect changes when Pokemon is modified', () => {
@@ -319,14 +300,7 @@ describe('useTeamChanges', () => {
 
     const modifiedState: TeamState = {
       ...baseTeamState,
-      pokemon: [
-        modifiedPokemon,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      ],
+      pokemon: [modifiedPokemon],
     };
     rerender({ teamState: modifiedState });
 

@@ -1,14 +1,11 @@
 import { useTeamEditorContext } from '../context/team-editor.context';
 import { useTeamChanges } from '../hooks/useTeamChanges';
 import { useTiersStaticData } from '../hooks/useTiersStaticData';
-import { TeamValidationSummary } from './team-validation-summary';
 import type { GenerationNum, Tier } from '@pkmn/dex';
 import {
   getGenerationsData,
   getBattleTierInfo,
 } from '@pokehub/frontend/pokemon-static-data';
-import type { BattleFormat, BattleTier } from '@pokehub/shared/pokemon-types';
-import { validateTeam } from '@pokehub/shared/pokemon-types';
 import {
   Alert,
   AlertDescription,
@@ -32,11 +29,23 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Skeleton,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { AlertTriangle, BarChart3, Download, Info, Loader2, Save, Upload } from 'lucide-react';
+import type { BattleFormat, BattleTier } from '@pokehub/shared/pokemon-types';
+import {
+  AlertTriangle,
+  BarChart3,
+  Download,
+  Info,
+  Loader2,
+  Save,
+  Shield,
+  Upload,
+} from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -44,10 +53,63 @@ export interface TeamConfigurationSectionProps {
   onOpenTeamAnalysis?: () => void;
 }
 
-export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurationSectionProps = {}) => {
+// Lazy load heavy validation components
+const LazyFormatRulesDisplay = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "team-validation" */
+    './format-rules-display'
+  ).then((module) => ({
+    default: module.FormatRulesDisplay,
+  }))
+);
+const LazyTeamValidationSummary = lazy(() =>
+  import(
+    /* webpackPrefetch: true */
+    /* webpackChunkName: "team-validation" */
+    './team-validation-summary'
+  ).then((module) => ({
+    default: module.TeamValidationSummary,
+  }))
+);
+
+// Loading fallback for validation summary
+const ValidationSummaryFallback = () => (
+  <Alert className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+    <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+    <AlertTitle className="text-blue-900 dark:text-blue-100">
+      Validating Team...
+    </AlertTitle>
+    <AlertDescription className="text-blue-700 dark:text-blue-300">
+      Checking your team against format rules and restrictions
+    </AlertDescription>
+  </Alert>
+);
+
+// Loading fallback for format rules display
+const FormatRulesDisplayFallback = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <Shield className="h-5 w-5" />
+        Format Rules
+      </CardTitle>
+      <CardDescription>Loading format restrictions...</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-5/6" />
+    </CardContent>
+  </Card>
+);
+
+export const TeamConfigurationSection = ({
+  onOpenTeamAnalysis,
+}: TeamConfigurationSectionProps = {}) => {
   const { singlesTiers, doublesTiers } = useTiersStaticData();
 
-  const { teamName, generation, format, tier, teamPokemon } =
+  const { teamName, generation, format, tier, teamPokemon, validation } =
     useTeamEditorContext();
 
   const [battleTierInfo, setBattleTierInfo] = useState(
@@ -60,21 +122,9 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
 
   const [showGenerationChangeDialog, setShowGenerationChangeDialog] =
     useState(false);
-  const [pendingGeneration, setPendingGeneration] = useState<GenerationNum | null>(
-    null
-  );
+  const [pendingGeneration, setPendingGeneration] =
+    useState<GenerationNum | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Validation
-  const validationResult = useMemo(() => {
-    return validateTeam({
-      name: teamName.value,
-      generation: generation.value,
-      format: format.value,
-      tier: tier.value,
-      pokemon: teamPokemon.value,
-    });
-  }, [teamName.value, generation.value, format.value, tier.value, teamPokemon.value]);
 
   // Change tracking
   const { hasChanges, markAsSaved } = useTeamChanges({
@@ -87,7 +137,7 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
 
   // Get Pokemon names for validation summary
   const pokemonNames = useMemo(() => {
-    return teamPokemon.value.map((p) => p?.species);
+    return teamPokemon.value.map((p) => p.species);
   }, [teamPokemon.value]);
 
   const handleTierChange = useCallback((val: Tier.Singles | Tier.Doubles) => {
@@ -149,7 +199,7 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
 
   const handleSave = useCallback(async () => {
     // Validate before saving
-    if (!validationResult.isValid) {
+    if (!validation.isTeamValid) {
       toast.error('Cannot save team with validation errors');
       return;
     }
@@ -175,181 +225,191 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
     } finally {
       setIsSaving(false);
     }
-  }, [validationResult, teamName.value, markAsSaved]);
+  }, [validation.isTeamValid, teamName.value, markAsSaved]);
 
   // Determine button state
-  const canSave = hasChanges && validationResult.isValid && !isSaving;
+  const canSave = hasChanges && validation.isTeamValid && !isSaving;
   const saveButtonTooltip = !hasChanges
     ? 'No changes to save'
-    : !validationResult.isValid
+    : !validation.isTeamValid
     ? 'Fix validation errors before saving'
     : undefined;
 
   return (
-    <div className="mb-8 grid gap-6 md:grid-cols-[1fr_auto]">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Team Configuration</CardTitle>
-              <CardDescription>
-                Set up your team format and rules
-              </CardDescription>
+    <div className="mb-8 space-y-6">
+      <div className="grid gap-6 md:grid-cols-[1fr_auto]">
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Team Configuration</CardTitle>
+                <CardDescription>
+                  Set up your team format and rules
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => console.log('Implement Export')}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import
+                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" onClick={handleSave} disabled={!canSave}>
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Team
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  {saveButtonTooltip && (
+                    <TooltipContent>{saveButtonTooltip}</TooltipContent>
+                  )}
+                </Tooltip>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => console.log('Implement Export')}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                Import
-              </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!canSave}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Team
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                {saveButtonTooltip && (
-                  <TooltipContent>{saveButtonTooltip}</TooltipContent>
-                )}
-              </Tooltip>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <TeamValidationSummary
-            validationResult={validationResult}
-            pokemonNames={pokemonNames}
-          />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <Label htmlFor="team-name">Team Name</Label>
-              <Input
-                id="team-name"
-                value={teamName.value}
-                onChange={(e) => teamName.setValue(e.target.value)}
-                className="mt-1"
+          </CardHeader>
+          <CardContent>
+            <Suspense fallback={<ValidationSummaryFallback />}>
+              <LazyTeamValidationSummary
+                validationResult={validation.state}
+                pokemonNames={pokemonNames}
               />
+            </Suspense>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <Label htmlFor="team-name">Team Name</Label>
+                <Input
+                  id="team-name"
+                  value={teamName.value}
+                  onChange={(e) => teamName.setValue(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="generation">Generation</Label>
+                <Select
+                  value={generation.value.toString()}
+                  onValueChange={handleGenerationChange}
+                >
+                  <SelectTrigger id="generation" className="mt-1">
+                    <SelectValue placeholder="Select Generation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getGenerationsData().map((gen) => (
+                      <SelectItem key={gen.id} value={gen.id.toString()}>
+                        {gen.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="format">Format</Label>
+                <Select
+                  value={format.value}
+                  onValueChange={(val) =>
+                    handleFormatChange(val as BattleFormat)
+                  }
+                >
+                  <SelectTrigger id="format" className="mt-1">
+                    <SelectValue placeholder="Select Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Singles">Singles</SelectItem>
+                    <SelectItem value="Doubles">Doubles</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="tier">Tier</Label>
+                <Select
+                  value={tier.value}
+                  onValueChange={(val) =>
+                    handleTierChange(val as Tier.Singles | Tier.Doubles)
+                  }
+                >
+                  <SelectTrigger id="tier" className="mt-1">
+                    <SelectValue placeholder="Select Tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedFormatTiers.map((tier) => (
+                      <SelectItem key={tier.id} value={tier.id}>
+                        {tier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="generation">Generation</Label>
-              <Select
-                value={generation.value.toString()}
-                onValueChange={handleGenerationChange}
-              >
-                <SelectTrigger id="generation" className="mt-1">
-                  <SelectValue placeholder="Select Generation" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getGenerationsData().map((gen) => (
-                    <SelectItem key={gen.id} value={gen.id.toString()}>
-                      {gen.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Format and Tier descriptions */}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {format && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>{format.value}</AlertTitle>
+                  <AlertDescription>
+                    {format.value === 'Singles'
+                      ? 'Standard 1v1 battles where each trainer brings 6 Pokémon and sends out 1 at a time.'
+                      : 'Doubles battles where each trainer brings 4-6 Pokémon and sends out 2 at a time.'}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {tier.value && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>{battleTierInfo?.name}</AlertTitle>
+                  <AlertDescription>
+                    {battleTierInfo?.description}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
-            <div>
-              <Label htmlFor="format">Format</Label>
-              <Select
-                value={format.value}
-                onValueChange={(val) => handleFormatChange(val as BattleFormat)}
-              >
-                <SelectTrigger id="format" className="mt-1">
-                  <SelectValue placeholder="Select Format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Singles">Singles</SelectItem>
-                  <SelectItem value="Doubles">Doubles</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="tier">Tier</Label>
-              <Select
-                value={tier.value}
-                onValueChange={(val) =>
-                  handleTierChange(val as Tier.Singles | Tier.Doubles)
-                }
-              >
-                <SelectTrigger id="tier" className="mt-1">
-                  <SelectValue placeholder="Select Tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedFormatTiers.map((tier) => (
-                    <SelectItem key={tier.id} value={tier.id}>
-                      {tier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {/* Format and Tier descriptions */}
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {format && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>{format.value}</AlertTitle>
-                <AlertDescription>
-                  {format.value === 'Singles'
-                    ? 'Standard 1v1 battles where each trainer brings 6 Pokémon and sends out 1 at a time.'
-                    : 'Doubles battles where each trainer brings 4-6 Pokémon and sends out 2 at a time.'}
-                </AlertDescription>
-              </Alert>
-            )}
-            {tier.value && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>{battleTierInfo?.name}</AlertTitle>
-                <AlertDescription>
-                  {battleTierInfo?.description}
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle>Team Analysis</CardTitle>
-          <CardDescription>
-            {"Check your team's strengths and weaknesses"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={onOpenTeamAnalysis}
-            disabled={!teamPokemon.hasAnyPokemon()}
-          >
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analyze Team
-          </Button>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle>Team Analysis</CardTitle>
+            <CardDescription>
+              {"Check your team's strengths and weaknesses"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={onOpenTeamAnalysis}
+              disabled={!teamPokemon.hasAnyPokemon()}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analyze Team
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Format Rules Display */}
+      <Suspense fallback={<FormatRulesDisplayFallback />}>
+        <LazyFormatRulesDisplay
+          showdownFormatId={validation.showdownFormatId}
+          generation={generation.value}
+        />
+      </Suspense>
 
       {/* Generation Change Confirmation Dialog */}
       <Dialog
@@ -369,7 +429,7 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
           </DialogHeader>
           <div className="rounded-md bg-muted p-4">
             <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <Info className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div className="space-y-1 text-sm">
                 <p className="font-medium">Why is this necessary?</p>
                 <p className="text-muted-foreground">
@@ -392,7 +452,10 @@ export const TeamConfigurationSection = ({ onOpenTeamAnalysis }: TeamConfigurati
             <Button variant="outline" onClick={handleCancelGenerationChange}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleConfirmGenerationChange}>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmGenerationChange}
+            >
               Clear Team & Change Generation
             </Button>
           </DialogFooter>

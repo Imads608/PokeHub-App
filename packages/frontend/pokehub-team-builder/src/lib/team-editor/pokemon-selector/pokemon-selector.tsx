@@ -1,4 +1,5 @@
 import { useFilterPokemonList } from '../../hooks/useFilterPokemonList';
+import { useBannedPokemon } from '../../hooks/useFormatBans';
 import { PokemonCardSkeleton } from './pokemon-card-skeleton';
 import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
@@ -19,17 +20,19 @@ import {
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
 import { Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
   tier: Tier.Singles | Tier.Doubles;
+  showdownFormatId: string;
   onPokemonSelected: (val: Species) => void;
 }
 
 export const PokemonSelector = ({
   generation,
   tier,
+  showdownFormatId,
   onPokemonSelected,
 }: PokemonSelectorProps) => {
   const [unfilteredResults] = useState(() =>
@@ -43,7 +46,30 @@ export const PokemonSelector = ({
   const [activeTab, setActiveTab] = useState('all');
   const { itemsToShow, handleScroll, resetItems } = useInfiniteScroll({});
 
-  const { isLoading, data } = useFilterPokemonList(unfilteredResults, {
+  // Get banned Pokemon for this format
+  const bannedPokemon = useBannedPokemon(showdownFormatId, generation);
+
+  // Filter out banned Pokemon
+  const filteredResults = useMemo(() => {
+    return unfilteredResults.filter((pokemon) => {
+      // Check if Pokemon's tier is banned
+      const tierValue = tier.startsWith('D')
+        ? pokemon.doublesTier
+        : pokemon.tier;
+      if (bannedPokemon.has(tierValue)) {
+        return false;
+      }
+
+      // Check if this specific Pokemon is banned
+      if (bannedPokemon.has(pokemon.name)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [unfilteredResults, bannedPokemon, tier]);
+
+  const { isLoading, data } = useFilterPokemonList(filteredResults, {
     generation,
     tier,
     types: selectedTypes,

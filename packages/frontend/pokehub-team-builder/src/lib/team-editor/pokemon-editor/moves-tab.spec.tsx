@@ -14,11 +14,18 @@ jest.mock('../../context/team-editor.context', () => ({
       setMove: mockSetMove,
     },
     generation: { value: 9 },
+    validation: {
+      showdownFormatId: 'gen9ou',
+    },
   }),
 }));
 
 // Mock data provider hooks
-jest.mock('@pokehub/frontend/dex-data-provider');
+jest.mock('@pokehub/frontend/dex-data-provider', () => ({
+  usePokemonLearnset: jest.fn(),
+  usePokemonMovesFromLearnset: jest.fn(),
+  getMoveDetails: jest.fn(() => undefined),
+}));
 
 // Get mocked functions after the mock is set up
 const { usePokemonLearnset: mockUsePokemonLearnset, usePokemonMovesFromLearnset: mockUsePokemonMovesFromLearnset } =

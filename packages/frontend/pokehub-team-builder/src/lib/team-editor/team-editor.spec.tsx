@@ -42,6 +42,18 @@ jest.mock('../context/team-editor.context', () => ({
       value: undefined,
       setValue: mockSetActivePokemon,
     },
+    validation: {
+      state: {
+        isValid: true,
+        errors: [],
+        showdownFormatId: 'gen9ou',
+        timestamp: 0,
+      },
+      getTeamErrors: () => [],
+      getPokemonErrors: () => [],
+      isTeamValid: true,
+      showdownFormatId: 'gen9ou',
+    },
   }),
   createNewPokemonFromSpecies: jest.fn((species: Species) => ({
     species: species.name,
@@ -128,6 +140,7 @@ jest.mock('./pokemon-selector/pokemon-selector', () => ({
     onPokemonSelected,
   }: {
     onPokemonSelected: (pokemon: Species, slot?: number) => void;
+    showdownFormatId: string;
   }) => (
     <div data-testid="pokemon-selector">
       <button

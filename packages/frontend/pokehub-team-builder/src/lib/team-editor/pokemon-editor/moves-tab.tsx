@@ -1,17 +1,21 @@
 import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useBannedMoves } from '../../hooks/useFormatBans';
 import { SearchableSelect } from './searchable-select';
 import type { MoveName, Species } from '@pkmn/dex';
 import {
   usePokemonLearnset,
   usePokemonMovesFromLearnset,
 } from '@pokehub/frontend/dex-data-provider';
-import { hasAtLeastOneMove, type PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Alert,
   AlertDescription,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
+import {
+  hasAtLeastOneMove,
+  type PokemonInTeam,
+} from '@pokehub/shared/pokemon-types';
 import { AlertCircle, Check } from 'lucide-react';
 
 export interface MovesTabProps {
@@ -23,6 +27,7 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
   const {
     activePokemon: { setMove },
     generation,
+    validation,
   } = useTeamEditorContext();
 
   // Get Pokemon's learnset
@@ -42,15 +47,25 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
   const moves = movesData ? Object.values(movesData) : [];
   const isLoading = isLearnsetLoading || isMovesLoading;
 
-  // Filter out already-selected moves for each slot
+  // Get banned moves from format rules
+  const bannedMoves = useBannedMoves(
+    validation.showdownFormatId,
+    generation.value
+  );
+
+  // Filter out already-selected moves and banned moves for each slot
   const getAvailableMovesForSlot = (slotIndex: number) => {
     // Get moves selected in OTHER slots (exclude current slot and empty moves)
     const selectedMoves = pokemon.moves.filter(
       (move, i) => i !== slotIndex && move !== ''
     );
 
-    // Filter out already-selected moves
-    return moves.filter((move) => !selectedMoves.includes(move.name as MoveName));
+    // Filter out already-selected moves and banned moves
+    return moves.filter(
+      (move) =>
+        !selectedMoves.includes(move.name as MoveName) &&
+        !bannedMoves.has(move.name)
+    );
   };
 
   const hasValidMoves = hasAtLeastOneMove(pokemon.moves);

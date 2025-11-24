@@ -1,4 +1,5 @@
 import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useBannedAbilities, useBannedItems } from '../../hooks/useFormatBans';
 import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
@@ -20,7 +21,7 @@ import {
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
 import { Check } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { SearchableSelect } from './searchable-select';
 
 export interface BasicTabProps {
@@ -32,10 +33,11 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   const {
     activePokemon: { setLevel, setName, setAbility, setItem, setNature },
     generation,
+    validation,
   } = useTeamEditorContext();
 
   // Retrieve Data
-  const [abilities] = useState(() =>
+  const [unfilteredAbilities] = useState(() =>
     getPokemonAbilitiesDetailsFromSpecies(species, generation.value)
   );
   const [natures] = useState(() =>
@@ -44,7 +46,31 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
       desc: getNatureDescription(nature.name, generation.value),
     }))
   );
-  const [items] = useState(() => getItems(generation.value));
+  const [unfilteredItems] = useState(() => getItems(generation.value));
+
+  // Get banned abilities and items from format rules
+  const bannedAbilities = useBannedAbilities(
+    validation.showdownFormatId,
+    generation.value
+  );
+  const bannedItems = useBannedItems(
+    validation.showdownFormatId,
+    generation.value
+  );
+
+  // Filter abilities and items
+  const abilities = useMemo(
+    () =>
+      unfilteredAbilities.filter(
+        (ability) => ability && !bannedAbilities.has(ability.name)
+      ),
+    [unfilteredAbilities, bannedAbilities]
+  );
+
+  const items = useMemo(
+    () => unfilteredItems.filter((item) => !bannedItems.has(item.name)),
+    [unfilteredItems, bannedItems]
+  );
 
   useEffect(() => {
     abilities.length > 0 && abilities[0] && setAbility(abilities[0].name);

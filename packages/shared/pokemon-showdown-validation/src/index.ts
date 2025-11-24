@@ -5,7 +5,6 @@ export {
 } from './lib/format-mapping';
 
 export {
-  validatePokemonForFormat,
   validateTeamForFormat,
   isPokemonBanned,
   isMoveBanned,

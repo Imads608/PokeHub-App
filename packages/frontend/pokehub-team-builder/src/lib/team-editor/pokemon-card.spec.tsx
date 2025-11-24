@@ -1,9 +1,8 @@
 import { PokemonCard } from './pokemon-card';
-import type { PokemonInTeam, ValidationResult } from '@pokehub/shared/pokemon-types';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Icons } from '@pkmn/img';
-import { getPokemonSlotErrors } from '@pokehub/shared/pokemon-types';
 
 // Mock @pkmn/img
 jest.mock('@pkmn/img');
@@ -11,10 +10,14 @@ jest.mock('@pkmn/img');
 // Mock data provider functions
 jest.mock('@pokehub/frontend/dex-data-provider');
 
-// Mock getPokemonSlotErrors
-jest.mock('@pokehub/shared/pokemon-types', () => ({
-  ...jest.requireActual('@pokehub/shared/pokemon-types'),
-  getPokemonSlotErrors: jest.fn(),
+// Mock team editor context
+const mockGetPokemonErrors = jest.fn(() => []);
+jest.mock('../context/team-editor.context', () => ({
+  useTeamEditorContext: () => ({
+    validation: {
+      getPokemonErrors: mockGetPokemonErrors,
+    },
+  }),
 }));
 
 const mockGetPokemon = jest.mocked(Icons.getPokemon);
@@ -39,8 +42,6 @@ const {
   getStats: jest.Mock;
 };
 
-const mockGetPokemonSlotErrors = jest.mocked(getPokemonSlotErrors);
-
 describe('PokemonCard', () => {
   const mockPokemon: PokemonInTeam = {
     species: 'Pikachu' as PokemonInTeam['species'],
@@ -55,11 +56,6 @@ describe('PokemonCard', () => {
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   };
 
-  const mockValidationResult: ValidationResult = {
-    valid: true,
-    errors: [],
-  };
-
   const defaultProps = {
     pokemon: mockPokemon,
     generation: 9 as const,
@@ -67,8 +63,7 @@ describe('PokemonCard', () => {
     onEdit: jest.fn(),
     onEditHover: jest.fn(),
     isPokemonEditorOpen: false,
-    validationResult: mockValidationResult,
-    slotIndex: 0,
+    index: 0,
   };
 
   beforeEach(() => {
@@ -126,7 +121,7 @@ describe('PokemonCard', () => {
     mockGetStats.mockReturnValue(['hp', 'atk', 'def', 'spa', 'spd', 'spe']);
 
     // Reset getPokemonSlotErrors to return empty array by default
-    mockGetPokemonSlotErrors.mockReturnValue([]);
+    mockGetPokemonErrors.mockReturnValue([]);
   });
 
   describe('Rendering', () => {
@@ -414,7 +409,7 @@ describe('PokemonCard', () => {
     });
 
     it('should show error icon when there are validation errors', () => {
-      mockGetPokemonSlotErrors.mockReturnValue([
+      mockGetPokemonErrors.mockReturnValue([
         { message: 'Pokemon must have at least one move', path: 'moves' },
       ]);
 
@@ -430,7 +425,7 @@ describe('PokemonCard', () => {
     });
 
     it('should show red border when there are validation errors', () => {
-      mockGetPokemonSlotErrors.mockReturnValue([
+      mockGetPokemonErrors.mockReturnValue([
         { message: 'Pokemon must have at least one move', path: 'moves' },
       ]);
 
@@ -442,7 +437,7 @@ describe('PokemonCard', () => {
     });
 
     it('should display error messages in tooltip', async () => {
-      mockGetPokemonSlotErrors.mockReturnValue([
+      mockGetPokemonErrors.mockReturnValue([
         { message: 'Pokemon must have at least one move', path: 'moves' },
         { message: 'Invalid ability for this Pokemon', path: 'ability' },
       ]);

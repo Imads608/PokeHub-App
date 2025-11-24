@@ -84,7 +84,7 @@ export function isRuleActive(formatId: string, rule: string): boolean {
   const rules = getFormatRules(formatId);
   if (!rules) return false;
 
-  return rules.rules.some(r => r.toLowerCase() === rule.toLowerCase());
+  return rules.rules.some((r) => r.toLowerCase() === rule.toLowerCase());
 }
 
 /**
@@ -95,16 +95,22 @@ export function isRuleActive(formatId: string, rule: string): boolean {
  */
 export function getRuleDescription(rule: string): string {
   const descriptions: Record<string, string> = {
-    'Species Clause': 'You cannot have two Pokemon with the same Pokedex number on a team.',
-    'Sleep Clause Mod': 'You cannot put more than one opposing Pokemon to sleep at a time.',
+    'Species Clause':
+      'You cannot have two Pokemon with the same Pokedex number on a team.',
+    'Sleep Clause Mod':
+      'You cannot put more than one opposing Pokemon to sleep at a time.',
     'OHKO Clause': 'One-hit KO moves (like Fissure and Horn Drill) are banned.',
     'Evasion Clause': 'Evasion-boosting moves and items are banned.',
-    'Evasion Moves Clause': 'Evasion-boosting moves (like Double Team) are banned.',
-    'Evasion Items Clause': 'Evasion-boosting items (like Bright Powder) are banned.',
+    'Evasion Moves Clause':
+      'Evasion-boosting moves (like Double Team) are banned.',
+    'Evasion Items Clause':
+      'Evasion-boosting items (like Bright Powder) are banned.',
     'Endless Battle Clause': 'Forcing an endless battle is banned.',
     'HP Percentage Mod': 'HP is shown in percentages.',
-    'Cancel Mod': 'Allows players to cancel their moves before the turn executes.',
-    'Team Preview': 'You will see your opponent\'s team before the battle begins.',
+    'Cancel Mod':
+      'Allows players to cancel their moves before the turn executes.',
+    'Team Preview':
+      "You will see your opponent's team before the battle begins.",
     'Terastal Clause': 'You may only Terastallize one Pokemon per battle.',
     'Dynamax Clause': 'You cannot Dynamax.',
   };
@@ -124,13 +130,15 @@ export function getRuleDescription(rule: string): string {
  *   console.log(`${clause.name}: ${clause.description}`);
  * });
  */
-export function getFormatClauses(formatId: string): Array<{ name: string; description: string }> {
+export function getFormatClauses(
+  formatId: string
+): Array<{ name: string; description: string }> {
   const rules = getFormatRules(formatId);
   if (!rules) return [];
 
   return rules.rules
-    .filter(rule => rule.includes('Clause') || rule.includes('Mod'))
-    .map(rule => ({
+    .filter((rule) => rule.includes('Clause') || rule.includes('Mod'))
+    .map((rule) => ({
       name: rule,
       description: getRuleDescription(rule),
     }));

@@ -323,6 +323,565 @@ hasAtLeastOneMove(moves): boolean
 - `clearTeam()` - Resets all 6 Pokemon slots to undefined
 - `hasAnyPokemon()` - Returns true if any slot has a Pokemon
 
+## Team Building UX Evolution ✅
+
+### UI Architecture Change: Sequential Pokemon Addition
+
+**Previous Design** (6 Slots Approach):
+- 6 empty slots displayed upfront
+- Users could click any slot to add a Pokemon
+- All slots visible regardless of whether they contained Pokemon
+- Parallel editing workflow
+
+**Current Design** (One-at-a-Time Approach):
+- Pokemon added sequentially through Pokemon Selector
+- Only shows Pokemon cards that have been added to the team
+- Cleaner, less overwhelming interface
+- Focused editing workflow
+
+**Implementation Details**:
+
+**1. Pokemon Addition Flow**:
+```
+1. User clicks "Add Pokemon" button
+   ↓
+2. Pokemon Selector dialog opens
+   ↓
+3. User searches and selects species
+   ↓
+4. Pokemon Editor dialog opens with tabs
+   ↓
+5. User configures Pokemon (moves, EVs, IVs, etc.)
+   ↓
+6. User clicks "Add to Team"
+   ↓
+7. Pokemon added to next available slot (0-5)
+   ↓
+8. Pokemon card appears in team grid
+```
+
+**2. Team Display**:
+- **Dynamic Grid**: Only shows cards for added Pokemon
+- **Empty State**: When team is empty, shows "Add Pokemon" button
+- **6 Pokemon Maximum**: Button disabled when team is full
+- **Visual Feedback**: Cards appear with smooth transitions
+
+**3. Pokemon Editing**:
+- **Click Pokemon Card**: Opens Pokemon Editor with existing Pokemon data
+- **Edit Mode**: All tabs populated with current values
+- **Save Changes**: Updates Pokemon in current slot
+- **Cancel**: Discards changes and restores original Pokemon
+
+**4. Pokemon Management**:
+- **Remove Pokemon**: X button on Pokemon card removes from team
+- **Slot Preservation**: Removed Pokemon leaves empty slot
+- **Re-add**: Can add new Pokemon to empty slot
+
+**Benefits of New Approach**:
+- **Reduced Cognitive Load**: Users focus on one Pokemon at a time
+- **Cleaner Interface**: No empty slot clutter
+- **Better Mobile Experience**: Less scrolling, more focused
+- **Progressive Disclosure**: Information revealed as needed
+- **Validation Clarity**: Easier to see which Pokemon need attention
+
+**Context State Management**:
+```typescript
+// Team pokemon array (up to 6)
+const teamPokemon = useSignal<(PokemonInTeam | undefined)[]>([
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+])
+
+// Active pokemon being edited
+const activePokemon = useSignal<PokemonInTeam | null>(null)
+
+// Add Pokemon to next available slot
+const addActivePokemonToTeam = (slotIndex?: number) => {
+  if (!activePokemon.value) return
+
+  const newTeam = [...teamPokemon.value]
+  if (slotIndex !== undefined) {
+    newTeam[slotIndex] = activePokemon.value
+  } else {
+    // Find first empty slot
+    const emptyIndex = newTeam.findIndex(p => p === undefined)
+    if (emptyIndex !== -1) {
+      newTeam[emptyIndex] = activePokemon.value
+    }
+  }
+  teamPokemon.value = newTeam
+}
+```
+
+**UI Components**:
+- `team-editor.tsx` - Main container with dynamic Pokemon grid
+- `pokemon-card.tsx` - Individual Pokemon display card
+- `pokemon-selector.tsx` - Species selection dialog
+- `pokemon-editor.tsx` - Comprehensive Pokemon configuration tabs
+
+## Pokemon Showdown Integration ✅
+
+### Overview
+
+The Team Builder now integrates with **Pokemon Showdown**, the most popular competitive Pokemon battle simulator. This integration provides format-specific validation, rule enforcement, and ban lists to ensure teams comply with official competitive formats.
+
+**Pokemon Showdown** defines:
+- Battle formats (OU, UU, Ubers, VGC, etc.)
+- Tier-based bans (Pokemon, moves, abilities, items)
+- Clauses (Species Clause, Sleep Clause, etc.)
+- Complex rules (Dynamax Clause, Evasion Clause, etc.)
+
+### Architecture
+
+**Key Components**:
+
+1. **Format Mapping** (`packages/shared/pokemon-showdown-validation/src/lib/format-mapping.ts`)
+   - Maps PokeHub formats to Showdown format IDs
+   - Handles generation + tier combinations
+   - Examples:
+     - Gen 9 OU → `gen9ou`
+     - Gen 8 VGC 2021 → `gen8vgc2021`
+     - Gen 7 Ubers → `gen7ubers`
+
+2. **Team Validator** (`packages/shared/pokemon-showdown-validation/src/lib/validator.ts`)
+   - Validates teams against format rules
+   - Checks banned Pokemon, moves, abilities, items
+   - Returns detailed error messages
+   - Uses `@pkmn/sim` under the hood
+
+3. **Format Rules** (`packages/shared/pokemon-showdown-validation/src/lib/format-rules.ts`)
+   - Retrieves format-specific restrictions
+   - Parses ban lists from format data
+   - Provides structured rule information
+
+4. **Context Integration** (`team-editor.context.tsx`)
+   - Centralized validation state
+   - Automatic re-validation on team changes
+   - Provides validation results to all components
+   - Single source of truth for validation
+
+### Validation Flow
+
+```typescript
+// 1. User configures team metadata
+generation.setValue(9)
+format.setValue('Singles')
+tier.setValue('OU')
+
+// 2. Context automatically computes Showdown format ID
+const showdownFormatId = getShowdownFormatId(generation, format, tier)
+// Result: 'gen9ou'
+
+// 3. Context validates team in real-time
+const validationResult = validateTeam({
+  name: teamName.value,
+  generation: generation.value,
+  format: format.value,
+  tier: tier.value,
+  pokemon: teamPokemon.value,
+})
+
+// 4. Components access validation from context
+const { validation } = useTeamEditorContext()
+const isValid = validation.isTeamValid
+const errors = validation.getPokemonErrors(index)
+```
+
+### Format Rules Display Component
+
+**Component**: `format-rules-display.tsx`
+
+**Purpose**: Shows users what Pokemon, moves, abilities, and items are banned in the selected format
+
+**Features**:
+- **Dynamic Rule Loading**: Fetches rules based on `showdownFormatId`
+- **Categorized Bans**: Separate sections for Pokemon, moves, abilities, items
+- **Visual Design**: Card-based layout with Shield icon
+- **Empty States**: Shows "No restrictions" when category is empty
+- **Comprehensive Display**: Shows format name and complete ban lists
+
+**UI Elements**:
+```tsx
+<FormatRulesDisplay
+  showdownFormatId="gen9ou"
+  generation={9}
+/>
+```
+
+Displays:
+```
+Format Rules
+OU (Gen 9)
+
+🚫 Banned Pokemon
+- Mewtwo
+- Lugia
+- ...
+
+🚫 Banned Moves
+- Baton Pass
+
+🚫 Banned Abilities
+- Moody
+- Shadow Tag
+
+🚫 Banned Items
+- (No restrictions)
+```
+
+### Proactive Filtering
+
+The integration includes **proactive filtering** to prevent users from selecting banned options:
+
+**1. Pokemon Selector** (`pokemon-selector.tsx`)
+- Fetches format bans using `useFormatBans` hook
+- Filters banned Pokemon from search results
+- Users cannot add banned Pokemon to their team
+
+**2. Moves Tab** (`moves-tab.tsx`)
+- Filters banned moves from move selection dropdown
+- Only shows legal moves for the format
+- Prevents selection of restricted moves
+
+**3. Basic Tab** (`basic-tab.tsx`)
+- Filters banned abilities from ability dropdown
+- Filters banned items from item selection
+- Prevents selection of restricted options
+
+**Implementation**:
+```typescript
+// Hook for fetching format bans
+const { bannedPokemon, bannedMoves, bannedAbilities, bannedItems } =
+  useFormatBans(showdownFormatId, generation)
+
+// Filter options
+const legalMoves = moves.filter(move => !bannedMoves.includes(move.name))
+const legalAbilities = abilities.filter(ab => !bannedAbilities.includes(ab.name))
+const legalItems = items.filter(item => !bannedItems.includes(item.name))
+```
+
+### Enhanced Validation UI
+
+**Purpose**: Provide clear, actionable feedback on team validation status
+
+**Previous Implementation**:
+- Simple error list
+- Always visible (even when valid)
+- No visual hierarchy
+- Difficult to parse multiple errors
+
+**New Implementation** (`team-validation-summary.tsx`):
+
+**1. Success State** ✅
+```tsx
+// Green alert when team is valid
+<Alert variant="default" className="border-green-200 bg-green-50">
+  <CheckCircle2 className="text-green-600" />
+  <AlertTitle>Team Valid</AlertTitle>
+  <AlertDescription>
+    Your team passes all validation rules and is ready to save.
+  </AlertDescription>
+</Alert>
+```
+
+**2. Collapsible Error Display** 🔽
+- **Expandable/Collapsible**: Users can hide error details
+- **Persistent Summary**: Error count always visible
+- **Smooth Transitions**: Chevron rotates when toggled
+```tsx
+<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+  <Alert variant="destructive">
+    <div className="flex items-center justify-between">
+      <AlertTitle className="flex items-center gap-2">
+        Validation Errors
+        <Badge variant="destructive">{totalErrors} errors</Badge>
+      </AlertTitle>
+      <CollapsibleTrigger>
+        <ChevronDown className={isOpen ? 'rotate-180' : ''} />
+      </CollapsibleTrigger>
+    </div>
+    <CollapsibleContent>
+      {/* Error details */}
+    </CollapsibleContent>
+  </Alert>
+</Collapsible>
+```
+
+**3. Error Count Badges** 🔢
+- Shows total error count in red badge
+- Per-Pokemon error counts in individual badges
+- Quickly see where problems exist
+
+**4. Visual Hierarchy** 📊
+- Team-level errors shown first (format issues, team composition)
+- Pokemon-level errors grouped by slot
+- Each Pokemon shows: "Slot X (PokemonName) - Y errors"
+- Clear separation between error categories
+
+**5. Categorized Errors**
+```
+❌ Validation Errors [3 errors] 🔽
+
+Team Errors:
+• Team must have at least one Pokemon
+
+Pokemon Errors:
+
+Slot 1 (Pikachu) [1 error]
+• At least one move is required
+
+Slot 3 (Charizard) [1 error]
+• Total EVs cannot exceed 510 (current: 520)
+```
+
+**Type Safety**:
+```typescript
+export interface TeamValidationSummaryProps {
+  validationResult: TeamValidationState  // From context, not generic ValidationResult
+  pokemonNames: string[]
+}
+```
+
+### Performance Optimizations
+
+**Problem**: Format rules and validation are heavy components that can slow initial render
+
+**Solution**: Lazy loading with React.lazy() and Suspense
+
+**1. Lazy Loaded Components**:
+```typescript
+// Lazy load heavy validation components
+const FormatRulesDisplay = lazy(() =>
+  import('./format-rules-display').then((module) => ({
+    default: module.FormatRulesDisplay,
+  }))
+);
+
+const TeamValidationSummary = lazy(() =>
+  import('./team-validation-summary').then((module) => ({
+    default: module.TeamValidationSummary,
+  }))
+);
+```
+
+**2. Loading Fallbacks**:
+
+**Validation Summary Fallback**:
+```tsx
+<Alert className="border-blue-200 bg-blue-50">
+  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+  <AlertTitle>Validating Team...</AlertTitle>
+  <AlertDescription>
+    Checking your team against format rules and restrictions
+  </AlertDescription>
+</Alert>
+```
+
+**Format Rules Fallback**:
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Shield className="h-5 w-5" />
+      Format Rules
+    </CardTitle>
+    <CardDescription>Loading format restrictions...</CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-3">
+    <Skeleton className="h-4 w-full" />
+    <Skeleton className="h-4 w-3/4" />
+    <Skeleton className="h-4 w-5/6" />
+  </CardContent>
+</Card>
+```
+
+**3. Suspense Boundaries**:
+```tsx
+<Suspense fallback={<ValidationSummaryFallback />}>
+  <TeamValidationSummary
+    validationResult={validation.state}
+    pokemonNames={pokemonNames}
+  />
+</Suspense>
+
+<Suspense fallback={<FormatRulesDisplayFallback />}>
+  <FormatRulesDisplay
+    showdownFormatId={validation.showdownFormatId}
+    generation={generation.value}
+  />
+</Suspense>
+```
+
+**Benefits**:
+- Initial bundle size reduced
+- Validation components only loaded when needed
+- User sees meaningful loading states
+- Better perceived performance
+
+### Single Source of Truth for Validation
+
+**Problem**: Multiple components were independently computing validation (duplicate work)
+
+**Previous Implementation**:
+```typescript
+// ❌ team-configuration-section.tsx
+const validationResult = useMemo(() => {
+  return validateTeam({ ... })
+}, [...])
+
+// ❌ team-editor.tsx
+const validationResult = useMemo(() => {
+  return validateTeam({ ... })
+}, [...])
+
+// ❌ pokemon-card.tsx
+// Received validationResult as prop
+```
+
+**New Implementation** (Context-based):
+```typescript
+// ✅ team-editor.context.tsx (SINGLE COMPUTATION)
+const validation = useMemo(() => {
+  const state = validateTeam({
+    name: teamName.value,
+    generation: generation.value,
+    format: format.value,
+    tier: tier.value,
+    pokemon: teamPokemon.value,
+  })
+
+  return {
+    state,
+    getTeamErrors: () => getTeamLevelErrors(state),
+    getPokemonErrors: (index: number) => getPokemonSlotErrors(state, index),
+    isTeamValid: state.isValid,
+    showdownFormatId: getShowdownFormatId(generation.value, format.value, tier.value),
+  }
+}, [teamName.value, generation.value, format.value, tier.value, teamPokemon.value])
+
+// ✅ All components use context
+const { validation } = useTeamEditorContext()
+const isValid = validation.isTeamValid
+const errors = validation.getPokemonErrors(index)
+```
+
+**Benefits**:
+- Performance: Validation computed once, not multiple times
+- Consistency: All components see same validation state
+- Maintainability: Single place to update validation logic
+- Type Safety: Proper TypeScript types from context
+
+### Type Improvements
+
+**Previous Types**:
+```typescript
+// ❌ Generic, not context-aware
+interface TeamValidationSummaryProps {
+  validationResult: ValidationResult  // Generic type
+  pokemonNames: string[]
+}
+```
+
+**New Types**:
+```typescript
+// ✅ Context-specific, properly typed
+import type { TeamValidationState } from '../context/team-editor.context.model'
+
+interface TeamValidationSummaryProps {
+  validationResult: TeamValidationState  // Context type
+  pokemonNames: string[]
+}
+```
+
+**Context Validation Type**:
+```typescript
+interface TeamValidationState {
+  isValid: boolean
+  errors: Array<{ field: string; message: string }>
+  showdownFormatId: string
+  timestamp: number
+}
+```
+
+### Files Modified
+
+**New Files**:
+- `packages/frontend/pokehub-team-builder/src/lib/hooks/useFormatBans.ts` - Hook for fetching format bans
+- `packages/frontend/pokehub-team-builder/src/lib/team-editor/format-rules-display.tsx` - Format rules UI component
+- `packages/shared/pokemon-showdown-validation/src/lib/format-mapping.ts` - Format ID mapping
+- `packages/shared/pokemon-showdown-validation/src/lib/format-rules.ts` - Format rules retrieval
+- `packages/shared/pokemon-showdown-validation/src/lib/validator.ts` - Team validation logic
+
+**Updated Files**:
+- `team-editor.context.tsx` - Added centralized validation state
+- `team-configuration-section.tsx` - Removed duplicate validation, added lazy loading
+- `team-validation-summary.tsx` - Complete rewrite with enhanced UI
+- `pokemon-selector.tsx` - Added proactive filtering for banned Pokemon
+- `moves-tab.tsx` - Added filtering for banned moves
+- `basic-tab.tsx` - Added filtering for banned abilities and items
+- `team-editor.tsx` - Removed duplicate validation computation
+- `pokemon-card.tsx` - Now uses validation from context instead of props
+
+### Testing
+
+**Test Updates**:
+- All 212 tests passing ✅
+- Mock context validation instead of mocking validateTeam
+- Use mutable mock state with getters for dynamic values
+- Updated prop types to match new interfaces
+
+**Example Test Mock**:
+```typescript
+const mockValidationState = {
+  isValid: true,
+  errors: [],
+  showdownFormatId: 'gen9ou',
+  timestamp: Date.now(),
+}
+
+jest.mock('../context/team-editor.context', () => ({
+  useTeamEditorContext: () => ({
+    validation: {
+      get state() {
+        return mockValidationState
+      },
+      getTeamErrors: jest.fn(() => []),
+      getPokemonErrors: jest.fn(() => []),
+      get isTeamValid() {
+        return mockValidationState.isValid
+      },
+      showdownFormatId: 'gen9ou',
+    },
+  }),
+}))
+```
+
+### User Experience Impact
+
+**Before**:
+- No format-specific validation
+- Could add banned Pokemon/moves/items
+- Errors discovered only when trying to battle
+- Generic error messages
+- No guidance on format rules
+- 6 empty slots always visible
+- Overwhelming for new users
+
+**After**:
+- Proactive filtering prevents illegal selections
+- Real-time validation against format rules
+- Clear success/error states
+- Collapsible error details
+- Visible format rules display
+- Better performance with lazy loading
+- Consistent validation state across UI
+- Clean one-at-a-time Pokemon addition flow
+- Progressive disclosure of team composition
+
 ## Shared Components
 
 ### SearchableSelect
@@ -625,6 +1184,25 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 ```
 
 ## Changelog
+
+### 2025-11-23
+- ✅ Integrated Pokemon Showdown validation system
+- ✅ Added format mapping utilities (PokeHub → Showdown format IDs)
+- ✅ Implemented team validator with format-specific rules
+- ✅ Created format rules retrieval system with ban lists
+- ✅ Added Format Rules Display component showing banned Pokemon/moves/abilities/items
+- ✅ Implemented proactive filtering in Pokemon Selector, Moves Tab, and Basic Tab
+- ✅ Enhanced validation UI with success states and collapsible error display
+- ✅ Added error count badges and improved visual hierarchy
+- ✅ Implemented lazy loading for validation components (FormatRulesDisplay, TeamValidationSummary)
+- ✅ Created loading fallbacks with meaningful messages
+- ✅ Added Suspense boundaries for better performance
+- ✅ Refactored to single source of truth for validation in context
+- ✅ Removed duplicate validation computation from components
+- ✅ Updated types from ValidationResult to TeamValidationState
+- ✅ Created useFormatBans hook for fetching format restrictions
+- ✅ Updated UI architecture from 6 slots to one-at-a-time Pokemon addition
+- ✅ All 212 tests passing with updated mocks
 
 ### 2025-11-16
 - ✅ Implemented Cancel functionality with smart change detection
