@@ -1,4 +1,7 @@
-import { TeamConfigurationSection, type TeamConfigurationSectionProps } from './team-configuration-section';
+import {
+  TeamConfigurationSection,
+  type TeamConfigurationSectionProps,
+} from './team-configuration-section';
 import type { GenerationNum, Tier } from '@pkmn/dex';
 import type { BattleFormat } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -29,7 +32,7 @@ const mockValidationState = {
   timestamp: Date.now(),
 };
 
-jest.mock('../context/team-editor.context', () => ({
+jest.mock('../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     teamName: { value: 'My Team', setValue: mockSetTeamName },
     generation: { value: 9 as GenerationNum, setValue: mockSetGeneration },
@@ -44,7 +47,7 @@ jest.mock('../context/team-editor.context', () => ({
 }));
 
 // Mock team validation context
-jest.mock('../context/team-validation.context', () => ({
+jest.mock('../context/team-validation-context/team-validation.context', () => ({
   useTeamValidationContext: () => ({
     get state() {
       return mockValidationState;
@@ -79,7 +82,11 @@ jest.mock('../hooks/useTiersStaticData', () => ({
     ],
     doublesTiers: [
       { id: 'DOU', name: 'Doubles OverUsed', description: 'Doubles main tier' },
-      { id: 'DUU', name: 'Doubles UnderUsed', description: 'Doubles second tier' },
+      {
+        id: 'DUU',
+        name: 'Doubles UnderUsed',
+        description: 'Doubles second tier',
+      },
     ],
   })),
 }));
@@ -104,9 +111,14 @@ jest.mock('@pokehub/frontend/pokemon-static-data', () => ({
 // Mock TeamValidationSummary component
 jest.mock('./team-validation-summary', () => ({
   TeamValidationSummary: ({
-    validationResult
+    validationResult,
   }: {
-    validationResult: { isValid: boolean; errors: unknown[]; showdownFormatId: string; timestamp: number }
+    validationResult: {
+      isValid: boolean;
+      errors: unknown[];
+      showdownFormatId: string;
+      timestamp: number;
+    };
   }) => (
     <div data-testid="validation-summary">
       {validationResult.isValid ? 'Team Valid' : 'Validation Errors'}
@@ -137,23 +149,35 @@ describe('TeamConfigurationSection', () => {
       render(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('Team Configuration')).toBeInTheDocument();
-      expect(screen.getByText('Set up your team format and rules')).toBeInTheDocument();
+      expect(
+        screen.getByText('Set up your team format and rules')
+      ).toBeInTheDocument();
     });
 
     it('should render Team Analysis card', () => {
       render(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('Team Analysis')).toBeInTheDocument();
-      expect(screen.getByText("Check your team's strengths and weaknesses")).toBeInTheDocument();
+      expect(
+        screen.getByText("Check your team's strengths and weaknesses")
+      ).toBeInTheDocument();
     });
 
     it('should render all action buttons', () => {
       render(<TeamConfigurationSection {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /save team/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /analyze team/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /export/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /import/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /save team/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /analyze team/i })
+      ).toBeInTheDocument();
     });
 
     it('should render all form fields', () => {
@@ -260,7 +284,9 @@ describe('TeamConfigurationSection', () => {
       await user.click(cancelButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Change Generation?')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Change Generation?')
+        ).not.toBeInTheDocument();
       });
 
       expect(mockSetGeneration).not.toHaveBeenCalled();
@@ -372,7 +398,9 @@ describe('TeamConfigurationSection', () => {
 
       // Set validation to invalid
       mockValidationState.isValid = false;
-      mockValidationState.errors = [{ field: 'teamName', message: 'Team name is required' }];
+      mockValidationState.errors = [
+        { field: 'teamName', message: 'Team name is required' },
+      ];
 
       render(<TeamConfigurationSection {...defaultProps} />);
 
@@ -429,7 +457,9 @@ describe('TeamConfigurationSection', () => {
 
       // Set validation to invalid
       mockValidationState.isValid = false;
-      mockValidationState.errors = [{ field: 'teamName', message: 'Team name is required' }];
+      mockValidationState.errors = [
+        { field: 'teamName', message: 'Team name is required' },
+      ];
 
       render(<TeamConfigurationSection {...defaultProps} />);
 
@@ -449,7 +479,9 @@ describe('TeamConfigurationSection', () => {
       mockHasAnyPokemon.mockReturnValue(false);
       render(<TeamConfigurationSection {...defaultProps} />);
 
-      const analyzeButton = screen.getByRole('button', { name: /analyze team/i });
+      const analyzeButton = screen.getByRole('button', {
+        name: /analyze team/i,
+      });
       expect(analyzeButton).toBeDisabled();
     });
 
@@ -457,7 +489,9 @@ describe('TeamConfigurationSection', () => {
       mockHasAnyPokemon.mockReturnValue(true);
       render(<TeamConfigurationSection {...defaultProps} />);
 
-      const analyzeButton = screen.getByRole('button', { name: /analyze team/i });
+      const analyzeButton = screen.getByRole('button', {
+        name: /analyze team/i,
+      });
       expect(analyzeButton).not.toBeDisabled();
     });
 
@@ -465,9 +499,13 @@ describe('TeamConfigurationSection', () => {
       const user = userEvent.setup();
       const onOpenTeamAnalysis = jest.fn();
       mockHasAnyPokemon.mockReturnValue(true);
-      render(<TeamConfigurationSection onOpenTeamAnalysis={onOpenTeamAnalysis} />);
+      render(
+        <TeamConfigurationSection onOpenTeamAnalysis={onOpenTeamAnalysis} />
+      );
 
-      const analyzeButton = screen.getByRole('button', { name: /analyze team/i });
+      const analyzeButton = screen.getByRole('button', {
+        name: /analyze team/i,
+      });
       await user.click(analyzeButton);
 
       expect(onOpenTeamAnalysis).toHaveBeenCalled();

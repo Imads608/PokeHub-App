@@ -1,5 +1,6 @@
-import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useTeamEditorContext } from '../../context/team-editor-context/team-editor.context';
 import { useBannedAbilities, useBannedItems } from '../../hooks/useFormatBans';
+import { SearchableSelect } from './searchable-select';
 import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
@@ -8,7 +9,6 @@ import {
   getNatures,
   getPokemonAbilitiesDetailsFromSpecies,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Input,
   Label,
@@ -20,9 +20,9 @@ import {
   Slider,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Check } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
-import { SearchableSelect } from './searchable-select';
 
 export interface BasicTabProps {
   pokemon: PokemonInTeam;
@@ -53,10 +53,7 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
     showdownFormatId,
     generation.value
   );
-  const bannedItems = useBannedItems(
-    showdownFormatId,
-    generation.value
-  );
+  const bannedItems = useBannedItems(showdownFormatId, generation.value);
 
   // Filter abilities and items
   const abilities = useMemo(

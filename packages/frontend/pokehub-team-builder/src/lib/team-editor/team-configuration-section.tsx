@@ -1,5 +1,5 @@
-import { useTeamEditorContext } from '../context/team-editor.context';
-import { useTeamValidationContext } from '../context/team-validation.context';
+import { useTeamEditorContext } from '../context/team-editor-context/team-editor.context';
+import { useTeamValidationContext } from '../context/team-validation-context/team-validation.context';
 import { useTeamChanges } from '../hooks/useTeamChanges';
 import { useTiersStaticData } from '../hooks/useTiersStaticData';
 import type { GenerationNum, Tier } from '@pkmn/dex';

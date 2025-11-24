@@ -1,4 +1,4 @@
-import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useTeamEditorContext } from '../../context/team-editor-context/team-editor.context';
 import { useBannedMoves } from '../../hooks/useFormatBans';
 import { SearchableSelect } from './searchable-select';
 import type { MoveName, Species } from '@pkmn/dex';
@@ -48,10 +48,7 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
   const isLoading = isLearnsetLoading || isMovesLoading;
 
   // Get banned moves from format rules
-  const bannedMoves = useBannedMoves(
-    showdownFormatId,
-    generation.value
-  );
+  const bannedMoves = useBannedMoves(showdownFormatId, generation.value);
 
   // Filter out already-selected moves and banned moves for each slot
   const getAvailableMovesForSlot = (slotIndex: number) => {

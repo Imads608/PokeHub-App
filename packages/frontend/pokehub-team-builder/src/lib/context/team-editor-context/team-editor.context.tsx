@@ -1,6 +1,6 @@
 'use client';
 
-import { getShowdownFormatId } from '../utils/format-mapping';
+import { getShowdownFormatId } from '../../utils/format-mapping';
 import type { TeamEditorContextModel } from './team-editor.context.model';
 import type {
   AbilityName,

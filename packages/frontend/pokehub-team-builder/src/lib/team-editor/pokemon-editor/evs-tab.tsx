@@ -1,6 +1,5 @@
-import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useTeamEditorContext } from '../../context/team-editor-context/team-editor.context';
 import { getStats, getStatName } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Input,
   Label,
@@ -8,6 +7,7 @@ import {
   Slider,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { useMemo } from 'react';
 
 export interface EVsTabProps {

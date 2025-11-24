@@ -1,4 +1,4 @@
-import type { TeamValidationState } from '../context/team-validation-state.context.model';
+import type { TeamValidationState } from '../context/team-validation-context/team-validation-state.context.model';
 import {
   Alert,
   AlertDescription,

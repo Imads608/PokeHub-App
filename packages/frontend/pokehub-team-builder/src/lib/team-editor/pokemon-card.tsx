@@ -1,6 +1,6 @@
 'use client';
 
-import { useTeamValidationContext } from '../context/team-validation.context';
+import { useTeamValidationContext } from '../context/team-validation-context/team-validation.context';
 import type { GenerationNum, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {

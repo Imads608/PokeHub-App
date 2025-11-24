@@ -1,6 +1,6 @@
 'use client';
 
-import { useTeamEditorContext } from './team-editor.context';
+import { useTeamEditorContext } from '../team-editor-context/team-editor.context';
 import type { TeamValidationState } from './team-validation-state.context.model';
 import { TeamValidationContext } from './team-validation.context';
 // Type-only import - doesn't bundle the actual code
@@ -35,7 +35,7 @@ export const TeamValidationProvider = ({
     import(
       /* webpackPrefetch: true */
       /* webpackChunkName: "team-validation" */
-      '@pokehub/shared/pokemon-showdown-validation'
+      './showdown-validation-utils'
     )
       .then((module) => {
         if (mounted) {

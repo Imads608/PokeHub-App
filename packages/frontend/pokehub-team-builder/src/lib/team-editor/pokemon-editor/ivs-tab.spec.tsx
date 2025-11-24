@@ -1,6 +1,6 @@
 import { IVsTab, type IVsTabProps } from './ivs-tab';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -15,12 +15,17 @@ const mockActivePokemon: PokemonInTeam = {
   nature: 'Jolly' as PokemonInTeam['nature'],
   gender: 'M' as PokemonInTeam['gender'],
   level: 50,
-  moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'] as PokemonInTeam['moves'],
+  moves: [
+    'Thunder',
+    'Quick Attack',
+    'Iron Tail',
+    'Thunderbolt',
+  ] as PokemonInTeam['moves'],
   evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
   ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 0 },
 };
 
-jest.mock('../../context/team-editor.context', () => ({
+jest.mock('../../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     activePokemon: {
       setIV: mockSetIV,
@@ -55,7 +60,9 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
 }));
 
 // Get references to mocked functions
-const { getStats, getStatName } = jest.requireMock('@pokehub/frontend/dex-data-provider') as {
+const { getStats, getStatName } = jest.requireMock(
+  '@pokehub/frontend/dex-data-provider'
+) as {
   getStats: jest.Mock;
   getStatName: jest.Mock;
 };
@@ -69,7 +76,12 @@ describe('IVsTab', () => {
     nature: 'Jolly' as PokemonInTeam['nature'],
     gender: 'M' as PokemonInTeam['gender'],
     level: 50,
-    moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'] as PokemonInTeam['moves'],
+    moves: [
+      'Thunder',
+      'Quick Attack',
+      'Iron Tail',
+      'Thunderbolt',
+    ] as PokemonInTeam['moves'],
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 0 },
   };
@@ -114,13 +126,17 @@ describe('IVsTab', () => {
     it('should render Max All button', () => {
       renderIVsTab(defaultProps);
 
-      expect(screen.getByRole('button', { name: /max all/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /max all/i })
+      ).toBeInTheDocument();
     });
 
     it('should render Trick Room button', () => {
       renderIVsTab(defaultProps);
 
-      expect(screen.getByRole('button', { name: /trick room/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /trick room/i })
+      ).toBeInTheDocument();
     });
   });
 
@@ -131,8 +147,12 @@ describe('IVsTab', () => {
       const inputs = screen.getAllByRole('spinbutton');
 
       // Find inputs by their value
-      const maxIVInputs = inputs.filter((input) => (input as HTMLInputElement).value === '31');
-      const speedInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
+      const maxIVInputs = inputs.filter(
+        (input) => (input as HTMLInputElement).value === '31'
+      );
+      const speedInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
 
       expect(maxIVInputs.length).toBe(5); // HP, Attack, Defense, Sp. Atk, Sp. Def
       expect(speedInput).toBeDefined();
@@ -172,7 +192,9 @@ describe('IVsTab', () => {
       renderIVsTab(defaultProps);
 
       const inputs = screen.getAllByRole('spinbutton');
-      const speedInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
+      const speedInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
 
       if (speedInput) {
         await user.clear(speedInput);
@@ -187,7 +209,9 @@ describe('IVsTab', () => {
       renderIVsTab(defaultProps);
 
       const inputs = screen.getAllByRole('spinbutton');
-      const speedInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
+      const speedInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
 
       if (speedInput) {
         await user.clear(speedInput);
@@ -249,7 +273,9 @@ describe('IVsTab', () => {
         const user = userEvent.setup();
         renderIVsTab(defaultProps);
 
-        const trickRoomButton = screen.getByRole('button', { name: /trick room/i });
+        const trickRoomButton = screen.getByRole('button', {
+          name: /trick room/i,
+        });
         await user.click(trickRoomButton);
 
         expect(mockSetValue).toHaveBeenCalled();
@@ -259,7 +285,9 @@ describe('IVsTab', () => {
         const user = userEvent.setup();
         renderIVsTab(defaultProps);
 
-        const trickRoomButton = screen.getByRole('button', { name: /trick room/i });
+        const trickRoomButton = screen.getByRole('button', {
+          name: /trick room/i,
+        });
         await user.click(trickRoomButton);
 
         const call = mockSetValue.mock.calls[0][0];
@@ -277,7 +305,9 @@ describe('IVsTab', () => {
         const user = userEvent.setup();
         renderIVsTab(defaultProps);
 
-        const trickRoomButton = screen.getByRole('button', { name: /trick room/i });
+        const trickRoomButton = screen.getByRole('button', {
+          name: /trick room/i,
+        });
         await user.click(trickRoomButton);
 
         const call = mockSetValue.mock.calls[0][0];

@@ -3,8 +3,8 @@
 import {
   createNewPokemonFromSpecies,
   useTeamEditorContext,
-} from '../context/team-editor.context';
-import { TeamValidationProvider } from '../context/team-validation.provider';
+} from '../context/team-editor-context/team-editor.context';
+import { TeamValidationProvider } from '../context/team-validation-context/team-validation.provider';
 import { arePokemonEqual } from '../hooks/useTeamChanges';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';

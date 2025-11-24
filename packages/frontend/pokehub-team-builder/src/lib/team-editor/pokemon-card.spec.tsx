@@ -1,8 +1,8 @@
 import { PokemonCard } from './pokemon-card';
+import { Icons } from '@pkmn/img';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Icons } from '@pkmn/img';
 
 // Mock @pkmn/img
 jest.mock('@pkmn/img');
@@ -11,13 +11,13 @@ jest.mock('@pkmn/img');
 jest.mock('@pokehub/frontend/dex-data-provider');
 
 // Mock team editor context
-jest.mock('../context/team-editor.context', () => ({
+jest.mock('../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({}),
 }));
 
 // Mock team validation context
 const mockGetPokemonErrors = jest.fn(() => []);
-jest.mock('../context/team-validation.context', () => ({
+jest.mock('../context/team-validation-context/team-validation.context', () => ({
   useTeamValidationContext: () => ({
     getPokemonErrors: mockGetPokemonErrors,
     state: {
@@ -64,7 +64,12 @@ describe('PokemonCard', () => {
     nature: 'Jolly' as PokemonInTeam['nature'],
     gender: 'M' as PokemonInTeam['gender'],
     level: 50,
-    moves: ['Thunderbolt', 'Quick Attack', 'Iron Tail', 'Volt Tackle'] as PokemonInTeam['moves'],
+    moves: [
+      'Thunderbolt',
+      'Quick Attack',
+      'Iron Tail',
+      'Volt Tackle',
+    ] as PokemonInTeam['moves'],
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   };
@@ -242,7 +247,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} onEdit={onEdit} />);
 
       const editButtons = screen.getAllByRole('button');
-      const editButton = editButtons.find((btn) => btn.querySelector('svg.lucide-square-pen'));
+      const editButton = editButtons.find((btn) =>
+        btn.querySelector('svg.lucide-square-pen')
+      );
 
       if (editButton) {
         await user.click(editButton);
@@ -257,7 +264,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} onEditHover={onEditHover} />);
 
       const editButtons = screen.getAllByRole('button');
-      const editButton = editButtons.find((btn) => btn.querySelector('svg.lucide-square-pen'));
+      const editButton = editButtons.find((btn) =>
+        btn.querySelector('svg.lucide-square-pen')
+      );
 
       if (editButton) {
         await user.hover(editButton);
@@ -272,7 +281,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} onRemove={onRemove} />);
 
       const removeButtons = screen.getAllByRole('button');
-      const removeButton = removeButtons.find((btn) => btn.querySelector('svg.lucide-trash-2'));
+      const removeButton = removeButtons.find((btn) =>
+        btn.querySelector('svg.lucide-trash-2')
+      );
 
       if (removeButton) {
         await user.click(removeButton);
@@ -294,7 +305,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
-      const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
+      const expandButton = buttons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-down')
+      );
 
       expect(expandButton).toBeInTheDocument();
     });
@@ -304,7 +317,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
-      const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
+      const expandButton = buttons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-down')
+      );
 
       if (expandButton) {
         await user.click(expandButton);
@@ -321,7 +336,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
-      const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
+      const expandButton = buttons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-down')
+      );
 
       if (expandButton) {
         await user.click(expandButton);
@@ -329,7 +346,9 @@ describe('PokemonCard', () => {
 
       await waitFor(() => {
         const upButtons = screen.getAllByRole('button');
-        const chevronUpButton = upButtons.find((btn) => btn.querySelector('svg.lucide-chevron-up'));
+        const chevronUpButton = upButtons.find((btn) =>
+          btn.querySelector('svg.lucide-chevron-up')
+        );
         expect(chevronUpButton).toBeInTheDocument();
       });
     });
@@ -339,7 +358,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
-      const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
+      const expandButton = buttons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-down')
+      );
 
       if (expandButton) {
         await user.click(expandButton);
@@ -350,7 +371,9 @@ describe('PokemonCard', () => {
       });
 
       const upButtons = screen.getAllByRole('button');
-      const collapseButton = upButtons.find((btn) => btn.querySelector('svg.lucide-chevron-up'));
+      const collapseButton = upButtons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-up')
+      );
 
       if (collapseButton) {
         await user.click(collapseButton);
@@ -368,7 +391,9 @@ describe('PokemonCard', () => {
       render(<PokemonCard {...defaultProps} />);
 
       const buttons = screen.getAllByRole('button');
-      const expandButton = buttons.find((btn) => btn.querySelector('svg.lucide-chevron-down'));
+      const expandButton = buttons.find((btn) =>
+        btn.querySelector('svg.lucide-chevron-down')
+      );
 
       if (expandButton) {
         await user.click(expandButton);
@@ -464,9 +489,15 @@ describe('PokemonCard', () => {
       }
 
       await waitFor(() => {
-        expect(screen.getAllByText('Validation Errors:').length).toBeGreaterThan(0);
-        expect(screen.getAllByText('Pokemon must have at least one move').length).toBeGreaterThan(0);
-        expect(screen.getAllByText('Invalid ability for this Pokemon').length).toBeGreaterThan(0);
+        expect(
+          screen.getAllByText('Validation Errors:').length
+        ).toBeGreaterThan(0);
+        expect(
+          screen.getAllByText('Pokemon must have at least one move').length
+        ).toBeGreaterThan(0);
+        expect(
+          screen.getAllByText('Invalid ability for this Pokemon').length
+        ).toBeGreaterThan(0);
       });
     });
   });
