@@ -1,15 +1,11 @@
-import type { GenerationNum, Tier } from '@pkmn/dex';
-import type {
-  PokemonInTeam,
-  BattleFormat,
-} from '@pokehub/shared/pokemon-types';
+import type { GenerationNum } from '@pkmn/dex';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface TeamState {
   teamName?: string;
   generation: GenerationNum;
-  format: BattleFormat;
-  tier: Tier.Singles | Tier.Doubles;
+  format: string;
   pokemon: PokemonInTeam[];
 }
 
@@ -97,8 +93,7 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
       if (
         team1.teamName !== team2.teamName ||
         team1.generation !== team2.generation ||
-        team1.format !== team2.format ||
-        team1.tier !== team2.tier
+        team1.format !== team2.format
       ) {
         return false;
       }
@@ -155,9 +150,6 @@ export const useTeamChanges = (currentTeamState: TeamState) => {
     }
     if (currentTeamState.format !== savedState.format) {
       changes.push('Format');
-    }
-    if (currentTeamState.tier !== savedState.tier) {
-      changes.push('Tier');
     }
 
     // Check if Pokemon were added or removed

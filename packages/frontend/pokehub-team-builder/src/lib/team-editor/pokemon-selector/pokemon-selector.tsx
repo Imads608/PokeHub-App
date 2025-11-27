@@ -24,19 +24,26 @@ import { useEffect, useState, useMemo } from 'react';
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
-  tier: Tier.Singles | Tier.Doubles;
+  format: string;
   showdownFormatId: string;
   onPokemonSelected: (val: Species) => void;
 }
 
 export const PokemonSelector = ({
   generation,
-  tier,
+  format,
   showdownFormatId,
   onPokemonSelected,
 }: PokemonSelectorProps) => {
+  // Determine if this is a doubles format
+  const isDoubles = format.includes('doubles') || format.includes('vgc');
+
+  // Use a default tier for getPokemonCompetitive based on format type
+  // This is a temporary solution - ideally we'd refactor getPokemonCompetitive
+  const defaultTier: Tier.Singles | Tier.Doubles = isDoubles ? 'DOU' : 'OU';
+
   const [unfilteredResults] = useState(() =>
-    getPokemonCompetitive(generation, tier)
+    getPokemonCompetitive(generation, defaultTier)
   );
 
   const { debouncedSearchTerm, searchTerm, setSearchTerm } = useDebouncedSearch(
@@ -53,9 +60,7 @@ export const PokemonSelector = ({
   const filteredResults = useMemo(() => {
     return unfilteredResults.filter((pokemon) => {
       // Check if Pokemon's tier is banned
-      const tierValue = tier.startsWith('D')
-        ? pokemon.doublesTier
-        : pokemon.tier;
+      const tierValue = isDoubles ? pokemon.doublesTier : pokemon.tier;
       if (bannedPokemon.has(tierValue)) {
         return false;
       }
@@ -67,11 +72,11 @@ export const PokemonSelector = ({
 
       return true;
     });
-  }, [unfilteredResults, bannedPokemon, tier]);
+  }, [unfilteredResults, bannedPokemon, isDoubles]);
 
   const { isLoading, data } = useFilterPokemonList(filteredResults, {
     generation,
-    tier,
+    format,
     types: selectedTypes,
     searchTerm: debouncedSearchTerm,
   });
@@ -188,9 +193,7 @@ export const PokemonSelector = ({
                     <PokemonCardSkeleton key={`skeleton-${index}`} />
                   ))
                 : data?.slice(0, itemsToShow).map((pokemon) => {
-                    const pokemonTier = tier.startsWith('D')
-                      ? pokemon.doublesTier
-                      : pokemon.tier;
+                    const pokemonTier = pokemon.tier;
                     return (
                       <div
                         key={pokemon.id}

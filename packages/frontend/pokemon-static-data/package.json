@@ -1,0 +1,6 @@
+{
+  "name": "@pokehub/frontend/pokemon-static-data",
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false
+}

@@ -15,7 +15,7 @@ export interface TeamValidationProviderProps {
 export const TeamValidationProvider = ({
   children,
 }: TeamValidationProviderProps) => {
-  const { teamName, tier, generation, format, teamPokemon, showdownFormatId } =
+  const { teamName, generation, format, teamPokemon, showdownFormatId } =
     useTeamEditorContext();
 
   // State to track if the validation module has loaded
@@ -69,7 +69,6 @@ export const TeamValidationProvider = ({
       name: teamName.value,
       generation: generation.value,
       format: format.value,
-      tier: tier.value,
       pokemon: teamPokemon.value, // No undefined, no filtering needed!
     });
 
@@ -79,7 +78,6 @@ export const TeamValidationProvider = ({
         name: teamName.value || '',
         generation: generation.value,
         format: format.value,
-        tier: tier.value,
         pokemon: teamPokemon.value, // Already filtered, no undefined!
       },
       showdownFormatId
@@ -121,7 +119,6 @@ export const TeamValidationProvider = ({
     teamName.value,
     generation.value,
     format.value,
-    tier.value,
     teamPokemon.value,
     showdownFormatId,
   ]);

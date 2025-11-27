@@ -1,6 +1,5 @@
 'use client';
 
-import { getShowdownFormatId } from '../../utils/format-mapping';
 import type { TeamEditorContextModel } from './team-editor.context.model';
 import type {
   AbilityName,
@@ -23,13 +22,7 @@ export const TeamEditorContext = createContext<
     },
   },
   format: {
-    value: 'Singles',
-    setValue: () => {
-      // Function needs to be set
-    },
-  },
-  tier: {
-    value: 'AG',
+    value: 'ou',
     setValue: () => {
       // Function needs to be set
     },
@@ -52,7 +45,7 @@ export const TeamEditorContext = createContext<
       // Function needs to be set
     },
   },
-  showdownFormatId: 'gen9anythinggoes',
+  showdownFormatId: 'gen9ou',
 });
 
 export const useTeamEditorContext = () => {
@@ -61,15 +54,14 @@ export const useTeamEditorContext = () => {
     teamPokemon,
     generation,
     format,
-    tier,
     teamName,
     ...restProps
   } = useContext(TeamEditorContext);
 
   // Compute Showdown format ID (memoized)
   const showdownFormatId = useMemo(() => {
-    return getShowdownFormatId(generation.value, format.value, tier.value);
-  }, [generation.value, format.value, tier.value]);
+    return `gen${generation.value}${format.value}`;
+  }, [generation.value, format.value]);
 
   const setActivePokemon = (pokemon: PokemonInTeam | Species | undefined) => {
     if (pokemon === undefined) {
@@ -212,7 +204,6 @@ export const useTeamEditorContext = () => {
     ...restProps,
     generation,
     format,
-    tier,
     teamName,
     showdownFormatId,
     activePokemon: {

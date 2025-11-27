@@ -54,8 +54,7 @@ export const pokemonTeamSchema = z.object({
     .min(1, 'Team name is required')
     .max(50, 'Team name cannot exceed 50 characters'),
   generation: z.number(),
-  format: z.enum(['Singles', 'Doubles']),
-  tier: z.string(),
+  format: z.string().min(1, 'Format is required'),
   pokemon: z
     .array(pokemonInTeamSchema)
     .min(1, 'Team must have at least one Pokemon')
@@ -108,8 +107,7 @@ export const validatePokemon = (
 export const validateTeam = (team: {
   name?: string;
   generation: number;
-  format: 'Singles' | 'Doubles';
-  tier: string;
+  format: string;
   pokemon: (unknown | undefined)[];
 }): ValidationResult => {
   // Create a mapping of filtered index to original slot position

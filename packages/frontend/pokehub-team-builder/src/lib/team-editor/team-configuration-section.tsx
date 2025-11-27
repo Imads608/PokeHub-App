@@ -1,12 +1,9 @@
 import { useTeamEditorContext } from '../context/team-editor-context/team-editor.context';
 import { useTeamValidationContext } from '../context/team-validation-context/team-validation.context';
 import { useTeamChanges } from '../hooks/useTeamChanges';
-import { useTiersStaticData } from '../hooks/useTiersStaticData';
-import type { GenerationNum, Tier } from '@pkmn/dex';
-import {
-  getGenerationsData,
-  getBattleTierInfo,
-} from '@pokehub/frontend/pokemon-static-data';
+import type { GenerationNum } from '@pkmn/dex';
+import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
+import { FormatSelector } from '../components/format-selector';
 import {
   Alert,
   AlertDescription,
@@ -35,7 +32,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import type { BattleFormat, BattleTier } from '@pokehub/shared/pokemon-types';
 import {
   AlertTriangle,
   BarChart3,
@@ -108,20 +104,10 @@ const FormatRulesDisplayFallback = () => (
 export const TeamConfigurationSection = ({
   onOpenTeamAnalysis,
 }: TeamConfigurationSectionProps = {}) => {
-  const { singlesTiers, doublesTiers } = useTiersStaticData();
-
-  const { teamName, generation, format, tier, teamPokemon, showdownFormatId } =
+  const { teamName, generation, format, teamPokemon, showdownFormatId } =
     useTeamEditorContext();
 
   const validation = useTeamValidationContext();
-
-  const [battleTierInfo, setBattleTierInfo] = useState(
-    getBattleTierInfo(tier.value)
-  );
-
-  const [selectedFormatTiers, setSelectedFormatTiers] = useState<
-    BattleTier<'Singles'>[] | BattleTier<'Doubles'>[]
-  >(format.value === 'Singles' ? singlesTiers : doublesTiers);
 
   const [showGenerationChangeDialog, setShowGenerationChangeDialog] =
     useState(false);
@@ -134,7 +120,6 @@ export const TeamConfigurationSection = ({
     teamName: teamName.value,
     generation: generation.value,
     format: format.value,
-    tier: tier.value,
     pokemon: teamPokemon.value,
   });
 
@@ -142,22 +127,6 @@ export const TeamConfigurationSection = ({
   const pokemonNames = useMemo(() => {
     return teamPokemon.value.map((p) => p.species);
   }, [teamPokemon.value]);
-
-  const handleTierChange = useCallback((val: Tier.Singles | Tier.Doubles) => {
-    setBattleTierInfo(getBattleTierInfo(val));
-    tier.setValue(val);
-  }, []);
-
-  const handleFormatChange = useCallback((val: BattleFormat) => {
-    if (val === 'Singles') {
-      setSelectedFormatTiers(singlesTiers);
-      handleTierChange(singlesTiers[0].id);
-    } else if (val === 'Doubles') {
-      setSelectedFormatTiers(doublesTiers);
-      handleTierChange(doublesTiers[0].id);
-    }
-    format.setValue(val);
-  }, []);
 
   const handleGenerationChange = useCallback(
     (newGeneration: string) => {
@@ -303,7 +272,7 @@ export const TeamConfigurationSection = ({
                 isReady={validation.isReady}
               />
             </Suspense>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <Label htmlFor="team-name">Team Name</Label>
                 <Input
@@ -333,65 +302,15 @@ export const TeamConfigurationSection = ({
               </div>
               <div>
                 <Label htmlFor="format">Format</Label>
-                <Select
+                <FormatSelector
+                  generation={generation.value}
                   value={format.value}
-                  onValueChange={(val) =>
-                    handleFormatChange(val as BattleFormat)
-                  }
-                >
-                  <SelectTrigger id="format" className="mt-1">
-                    <SelectValue placeholder="Select Format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Singles">Singles</SelectItem>
-                    <SelectItem value="Doubles">Doubles</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="tier">Tier</Label>
-                <Select
-                  value={tier.value}
-                  onValueChange={(val) =>
-                    handleTierChange(val as Tier.Singles | Tier.Doubles)
-                  }
-                >
-                  <SelectTrigger id="tier" className="mt-1">
-                    <SelectValue placeholder="Select Tier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedFormatTiers.map((tier) => (
-                      <SelectItem key={tier.id} value={tier.id}>
-                        {tier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onValueChange={format.setValue}
+                  className="mt-1"
+                />
               </div>
             </div>
-            {/* Format and Tier descriptions */}
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {format && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>{format.value}</AlertTitle>
-                  <AlertDescription>
-                    {format.value === 'Singles'
-                      ? 'Standard 1v1 battles where each trainer brings 6 Pokémon and sends out 1 at a time.'
-                      : 'Doubles battles where each trainer brings 4-6 Pokémon and sends out 2 at a time.'}
-                  </AlertDescription>
-                </Alert>
-              )}
-              {tier.value && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>{battleTierInfo?.name}</AlertTitle>
-                  <AlertDescription>
-                    {battleTierInfo?.description}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+            {/* Format description will be shown in the FormatSelector dropdown */}
           </CardContent>
         </Card>
 

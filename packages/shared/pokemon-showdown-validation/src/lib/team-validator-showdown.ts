@@ -107,7 +107,7 @@ function parseValidationProblems(
  * }
  */
 export function validateTeamForFormat(
-  team: PokemonTeam<'Singles'> | PokemonTeam<'Doubles'>,
+  team: PokemonTeam,
   formatId: string
 ): TeamValidationResult {
   const warnings: string[] = [];

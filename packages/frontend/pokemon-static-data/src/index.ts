@@ -25,3 +25,11 @@ export type {
   TeamOffensiveCoverage,
   MoveForCoverage,
 } from './lib/team-type-coverage';
+export {
+  getFormatsForGeneration,
+  groupFormatsByCategory,
+  searchFormats,
+  getCategoryLabel,
+  getShowdownFormatId,
+} from './lib/formats';
+export type { BattleFormatInfo, FormatCategory } from './lib/formats';

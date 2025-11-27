@@ -59,7 +59,7 @@ const LazyTeamAnalysisDialog = lazy(() =>
 export const TeamEditor = () => {
   // State for team configuration
 
-  const { teamPokemon, generation, tier, activePokemon, showdownFormatId } =
+  const { teamPokemon, generation, format, activePokemon, showdownFormatId } =
     useTeamEditorContext();
   const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
@@ -238,7 +238,7 @@ export const TeamEditor = () => {
           >
             <LazyPokemonSelector
               generation={generation.value}
-              tier={tier.value}
+              format={format.value}
               showdownFormatId={showdownFormatId}
               onPokemonSelected={onPokemonSelected}
             />

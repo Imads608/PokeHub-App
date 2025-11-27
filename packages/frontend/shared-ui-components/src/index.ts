@@ -85,3 +85,9 @@ export {
   CollapsibleContent,
   CollapsibleTrigger,
 } from './lib/collapsible/collapsible';
+export {
+  type ComboboxOption,
+  type ComboboxProps,
+  type ComboboxGroup,
+  Combobox,
+} from './lib/combobox';

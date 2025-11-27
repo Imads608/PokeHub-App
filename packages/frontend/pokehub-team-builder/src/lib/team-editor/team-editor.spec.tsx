@@ -1,9 +1,6 @@
 import { TeamEditor } from './team-editor';
-import type { GenerationNum, Species, Tier } from '@pkmn/dex';
-import type {
-  BattleFormat,
-  PokemonInTeam,
-} from '@pokehub/shared/pokemon-types';
+import type { GenerationNum, Species } from '@pkmn/dex';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -39,8 +36,7 @@ jest.mock('../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     teamName: { value: 'Test Team', setValue: jest.fn() },
     generation: { value: 9 as GenerationNum, setValue: jest.fn() },
-    format: { value: 'Singles' as BattleFormat, setValue: jest.fn() },
-    tier: { value: 'OU' as Tier.Singles, setValue: jest.fn() },
+    format: { value: 'ou', setValue: jest.fn() },
     showdownFormatId: 'gen9ou',
     teamPokemon: {
       value: mockTeamPokemon,

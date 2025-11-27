@@ -1,8 +1,6 @@
 'use client';
 
-import { useTiersStaticData } from '../hooks/useTiersStaticData';
 import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
-import type { BattleTier, BattleFormat } from '@pokehub/shared/pokemon-types';
 import {
   Button,
   Card,
@@ -21,21 +19,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export const TeamViewer = () => {
-  const { allFormatTier, allTiers, doublesTiers, singlesTiers } =
-    useTiersStaticData();
-
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGeneration, setSelectedGeneration] = useState<string>('all');
-  const [selectedFormat, setSelectedFormat] = useState<BattleFormat | 'All'>(
-    'All'
-  );
-
-  const [availableTiersList, setAvailableTiersList] =
-    useState<(BattleTier<'Singles'> | BattleTier<'Doubles'>)[]>(allTiers);
-  const [selectedTier, setSelectedTier] = useState<
-    BattleTier<'Singles'> | BattleTier<'Doubles'> | typeof allFormatTier
-  >(allFormatTier);
+  const [selectedFormat, setSelectedFormat] = useState<string>('all');
 
   // Load teams on mount
 
@@ -44,37 +31,6 @@ export const TeamViewer = () => {
   // Handle create new team
   const handleCreateTeam = () => {
     router.push('/team-builder/new');
-  };
-
-  const handleTierChange = (val: string) => {
-    if (val === 'all') {
-      setSelectedTier(allFormatTier);
-      return;
-    }
-    const tierInfo = allTiers.find((tier) => tier.id === val);
-    if (tierInfo) {
-      setSelectedTier(tierInfo);
-    }
-  };
-
-  const handleFormatChange = (val: BattleFormat | 'All') => {
-    switch (val) {
-      case 'All':
-        setAvailableTiersList(allTiers);
-        setSelectedTier(allTiers[0]);
-        break;
-      case 'Singles':
-        setAvailableTiersList(singlesTiers);
-        setSelectedTier(singlesTiers[0]);
-        break;
-      case 'Doubles':
-        setAvailableTiersList(doublesTiers);
-        setSelectedTier(doublesTiers[0]);
-        break;
-      default:
-        break;
-    }
-    setSelectedFormat(val);
   };
 
   // Handle edit team
@@ -89,8 +45,6 @@ export const TeamViewer = () => {
   // Get Pokemon count for a team
 
   // Format date
-
-  // Group teams by tier
 
   return (
     <div className="min-h-screen bg-background pb-16 pt-20">
@@ -157,37 +111,14 @@ export const TeamViewer = () => {
                 <label className="mb-2 block text-sm font-medium">Format</label>
                 <Select
                   value={selectedFormat}
-                  onValueChange={(val) =>
-                    handleFormatChange(val as BattleFormat | 'All')
-                  }
+                  onValueChange={setSelectedFormat}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All" />
+                    <SelectValue placeholder="All Formats" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    <SelectItem value="Singles">Singles</SelectItem>
-                    <SelectItem value="Doubles">Doubles</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">Tier</label>
-                <Select
-                  value={selectedTier.id}
-                  onValueChange={handleTierChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {availableTiersList.map((tier) => (
-                      <SelectItem key={tier.id} value={tier.id}>
-                        {tier.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">All Formats</SelectItem>
+                    {/* TODO: Add format options from useFormats hook when implementing team filtering */}
                   </SelectContent>
                 </Select>
               </div>

@@ -1,21 +1,21 @@
-import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
+import type { GenerationNum, Species, TypeName } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
 
 export interface FilterPokemonListOptions {
   searchTerm?: string;
   types: TypeName[];
   generation: GenerationNum;
-  tier: Tier.Singles | Tier.Doubles;
+  format: string;
 }
 
 export const useFilterPokemonList = (
   data: Species[],
-  { searchTerm, types, generation, tier }: FilterPokemonListOptions
+  { searchTerm, types, generation, format }: FilterPokemonListOptions
 ) => {
   return useQuery({
     queryKey: [
       'pokedex-competitive-search',
-      { generation, tier },
+      { generation, format },
       { searchTerm, types },
     ],
     queryFn: () => {

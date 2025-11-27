@@ -11,7 +11,6 @@ import type {
   MoveName,
   NatureName,
   SpeciesName,
-  Tier,
 } from '@pkmn/dex';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { renderHook, act } from '@testing-library/react';
@@ -177,8 +176,7 @@ describe('useTeamChanges', () => {
   const baseTeamState: TeamState = {
     teamName: 'My Team',
     generation: 9 as GenerationNum,
-    format: 'Singles',
-    tier: 'OU' as Tier.Singles,
+    format: 'ou',
     pokemon: [
       {
         species: 'Pikachu' as SpeciesName,

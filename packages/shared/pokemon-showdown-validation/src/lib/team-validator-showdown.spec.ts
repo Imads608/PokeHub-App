@@ -125,12 +125,11 @@ const createPokemon = (overrides?: Partial<PokemonInTeam>): PokemonInTeam => {
 // Helper to create a valid team
 const createTeam = (
   pokemon: PokemonInTeam[] = [createPokemon()]
-): PokemonTeam<'Singles'> => ({
+): PokemonTeam => ({
   name: 'Test Team',
   pokemon,
   generation: 9,
-  format: 'Singles',
-  tier: 'OU',
+  format: 'ou',
 });
 
 describe('Team Validator (Showdown)', () => {
