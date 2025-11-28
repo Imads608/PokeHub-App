@@ -1,9 +1,11 @@
+import { useFormatRules } from './useFormatRules';
 import type {
   AbilityName,
   GenerationNum,
   ItemName,
   MoveName,
   SpeciesName,
+  Species,
 } from '@pkmn/dex';
 import {
   getAbilityDetails,
@@ -11,8 +13,45 @@ import {
   getMoveDetails,
   getPokemonDetailsByName,
 } from '@pokehub/frontend/dex-data-provider';
-import { getFormatRules } from '@pokehub/shared/pokemon-showdown-validation';
 import { useMemo } from 'react';
+
+export interface BannedItemsResult<T> {
+  data: Set<T | string>;
+  isLoading: boolean;
+}
+
+/**
+ * Generic helper to extract banned items of a specific type from format rules
+ */
+function useBannedItemsOfType<T>(
+  formatId: string,
+  generation: GenerationNum,
+  checker: (ban: string, gen: GenerationNum) => T | null,
+  includeNonMatches = false
+): BannedItemsResult<T> {
+  const { data: formatRules, isLoading } = useFormatRules(formatId);
+
+  const data = useMemo(() => {
+    if (!formatRules?.completeBanlist.length) {
+      return new Set<T | string>();
+    }
+
+    const banned = new Set<T | string>();
+    formatRules.completeBanlist.forEach((ban) => {
+      const item = checker(ban, generation);
+      if (item) {
+        banned.add(item as T);
+      } else if (includeNonMatches) {
+        // For Pokemon, include tier markers like "UUBL"
+        banned.add(ban);
+      }
+    });
+
+    return banned;
+  }, [formatRules, generation, checker, includeNonMatches]);
+
+  return { data, isLoading };
+}
 
 /**
  * Returns a Set of banned Pokemon names for the given format.
@@ -21,32 +60,16 @@ import { useMemo } from 'react';
 export function useBannedPokemon(
   showdownFormatId: string,
   generation: GenerationNum
-): Set<string> {
-  return useMemo(() => {
-    const formatRules = getFormatRules(showdownFormatId);
-    if (!formatRules || formatRules.banlist.length === 0) {
-      return new Set<string>();
-    }
-
-    const banned = new Set<string>();
-
-    formatRules.banlist.forEach((ban) => {
-      // Check if ban is a specific Pokemon
-      const bannedSpecies = getPokemonDetailsByName(
-        ban as SpeciesName,
-        generation
-      );
-      if (bannedSpecies) {
-        banned.add(bannedSpecies.name);
-      } else {
-        // If not a Pokemon, it might be a tier marker (e.g., "UUBL")
-        // Store it as-is for tier matching
-        banned.add(ban);
-      }
-    });
-
-    return banned;
-  }, [showdownFormatId, generation]);
+): BannedItemsResult<string> {
+  return useBannedItemsOfType(
+    showdownFormatId,
+    generation,
+    (ban, gen) => {
+      const species = getPokemonDetailsByName(ban as SpeciesName, gen);
+      return species?.name || null;
+    },
+    true // Include non-Pokemon (tier markers)
+  );
 }
 
 /**
@@ -55,23 +78,11 @@ export function useBannedPokemon(
 export function useBannedMoves(
   showdownFormatId: string,
   generation: GenerationNum
-): Set<MoveName> {
-  return useMemo(() => {
-    const formatRules = getFormatRules(showdownFormatId);
-    if (!formatRules || formatRules.banlist.length === 0) {
-      return new Set<MoveName>();
-    }
-
-    const banned = new Set<MoveName>();
-    formatRules.banlist.forEach((ban) => {
-      const moveDetails = getMoveDetails(ban as MoveName, generation);
-      if (moveDetails) {
-        banned.add(moveDetails.name);
-      }
-    });
-
-    return banned;
-  }, [showdownFormatId, generation]);
+): BannedItemsResult<MoveName> {
+  return useBannedItemsOfType(showdownFormatId, generation, (ban, gen) => {
+    const move = getMoveDetails(ban as MoveName, gen);
+    return move?.name || null;
+  }) as BannedItemsResult<MoveName>;
 }
 
 /**
@@ -80,23 +91,11 @@ export function useBannedMoves(
 export function useBannedAbilities(
   showdownFormatId: string,
   generation: GenerationNum
-): Set<AbilityName> {
-  return useMemo(() => {
-    const formatRules = getFormatRules(showdownFormatId);
-    if (!formatRules || formatRules.banlist.length === 0) {
-      return new Set<AbilityName>();
-    }
-
-    const banned = new Set<AbilityName>();
-    formatRules.banlist.forEach((ban) => {
-      const abilityDetails = getAbilityDetails(ban as AbilityName, generation);
-      if (abilityDetails) {
-        banned.add(abilityDetails.name);
-      }
-    });
-
-    return banned;
-  }, [showdownFormatId, generation]);
+): BannedItemsResult<AbilityName> {
+  return useBannedItemsOfType(showdownFormatId, generation, (ban, gen) => {
+    const ability = getAbilityDetails(ban as AbilityName, gen);
+    return ability?.name || null;
+  }) as BannedItemsResult<AbilityName>;
 }
 
 /**
@@ -105,21 +104,59 @@ export function useBannedAbilities(
 export function useBannedItems(
   showdownFormatId: string,
   generation: GenerationNum
-): Set<ItemName> {
-  return useMemo(() => {
-    const formatRules = getFormatRules(showdownFormatId);
-    if (!formatRules || formatRules.banlist.length === 0) {
-      return new Set<ItemName>();
+): BannedItemsResult<ItemName> {
+  return useBannedItemsOfType(showdownFormatId, generation, (ban, gen) => {
+    const item = getItemDetails(ban as ItemName, gen);
+    return item?.name || null;
+  }) as BannedItemsResult<ItemName>;
+}
+
+/**
+ * Filters a list of Pokemon based on format bans and illegal tiers
+ * @param unfilteredPokemon - List of all Pokemon to filter
+ * @param showdownFormatId - Format ID to get bans for
+ * @param generation - Generation number
+ * @param isDoubles - Whether this is a doubles format
+ * @returns Filtered Pokemon list and loading state
+ */
+export function useBannedAndIllegalPokemon(
+  unfilteredPokemon: Species[],
+  showdownFormatId: string,
+  generation: GenerationNum,
+  isDoubles: boolean
+): { data: Species[]; isLoading: boolean } {
+  const { data: bannedPokemon, isLoading } = useBannedPokemon(
+    showdownFormatId,
+    generation
+  );
+
+  const data = useMemo(() => {
+    // Don't filter if bans are still loading
+    if (isLoading) {
+      return [];
     }
 
-    const banned = new Set<ItemName>();
-    formatRules.banlist.forEach((ban) => {
-      const itemDetails = getItemDetails(ban as ItemName, generation);
-      if (itemDetails) {
-        banned.add(itemDetails.name);
-      }
-    });
+    return unfilteredPokemon.filter((pokemon) => {
+      // Check if Pokemon's tier is banned
+      const tierValue = isDoubles ? pokemon.doublesTier : pokemon.tier;
 
-    return banned;
-  }, [showdownFormatId, generation]);
+      // Filter out Illegal tier Pokemon
+      if (tierValue === 'Illegal') {
+        return false;
+      }
+
+      if (bannedPokemon.has(tierValue)) {
+        return false;
+      }
+
+      // Check if this specific Pokemon is banned
+      if (bannedPokemon.has(pokemon.name)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [unfilteredPokemon, bannedPokemon, isDoubles, isLoading]);
+
+  return { data, isLoading };
 }

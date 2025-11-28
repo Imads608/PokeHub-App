@@ -1,9 +1,9 @@
 import { useFilterPokemonList } from '../../hooks/useFilterPokemonList';
-import { useBannedPokemon } from '../../hooks/useFormatBans';
+import { useBannedAndIllegalPokemon } from '../../hooks/useFormatBans';
 import { PokemonCardSkeleton } from './pokemon-card-skeleton';
-import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
+import type { GenerationNum, Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
-import { getPokemonCompetitive } from '@pokehub/frontend/dex-data-provider';
+import { getAllPokemonSpecies } from '@pokehub/frontend/dex-data-provider';
 import {
   Badge,
   Button,
@@ -20,7 +20,7 @@ import {
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
 import { Search, X } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
@@ -38,13 +38,7 @@ export const PokemonSelector = ({
   // Determine if this is a doubles format
   const isDoubles = format.includes('doubles') || format.includes('vgc');
 
-  // Use a default tier for getPokemonCompetitive based on format type
-  // This is a temporary solution - ideally we'd refactor getPokemonCompetitive
-  const defaultTier: Tier.Singles | Tier.Doubles = isDoubles ? 'DOU' : 'OU';
-
-  const [unfilteredResults] = useState(() =>
-    getPokemonCompetitive(generation, defaultTier)
-  );
+  const [unfilteredResults] = useState(() => getAllPokemonSpecies(generation));
 
   const { debouncedSearchTerm, searchTerm, setSearchTerm } = useDebouncedSearch(
     { initialVal: '' }
@@ -53,33 +47,25 @@ export const PokemonSelector = ({
   const [activeTab, setActiveTab] = useState('all');
   const { itemsToShow, handleScroll, resetItems } = useInfiniteScroll({});
 
-  // Get banned Pokemon for this format
-  const bannedPokemon = useBannedPokemon(showdownFormatId, generation);
-
-  // Filter out banned Pokemon
-  const filteredResults = useMemo(() => {
-    return unfilteredResults.filter((pokemon) => {
-      // Check if Pokemon's tier is banned
-      const tierValue = isDoubles ? pokemon.doublesTier : pokemon.tier;
-      if (bannedPokemon.has(tierValue)) {
-        return false;
-      }
-
-      // Check if this specific Pokemon is banned
-      if (bannedPokemon.has(pokemon.name)) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [unfilteredResults, bannedPokemon, isDoubles]);
+  // Filter out banned and illegal Pokemon
+  const { data: filteredResults, isLoading: isBansLoading } =
+    useBannedAndIllegalPokemon(
+      unfilteredResults,
+      showdownFormatId,
+      generation,
+      isDoubles
+    );
 
   const { isLoading, data } = useFilterPokemonList(filteredResults, {
     generation,
     format,
     types: selectedTypes,
     searchTerm: debouncedSearchTerm,
+    enabled: !isBansLoading && filteredResults.length > 0,
   });
+
+  // Combined loading state
+  const isDataLoading = isLoading || isBansLoading;
 
   const handleTypeToggle = (type: TypeName) => {
     setSelectedTypes((prev) =>
@@ -187,7 +173,7 @@ export const PokemonSelector = ({
             onScrollCapture={handleScroll}
           >
             <div className="grid grid-cols-2 gap-2 pr-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {isLoading
+              {isDataLoading
                 ? // Loading skeleton cards
                   Array.from({ length: 20 }).map((_, index) => (
                     <PokemonCardSkeleton key={`skeleton-${index}`} />
@@ -233,7 +219,7 @@ export const PokemonSelector = ({
                     );
                   })}
 
-              {!isLoading && data?.length === 0 && (
+              {!isDataLoading && data?.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-12">
                   <div className="mb-4 rounded-full bg-muted p-3">
                     <Search className="h-6 w-6 text-muted-foreground" />

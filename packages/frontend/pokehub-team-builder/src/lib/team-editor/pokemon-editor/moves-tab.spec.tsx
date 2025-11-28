@@ -4,6 +4,7 @@ import { Tabs } from '@pokehub/frontend/shared-ui-components';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock context
 const mockSetMove = jest.fn();
@@ -14,10 +15,16 @@ jest.mock('../../context/team-editor-context/team-editor.context', () => ({
       setMove: mockSetMove,
     },
     generation: { value: 9 },
-    validation: {
-      showdownFormatId: 'gen9ou',
-    },
+    showdownFormatId: 'gen9ou',
   }),
+}));
+
+// Mock useFormatBans hooks
+jest.mock('../../hooks/useFormatBans', () => ({
+  useBannedMoves: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
 }));
 
 // Mock data provider hooks
@@ -165,10 +172,18 @@ describe('MovesTab', () => {
 
   // Helper to render MovesTab within Tabs wrapper
   const renderMovesTab = (props: MovesTabProps) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
     return render(
-      <Tabs defaultValue="moves">
-        <MovesTab {...props} />
-      </Tabs>
+      <QueryClientProvider client={queryClient}>
+        <Tabs defaultValue="moves">
+          <MovesTab {...props} />
+        </Tabs>
+      </QueryClientProvider>
     );
   };
 

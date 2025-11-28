@@ -7,7 +7,7 @@ export {
   getMoveDetails,
   getAbilityDetails,
   getItemDetails,
-  getPokemonCompetitive,
+  getAllPokemonSpecies,
   getNatureDetails,
   getStatName,
   getStats,
@@ -37,7 +37,3 @@ export {
   useAbiltiesDetails,
   type AbilitiesDetailsOptions,
 } from './lib/hooks/pokemon-abilities-details';
-export {
-  useGetPokemonByCompetiveFilter,
-  type PokemonByCompetiveFilter,
-} from './lib/hooks/pokemon-competitive.hook';

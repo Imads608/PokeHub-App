@@ -6,6 +6,7 @@ import type { GenerationNum } from '@pkmn/dex';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // TODO: These tests need to be rewritten for the new FormatSelector component
 // which uses a searchable combobox with format categories instead of separate
@@ -170,7 +171,7 @@ jest.mock('./format-rules-display', () => ({
 }));
 
 // Mock FormatSelector component
-jest.mock('../components/format-selector', () => ({
+jest.mock('./format-selector', () => ({
   FormatSelector: ({
     value,
     onValueChange,
@@ -195,6 +196,19 @@ describe('TeamConfigurationSection', () => {
     onOpenTeamAnalysis: jest.fn(),
   };
 
+  // Helper to render with QueryClient
+  const renderWithClient = (ui: React.ReactElement) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    return render(
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockHasAnyPokemon.mockReturnValue(false);
@@ -203,7 +217,7 @@ describe('TeamConfigurationSection', () => {
 
   describe('Rendering', () => {
     it('should render Team Configuration card', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('Team Configuration')).toBeInTheDocument();
       expect(
@@ -212,7 +226,7 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should render Team Analysis card', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('Team Analysis')).toBeInTheDocument();
       expect(
@@ -221,7 +235,7 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should render all action buttons', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(
         screen.getByRole('button', { name: /export/i })
@@ -238,7 +252,7 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should render all form fields', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByLabelText('Team Name')).toBeInTheDocument();
       expect(screen.getByLabelText('Generation')).toBeInTheDocument();
@@ -246,21 +260,21 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should render validation summary', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByTestId('validation-summary')).toBeInTheDocument();
     });
 
     it.skip('should render format description', () => {
       // TODO: Update for new FormatSelector component
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText(/Standard 1v1 battles/i)).toBeInTheDocument();
     });
 
     it.skip('should render tier description', () => {
       // TODO: Tier selector no longer exists - remove this test
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('The main competitive tier')).toBeInTheDocument();
     });
@@ -268,7 +282,7 @@ describe('TeamConfigurationSection', () => {
 
   describe('Team Name Input', () => {
     it('should display current team name', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const input = screen.getByLabelText('Team Name') as HTMLInputElement;
       expect(input.value).toBe('My Team');
@@ -276,7 +290,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should call setValue when team name changes', async () => {
       const user = userEvent.setup();
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const input = screen.getByLabelText('Team Name');
       await user.clear(input);
@@ -288,7 +302,7 @@ describe('TeamConfigurationSection', () => {
 
   describe('Generation Selector', () => {
     it('should display current generation', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       expect(screen.getByText('Generation 9')).toBeInTheDocument();
     });
@@ -296,7 +310,7 @@ describe('TeamConfigurationSection', () => {
     it('should change generation freely when team is empty', async () => {
       const user = userEvent.setup();
       mockHasAnyPokemon.mockReturnValue(false);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Generation');
       await user.click(select);
@@ -310,7 +324,7 @@ describe('TeamConfigurationSection', () => {
     it('should show confirmation dialog when team has Pokemon', async () => {
       const user = userEvent.setup();
       mockHasAnyPokemon.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Generation');
       await user.click(select);
@@ -326,7 +340,7 @@ describe('TeamConfigurationSection', () => {
     it('should cancel generation change from dialog', async () => {
       const user = userEvent.setup();
       mockHasAnyPokemon.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Generation');
       await user.click(select);
@@ -354,7 +368,7 @@ describe('TeamConfigurationSection', () => {
     it('should confirm generation change and clear team', async () => {
       const user = userEvent.setup();
       mockHasAnyPokemon.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Generation');
       await user.click(select);
@@ -387,7 +401,7 @@ describe('TeamConfigurationSection', () => {
     // The new component uses a searchable combobox with categories instead of
     // separate Format and Tier dropdowns
     it('should display current format', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const formatSelect = screen.getByLabelText('Format');
       expect(formatSelect).toHaveTextContent('Singles');
@@ -395,7 +409,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should change format to Doubles', async () => {
       const user = userEvent.setup();
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Format');
       await user.click(select);
@@ -408,7 +422,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should call handlers when format changes', async () => {
       const user = userEvent.setup();
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Format');
       await user.click(select);
@@ -423,7 +437,7 @@ describe('TeamConfigurationSection', () => {
   describe.skip('Tier Selector', () => {
     // TODO: Remove these tests - Tier selector no longer exists
     it('should display current tier', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const tierSelect = screen.getByLabelText('Tier');
       expect(tierSelect).toHaveTextContent('OverUsed');
@@ -431,7 +445,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should change tier', async () => {
       const user = userEvent.setup();
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Tier');
       await user.click(select);
@@ -446,7 +460,7 @@ describe('TeamConfigurationSection', () => {
   describe('Save Button', () => {
     it('should be disabled when no changes', () => {
       mockHasChanges.mockReturnValue(false);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       expect(saveButton).toBeDisabled();
@@ -461,7 +475,7 @@ describe('TeamConfigurationSection', () => {
         { field: 'teamName', message: 'Team name is required' },
       ];
 
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       expect(saveButton).toBeDisabled();
@@ -473,7 +487,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should be enabled when hasChanges and isValid', () => {
       mockHasChanges.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       expect(saveButton).not.toBeDisabled();
@@ -482,7 +496,7 @@ describe('TeamConfigurationSection', () => {
     it('should show saving state', async () => {
       const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       await user.click(saveButton);
@@ -495,7 +509,7 @@ describe('TeamConfigurationSection', () => {
     it('should call markAsSaved and show success toast on save', async () => {
       const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
       await user.click(saveButton);
@@ -520,7 +534,7 @@ describe('TeamConfigurationSection', () => {
         { field: 'teamName', message: 'Team name is required' },
       ];
 
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const saveButton = screen.getByRole('button', { name: /save team/i });
 
@@ -536,7 +550,7 @@ describe('TeamConfigurationSection', () => {
   describe('Team Analysis Button', () => {
     it('should be disabled when team is empty', () => {
       mockHasAnyPokemon.mockReturnValue(false);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const analyzeButton = screen.getByRole('button', {
         name: /analyze team/i,
@@ -546,7 +560,7 @@ describe('TeamConfigurationSection', () => {
 
     it('should be enabled when team has Pokemon', () => {
       mockHasAnyPokemon.mockReturnValue(true);
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const analyzeButton = screen.getByRole('button', {
         name: /analyze team/i,
@@ -573,7 +587,7 @@ describe('TeamConfigurationSection', () => {
 
   describe('Validation Integration', () => {
     it('should use validation state from context', () => {
-      render(<TeamConfigurationSection {...defaultProps} />);
+      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       // Component should render validation summary with state from context
       const validationSummary = screen.getByTestId('validation-summary');

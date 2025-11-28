@@ -19,10 +19,13 @@ import {
   CardHeader,
   CardTitle,
   ScrollArea,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 import { getFormatRules } from '@pokehub/shared/pokemon-showdown-validation';
-import { Ban, Shield, Swords, Zap, Package } from 'lucide-react';
-import { useMemo } from 'react';
+import { Ban, Shield, Swords, Zap, Package, ChevronDown } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export interface FormatRulesDisplayProps {
   showdownFormatId: string;
@@ -41,6 +44,8 @@ export const FormatRulesDisplay = ({
   showdownFormatId,
   generation,
 }: FormatRulesDisplayProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   // Categorize bans by type
   const categorizedBans = useMemo<CategorizedBans>(() => {
     const formatRules = getFormatRules(showdownFormatId);
@@ -122,111 +127,126 @@ export const FormatRulesDisplay = ({
     categorizedBans.other.length;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Format Rules
-        </CardTitle>
-        <CardDescription>
-          {totalBans} restriction{totalBans !== 1 ? 's' : ''} for{' '}
-          {formatRules.formatName}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Banned Tiers/Other */}
-        {categorizedBans.other.length > 0 && (
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Ban className="h-4 w-4" />
-              Banned Tiers ({categorizedBans.other.length})
-            </h4>
-            <div className="flex flex-wrap gap-1">
-              {categorizedBans.other.map((ban) => (
-                <Badge key={ban} variant="destructive" className="text-xs">
-                  {ban}
-                </Badge>
-              ))}
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CardHeader>
+          <CollapsibleTrigger className="flex w-full items-center justify-between hover:opacity-70 [&[data-state=open]>svg]:rotate-180">
+            <div className="flex flex-col items-start gap-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Format Rules
+              </CardTitle>
+              <CardDescription>
+                {totalBans} restriction{totalBans !== 1 ? 's' : ''} for{' '}
+                {formatRules.formatName}
+              </CardDescription>
             </div>
-          </div>
-        )}
-
-        {/* Banned Pokemon */}
-        {categorizedBans.pokemon.length > 0 && (
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Ban className="h-4 w-4" />
-              Banned Pokemon ({categorizedBans.pokemon.length})
-            </h4>
-            <ScrollArea className="h-24">
-              <div className="flex flex-wrap gap-1 pr-4">
-                {categorizedBans.pokemon.map((ban) => (
-                  <Badge key={ban} variant="outline" className="text-xs">
-                    {ban}
-                  </Badge>
-                ))}
+            <ChevronDown className="h-5 w-5 shrink-0 transition-transform duration-200" />
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
+            {/* Banned Tiers/Other */}
+            {categorizedBans.other.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <Ban className="h-4 w-4" />
+                  Banned Tiers ({categorizedBans.other.length})
+                </h4>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-1 pr-4">
+                    {categorizedBans.other.map((ban) => (
+                      <Badge
+                        key={ban}
+                        variant="destructive"
+                        className="text-xs"
+                      >
+                        {ban}
+                      </Badge>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </div>
-        )}
+            )}
 
-        {/* Banned Moves */}
-        {categorizedBans.moves.length > 0 && (
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Swords className="h-4 w-4" />
-              Banned Moves ({categorizedBans.moves.length})
-            </h4>
-            <ScrollArea className="h-24">
-              <div className="flex flex-wrap gap-1 pr-4">
-                {categorizedBans.moves.map((ban) => (
-                  <Badge key={ban} variant="outline" className="text-xs">
-                    {ban}
-                  </Badge>
-                ))}
+            {/* Banned Pokemon */}
+            {categorizedBans.pokemon.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <Ban className="h-4 w-4" />
+                  Banned Pokemon ({categorizedBans.pokemon.length})
+                </h4>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-1 pr-4">
+                    {categorizedBans.pokemon.map((ban) => (
+                      <Badge key={ban} variant="outline" className="text-xs">
+                        {ban}
+                      </Badge>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </div>
-        )}
+            )}
 
-        {/* Banned Abilities */}
-        {categorizedBans.abilities.length > 0 && (
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Zap className="h-4 w-4" />
-              Banned Abilities ({categorizedBans.abilities.length})
-            </h4>
-            <ScrollArea className="h-24">
-              <div className="flex flex-wrap gap-1 pr-4">
-                {categorizedBans.abilities.map((ban) => (
-                  <Badge key={ban} variant="outline" className="text-xs">
-                    {ban}
-                  </Badge>
-                ))}
+            {/* Banned Moves */}
+            {categorizedBans.moves.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <Swords className="h-4 w-4" />
+                  Banned Moves ({categorizedBans.moves.length})
+                </h4>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-1 pr-4">
+                    {categorizedBans.moves.map((ban) => (
+                      <Badge key={ban} variant="outline" className="text-xs">
+                        {ban}
+                      </Badge>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </div>
-        )}
+            )}
 
-        {/* Banned Items */}
-        {categorizedBans.items.length > 0 && (
-          <div>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Package className="h-4 w-4" />
-              Banned Items ({categorizedBans.items.length})
-            </h4>
-            <ScrollArea className="h-24">
-              <div className="flex flex-wrap gap-1 pr-4">
-                {categorizedBans.items.map((ban) => (
-                  <Badge key={ban} variant="outline" className="text-xs">
-                    {ban}
-                  </Badge>
-                ))}
+            {/* Banned Abilities */}
+            {categorizedBans.abilities.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <Zap className="h-4 w-4" />
+                  Banned Abilities ({categorizedBans.abilities.length})
+                </h4>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-1 pr-4">
+                    {categorizedBans.abilities.map((ban) => (
+                      <Badge key={ban} variant="outline" className="text-xs">
+                        {ban}
+                      </Badge>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            )}
+
+            {/* Banned Items */}
+            {categorizedBans.items.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-sm font-semibold">
+                  <Package className="h-4 w-4" />
+                  Banned Items ({categorizedBans.items.length})
+                </h4>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-1 pr-4">
+                    {categorizedBans.items.map((ban) => (
+                      <Badge key={ban} variant="outline" className="text-xs">
+                        {ban}
+                      </Badge>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };

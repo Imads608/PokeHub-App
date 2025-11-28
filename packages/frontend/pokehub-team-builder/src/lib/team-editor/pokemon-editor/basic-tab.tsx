@@ -49,11 +49,14 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   const [unfilteredItems] = useState(() => getItems(generation.value));
 
   // Get banned abilities and items from format rules
-  const bannedAbilities = useBannedAbilities(
+  const { data: bannedAbilities } = useBannedAbilities(
     showdownFormatId,
     generation.value
   );
-  const bannedItems = useBannedItems(showdownFormatId, generation.value);
+  const { data: bannedItems } = useBannedItems(
+    showdownFormatId,
+    generation.value
+  );
 
   // Filter abilities and items
   const abilities = useMemo(

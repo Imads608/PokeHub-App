@@ -45,10 +45,14 @@ export const MovesTab = ({ pokemon, species }: MovesTabProps) => {
     });
 
   const moves = movesData ? Object.values(movesData) : [];
-  const isLoading = isLearnsetLoading || isMovesLoading;
 
   // Get banned moves from format rules
-  const bannedMoves = useBannedMoves(showdownFormatId, generation.value);
+  const { data: bannedMoves, isLoading: isBansLoading } = useBannedMoves(
+    showdownFormatId,
+    generation.value
+  );
+
+  const isLoading = isLearnsetLoading || isMovesLoading || isBansLoading;
 
   // Filter out already-selected moves and banned moves for each slot
   const getAvailableMovesForSlot = (slotIndex: number) => {

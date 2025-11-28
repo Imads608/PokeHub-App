@@ -1,9 +1,9 @@
 import { useTeamEditorContext } from '../context/team-editor-context/team-editor.context';
 import { useTeamValidationContext } from '../context/team-validation-context/team-validation.context';
 import { useTeamChanges } from '../hooks/useTeamChanges';
+import { FormatSelector } from './format-selector';
 import type { GenerationNum } from '@pkmn/dex';
 import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
-import { FormatSelector } from '../components/format-selector';
 import {
   Alert,
   AlertDescription,

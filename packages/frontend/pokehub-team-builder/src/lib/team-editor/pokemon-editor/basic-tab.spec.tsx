@@ -4,6 +4,7 @@ import { Tabs } from '@pokehub/frontend/shared-ui-components';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock context
 const mockSetLevel = jest.fn();
@@ -22,10 +23,20 @@ jest.mock('../../context/team-editor-context/team-editor.context', () => ({
       setNature: mockSetNature,
     },
     generation: { value: 9 },
-    validation: {
-      showdownFormatId: 'gen9ou',
-    },
+    showdownFormatId: 'gen9ou',
   }),
+}));
+
+// Mock useFormatBans hooks
+jest.mock('../../hooks/useFormatBans', () => ({
+  useBannedAbilities: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
+  useBannedItems: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
 }));
 
 // Mock data providers
@@ -147,12 +158,20 @@ describe('BasicTab', () => {
     species: mockSpecies,
   };
 
-  // Helper to render BasicTab within Tabs wrapper
+  // Helper to render BasicTab within Tabs wrapper with QueryClient
   const renderBasicTab = (props: BasicTabProps) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
     return render(
-      <Tabs defaultValue="basic">
-        <BasicTab {...props} />
-      </Tabs>
+      <QueryClientProvider client={queryClient}>
+        <Tabs defaultValue="basic">
+          <BasicTab {...props} />
+        </Tabs>
+      </QueryClientProvider>
     );
   };
 
