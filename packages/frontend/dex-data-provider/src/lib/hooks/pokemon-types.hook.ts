@@ -1,4 +1,4 @@
-import { getAllPokemonTypes } from '../api/pokemon-dex.api';
+import { getAllPokemonTypes } from '../api/types.api';
 import { useQuery } from '@tanstack/react-query';
 
 export const POKEMON_TYPES_QUERY_KEY = ['pokemon', 'types'];

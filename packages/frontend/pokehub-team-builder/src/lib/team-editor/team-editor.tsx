@@ -8,7 +8,7 @@ import { TeamValidationProvider } from '../context/team-validation-context/team-
 import { arePokemonEqual } from '../hooks/useTeamChanges';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
-import { TeamConfigurationSection } from './team-configuration-section';
+import { TeamConfigurationSection } from './team-configuration/team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';

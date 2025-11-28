@@ -3,21 +3,21 @@
 import { DefensiveCoverageTab } from './defensive-coverage-tab';
 import { OffensiveCoverageTab } from './offensive-coverage-tab';
 import { TeamSummaryTab } from './team-summary-tab';
+import {
+  calculateTeamDefensiveCoverage,
+  calculateTeamOffensiveCoverage,
+  getTeamAnalysisSummary,
+} from './team-type-coverage';
+import type {
+  MoveForCoverage,
+  TeamDefensiveCoverage,
+  TeamOffensiveCoverage,
+} from './team-type-coverage';
 import type { GenerationNum, TypeName } from '@pkmn/dex';
 import {
   getMoveDetails,
   getPokemonDetailsByName,
 } from '@pokehub/frontend/dex-data-provider';
-import {
-  calculateTeamDefensiveCoverage,
-  calculateTeamOffensiveCoverage,
-  getTeamAnalysisSummary,
-} from '@pokehub/frontend/pokemon-static-data';
-import type {
-  MoveForCoverage,
-  TeamDefensiveCoverage,
-  TeamOffensiveCoverage,
-} from '@pokehub/frontend/pokemon-static-data';
 import {
   Dialog,
   DialogContent,

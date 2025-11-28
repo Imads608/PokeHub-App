@@ -1,9 +1,9 @@
+import type { TypeName, MoveCategory } from '@pkmn/dex';
 import {
   getTypeEffectivenessForTypes,
   getCombinedOffensiveCoverage,
   getAllTypes,
-} from './type-effectiveness';
-import type { TypeName, MoveCategory } from '@pkmn/dex';
+} from '@pokehub/frontend/pokemon-static-data';
 
 /**
  * Team defensive coverage result
@@ -238,7 +238,8 @@ export function getTeamAnalysisSummary(
 } {
   // Type diversity: unique move types / total types (0-1 scale)
   // Higher is better - more type variety means more options and less predictability
-  const typeDiversity = offensiveCoverage.moveTypes.length / TOTAL_POKEMON_TYPES;
+  const typeDiversity =
+    offensiveCoverage.moveTypes.length / TOTAL_POKEMON_TYPES;
 
   // Defensive balance: ratio of resistances to weaknesses (0-∞ scale, capped at 1)
   // Higher is better - more resistances than weaknesses means better survivability
@@ -256,7 +257,8 @@ export function getTeamAnalysisSummary(
 
   // Offensive balance: super-effective coverage / total types (0-1 scale)
   // Higher is better - can hit more types for super-effective damage
-  const offensiveBalance = offensiveCoverage.superEffectiveCoverage.length / TOTAL_POKEMON_TYPES;
+  const offensiveBalance =
+    offensiveCoverage.superEffectiveCoverage.length / TOTAL_POKEMON_TYPES;
 
   // Overall score (0-1 scale, converted to 0-100% for display)
   // Weighted average prioritizing defensive balance (40%), with type diversity
@@ -281,10 +283,12 @@ export function getTeamAnalysisSummary(
   });
 
   // Add SE move counts (number of moves that hit each type super-effectively)
-  offensiveCoverage.superEffectiveCoverageDetailed.forEach(({ type, moveCount }) => {
-    const current = advantageScores.get(type) || 0;
-    advantageScores.set(type, current + moveCount);
-  });
+  offensiveCoverage.superEffectiveCoverageDetailed.forEach(
+    ({ type, moveCount }) => {
+      const current = advantageScores.get(type) || 0;
+      advantageScores.set(type, current + moveCount);
+    }
+  );
 
   const topAdvantages = Array.from(advantageScores.entries())
     .sort((a, b) => b[1] - a[1])

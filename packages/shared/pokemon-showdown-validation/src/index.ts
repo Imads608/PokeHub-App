@@ -7,5 +7,3 @@ export {
   type PokemonValidationResult,
   type TeamValidationResult,
 } from './lib/team-validator-showdown';
-
-export { getFormatRules, type FormatRules } from './lib/format-rules';

@@ -1,5 +1,5 @@
+import { getFormatRules } from '@pokehub/frontend/dex-data-provider';
 import { useQuery } from '@tanstack/react-query';
-import { getFormatRules } from '@pokehub/shared/pokemon-showdown-validation';
 
 /**
  * Query key factory for format rules

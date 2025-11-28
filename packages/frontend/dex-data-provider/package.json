@@ -1,0 +1,6 @@
+{
+  "name": "@pokehub/frontend/dex-data-provider",
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false
+}

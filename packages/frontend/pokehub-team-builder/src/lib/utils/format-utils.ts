@@ -4,4 +4,4 @@ export {
   searchFormats,
   getCategoryLabel,
   getShowdownFormatId,
-} from '@pokehub/frontend/pokemon-static-data';
+} from '@pokehub/frontend/dex-data-provider';

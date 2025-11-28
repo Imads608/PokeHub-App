@@ -1,4 +1,4 @@
-import { getPokemonDetails } from '../api/pokemon-dex.api';
+import { getPokemonDetails } from '../api/species.api';
 import { type GenerationNum, type ID } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
 

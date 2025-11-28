@@ -144,4 +144,3 @@ export function getFormatRules(formatId: string): FormatRules | null {
     return null;
   }
 }
-

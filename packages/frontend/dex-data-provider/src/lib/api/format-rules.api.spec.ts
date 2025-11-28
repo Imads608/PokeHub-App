@@ -1,4 +1,4 @@
-import { getFormatRules } from './format-rules';
+import { getFormatRules } from './format-rules.api';
 
 describe('Format Rules', () => {
   describe('getFormatRules', () => {
@@ -32,7 +32,9 @@ describe('Format Rules', () => {
       const rules = getFormatRules('gen9ou');
 
       expect(rules?.teamSize.min).toBeGreaterThan(0);
-      expect(rules?.teamSize.max).toBeGreaterThanOrEqual(rules?.teamSize.min || 0);
+      expect(rules?.teamSize.max).toBeGreaterThanOrEqual(
+        rules?.teamSize.min || 0
+      );
     });
 
     describe('completeBanlist', () => {
@@ -51,7 +53,9 @@ describe('Format Rules', () => {
 
         // UU should have more bans in completeBanlist than direct banlist
         // because it inherits from OU
-        expect(rules!.completeBanlist.length).toBeGreaterThan(rules!.banlist.length);
+        expect(rules!.completeBanlist.length).toBeGreaterThan(
+          rules!.banlist.length
+        );
 
         // UU's completeBanlist should include bans from OU like "Uber" and "AG"
         expect(rules!.completeBanlist).toContain('Uber');

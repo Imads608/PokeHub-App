@@ -1,9 +1,9 @@
+import { useFormats } from '../../hooks/useFormats';
 import type { GenerationNum } from '@pkmn/dex';
+import { Skeleton } from '@pokehub/frontend/shared-ui-components';
 import type { ComboboxGroup } from '@pokehub/frontend/shared-ui-components/combobox';
 import { Combobox } from '@pokehub/frontend/shared-ui-components/combobox';
-import { Skeleton } from '@pokehub/frontend/shared-ui-components';
 import { useMemo } from 'react';
-import { useFormats } from '../hooks/useFormats';
 
 export interface FormatSelectorProps {
   /** Current generation */

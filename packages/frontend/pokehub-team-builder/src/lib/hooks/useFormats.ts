@@ -1,5 +1,5 @@
 import type { GenerationNum } from '@pkmn/dex';
-import type { BattleFormatInfo } from '@pokehub/frontend/pokemon-static-data';
+import type { BattleFormatInfo } from '@pokehub/frontend/dex-data-provider';
 import { useQuery } from '@tanstack/react-query';
 
 /**

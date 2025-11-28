@@ -10,6 +10,7 @@ import {
   getItemDetails,
   getMoveDetails,
   getPokemonDetailsByName,
+  getFormatRules,
 } from '@pokehub/frontend/dex-data-provider';
 import {
   Badge,
@@ -23,7 +24,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { getFormatRules } from '@pokehub/shared/pokemon-showdown-validation';
 import { Ban, Shield, Swords, Zap, Package, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 

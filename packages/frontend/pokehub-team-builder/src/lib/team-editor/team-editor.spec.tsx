@@ -116,7 +116,7 @@ jest.mock('@pkmn/img', () => ({
 }));
 
 // Mock TeamConfigurationSection
-jest.mock('./team-configuration-section', () => ({
+jest.mock('./team-configuration/team-configuration-section', () => ({
   TeamConfigurationSection: ({
     onOpenTeamAnalysis,
   }: {

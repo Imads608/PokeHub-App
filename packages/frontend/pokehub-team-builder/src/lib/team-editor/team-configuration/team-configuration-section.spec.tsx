@@ -3,10 +3,10 @@ import {
   type TeamConfigurationSectionProps,
 } from './team-configuration-section';
 import type { GenerationNum } from '@pkmn/dex';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // TODO: These tests need to be rewritten for the new FormatSelector component
 // which uses a searchable combobox with format categories instead of separate
@@ -35,7 +35,7 @@ const mockValidationState = {
   timestamp: Date.now(),
 };
 
-jest.mock('../context/team-editor-context/team-editor.context', () => ({
+jest.mock('../../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     teamName: { value: 'My Team', setValue: mockSetTeamName },
     generation: { value: 9 as GenerationNum, setValue: mockSetGeneration },
@@ -49,26 +49,29 @@ jest.mock('../context/team-editor-context/team-editor.context', () => ({
 }));
 
 // Mock team validation context
-jest.mock('../context/team-validation-context/team-validation.context', () => ({
-  useTeamValidationContext: () => ({
-    get state() {
-      return mockValidationState;
-    },
-    getTeamErrors: jest.fn(() => []),
-    getPokemonErrors: jest.fn(() => []),
-    get isTeamValid() {
-      return mockValidationState.isValid;
-    },
-    showdownFormatId: 'gen9ou',
-    isReady: true,
-  }),
-}));
+jest.mock(
+  '../../context/team-validation-context/team-validation.context',
+  () => ({
+    useTeamValidationContext: () => ({
+      get state() {
+        return mockValidationState;
+      },
+      getTeamErrors: jest.fn(() => []),
+      getPokemonErrors: jest.fn(() => []),
+      get isTeamValid() {
+        return mockValidationState.isValid;
+      },
+      showdownFormatId: 'gen9ou',
+      isReady: true,
+    }),
+  })
+);
 
 // Mock useTeamChanges
 const mockMarkAsSaved = jest.fn();
 const mockHasChanges = jest.fn(() => false);
 
-jest.mock('../hooks/useTeamChanges', () => ({
+jest.mock('../../hooks/useTeamChanges', () => ({
   useTeamChanges: () => ({
     hasChanges: mockHasChanges(),
     markAsSaved: mockMarkAsSaved,
@@ -76,7 +79,7 @@ jest.mock('../hooks/useTeamChanges', () => ({
 }));
 
 // Mock useTiersStaticData
-jest.mock('../hooks/useTiersStaticData', () => ({
+jest.mock('../../hooks/useTiersStaticData', () => ({
   useTiersStaticData: jest.fn(() => ({
     singlesTiers: [
       { id: 'OU', name: 'OverUsed', description: 'The main competitive tier' },
@@ -94,7 +97,7 @@ jest.mock('../hooks/useTiersStaticData', () => ({
 }));
 
 // Mock useFormats hook
-jest.mock('../hooks/useFormats', () => ({
+jest.mock('../../hooks/useFormats', () => ({
   useFormats: jest.fn(() => ({
     data: [
       {

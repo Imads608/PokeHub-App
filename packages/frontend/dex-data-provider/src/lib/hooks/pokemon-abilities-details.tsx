@@ -1,4 +1,4 @@
-import { getPokemonAbilitiesDetails } from '../api/pokemon-dex.api';
+import { getPokemonAbilitiesDetails } from '../api/abilities.api';
 import type { GenerationNum } from '@pkmn/dex';
 import { useQuery } from '@tanstack/react-query';
 
