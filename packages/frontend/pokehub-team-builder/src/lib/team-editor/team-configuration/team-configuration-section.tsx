@@ -279,6 +279,7 @@ export const TeamConfigurationSection = ({
                   id="team-name"
                   value={teamName.value}
                   onChange={(e) => teamName.setValue(e.target.value)}
+                  maxLength={50}
                   className="mt-1"
                 />
               </div>

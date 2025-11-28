@@ -86,6 +86,7 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
             value={pokemon.name}
             onChange={(e) => setName(e.target.value)}
             placeholder={pokemon.species}
+            maxLength={12}
             className="mt-1"
           />
         </div>
