@@ -1,4 +1,3 @@
-import type { BattleFormat } from './battle';
 import type {
   SpeciesName,
   ItemName,
@@ -6,7 +5,6 @@ import type {
   PokemonSet,
   GenerationNum,
   MoveName,
-  Tier,
   NatureName,
   GenderName,
 } from '@pkmn/dex';
@@ -20,14 +18,13 @@ export interface PokemonInTeam extends PokemonSet {
   moves: MoveName[];
 }
 
-export interface PokemonTeam<Format extends BattleFormat> {
+export interface PokemonTeam {
   name: string;
   pokemon: PokemonInTeam[];
   generation: GenerationNum;
-  format: BattleFormat;
-  tier: Format extends 'Singles'
-    ? Tier.Singles
-    : Format extends 'Doubles'
-    ? Tier.Doubles
-    : never;
+  /**
+   * Format ID (Showdown format without gen prefix)
+   * Examples: 'ou', 'vgc2024rege', 'nationaldex', 'monotypefire'
+   */
+  format: string;
 }

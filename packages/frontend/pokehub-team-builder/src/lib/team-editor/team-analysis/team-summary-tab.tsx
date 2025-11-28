@@ -3,7 +3,7 @@
 import type {
   TeamDefensiveCoverage,
   TeamOffensiveCoverage,
-} from '@pokehub/frontend/pokemon-static-data';
+} from './team-type-coverage';
 import {
   Badge,
   Card,
@@ -68,8 +68,8 @@ export const TeamSummaryTab = ({
             Overall Team Rating
           </CardTitle>
           <CardDescription>
-            Composite score based on type diversity, defensive balance, and offensive
-            coverage
+            Composite score based on type diversity, defensive balance, and
+            offensive coverage
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -77,7 +77,9 @@ export const TeamSummaryTab = ({
             <span className="text-2xl font-bold">
               {Math.round(overallScore * 100)}%
             </span>
-            <span className={`text-lg font-semibold ${getScoreColor(overallScore)}`}>
+            <span
+              className={`text-lg font-semibold ${getScoreColor(overallScore)}`}
+            >
               {getScoreLabel(overallScore)}
             </span>
           </div>
@@ -90,7 +92,9 @@ export const TeamSummaryTab = ({
         {/* Type Diversity */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Type Diversity</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Type Diversity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -113,7 +117,9 @@ export const TeamSummaryTab = ({
         {/* Defensive Balance */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Defensive Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Defensive Balance
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -122,10 +128,15 @@ export const TeamSummaryTab = ({
                   {Math.round(Math.min(defensiveBalance, 1) * 100)}%
                 </span>
                 <Shield
-                  className={`h-5 w-5 ${getScoreColor(Math.min(defensiveBalance, 1))}`}
+                  className={`h-5 w-5 ${getScoreColor(
+                    Math.min(defensiveBalance, 1)
+                  )}`}
                 />
               </div>
-              <Progress value={Math.min(defensiveBalance, 1) * 100} className="h-2" />
+              <Progress
+                value={Math.min(defensiveBalance, 1) * 100}
+                className="h-2"
+              />
               <p className="text-xs text-muted-foreground">
                 {defensiveCoverage.teamResistances.length} resistances vs{' '}
                 {defensiveCoverage.teamWeaknesses.length} weaknesses
@@ -137,7 +148,9 @@ export const TeamSummaryTab = ({
         {/* Offensive Balance */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Offensive Coverage</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Offensive Coverage
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -176,7 +189,9 @@ export const TeamSummaryTab = ({
                 return (
                   <Badge
                     key={type}
-                    className={`${typeColors[type as keyof typeof typeColors]} text-base`}
+                    className={`${
+                      typeColors[type as keyof typeof typeColors]
+                    } text-base`}
                   >
                     #{index + 1} {type}
                     {weakness && ` (×${weakness.count})`}
@@ -206,14 +221,18 @@ export const TeamSummaryTab = ({
               {topAdvantages.map((type, index) => (
                 <Badge
                   key={type}
-                  className={`${typeColors[type as keyof typeof typeColors]} border border-green-500 text-base`}
+                  className={`${
+                    typeColors[type as keyof typeof typeColors]
+                  } border border-green-500 text-base`}
                 >
                   #{index + 1} {type}
                 </Badge>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No clear advantages found.</p>
+            <p className="text-sm text-muted-foreground">
+              No clear advantages found.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -231,20 +250,19 @@ export const TeamSummaryTab = ({
                 {defensiveCoverage.criticalWeaknesses.join(', ')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Consider adding a Pokemon that resists these types or has immunity.
+                Consider adding a Pokemon that resists these types or has
+                immunity.
               </p>
             </div>
           )}
 
           {offensiveCoverage.coverageGaps.length > 12 && (
             <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3">
-              <p className="text-sm font-medium">
-                ⚠️ Poor Offensive Coverage
-              </p>
+              <p className="text-sm font-medium">⚠️ Poor Offensive Coverage</p>
               <p className="text-sm text-muted-foreground">
                 You&apos;re missing super-effective coverage for{' '}
-                {offensiveCoverage.coverageGaps.length} types. Consider adding diverse
-                move types.
+                {offensiveCoverage.coverageGaps.length} types. Consider adding
+                diverse move types.
               </p>
             </div>
           )}
@@ -255,8 +273,8 @@ export const TeamSummaryTab = ({
                 ⚠️ Cannot Hit: {offensiveCoverage.cannotHit.join(', ')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Add moves that can hit these types (they&apos;re immune to all your
-                current moves).
+                Add moves that can hit these types (they&apos;re immune to all
+                your current moves).
               </p>
             </div>
           )}
@@ -267,8 +285,8 @@ export const TeamSummaryTab = ({
               <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-3">
                 <p className="text-sm font-medium">✅ Well-Balanced Team!</p>
                 <p className="text-sm text-muted-foreground">
-                  Your team has good defensive coverage and offensive diversity. Keep
-                  refining your move choices and EV spreads.
+                  Your team has good defensive coverage and offensive diversity.
+                  Keep refining your move choices and EV spreads.
                 </p>
               </div>
             )}

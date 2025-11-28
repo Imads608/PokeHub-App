@@ -1,9 +1,10 @@
 import { BasicTab, type BasicTabProps } from './basic-tab';
 import type { Species } from '@pkmn/dex';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock context
 const mockSetLevel = jest.fn();
@@ -12,7 +13,7 @@ const mockSetAbility = jest.fn();
 const mockSetItem = jest.fn();
 const mockSetNature = jest.fn();
 
-jest.mock('../../context/team-editor.context', () => ({
+jest.mock('../../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     activePokemon: {
       setLevel: mockSetLevel,
@@ -22,7 +23,20 @@ jest.mock('../../context/team-editor.context', () => ({
       setNature: mockSetNature,
     },
     generation: { value: 9 },
+    showdownFormatId: 'gen9ou',
   }),
+}));
+
+// Mock useFormatBans hooks
+jest.mock('../../hooks/useFormatBans', () => ({
+  useBannedAbilities: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
+  useBannedItems: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
 }));
 
 // Mock data providers
@@ -40,6 +54,8 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
     },
     { name: 'Leftovers', exists: true, desc: 'Restores HP every turn' },
   ]),
+  getAbilityDetails: jest.fn(() => undefined),
+  getItemDetails: jest.fn(() => undefined),
   getNatures: jest.fn(() => [
     { name: 'Jolly', plus: 'spe', minus: 'spa' },
     { name: 'Adamant', plus: 'atk', minus: 'spa' },
@@ -142,12 +158,20 @@ describe('BasicTab', () => {
     species: mockSpecies,
   };
 
-  // Helper to render BasicTab within Tabs wrapper
+  // Helper to render BasicTab within Tabs wrapper with QueryClient
   const renderBasicTab = (props: BasicTabProps) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
     return render(
-      <Tabs defaultValue="basic">
-        <BasicTab {...props} />
-      </Tabs>
+      <QueryClientProvider client={queryClient}>
+        <Tabs defaultValue="basic">
+          <BasicTab {...props} />
+        </Tabs>
+      </QueryClientProvider>
     );
   };
 

@@ -1,4 +1,6 @@
-import { useTeamEditorContext } from '../../context/team-editor.context';
+import { useTeamEditorContext } from '../../context/team-editor-context/team-editor.context';
+import { useBannedAbilities, useBannedItems } from '../../hooks/useFormatBans';
+import { SearchableSelect } from './searchable-select';
 import type { AbilityName, ItemName, NatureName, Species } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
@@ -7,7 +9,6 @@ import {
   getNatures,
   getPokemonAbilitiesDetailsFromSpecies,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import {
   Input,
   Label,
@@ -19,9 +20,9 @@ import {
   Slider,
   TabsContent,
 } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Check } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { SearchableSelect } from './searchable-select';
+import { useEffect, useState, useMemo } from 'react';
 
 export interface BasicTabProps {
   pokemon: PokemonInTeam;
@@ -32,10 +33,11 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
   const {
     activePokemon: { setLevel, setName, setAbility, setItem, setNature },
     generation,
+    showdownFormatId,
   } = useTeamEditorContext();
 
   // Retrieve Data
-  const [abilities] = useState(() =>
+  const [unfilteredAbilities] = useState(() =>
     getPokemonAbilitiesDetailsFromSpecies(species, generation.value)
   );
   const [natures] = useState(() =>
@@ -44,7 +46,31 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
       desc: getNatureDescription(nature.name, generation.value),
     }))
   );
-  const [items] = useState(() => getItems(generation.value));
+  const [unfilteredItems] = useState(() => getItems(generation.value));
+
+  // Get banned abilities and items from format rules
+  const { data: bannedAbilities } = useBannedAbilities(
+    showdownFormatId,
+    generation.value
+  );
+  const { data: bannedItems } = useBannedItems(
+    showdownFormatId,
+    generation.value
+  );
+
+  // Filter abilities and items
+  const abilities = useMemo(
+    () =>
+      unfilteredAbilities.filter(
+        (ability) => ability && !bannedAbilities.has(ability.name)
+      ),
+    [unfilteredAbilities, bannedAbilities]
+  );
+
+  const items = useMemo(
+    () => unfilteredItems.filter((item) => !bannedItems.has(item.name)),
+    [unfilteredItems, bannedItems]
+  );
 
   useEffect(() => {
     abilities.length > 0 && abilities[0] && setAbility(abilities[0].name);
@@ -60,6 +86,7 @@ export const BasicTab = ({ pokemon, species }: BasicTabProps) => {
             value={pokemon.name}
             onChange={(e) => setName(e.target.value)}
             placeholder={pokemon.species}
+            maxLength={12}
             className="mt-1"
           />
         </div>

@@ -1,9 +1,6 @@
 'use client';
 
-import type {
-  TeamEditorContextModel,
-  TeamValidationState,
-} from './team-editor.context.model';
+import type { TeamEditorContextModel } from './team-editor.context.model';
 import type {
   AbilityName,
   ItemName,
@@ -12,12 +9,7 @@ import type {
   Species,
   StatID,
 } from '@pkmn/dex';
-import {
-  validateTeamForFormat,
-  getShowdownFormatId,
-} from '@pokehub/shared/pokemon-showdown-validation';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
-import { validateTeam } from '@pokehub/shared/pokemon-types';
 import { createContext, useCallback, useContext, useMemo } from 'react';
 
 export const TeamEditorContext = createContext<
@@ -30,13 +22,7 @@ export const TeamEditorContext = createContext<
     },
   },
   format: {
-    value: 'Singles',
-    setValue: () => {
-      // Function needs to be set
-    },
-  },
-  tier: {
-    value: 'AG',
+    value: 'ou',
     setValue: () => {
       // Function needs to be set
     },
@@ -59,18 +45,7 @@ export const TeamEditorContext = createContext<
       // Function needs to be set
     },
   },
-  validation: {
-    state: {
-      isValid: true,
-      errors: [],
-      showdownFormatId: 'gen9anythinggoes',
-      timestamp: 0,
-    },
-    getTeamErrors: () => [],
-    getPokemonErrors: () => [],
-    isTeamValid: true,
-    showdownFormatId: 'gen9anythinggoes',
-  },
+  showdownFormatId: 'gen9ou',
 });
 
 export const useTeamEditorContext = () => {
@@ -79,91 +54,14 @@ export const useTeamEditorContext = () => {
     teamPokemon,
     generation,
     format,
-    tier,
     teamName,
     ...restProps
   } = useContext(TeamEditorContext);
 
   // Compute Showdown format ID (memoized)
   const showdownFormatId = useMemo(() => {
-    return getShowdownFormatId(generation.value, format.value, tier.value);
-  }, [generation.value, format.value, tier.value]);
-
-  // Run validation (memoized - only recomputes when team data changes)
-  const validationState: TeamValidationState = useMemo(() => {
-    // Run Zod structural validation
-    const zodResult = validateTeam({
-      name: teamName.value,
-      generation: generation.value,
-      format: format.value,
-      tier: tier.value,
-      pokemon: teamPokemon.value, // No undefined, no filtering needed!
-    });
-
-    // Run Showdown format validation
-    const showdownResult = validateTeamForFormat(
-      {
-        name: teamName.value || '',
-        generation: generation.value,
-        format: format.value,
-        tier: tier.value,
-        pokemon: teamPokemon.value, // Already filtered, no undefined!
-      },
-      showdownFormatId
-    );
-
-    // Merge errors from both validators
-    const mergedErrors = [
-      ...zodResult.errors,
-      ...Array.from(showdownResult.pokemonResults.entries()).flatMap(
-        ([index, result]) =>
-          result.errors.map((error) => ({
-            field: `pokemon.${index}`,
-            message: error,
-            pokemonSlot: index, // Direct mapping - no slot translation needed!
-          }))
-      ),
-      ...showdownResult.errors
-        .filter(
-          (error) =>
-            !Array.from(showdownResult.pokemonResults.values()).some((r) =>
-              r.errors.includes(error)
-            )
-        )
-        .map((error) => ({
-          field: 'team',
-          message: error,
-        })),
-    ];
-
-    return {
-      isValid: zodResult.isValid && showdownResult.isValid,
-      errors: mergedErrors,
-      showdownFormatId,
-      timestamp: Date.now(),
-    };
-  }, [
-    teamName.value,
-    generation.value,
-    format.value,
-    tier.value,
-    teamPokemon.value,
-    showdownFormatId,
-  ]);
-
-  // Validation helper methods (memoized)
-  const getTeamErrors = useCallback(() => {
-    return validationState.errors.filter(
-      (err) => err.pokemonSlot === undefined
-    );
-  }, [validationState.errors]);
-
-  const getPokemonErrors = useCallback(
-    (index: number) => {
-      return validationState.errors.filter((err) => err.pokemonSlot === index);
-    },
-    [validationState.errors]
-  );
+    return `gen${generation.value}${format.value}`;
+  }, [generation.value, format.value]);
 
   const setActivePokemon = (pokemon: PokemonInTeam | Species | undefined) => {
     if (pokemon === undefined) {
@@ -306,8 +204,8 @@ export const useTeamEditorContext = () => {
     ...restProps,
     generation,
     format,
-    tier,
     teamName,
+    showdownFormatId,
     activePokemon: {
       value: activePokemon.value,
       setValue: setActivePokemon,
@@ -328,13 +226,6 @@ export const useTeamEditorContext = () => {
       hasAnyPokemon,
       removePokemonFromTeam,
       updatePokemonInTeam,
-    },
-    validation: {
-      state: validationState,
-      getTeamErrors,
-      getPokemonErrors,
-      isTeamValid: validationState.isValid,
-      showdownFormatId,
     },
   };
 };

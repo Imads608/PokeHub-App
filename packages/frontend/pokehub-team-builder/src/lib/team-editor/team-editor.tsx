@@ -3,16 +3,15 @@
 import {
   createNewPokemonFromSpecies,
   useTeamEditorContext,
-} from '../context/team-editor.context';
+} from '../context/team-editor-context/team-editor.context';
+import { TeamValidationProvider } from '../context/team-validation-context/team-validation.provider';
 import { arePokemonEqual } from '../hooks/useTeamChanges';
 import { EmptySlot } from './empty-slot';
 import { PokemonCard } from './pokemon-card';
-import { TeamConfigurationSection } from './team-configuration-section';
+import { TeamConfigurationSection } from './team-configuration/team-configuration-section';
 import type { Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import { getPokemonDetailsByName } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
-import { validateTeam } from '@pokehub/shared/pokemon-types';
 import {
   Badge,
   Dialog,
@@ -22,6 +21,7 @@ import {
   DialogTitle,
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
 
 // Lazy load dialog components for better performance
@@ -29,7 +29,7 @@ import { useCallback, useMemo, useState, Suspense, lazy } from 'react';
 const LazyPokemonSelector = lazy(() =>
   import(
     /* webpackPrefetch: true */
-    /* webpackChunkName: "pokemon-selector" */
+    /* webpackChunkName: "pokemon-selection" */
     './pokemon-selector/pokemon-selector'
   ).then((mod) => ({
     default: mod.PokemonSelector,
@@ -39,7 +39,7 @@ const LazyPokemonSelector = lazy(() =>
 const LazyPokemonEditor = lazy(() =>
   import(
     /* webpackPrefetch: true */
-    /* webpackChunkName: "pokemon-editor" */
+    /* webpackChunkName: "pokemon-selection" */
     './pokemon-editor/pokemon-editor'
   ).then((mod) => ({
     default: mod.PokemonEditor,
@@ -59,7 +59,7 @@ const LazyTeamAnalysisDialog = lazy(() =>
 export const TeamEditor = () => {
   // State for team configuration
 
-  const { teamPokemon, generation, tier, activePokemon, teamName, format } =
+  const { teamPokemon, generation, format, activePokemon, showdownFormatId } =
     useTeamEditorContext();
   const [isTeamAnalysisOpen, setIsTeamAnalysisOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
@@ -69,23 +69,6 @@ export const TeamEditor = () => {
     PokemonInTeam | undefined
   >(undefined);
   const [editingNewPokemon, setEditingNewPokemon] = useState(false);
-
-  // Validate team
-  const validationResult = useMemo(() => {
-    return validateTeam({
-      name: teamName.value,
-      generation: generation.value,
-      format: format.value,
-      tier: tier.value,
-      pokemon: teamPokemon.value,
-    });
-  }, [
-    teamName.value,
-    generation.value,
-    format.value,
-    tier.value,
-    teamPokemon.value,
-  ]);
 
   const onPokemonSelected = useCallback(
     (pokemon: Species | PokemonInTeam, index?: number) => {
@@ -121,6 +104,14 @@ export const TeamEditor = () => {
     [activePokemon]
   );
 
+  const updateStatesOnEditClose = useCallback(() => {
+    setIsPokemonEditorOpen(false);
+    setPokemonSnapshot(undefined);
+    activePokemon.setValue(undefined);
+    setActiveIndex(undefined);
+    setEditingNewPokemon(false);
+  }, [activePokemon]);
+
   const onAddPokemonToTeam = useCallback(() => {
     if (!activePokemon.value) return;
 
@@ -132,12 +123,14 @@ export const TeamEditor = () => {
       teamPokemon.updatePokemonInTeam(activeIndex, activePokemon.value);
     }
 
-    setIsPokemonEditorOpen(false);
-    setPokemonSnapshot(undefined);
-    activePokemon.setValue(undefined);
-    setActiveIndex(undefined);
-    setEditingNewPokemon(false);
-  }, [editingNewPokemon, activeIndex, teamPokemon, activePokemon]);
+    updateStatesOnEditClose();
+  }, [
+    editingNewPokemon,
+    activeIndex,
+    teamPokemon,
+    activePokemon,
+    updateStatesOnEditClose,
+  ]);
 
   const onCancelEdit = useCallback(() => {
     // Check if there are unsaved changes
@@ -157,16 +150,12 @@ export const TeamEditor = () => {
       }
     }
 
-    // Restore snapshot and close
-    if (pokemonSnapshot) {
-      activePokemon.setValue(pokemonSnapshot);
-    }
-    setIsPokemonEditorOpen(false);
-    setPokemonSnapshot(undefined);
-    activePokemon.setValue(undefined);
-    setActiveIndex(undefined);
-    setEditingNewPokemon(false);
-  }, [pokemonSnapshot, activePokemon]);
+    // Close without saving changes
+    // if (pokemonSnapshot) {
+    //   activePokemon.setValue(pokemonSnapshot);
+    // }
+    updateStatesOnEditClose();
+  }, [pokemonSnapshot, activePokemon, updateStatesOnEditClose]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -190,7 +179,7 @@ export const TeamEditor = () => {
   }, [activePokemon.value, generation.value]);
 
   return (
-    <>
+    <TeamValidationProvider>
       {/* Team Configuration */}
       <TeamConfigurationSection
         onOpenTeamAnalysis={() => setIsTeamAnalysisOpen(true)}
@@ -206,7 +195,6 @@ export const TeamEditor = () => {
               generation={generation.value}
               onRemove={() => teamPokemon.removePokemonFromTeam(index)}
               onEdit={() => onPokemonSelected(pokemon, index)}
-              validationResult={validationResult}
               index={index}
             />
           </div>
@@ -250,7 +238,8 @@ export const TeamEditor = () => {
           >
             <LazyPokemonSelector
               generation={generation.value}
-              tier={tier.value}
+              format={format.value}
+              showdownFormatId={showdownFormatId}
               onPokemonSelected={onPokemonSelected}
             />
           </Suspense>
@@ -322,6 +311,6 @@ export const TeamEditor = () => {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </TeamValidationProvider>
   );
 };

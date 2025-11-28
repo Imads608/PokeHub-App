@@ -1,6 +1,6 @@
 'use client';
 
-import type { TeamOffensiveCoverage } from '@pokehub/frontend/pokemon-static-data';
+import type { TeamOffensiveCoverage } from './team-type-coverage';
 import {
   Alert,
   AlertDescription,
@@ -67,7 +67,13 @@ export const OffensiveCoverageTab = ({
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {moveTypes.map(
-                  ({ type, count, physicalCount, specialCount, statusCount }) => (
+                  ({
+                    type,
+                    count,
+                    physicalCount,
+                    specialCount,
+                    statusCount,
+                  }) => (
                     <div key={type} className="flex flex-col items-start gap-1">
                       <Badge className={typeColors[type]}>
                         {type} ×{count}
@@ -94,14 +100,14 @@ export const OffensiveCoverageTab = ({
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
-                <span className="font-medium">Legend:</span> P=Physical, S=Special,
-                St=Status
+                <span className="font-medium">Legend:</span> P=Physical,
+                S=Special, St=Status
               </div>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No moves found on your team. Add moves to your Pokemon to see coverage
-              analysis.
+              No moves found on your team. Add moves to your Pokemon to see
+              coverage analysis.
             </p>
           )}
         </CardContent>
@@ -213,22 +219,25 @@ export const OffensiveCoverageTab = ({
           <CardHeader>
             <CardTitle className="text-lg">Resistant Types</CardTitle>
             <CardDescription>
-              Types that resist your attacks (0.5× or 0.25× damage) and you cannot hit
-              super-effectively
+              Types that resist your attacks (0.5× or 0.25× damage) and you
+              cannot hit super-effectively
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 {resistedBy.map((type) => (
-                  <Badge key={type} className={`${typeColors[type]} opacity-60`}>
+                  <Badge
+                    key={type}
+                    className={`${typeColors[type]} opacity-60`}
+                  >
                     {type}
                   </Badge>
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">
-                {resistedBy.length} type(s) resist your attacks without super-effective
-                coverage
+                {resistedBy.length} type(s) resist your attacks without
+                super-effective coverage
               </p>
             </div>
           </CardContent>

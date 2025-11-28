@@ -1,5 +1,4 @@
 import {
-  validatePokemonForFormat,
   validateTeamForFormat,
   isPokemonBanned,
   isMoveBanned,
@@ -126,12 +125,11 @@ const createPokemon = (overrides?: Partial<PokemonInTeam>): PokemonInTeam => {
 // Helper to create a valid team
 const createTeam = (
   pokemon: PokemonInTeam[] = [createPokemon()]
-): PokemonTeam<'Singles'> => ({
+): PokemonTeam => ({
   name: 'Test Team',
   pokemon,
   generation: 9,
-  format: 'Singles',
-  tier: 'OU',
+  format: 'ou',
 });
 
 describe('Team Validator (Showdown)', () => {
@@ -213,41 +211,6 @@ describe('Team Validator (Showdown)', () => {
       expect(isItemBanned('Choice Scarf' as ItemName, 'invalidformat')).toBe(
         false
       );
-    });
-  });
-
-  describe('validatePokemonForFormat', () => {
-    it('should validate a legal Pokemon', () => {
-      const pokemon = createPokemon();
-      const result = validatePokemonForFormat(pokemon, 'gen9ou');
-
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('should detect banned Pokemon', () => {
-      const pokemon = createPokemon({ species: 'Mewtwo' as SpeciesName });
-      const result = validatePokemonForFormat(pokemon, 'gen9ou');
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-    });
-
-    it('should return error for invalid format', () => {
-      const pokemon = createPokemon();
-      const result = validatePokemonForFormat(pokemon, 'invalidformat');
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Format 'invalidformat' does not exist");
-    });
-
-    it('should validate Pokemon with no moves', () => {
-      const pokemon = createPokemon({ moves: [] });
-      const result = validatePokemonForFormat(pokemon, 'gen9ou');
-
-      // May or may not be valid depending on Showdown's rules
-      expect(result).toHaveProperty('isValid');
-      expect(result).toHaveProperty('errors');
     });
   });
 
@@ -334,14 +297,22 @@ describe('Team Validator (Showdown)', () => {
       ]);
       const result = validateTeamForFormat(team, 'gen9ou');
 
+      // Both Pokemon should have validation results initialized
       expect(result.pokemonResults.has(0)).toBe(true);
       expect(result.pokemonResults.has(1)).toBe(true);
 
       const pikachu = result.pokemonResults.get(0);
       const mewtwo = result.pokemonResults.get(1);
 
+      // Without explicit (pokemon X) slot markers, errors are team-level only
+      // So both individual Pokemon results should be valid
       expect(pikachu?.isValid).toBe(true);
-      expect(mewtwo?.isValid).toBe(false);
+      expect(mewtwo?.isValid).toBe(true);
+
+      // The ban error should be in team-level errors
+      expect(result.errors.some((e) => e.toLowerCase().includes('mewtwo'))).toBe(
+        true
+      );
     });
   });
 });

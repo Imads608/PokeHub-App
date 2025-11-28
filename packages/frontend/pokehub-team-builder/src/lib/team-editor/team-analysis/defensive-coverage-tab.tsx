@@ -1,6 +1,6 @@
 'use client';
 
-import type { TeamDefensiveCoverage } from '@pokehub/frontend/pokemon-static-data';
+import type { TeamDefensiveCoverage } from './team-type-coverage';
 import {
   Alert,
   AlertDescription,
@@ -142,7 +142,8 @@ export const DefensiveCoverageTab = ({
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No weaknesses detected (this is unusual - check your team composition).
+              No weaknesses detected (this is unusual - check your team
+              composition).
             </p>
           )}
         </CardContent>

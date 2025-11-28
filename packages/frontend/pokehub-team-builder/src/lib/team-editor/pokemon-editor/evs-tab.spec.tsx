@@ -1,13 +1,13 @@
 import { EVsTab, type EVsTabProps } from './evs-tab';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // Mock context
 const mockSetEV = jest.fn();
 
-jest.mock('../../context/team-editor.context', () => ({
+jest.mock('../../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     activePokemon: {
       setEV: mockSetEV,
@@ -40,7 +40,9 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
 }));
 
 // Get references to mocked functions
-const { getStats, getStatName } = jest.requireMock('@pokehub/frontend/dex-data-provider') as {
+const { getStats, getStatName } = jest.requireMock(
+  '@pokehub/frontend/dex-data-provider'
+) as {
   getStats: jest.Mock;
   getStatName: jest.Mock;
 };
@@ -54,7 +56,12 @@ describe('EVsTab', () => {
     nature: 'Jolly' as PokemonInTeam['nature'],
     gender: 'M' as PokemonInTeam['gender'],
     level: 50,
-    moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'] as PokemonInTeam['moves'],
+    moves: [
+      'Thunder',
+      'Quick Attack',
+      'Iron Tail',
+      'Thunderbolt',
+    ] as PokemonInTeam['moves'],
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   };
@@ -126,9 +133,15 @@ describe('EVsTab', () => {
       const inputs = screen.getAllByRole('spinbutton');
 
       // Find inputs by their value
-      const hpInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
-      const atkInput = inputs.find((input) => (input as HTMLInputElement).value === '252');
-      const spdInput = inputs.find((input) => (input as HTMLInputElement).value === '4');
+      const hpInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
+      const atkInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '252'
+      );
+      const spdInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '4'
+      );
 
       expect(hpInput).toBeDefined();
       expect(atkInput).toBeDefined();
@@ -169,7 +182,9 @@ describe('EVsTab', () => {
       renderEVsTab(defaultProps);
 
       const inputs = screen.getAllByRole('spinbutton');
-      const hpInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
+      const hpInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
 
       if (hpInput) {
         await user.clear(hpInput);
@@ -184,7 +199,9 @@ describe('EVsTab', () => {
       renderEVsTab(defaultProps);
 
       const inputs = screen.getAllByRole('spinbutton');
-      const hpInput = inputs.find((input) => (input as HTMLInputElement).value === '0');
+      const hpInput = inputs.find(
+        (input) => (input as HTMLInputElement).value === '0'
+      );
 
       if (hpInput) {
         await user.clear(hpInput);

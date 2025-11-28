@@ -1,31 +1,47 @@
 import { MovesTab, type MovesTabProps } from './moves-tab';
 import type { Species } from '@pkmn/dex';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { Tabs } from '@pokehub/frontend/shared-ui-components';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock context
 const mockSetMove = jest.fn();
 
-jest.mock('../../context/team-editor.context', () => ({
+jest.mock('../../context/team-editor-context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     activePokemon: {
       setMove: mockSetMove,
     },
     generation: { value: 9 },
+    showdownFormatId: 'gen9ou',
   }),
 }));
 
+// Mock useFormatBans hooks
+jest.mock('../../hooks/useFormatBans', () => ({
+  useBannedMoves: jest.fn(() => ({
+    data: new Set(),
+    isLoading: false,
+  })),
+}));
+
 // Mock data provider hooks
-jest.mock('@pokehub/frontend/dex-data-provider');
+jest.mock('@pokehub/frontend/dex-data-provider', () => ({
+  usePokemonLearnset: jest.fn(),
+  usePokemonMovesFromLearnset: jest.fn(),
+  getMoveDetails: jest.fn(() => undefined),
+}));
 
 // Get mocked functions after the mock is set up
-const { usePokemonLearnset: mockUsePokemonLearnset, usePokemonMovesFromLearnset: mockUsePokemonMovesFromLearnset } =
-  jest.requireMock('@pokehub/frontend/dex-data-provider') as {
-    usePokemonLearnset: jest.Mock;
-    usePokemonMovesFromLearnset: jest.Mock;
-  };
+const {
+  usePokemonLearnset: mockUsePokemonLearnset,
+  usePokemonMovesFromLearnset: mockUsePokemonMovesFromLearnset,
+} = jest.requireMock('@pokehub/frontend/dex-data-provider') as {
+  usePokemonLearnset: jest.Mock;
+  usePokemonMovesFromLearnset: jest.Mock;
+};
 
 const mockLearnsetData = {
   data: { thunder: {}, quickattack: {}, irontail: {}, thunderbolt: {} },
@@ -98,7 +114,11 @@ jest.mock('./searchable-select', () => ({
     onClear?: () => void;
     isLoading?: boolean;
   }) => (
-    <div data-testid={`searchable-select-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+    <div
+      data-testid={`searchable-select-${label
+        .toLowerCase()
+        .replace(/\s+/g, '-')}`}
+    >
       <label>{label}</label>
       <input
         value={value}
@@ -107,7 +127,10 @@ jest.mock('./searchable-select', () => ({
         disabled={isLoading}
       />
       {onClear && (
-        <button onClick={onClear} data-testid={`clear-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+        <button
+          onClick={onClear}
+          data-testid={`clear-${label.toLowerCase().replace(/\s+/g, '-')}`}
+        >
           Clear
         </button>
       )}
@@ -124,7 +147,12 @@ describe('MovesTab', () => {
     nature: 'Jolly' as PokemonInTeam['nature'],
     gender: 'M' as PokemonInTeam['gender'],
     level: 50,
-    moves: ['Thunder', 'Quick Attack', 'Iron Tail', 'Thunderbolt'] as PokemonInTeam['moves'],
+    moves: [
+      'Thunder',
+      'Quick Attack',
+      'Iron Tail',
+      'Thunderbolt',
+    ] as PokemonInTeam['moves'],
     evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
     ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
   };
@@ -144,10 +172,18 @@ describe('MovesTab', () => {
 
   // Helper to render MovesTab within Tabs wrapper
   const renderMovesTab = (props: MovesTabProps) => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
     return render(
-      <Tabs defaultValue="moves">
-        <MovesTab {...props} />
-      </Tabs>
+      <QueryClientProvider client={queryClient}>
+        <Tabs defaultValue="moves">
+          <MovesTab {...props} />
+        </Tabs>
+      </QueryClientProvider>
     );
   };
 
@@ -172,19 +208,35 @@ describe('MovesTab', () => {
     it('should render SearchableSelect for each move slot', () => {
       renderMovesTab(defaultProps);
 
-      expect(screen.getByTestId('searchable-select-move-1')).toBeInTheDocument();
-      expect(screen.getByTestId('searchable-select-move-2')).toBeInTheDocument();
-      expect(screen.getByTestId('searchable-select-move-3')).toBeInTheDocument();
-      expect(screen.getByTestId('searchable-select-move-4')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('searchable-select-move-1')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('searchable-select-move-2')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('searchable-select-move-3')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('searchable-select-move-4')
+      ).toBeInTheDocument();
     });
 
     it('should display current move values', () => {
       renderMovesTab(defaultProps);
 
-      expect((screen.getByTestId('input-move-1') as HTMLInputElement).value).toBe('Thunder');
-      expect((screen.getByTestId('input-move-2') as HTMLInputElement).value).toBe('Quick Attack');
-      expect((screen.getByTestId('input-move-3') as HTMLInputElement).value).toBe('Iron Tail');
-      expect((screen.getByTestId('input-move-4') as HTMLInputElement).value).toBe('Thunderbolt');
+      expect(
+        (screen.getByTestId('input-move-1') as HTMLInputElement).value
+      ).toBe('Thunder');
+      expect(
+        (screen.getByTestId('input-move-2') as HTMLInputElement).value
+      ).toBe('Quick Attack');
+      expect(
+        (screen.getByTestId('input-move-3') as HTMLInputElement).value
+      ).toBe('Iron Tail');
+      expect(
+        (screen.getByTestId('input-move-4') as HTMLInputElement).value
+      ).toBe('Thunderbolt');
     });
   });
 

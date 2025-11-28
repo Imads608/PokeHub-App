@@ -4,4 +4,4 @@ export { TeamEditor } from './lib/team-editor/team-editor';
 export {
   TeamEditorProvider,
   type TeamEditorProviderProps,
-} from './lib/context/team-editor.provider';
+} from './lib/context/team-editor-context/team-editor.provider';

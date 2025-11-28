@@ -1,8 +1,9 @@
 import { useFilterPokemonList } from '../../hooks/useFilterPokemonList';
+import { useBannedAndIllegalPokemon } from '../../hooks/useFormatBans';
 import { PokemonCardSkeleton } from './pokemon-card-skeleton';
-import type { GenerationNum, Species, Tier, TypeName } from '@pkmn/dex';
+import type { GenerationNum, Species, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
-import { getPokemonCompetitive } from '@pokehub/frontend/dex-data-provider';
+import { getAllPokemonSpecies } from '@pokehub/frontend/dex-data-provider';
 import {
   Badge,
   Button,
@@ -23,18 +24,21 @@ import { useEffect, useState } from 'react';
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
-  tier: Tier.Singles | Tier.Doubles;
+  format: string;
+  showdownFormatId: string;
   onPokemonSelected: (val: Species) => void;
 }
 
 export const PokemonSelector = ({
   generation,
-  tier,
+  format,
+  showdownFormatId,
   onPokemonSelected,
 }: PokemonSelectorProps) => {
-  const [unfilteredResults] = useState(() =>
-    getPokemonCompetitive(generation, tier)
-  );
+  // Determine if this is a doubles format
+  const isDoubles = format.includes('doubles') || format.includes('vgc');
+
+  const [unfilteredResults] = useState(() => getAllPokemonSpecies(generation));
 
   const { debouncedSearchTerm, searchTerm, setSearchTerm } = useDebouncedSearch(
     { initialVal: '' }
@@ -43,12 +47,25 @@ export const PokemonSelector = ({
   const [activeTab, setActiveTab] = useState('all');
   const { itemsToShow, handleScroll, resetItems } = useInfiniteScroll({});
 
-  const { isLoading, data } = useFilterPokemonList(unfilteredResults, {
+  // Filter out banned and illegal Pokemon
+  const { data: filteredResults, isLoading: isBansLoading } =
+    useBannedAndIllegalPokemon(
+      unfilteredResults,
+      showdownFormatId,
+      generation,
+      isDoubles
+    );
+
+  const { isLoading, data } = useFilterPokemonList(filteredResults, {
     generation,
-    tier,
+    format,
     types: selectedTypes,
     searchTerm: debouncedSearchTerm,
+    enabled: !isBansLoading && filteredResults.length > 0,
   });
+
+  // Combined loading state
+  const isDataLoading = isLoading || isBansLoading;
 
   const handleTypeToggle = (type: TypeName) => {
     setSelectedTypes((prev) =>
@@ -156,15 +173,13 @@ export const PokemonSelector = ({
             onScrollCapture={handleScroll}
           >
             <div className="grid grid-cols-2 gap-2 pr-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {isLoading
+              {isDataLoading
                 ? // Loading skeleton cards
                   Array.from({ length: 20 }).map((_, index) => (
                     <PokemonCardSkeleton key={`skeleton-${index}`} />
                   ))
                 : data?.slice(0, itemsToShow).map((pokemon) => {
-                    const pokemonTier = tier.startsWith('D')
-                      ? pokemon.doublesTier
-                      : pokemon.tier;
+                    const pokemonTier = pokemon.tier;
                     return (
                       <div
                         key={pokemon.id}
@@ -204,7 +219,7 @@ export const PokemonSelector = ({
                     );
                   })}
 
-              {!isLoading && data?.length === 0 && (
+              {!isDataLoading && data?.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-12">
                   <div className="mb-4 rounded-full bg-muted p-3">
                     <Search className="h-6 w-6 text-muted-foreground" />

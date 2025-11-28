@@ -1,6 +1,6 @@
 import {
-  getSinglesBattleTiers,
   getDoublesBattleTiers,
+  getSinglesBattleTiers,
 } from '@pokehub/frontend/pokemon-static-data';
 import { useMemo } from 'react';
 

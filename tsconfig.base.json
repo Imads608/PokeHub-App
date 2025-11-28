@@ -116,6 +116,9 @@
       "@pokehub/frontend/shared-ui-components": [
         "packages/frontend/shared-ui-components/src/index.ts"
       ],
+      "@pokehub/frontend/shared-ui-components/*": [
+        "packages/frontend/shared-ui-components/src/lib/*"
+      ],
       "@pokehub/frontend/shared-ui-icons": [
         "packages/frontend/shared-ui-icons/src/index.ts"
       ],

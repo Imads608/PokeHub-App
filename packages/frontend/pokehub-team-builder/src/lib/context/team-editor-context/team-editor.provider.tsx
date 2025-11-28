@@ -1,16 +1,15 @@
 'use client';
 
 import { TeamEditorContext } from './team-editor.context';
-import type { GenerationNum, Tier } from '@pkmn/dex';
+import type { GenerationNum } from '@pkmn/dex';
 import type {
-  BattleFormat,
   PokemonInTeam,
   PokemonTeam,
 } from '@pokehub/shared/pokemon-types';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export interface TeamEditorProviderProps {
-  team?: PokemonTeam<'Singles' | 'Doubles'>;
+  team?: PokemonTeam;
   children: React.ReactNode;
 }
 
@@ -23,11 +22,8 @@ export const TeamEditorProvider = ({
   const [selectedGeneration, setSelectedGeneration] = useState<GenerationNum>(
     team?.generation || 9
   );
-  const [selectedFormat, setSelectedFormat] = useState<BattleFormat>(
-    team?.format || 'Singles'
-  );
-  const [selectedTier, setSelectedTier] = useState<Tier.Singles | Tier.Doubles>(
-    team?.tier || 'AG'
+  const [selectedFormat, setSelectedFormat] = useState<string>(
+    team?.format || 'ou'
   );
   const [pokemonTeam, setPokemonTeam] = useState<PokemonInTeam[]>(
     team?.pokemon || []
@@ -37,16 +33,17 @@ export const TeamEditorProvider = ({
     undefined
   );
 
+  // Compute Showdown format ID from generation + format
+  const showdownFormatId = useMemo(() => {
+    return `gen${selectedGeneration}${selectedFormat}`;
+  }, [selectedGeneration, selectedFormat]);
+
   return (
     <TeamEditorContext.Provider
       value={{
         format: {
           value: selectedFormat,
           setValue: setSelectedFormat,
-        },
-        tier: {
-          value: selectedTier,
-          setValue: setSelectedTier,
         },
         generation: {
           value: selectedGeneration,
@@ -64,18 +61,7 @@ export const TeamEditorProvider = ({
           value: activePokemon,
           setValue: setActivePokemon,
         },
-        validation: {
-          state: {
-            isValid: true,
-            errors: [],
-            showdownFormatId: 'gen9anythinggoes',
-            timestamp: 0,
-          },
-          getTeamErrors: () => [],
-          getPokemonErrors: () => [],
-          isTeamValid: true,
-          showdownFormatId: 'gen9anythinggoes',
-        },
+        showdownFormatId,
       }}
     >
       {children}

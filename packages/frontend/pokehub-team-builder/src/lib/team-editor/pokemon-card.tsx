@@ -1,5 +1,6 @@
 'use client';
 
+import { useTeamValidationContext } from '../context/team-validation-context/team-validation.context';
 import type { GenerationNum, TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
@@ -11,8 +12,6 @@ import {
   getStatName,
   getStats,
 } from '@pokehub/frontend/dex-data-provider';
-import type { PokemonInTeam, ValidationResult } from '@pokehub/shared/pokemon-types';
-import { getPokemonSlotErrors } from '@pokehub/shared/pokemon-types';
 import {
   Badge,
   Button,
@@ -25,7 +24,15 @@ import {
   TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 import { typeColors } from '@pokehub/frontend/shared-utils';
-import { Edit, Trash2, ChevronDown, ChevronUp, Info, AlertCircle } from 'lucide-react';
+import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
+import {
+  Edit,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  AlertCircle,
+} from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 
 interface PokemonCardProps {
@@ -35,7 +42,6 @@ interface PokemonCardProps {
   onEdit: () => void;
   onEditHover?: () => void;
   isPokemonEditorOpen: boolean;
-  validationResult: ValidationResult;
   index: number;
 }
 
@@ -46,17 +52,18 @@ export function PokemonCard({
   onEdit,
   onEditHover,
   isPokemonEditorOpen,
-  validationResult,
   index,
 }: PokemonCardProps) {
-  // Get validation errors for this Pokemon
+  const validation = useTeamValidationContext();
+
+  // Get validation errors for this Pokemon from context
   const pokemonErrors = useMemo(
-    () => getPokemonSlotErrors(validationResult, index),
-    [validationResult, index]
+    () => validation.getPokemonErrors(index),
+    [validation, index]
   );
   const hasErrors = pokemonErrors.length > 0;
 
-  // Data being usedj
+  // Data being used
   const [isExpanded, setIsExpanded] = useState(false);
 
   const icon = useRef(Icons.getPokemon(pokemon.species));
@@ -139,7 +146,9 @@ export function PokemonCard({
   }, [pokemon.evs, isPokemonEditorOpen]);
 
   return (
-    <Card className={`overflow-hidden ${hasErrors ? 'border-destructive' : ''}`}>
+    <Card
+      className={`overflow-hidden ${hasErrors ? 'border-destructive' : ''}`}
+    >
       <CardHeader className="pb-2 pt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -165,7 +174,7 @@ export function PokemonCard({
                       <TooltipContent className="max-w-xs">
                         <div className="space-y-1">
                           <p className="font-medium">Validation Errors:</p>
-                          <ul className="list-disc list-inside space-y-1 text-sm">
+                          <ul className="list-inside list-disc space-y-1 text-sm">
                             {pokemonErrors.map((error, index) => (
                               <li key={index}>{error.message}</li>
                             ))}
