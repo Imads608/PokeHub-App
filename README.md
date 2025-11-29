@@ -124,6 +124,23 @@ Generate migrations:
 npx drizzle-kit generate
 ```
 
+For detailed database setup instructions, see [docs/deployment/database.md](./docs/deployment/database.md).
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[Deployment Guide](./docs/deployment/README.md)** - Azure Container Apps deployment
+  - [Container Apps Setup](./docs/deployment/container-apps/setup.md)
+  - [Operations Guide](./docs/deployment/container-apps/operations.md)
+  - [Troubleshooting](./docs/deployment/container-apps/troubleshooting.md)
+  - [Database Configuration](./docs/deployment/database.md)
+- **[Development Setup](./docs/development/environment-setup.md)** - Environment configuration
+- **[Features](./docs/features/)** - Feature documentation
+  - [Authentication](./docs/features/authentication.md)
+  - [Pokedex](./docs/features/pokedex.md)
+  - [Team Builder](./docs/features/team-builder.md)
+
 ## 🎯 Project Goals
 
 PokeHub aims to:

@@ -1,0 +1,43 @@
+properties:
+  environmentId: /subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/pokehub_group/providers/Microsoft.App/managedEnvironments/pokehub-env
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 3000
+      transport: auto
+      allowInsecure: false
+    registries:
+      - server: pokehub.azurecr.io
+        username: pokehub
+        passwordSecretRef: acr-password
+    secrets:
+      - name: acr-password
+        value: REPLACE_WITH_ACR_PASSWORD
+      - name: db-password
+        value: REPLACE_WITH_DB_PASSWORD
+  template:
+    containers:
+      - name: pokehub-api
+        image: pokehub.azurecr.io/pokehub-api:dev
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+        env:
+          - name: NODE_ENV
+            value: production
+          - name: DB_HOST
+            value: aws-1-us-east-1.pooler.supabase.com
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: postgres
+          - name: DB_USER
+            value: postgres.wxrhnixjscveeamupgam
+          - name: DB_PASS
+            secretRef: db-password
+          - name: PORT
+            value: "3000"
+    scale:
+      minReplicas: 1
+      maxReplicas: 3

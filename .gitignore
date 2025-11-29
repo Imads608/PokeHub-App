@@ -40,6 +40,7 @@ testem.log
 Thumbs.db
 **/.env
 **/.env.local
+**/.env.production
 **/node_modules
 **/*.pem
 **/.next
