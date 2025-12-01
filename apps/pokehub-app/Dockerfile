@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY nx.json tsconfig.base.json ./
 
+# Copy config files needed for lint, test, and build
+COPY .eslintrc.json jest.preset.js jest.config.ts tailwind.config.js ./
+
 # Copy all source code
 COPY apps ./apps
 COPY packages ./packages
