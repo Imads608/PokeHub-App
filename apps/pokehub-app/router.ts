@@ -31,7 +31,7 @@ export const PokeHubRouter: AppRouter = {
       allowSubRoutes: false,
     },
     {
-      route: '/team-editor',
+      route: '/team-builder',
       rolesAllowed: ['USER'],
       allowSubRoutes: true,
     },

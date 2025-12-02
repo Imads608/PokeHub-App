@@ -32,6 +32,29 @@ cp .env.template .env
 
 ### 2. Build and Push Image
 
+**Recommended: Use ACR Build** (avoids local network issues with large images)
+
+```bash
+# Backend API
+cd /path/to/PokeHub-App
+az acr build \
+  --registry pokehub \
+  --image pokehub-api:dev \
+  --file apps/pokehub-api/Dockerfile \
+  .
+
+# Frontend App (requires build args for Next.js)
+cd /path/to/PokeHub-App
+az acr build \
+  --registry pokehub \
+  --image pokehub-app:dev \
+  --build-arg NEXT_PUBLIC_POKEHUB_API_URL=https://api.pokehub.space/api \
+  --file apps/pokehub-app/Dockerfile \
+  .
+```
+
+**Alternative: Local Build + Push** (may fail with network issues on large images)
+
 ```bash
 # From project root
 docker build --no-cache -t pokehub-api -f apps/pokehub-api/Dockerfile .
@@ -39,10 +62,75 @@ docker tag pokehub-api pokehub.azurecr.io/pokehub-api:dev
 docker push pokehub.azurecr.io/pokehub-api:dev
 ```
 
+> **Note**: Local docker push can fail with "connection reset" errors when pushing large images (800MB+). ACR build is more reliable as it builds directly on Azure infrastructure.
+
 ### 3. Deploy
 
 ```bash
 # From this directory (platform/container-apps)
+./deploy.sh pokehub-api
+```
+
+## Building Frontend vs Backend
+
+### Frontend (pokehub-app)
+
+The frontend build **requires** build arguments for Next.js environment variables:
+
+```bash
+az acr build \
+  --registry pokehub \
+  --image pokehub-app:dev \
+  --build-arg NEXT_PUBLIC_POKEHUB_API_URL=https://api.pokehub.space/api \
+  --file apps/pokehub-app/Dockerfile \
+  .
+```
+
+**Why build args are needed:**
+- Next.js bakes `NEXT_PUBLIC_*` variables into the JavaScript bundle at build time
+- These variables are used for client-side API calls
+- Without the build arg, the frontend won't know which API to connect to
+
+### Backend (pokehub-api)
+
+The backend doesn't require build args - all configuration is provided at runtime:
+
+```bash
+az acr build \
+  --registry pokehub \
+  --image pokehub-api:dev \
+  --file apps/pokehub-api/Dockerfile \
+  .
+```
+
+## Complete Build & Deploy Process
+
+**Frontend:**
+```bash
+# 1. Build image on Azure (from repo root)
+az acr build \
+  --registry pokehub \
+  --image pokehub-app:dev \
+  --build-arg NEXT_PUBLIC_POKEHUB_API_URL=https://api.pokehub.space/api \
+  --file apps/pokehub-app/Dockerfile \
+  .
+
+# 2. Deploy (from platform/container-apps)
+cd platform/container-apps
+./deploy.sh pokehub-app
+```
+
+**Backend:**
+```bash
+# 1. Build image on Azure (from repo root)
+az acr build \
+  --registry pokehub \
+  --image pokehub-api:dev \
+  --file apps/pokehub-api/Dockerfile \
+  .
+
+# 2. Deploy (from platform/container-apps)
+cd platform/container-apps
 ./deploy.sh pokehub-api
 ```
 
