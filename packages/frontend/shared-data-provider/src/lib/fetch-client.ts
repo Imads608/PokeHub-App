@@ -29,13 +29,19 @@ export interface FetchResponseNoError<Data> extends Response {
   json(): Promise<Data>;
 }
 
-export interface AppFetchClients {
-  [key: string]: FetchClient;
-}
+export type AppFetchClients = {
+  [key in AppFetchClientKeys]: FetchClient | undefined;
+};
 
-const BACKEND_URL = process.env['BACKEND_URL'] || 'http://localhost:3000/api';
+const defaultClientURLs: { [key in AppFetchClientKeys]: string } = {
+  API: process.env['API_URL'] || 'http://localhost:3000/api',
+  NEXT_API: process.env['NEXT_API_URL'] || 'http://localhost:3000/api',
+};
 
-const clients: AppFetchClients = {};
+const clients: AppFetchClients = {
+  API: undefined,
+  NEXT_API: undefined,
+};
 
 export const createFetchClient = (
   key: AppFetchClientKeys,
@@ -97,5 +103,5 @@ export const doesClientExist = (key: AppFetchClientKeys): boolean =>
   !!clients[key];
 
 export const getFetchClient = (key: AppFetchClientKeys): FetchClient => {
-  return clients[key] || createFetchClient(key, BACKEND_URL);
+  return clients[key] || createFetchClient(key, defaultClientURLs[key]);
 };

@@ -16,6 +16,12 @@ properties:
         value: REPLACE_WITH_ACR_PASSWORD
       - name: db-password
         value: REPLACE_WITH_DB_PASSWORD
+      - name: google-client-id
+        value: REPLACE_WITH_GOOGLE_CLIENT_ID
+      - name: refresh-token-secret
+        value: REPLACE_WITH_REFRESH_TOKEN_SECRET
+      - name: access-token-secret
+        value: REPLACE_WITH_ACCESS_TOKEN_SECRET
   template:
     containers:
       - name: pokehub-api
@@ -29,7 +35,7 @@ properties:
           - name: DB_HOST
             value: aws-1-us-east-1.pooler.supabase.com
           - name: DB_PORT
-            value: "5432"
+            value: '5432'
           - name: DB_NAME
             value: postgres
           - name: DB_USER
@@ -37,7 +43,21 @@ properties:
           - name: DB_PASS
             secretRef: db-password
           - name: PORT
-            value: "3000"
+            value: '3000'
+          - name: ACCESS_TOKEN
+            secretRef: access-token-secret
+          - name: ACCESS_TOKEN_EXPIRES
+            value: '60'
+          - name: REFRESH_TOKEN
+            secretRef: refresh-token-secret
+          - name: REFRESH_TOKEN_EXPIRES
+            value: '720'
+          - name: AZURE_STORAGE_ACCOUNT
+            value: 'pokehub'
+          - name: AZURE_STORAGE_CONTAINER
+            value: 'avatars'
+          - name: GOOGLE_CLIENT_ID
+            secretRef: google-client-id
     scale:
       minReplicas: 1
       maxReplicas: 3

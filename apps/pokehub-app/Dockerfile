@@ -28,14 +28,16 @@ RUN npx nx build pokehub-app --configuration=production
 # Runtime stage
 FROM node:20-alpine AS runtime
 
-WORKDIR /app/pokehub
+WORKDIR /app
 
-# Copy built application
-COPY --from=builder /app/dist/apps/pokehub-app .
+# Copy standalone output (minimal dependencies traced by Next.js)
+COPY --from=builder /app/dist/apps/pokehub-app/.next/standalone ./
 
-# Install only production dependencies
-RUN npm install --only=production
+# Copy static files to where Next.js expects them in the standalone structure
+COPY --from=builder /app/dist/apps/pokehub-app/.next/static ./dist/apps/pokehub-app/.next/static
+COPY --from=builder /app/dist/apps/pokehub-app/public ./apps/pokehub-app/public
 
 EXPOSE 3000
 
-CMD ["npx", "next", "start"]
+# Start the standalone server
+CMD ["node", "apps/pokehub-app/server.js"]

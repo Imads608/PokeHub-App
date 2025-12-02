@@ -12,7 +12,7 @@ const nextConfig = {
   images: {
     domains: ['play.pokemonshowdown.com', 'raw.githubusercontent.com'], // Add the external domain here
   },
-  output: undefined,
+  output: 'standalone',
   webpack: (config, { isServer }) => {
     // Add Statoscope plugin when ANALYZE is enabled
     if (process.env.ANALYZE === 'true') {

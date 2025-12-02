@@ -37,6 +37,9 @@ sed -i "s|REPLACE_WITH_DB_PASSWORD|${DB_PASSWORD}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_NEXTAUTH_SECRET|${NEXTAUTH_SECRET}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_GOOGLE_CLIENT_ID|${GOOGLE_CLIENT_ID}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_GOOGLE_CLIENT_SECRET|${GOOGLE_CLIENT_SECRET}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_AZURE_STORAGE_ACCOUNT_KEY|${AZURE_STORAGE_ACCOUNT_KEY}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_REFRESH_TOKEN_SECRET|${REFRESH_TOKEN_SECRET}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_ACCESS_TOKEN_SECRET|${ACCESS_TOKEN_SECRET}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_API_URL|${API_URL}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_APP_URL|${APP_URL}|g" "$TEMP_FILE"
 
@@ -47,6 +50,24 @@ if az containerapp show --name "$APP_NAME" --resource-group pokehub_group &>/dev
     --name "$APP_NAME" \
     --resource-group pokehub_group \
     --yaml "$TEMP_FILE"
+
+  echo "Restarting container to pull latest image..."
+  # Get the active revision name
+  REVISION=$(az containerapp revision list \
+    --name "$APP_NAME" \
+    --resource-group pokehub_group \
+    --query "[?properties.active==\`true\`].name" \
+    -o tsv | head -1)
+
+  if [ -n "$REVISION" ]; then
+    az containerapp revision restart \
+      --name "$APP_NAME" \
+      --resource-group pokehub_group \
+      --revision "$REVISION"
+    echo "Container restarted successfully"
+  else
+    echo "Warning: Could not find active revision to restart"
+  fi
 else
   echo "Creating new container app..."
   az containerapp create \
