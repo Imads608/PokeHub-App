@@ -55,8 +55,8 @@ jobs:
       - name: Detect affected projects
         id: affected
         run: |
-          # Get affected apps
-          AFFECTED=$(npx nx show projects --affected --type=app 2>/dev/null || echo "")
+          # Get affected apps (convert newlines to comma-separated)
+          AFFECTED=$(npx nx show projects --affected --type=app 2>/dev/null | tr '\n' ',' | sed 's/,$//' || echo "")
           echo "Affected apps: $AFFECTED"
           echo "apps=$AFFECTED" >> $GITHUB_OUTPUT
 
