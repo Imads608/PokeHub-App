@@ -25,7 +25,7 @@ properties:
   template:
     containers:
       - name: pokehub-api
-        image: pokehub.azurecr.io/pokehub-api:dev
+        image: pokehub.azurecr.io/pokehub-api:latest
         resources:
           cpu: 1.0
           memory: 2Gi
