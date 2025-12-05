@@ -11,7 +11,8 @@ import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
 import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils/server';
 import { type NextRequest, NextResponse } from 'next/server';
 
-const AZURE_STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+const AZURE_STORAGE_ACCOUNT_NAME =
+  process.env.AZURE_STORAGE_ACCOUNT_NAME || 'pokehub';
 const AZURE_STORAGE_ACCOUNT_KEY = process.env.AZURE_STORAGE_ACCOUNT_KEY;
 const CONTAINER_NAME = 'avatars';
 
