@@ -191,6 +191,26 @@ jobs:
     needs: [setup, build]
     runs-on: ubuntu-latest
     if: needs.setup.outputs.has-api-changes == 'true' || needs.setup.outputs.has-app-changes == 'true'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pokehub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: pokehub_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
