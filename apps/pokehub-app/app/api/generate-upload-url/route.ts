@@ -11,29 +11,34 @@ import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
 import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils/server';
 import { type NextRequest, NextResponse } from 'next/server';
 
-const AZURE_STORAGE_ACCOUNT_NAME =
-  process.env.AZURE_STORAGE_ACCOUNT_NAME || 'pokehub';
-const AZURE_STORAGE_ACCOUNT_KEY = process.env.AZURE_STORAGE_ACCOUNT_KEY;
 const CONTAINER_NAME = 'avatars';
-
-if (!AZURE_STORAGE_ACCOUNT_NAME || !AZURE_STORAGE_ACCOUNT_KEY) {
-  throw new Error('Azure Storage account name or key is not configured');
-}
-
-const sharedKeyCredential = new StorageSharedKeyCredential(
-  AZURE_STORAGE_ACCOUNT_NAME,
-  AZURE_STORAGE_ACCOUNT_KEY
-);
-
-const blobServiceClient = new BlobServiceClient(
-  `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-  sharedKeyCredential
-);
 
 const logger = getLogger('GenerateUploadUrl');
 
+function getAzureClients() {
+  const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || 'pokehub';
+  const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
+
+  if (!accountName || !accountKey) {
+    throw new Error('Azure Storage account name or key is not configured');
+  }
+
+  const sharedKeyCredential = new StorageSharedKeyCredential(
+    accountName,
+    accountKey
+  );
+
+  const blobServiceClient = new BlobServiceClient(
+    `https://${accountName}.blob.core.windows.net`,
+    sharedKeyCredential
+  );
+
+  return { sharedKeyCredential, blobServiceClient };
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const { sharedKeyCredential, blobServiceClient } = getAzureClients();
     logger.info('Generating upload url: ', blobServiceClient.url);
 
     const session = await auth();
