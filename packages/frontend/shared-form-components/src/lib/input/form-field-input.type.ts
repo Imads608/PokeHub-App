@@ -1,5 +1,5 @@
-import { InputProps } from '@pokehub/frontend/shared-ui-components';
-import { Control, FieldPathValue, FieldValues, Path, Validate } from 'react-hook-form';
+import type { InputProps } from '@pokehub/frontend/shared-ui-components';
+import type { Control, FieldPathValue, FieldValues, Path, Validate } from 'react-hook-form';
 
 export type FormFieldInputProps<FieldValuesType extends FieldValues> = Omit<InputProps, 'name'> & {
   name: Path<FieldValuesType>;

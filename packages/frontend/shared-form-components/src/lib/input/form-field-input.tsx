@@ -2,9 +2,9 @@ import { Input, Label } from '@pokehub/frontend/shared-ui-components';
 import { type FieldValues } from 'react-hook-form';
 
 import { FormFieldWrapper } from '../common/form-field-wrapper';
-import { FormLabelProps } from '../common/form-label.type';
+import type { FormLabelProps } from '../common/form-label.type';
 import { useInputController } from './form-field-input-controller.hook';
-import { FormFieldInputProps } from './form-field-input.type';
+import type { FormFieldInputProps } from './form-field-input.type';
 
 export const FormFieldInput = <FieldValuesType extends FieldValues>(
   props: FormFieldInputProps<FieldValuesType>,

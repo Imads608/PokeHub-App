@@ -1,7 +1,8 @@
-import { FieldValues, UseControllerProps, UseControllerReturn, useController } from 'react-hook-form';
+import type { FieldValues, UseControllerProps, UseControllerReturn} from 'react-hook-form';
+import { useController } from 'react-hook-form';
 
-import { FormLabelProps } from '../common/form-label.type';
-import { FormFieldInputProps } from './form-field-input.type';
+import type { FormLabelProps } from '../common/form-label.type';
+import type { FormFieldInputProps } from './form-field-input.type';
 
 export const useInputController = <FieldValuesType extends FieldValues>(
   props: FormFieldInputProps<FieldValuesType>,

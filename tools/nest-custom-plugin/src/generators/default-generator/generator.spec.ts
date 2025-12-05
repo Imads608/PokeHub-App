@@ -1,6 +1,6 @@
 import { defaultGeneratorGenerator } from './generator';
-import { DefaultGeneratorGeneratorSchema } from './schema';
-import { Tree, readProjectConfiguration } from '@nx/devkit';
+import type { DefaultGeneratorGeneratorSchema } from './schema';
+import { type Tree, readProjectConfiguration } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 
 describe('default-generator generator', () => {
