@@ -193,7 +193,7 @@ jobs:
     if: needs.setup.outputs.has-api-changes == 'true' || needs.setup.outputs.has-app-changes == 'true'
     services:
       postgres:
-        image: postgres:15
+        image: ghcr.io/docker-library/postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
