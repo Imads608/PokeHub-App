@@ -3,6 +3,12 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 // For CI, you may want to set BASE_URL to the deployed application.
 const baseURL = process.env['BASE_URL'] || 'http://127.0.0.1:4200';
+
+// Browser configurations
+const chromiumProject = { name: "chromium", use: { ...devices["Desktop Chrome"] } };
+const firefoxProject = { name: "firefox", use: { ...devices["Desktop Firefox"] } };
+const webkitProject = { name: "webkit", use: { ...devices["Desktop Safari"] } };
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -26,9 +32,9 @@ export default defineConfig({ ...nxE2EPreset(__filename, { testDir: './src' }),
         cwd: workspaceRoot,
     }, projects: process.env.CI ? [
         // Only run chromium tests in CI for faster execution
-        { name: "chromium", use: { ...devices["Desktop Chrome"] } }
+        chromiumProject
     ] : [
-        { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-        { name: "firefox", use: { ...devices["Desktop Firefox"] } },
-        { name: "webkit", use: { ...devices["Desktop Safari"] } }
+        chromiumProject,
+        firefoxProject,
+        webkitProject
     ] });
