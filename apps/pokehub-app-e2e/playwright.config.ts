@@ -24,7 +24,10 @@ export default defineConfig({ ...nxE2EPreset(__filename, { testDir: './src' }),
         url: 'http://127.0.0.1:4200',
         reuseExistingServer: !process.env.CI,
         cwd: workspaceRoot,
-    }, projects: [
+    }, projects: process.env.CI ? [
+        // Only run chromium tests in CI for faster execution
+        { name: "chromium", use: { ...devices["Desktop Chrome"] } }
+    ] : [
         { name: "chromium", use: { ...devices["Desktop Chrome"] } },
         { name: "firefox", use: { ...devices["Desktop Firefox"] } },
         { name: "webkit", use: { ...devices["Desktop Safari"] } }
