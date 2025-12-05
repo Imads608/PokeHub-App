@@ -211,6 +211,8 @@ jobs:
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: pokehub_test
+      AUTH_SECRET: ci-test-secret-not-for-production
+      NEXTAUTH_SECRET: ci-test-secret-not-for-production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
