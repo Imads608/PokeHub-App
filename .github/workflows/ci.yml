@@ -253,8 +253,8 @@ jobs:
         with:
           name: playwright-report
           path: |
-            **/playwright-report/
-            **/test-results/
+            dist/.playwright/**/test-output/
+            dist/.playwright/**/playwright-report/
           retention-days: 7
 
   ci-success:
