@@ -9,6 +9,7 @@ This directory contains all deployment-related documentation for the PokeHub app
 - **[Troubleshooting](./container-apps/troubleshooting.md)** - Common issues and solutions
 - **[Database Setup](./database.md)** - Database configuration guide
 - **[Deployment Status](./status.md)** - Current deployment status
+- **[DNS & Multi-Region Options](./dns-and-multi-region.md)** - Apex domain support and multi-region deployment strategies
 
 ## Architecture Overview
 
