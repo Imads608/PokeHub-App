@@ -40,7 +40,7 @@ jobs:
 
       - name: Login to Azure Container Registry
         run: |
-          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.AZURE_CONTAINER_REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+          az acr login --name pokehub
 
       - name: Verify image exists in ACR
         run: |
@@ -129,7 +129,7 @@ jobs:
 
       - name: Login to Azure Container Registry
         run: |
-          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.AZURE_CONTAINER_REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+          az acr login --name pokehub
 
       - name: Verify image exists in ACR
         run: |
