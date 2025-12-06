@@ -1,0 +1,57 @@
+properties:
+  environmentId: /subscriptions/fc24fb67-c494-48a0-b6af-3075eeb257fc/resourceGroups/pokehub_group/providers/Microsoft.App/managedEnvironments/pokehub-env
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 3000
+      transport: auto
+      allowInsecure: false
+    registries:
+      - server: pokehub.azurecr.io
+        username: pokehub
+        passwordSecretRef: acr-password
+    secrets:
+      - name: acr-password
+        value: REPLACE_WITH_ACR_PASSWORD
+      - name: nextauth-secret
+        value: REPLACE_WITH_NEXTAUTH_SECRET
+      - name: google-client-id
+        value: REPLACE_WITH_GOOGLE_CLIENT_ID
+      - name: google-client-secret
+        value: REPLACE_WITH_GOOGLE_CLIENT_SECRET
+      - name: azure-storage-account-key
+        value: REPLACE_WITH_AZURE_STORAGE_ACCOUNT_KEY
+  template:
+    containers:
+      - name: pokehub-app
+        image: pokehub.azurecr.io/pokehub-app:latest
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+        env:
+          - name: NODE_ENV
+            value: production
+          - name: NEXT_PUBLIC_POKEHUB_API_URL
+            value: https://api.pokehub.space/api
+          - name: POKEHUB_API_URL
+            value: https://api.pokehub.space/api
+          - name: API_URL
+            value: https://api.pokehub.space/api
+          - name: NEXT_API_URL
+            value: https://www.pokehub.space
+          - name: AZURE_STORAGE_ACCOUNT_NAME
+            value: pokehub
+          - name: NEXTAUTH_URL
+            value: https://www.pokehub.space
+          - name: AUTH_SECRET
+            secretRef: nextauth-secret
+          - name: AUTH_GOOGLE_ID
+            secretRef: google-client-id
+          - name: AUTH_GOOGLE_SECRET
+            secretRef: google-client-secret
+          - name: AZURE_STORAGE_ACCOUNT_KEY
+            secretRef: azure-storage-account-key
+    scale:
+      minReplicas: 1
+      maxReplicas: 3

@@ -1,0 +1,224 @@
+name: Deploy to Azure Container Apps
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v0.1.0 or latest)'
+        required: true
+        type: string
+        default: 'latest'
+      app:
+        description: 'Which app to deploy'
+        required: true
+        type: choice
+        options:
+          - both
+          - api
+          - app
+
+env:
+  AZURE_CONTAINER_REGISTRY: pokehub.azurecr.io
+  RESOURCE_GROUP: pokehub_group
+
+jobs:
+  deploy-api:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    if: inputs.app == 'both' || inputs.app == 'api'
+    environment:
+      name: production
+      url: https://api.pokehub.space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Verify image exists in ACR
+        run: |
+          echo "Checking if image exists: ${{ env.AZURE_CONTAINER_REGISTRY }}/pokehub-api:${{ inputs.version }}"
+          az acr repository show-tags \
+            --name pokehub \
+            --repository pokehub-api \
+            --query "[?@=='${{ inputs.version }}']" \
+            -o tsv | grep -q "${{ inputs.version }}" || {
+              echo "Error: Image tag '${{ inputs.version }}' not found in ACR"
+              exit 1
+            }
+          echo "Image verified!"
+
+      - name: Create .env file
+        working-directory: platform/container-apps
+        run: |
+          cat > .env << EOF
+          ACR_PASSWORD=${{ secrets.ACR_PASSWORD }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AZURE_STORAGE_ACCOUNT_KEY=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+          ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+          API_URL=https://api.pokehub.space/api
+          APP_URL=https://www.pokehub.space
+          EOF
+
+      - name: Update image tag in YAML
+        working-directory: platform/container-apps
+        run: |
+          sed -i "s|image: pokehub.azurecr.io/pokehub-api:.*|image: pokehub.azurecr.io/pokehub-api:${{ inputs.version }}|g" pokehub-api.yaml
+          echo "Updated pokehub-api.yaml to use image tag: ${{ inputs.version }}"
+
+      - name: Deploy pokehub-api
+        working-directory: platform/container-apps
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh pokehub-api
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+
+          STATUS=$(az containerapp show \
+            --name pokehub-api \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.runningStatus" \
+            -o tsv)
+
+          echo "Container app status: $STATUS"
+
+          if [[ "$STATUS" != "Running" ]]; then
+            echo "Warning: Container app is not in Running state"
+            echo "Checking logs..."
+            az containerapp logs show \
+              --name pokehub-api \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --tail 50
+          fi
+
+      - name: Cleanup
+        if: always()
+        working-directory: platform/container-apps
+        run: rm -f .env
+
+  deploy-app:
+    name: Deploy App
+    runs-on: ubuntu-latest
+    needs: deploy-api
+    if: always() && (inputs.app == 'both' || inputs.app == 'app') && (needs.deploy-api.result == 'success' || needs.deploy-api.result == 'skipped')
+    environment:
+      name: production
+      url: https://www.pokehub.space
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Verify image exists in ACR
+        run: |
+          echo "Checking if image exists: ${{ env.AZURE_CONTAINER_REGISTRY }}/pokehub-app:${{ inputs.version }}"
+          az acr repository show-tags \
+            --name pokehub \
+            --repository pokehub-app \
+            --query "[?@=='${{ inputs.version }}']" \
+            -o tsv | grep -q "${{ inputs.version }}" || {
+              echo "Error: Image tag '${{ inputs.version }}' not found in ACR"
+              exit 1
+            }
+          echo "Image verified!"
+
+      - name: Create .env file
+        working-directory: platform/container-apps
+        run: |
+          cat > .env << EOF
+          ACR_PASSWORD=${{ secrets.ACR_PASSWORD }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AZURE_STORAGE_ACCOUNT_KEY=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+          ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+          API_URL=https://api.pokehub.space/api
+          APP_URL=https://www.pokehub.space
+          EOF
+
+      - name: Update image tag in YAML
+        working-directory: platform/container-apps
+        run: |
+          sed -i "s|image: pokehub.azurecr.io/pokehub-app:.*|image: pokehub.azurecr.io/pokehub-app:${{ inputs.version }}|g" pokehub-app.yaml
+          echo "Updated pokehub-app.yaml to use image tag: ${{ inputs.version }}"
+
+      - name: Deploy pokehub-app
+        working-directory: platform/container-apps
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh pokehub-app
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+
+          STATUS=$(az containerapp show \
+            --name pokehub-app \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.runningStatus" \
+            -o tsv)
+
+          echo "Container app status: $STATUS"
+
+          if [[ "$STATUS" != "Running" ]]; then
+            echo "Warning: Container app is not in Running state"
+            echo "Checking logs..."
+            az containerapp logs show \
+              --name pokehub-app \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --tail 50
+          fi
+
+      - name: Cleanup
+        if: always()
+        working-directory: platform/container-apps
+        run: rm -f .env
+
+  deployment-summary:
+    name: Deployment Summary
+    needs: [deploy-api, deploy-app]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ inputs.app }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "| App | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| pokehub-api | ${{ needs.deploy-api.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| pokehub-app | ${{ needs.deploy-app.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **API:** https://api.pokehub.space" >> $GITHUB_STEP_SUMMARY
+          echo "- **App:** https://www.pokehub.space" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check deployment status
+        run: |
+          if [[ "${{ needs.deploy-api.result }}" == "failure" ]] || \
+             [[ "${{ needs.deploy-app.result }}" == "failure" ]]; then
+            echo "One or more deployments failed!"
+            exit 1
+          fi
+          echo "All deployments completed successfully!"

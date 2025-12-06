@@ -2,7 +2,8 @@
   "name": "@pokehub/nest-custom-plugin",
   "version": "0.0.1",
   "dependencies": {
-    "@nx/devkit": "19.7.3",
+    "@nx/devkit": "22.0.2",
+    "@nx/nest": "22.0.2",
     "tslib": "^2.3.0"
   },
   "type": "commonjs",

@@ -111,6 +111,13 @@ export const ClientRouteGuard = ({
         } else {
           redirectToDefaultPrivilegedPage(authData.user.accountRole);
         }
+      } else if (
+        authData?.user &&
+        isPrivateRoute(routeType) &&
+        !authData.user.username &&
+        url !== '/create-profile'
+      ) {
+        router.push('/create-profile');
       } else {
         setAuthorized(true);
       }

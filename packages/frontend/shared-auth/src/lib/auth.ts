@@ -12,6 +12,7 @@ import Google from 'next-auth/providers/google';
 const logger = getLogger('Authjs');
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [Google],
   callbacks: {
     async jwt({ token, account, /*profile,*/ trigger, session }) {

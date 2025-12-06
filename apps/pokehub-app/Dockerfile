@@ -1,28 +1,43 @@
-ARG TAG=dev
+# Build stage
+FROM node:20-alpine AS builder
 
-FROM pokehub.azurecr.io/pokehub-base:${TAG} as app-base
+WORKDIR /app
 
-# NOTE: the environments from this dockerfile are being used by the app over
-# environment variables
+# Copy package files
+COPY package.json package-lock.json ./
+COPY nx.json tsconfig.base.json ./
 
-FROM app-base AS app-build
+# Copy config files needed for lint, test, and build
+COPY .eslintrc.json jest.preset.js jest.config.ts tailwind.config.js ./
 
+# Copy all source code
+COPY apps ./apps
+COPY packages ./packages
+
+# Install dependencies
+RUN npm install
+
+# Build arguments for Next.js
 ARG NEXT_PUBLIC_POKEHUB_API_URL
 ENV NEXT_PUBLIC_POKEHUB_API_URL=${NEXT_PUBLIC_POKEHUB_API_URL}
 ENV POKEHUB_API_URL=${NEXT_PUBLIC_POKEHUB_API_URL}
-# ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-# ENV GOOGLE_TAG_ID=${GOOGLE_TAG_ID}
 
-WORKDIR /app/base
-COPY . ./apps/pokehub-app
+# Build the app
+RUN npx nx build pokehub-app --configuration=production
 
-RUN npx nx build pokehub-app --configuration=production 
+# Runtime stage
+FROM node:20-alpine AS runtime
 
-FROM node:alpine as app-runtime
-WORKDIR /app/pokehub
-COPY --from=app-build /app/base/dist/apps/pokehub-app .
-RUN npm install --only=production
+WORKDIR /app
 
-#CMD ["sh"]
-#CMD ["node", ".next/server"]
-CMD ["npx", "next", "start"]
+# Copy standalone output (minimal dependencies traced by Next.js)
+COPY --from=builder /app/dist/apps/pokehub-app/.next/standalone ./
+
+# Copy static files to where Next.js expects them in the standalone structure
+COPY --from=builder /app/dist/apps/pokehub-app/.next/static ./dist/apps/pokehub-app/.next/static
+COPY --from=builder /app/dist/apps/pokehub-app/public ./apps/pokehub-app/public
+
+EXPOSE 3000
+
+# Start the standalone server
+CMD ["node", "apps/pokehub-app/server.js"]

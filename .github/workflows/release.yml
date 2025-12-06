@@ -1,0 +1,180 @@
+name: Release & Build Images
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  AZURE_CONTAINER_REGISTRY: pokehub.azurecr.io
+  NX_NO_CLOUD: true
+
+jobs:
+  ci-checks:
+    name: CI Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint all projects
+        run: npx nx run-many -t lint --parallel=3
+
+      - name: Test all projects
+        run: npx nx run-many -t test --parallel=3 --configuration=ci
+
+      - name: Build all projects
+        run: npx nx run-many -t build --parallel=2 --configuration=production
+
+  build-and-push:
+    name: Build & Push ${{ matrix.app.name }}
+    needs: ci-checks
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - name: pokehub-api
+            dockerfile: apps/pokehub-api/Dockerfile
+            build-args: ''
+          - name: pokehub-app
+            dockerfile: apps/pokehub-app/Dockerfile
+            build-args: 'NEXT_PUBLIC_POKEHUB_API_URL=https://api.pokehub.space/api'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.AZURE_CONTAINER_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push ${{ matrix.app.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.app.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ matrix.app.name }}:${{ steps.version.outputs.version }}
+            ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ matrix.app.name }}:latest
+          build-args: ${{ matrix.app.build-args }}
+          cache-from: type=registry,ref=${{ env.AZURE_CONTAINER_REGISTRY }}/${{ matrix.app.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.AZURE_CONTAINER_REGISTRY }}/${{ matrix.app.name }}:buildcache,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Generating changelog from $PREVIOUS_TAG to ${{ steps.version.outputs.version }}"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
+          else
+            echo "No previous tag found, using recent commits"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" -20)
+          fi
+
+          # Write changelog to file for multi-line output
+          echo "$CHANGELOG" > changelog.txt
+          echo "Generated changelog"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-summary:
+    name: Release Summary
+    needs: [build-and-push, create-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.AZURE_CONTAINER_REGISTRY }}/pokehub-api:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.AZURE_CONTAINER_REGISTRY }}/pokehub-app:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to **Actions** → **Deploy to Azure Container Apps**" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click **Run workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "3. Enter version: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Select apps to deploy" >> $GITHUB_STEP_SUMMARY
+          echo "5. Approve the production deployment" >> $GITHUB_STEP_SUMMARY
