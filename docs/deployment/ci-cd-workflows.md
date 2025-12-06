@@ -84,6 +84,69 @@ Manually triggered to deploy to production.
 | `AZURE_CREDENTIALS` | Azure service principal credentials (JSON) for deployment |
 | `AZURE_RESOURCE_GROUP` | Azure resource group containing the Container Apps |
 
+### Setting up AZURE_CREDENTIALS
+
+The `AZURE_CREDENTIALS` secret requires a service principal with appropriate permissions. Follow these steps to create it:
+
+#### 1. Create a Service Principal
+
+```bash
+# Create a service principal with contributor access to your resource group
+az ad sp create-for-rbac \
+  --name "github-actions-pokehub" \
+  --role contributor \
+  --scopes /subscriptions/{subscription-id}/resourceGroups/pokehub_group \
+  --sdk-auth
+```
+
+This command outputs a JSON object that you'll use for the `AZURE_CREDENTIALS` secret:
+
+```json
+{
+  "clientId": "...",
+  "clientSecret": "...",
+  "subscriptionId": "...",
+  "tenantId": "..."
+}
+```
+
+#### 2. Grant Azure Container Registry Access
+
+The service principal needs access to the Azure Container Registry to use `az acr login` and `az acr repository` commands.
+
+**Via Azure Portal:**
+1. Navigate to your Azure Container Registry (`pokehub`)
+2. Go to **Access control (IAM)**
+3. Click **+ Add** → **Add role assignment**
+4. Select the **AcrPull** role (or **AcrPush** if you need push access)
+5. Click **Next**
+6. Select **User, group, or service principal**
+7. Click **+ Select members**
+8. Search for **"github-actions-pokehub"** and select your service principal
+9. Click **Select** → **Review + assign**
+
+**Via Azure CLI:**
+```bash
+# Get the ACR resource ID
+ACR_ID=$(az acr show --name pokehub --query id --output tsv)
+
+# Grant AcrPull role (read access)
+az role assignment create \
+  --assignee-object-id $(az ad sp list --display-name "github-actions-pokehub" --query "[0].id" -o tsv) \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPull \
+  --scope $ACR_ID
+```
+
+#### 3. Add to GitHub Secrets
+
+Copy the entire JSON output from step 1 and add it as the `AZURE_CREDENTIALS` secret in your GitHub repository:
+1. Go to **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `AZURE_CREDENTIALS`
+4. Value: Paste the entire JSON object
+5. Click **Add secret**
+
 ## GitHub Environment
 
 Create a `production` environment in repository settings with:
