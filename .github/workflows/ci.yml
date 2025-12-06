@@ -213,6 +213,9 @@ jobs:
       DB_NAME: pokehub_test
       AUTH_SECRET: ci-test-secret-not-for-production
       NEXTAUTH_SECRET: ci-test-secret-not-for-production
+      AUTH_TRUST_HOST: true
+      NEXT_PUBLIC_POKEHUB_API_URL: http://localhost:3000/api
+      POKEHUB_API_URL: http://localhost:3000/api
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -252,9 +255,7 @@ jobs:
         if: failure()
         with:
           name: playwright-report
-          path: |
-            dist/.playwright/**/test-output/
-            dist/.playwright/**/playwright-report/
+          path: dist/.playwright/
           retention-days: 7
 
   ci-success:
