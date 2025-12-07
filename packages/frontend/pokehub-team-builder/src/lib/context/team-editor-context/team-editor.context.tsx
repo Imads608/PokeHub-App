@@ -16,7 +16,7 @@ export const TeamEditorContext = createContext<
   TeamEditorContextModel<'ReadWrite'>
 >({
   teamName: {
-    value: undefined,
+    value: '',
     setValue: () => {
       // Function needs to be set
     },

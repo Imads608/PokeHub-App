@@ -4,7 +4,7 @@
 
 The Team Builder feature allows users to create and customize competitive Pokemon teams. It provides an intuitive interface for configuring Pokemon stats, moves, abilities, items, and other battle-relevant attributes.
 
-**Status**: In Development (Core editing complete, validation implemented, team analysis implemented, persistence pending)
+**Status**: In Development (Core editing complete, validation implemented, team analysis implemented, backend persistence implemented - frontend integration pending)
 
 ## Architecture
 

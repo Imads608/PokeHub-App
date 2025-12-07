@@ -5,7 +5,6 @@ export default async function TeamBuilderLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // await for 5 seconds to simulate a server-side delay
   await handleServerAuth();
 
   return <>{children}</>;

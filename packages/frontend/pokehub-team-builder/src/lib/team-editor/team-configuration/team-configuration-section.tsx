@@ -1,6 +1,7 @@
 import { useTeamEditorContext } from '../../context/team-editor-context/team-editor.context';
 import { useTeamValidationContext } from '../../context/team-validation-context/team-validation.context';
 import { useTeamChanges } from '../../hooks/useTeamChanges';
+import { useSaveTeam } from '../../hooks/useTeams';
 import { FormatSelector } from './format-selector';
 import type { GenerationNum } from '@pkmn/dex';
 import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
@@ -32,6 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@pokehub/frontend/shared-ui-components';
+import type { CreateTeamDTO } from '@pokehub/shared/pokemon-types';
 import {
   AlertTriangle,
   BarChart3,
@@ -113,7 +115,6 @@ export const TeamConfigurationSection = ({
     useState(false);
   const [pendingGeneration, setPendingGeneration] =
     useState<GenerationNum | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   // Change tracking
   const { hasChanges, markAsSaved } = useTeamChanges({
@@ -123,10 +124,19 @@ export const TeamConfigurationSection = ({
     pokemon: teamPokemon.value,
   });
 
+  // Save team hook - assuming we'll get teamId from context in the future
+  const { saveTeam, isPending: isSaving } = useSaveTeam(undefined);
+
   // Get Pokemon names for validation summary
   const pokemonNames = useMemo(() => {
     return teamPokemon.value.map((p) => p.species);
   }, [teamPokemon.value]);
+
+  // Get team name validation errors
+  const teamNameError = useMemo(() => {
+    const errors = validation.getTeamErrors();
+    return errors.find((err) => err.field === 'name')?.message;
+  }, [validation]);
 
   const handleGenerationChange = useCallback(
     (newGeneration: string) => {
@@ -182,11 +192,17 @@ export const TeamConfigurationSection = ({
       return;
     }
 
-    setIsSaving(true);
     try {
-      // TODO: Implement actual save to backend
-      // For now, just simulate save
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Prepare team data for save
+      const teamData: CreateTeamDTO = {
+        name: teamName.value,
+        generation: generation.value,
+        format: format.value,
+        pokemon: teamPokemon.value,
+      };
+
+      // Save team using the hook
+      await saveTeam(teamData);
 
       // Mark as saved
       markAsSaved();
@@ -198,12 +214,20 @@ export const TeamConfigurationSection = ({
     } catch (error) {
       console.error('Error saving team:', error);
       toast.error('Failed to save team', {
-        description: 'Please try again',
+        description:
+          error instanceof Error ? error.message : 'Please try again',
       });
-    } finally {
-      setIsSaving(false);
     }
-  }, [validation.isReady, validation.isTeamValid, teamName.value, markAsSaved]);
+  }, [
+    validation.isReady,
+    validation.isTeamValid,
+    teamName.value,
+    generation.value,
+    format.value,
+    teamPokemon.value,
+    saveTeam,
+    markAsSaved,
+  ]);
 
   // Determine button state
   const canSave =
@@ -280,8 +304,17 @@ export const TeamConfigurationSection = ({
                   value={teamName.value}
                   onChange={(e) => teamName.setValue(e.target.value)}
                   maxLength={50}
-                  className="mt-1"
+                  className={`mt-1 ${
+                    teamNameError
+                      ? 'border-destructive focus-visible:ring-destructive'
+                      : ''
+                  }`}
                 />
+                {teamNameError && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {teamNameError}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="generation">Generation</Label>

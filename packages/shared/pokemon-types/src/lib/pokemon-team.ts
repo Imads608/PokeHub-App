@@ -1,4 +1,8 @@
 import type {
+  PokemonInTeamSchema,
+  PokemonTeamSchema,
+} from './pokemon-team.validation';
+import type {
   SpeciesName,
   ItemName,
   AbilityName,
@@ -9,7 +13,7 @@ import type {
   GenderName,
 } from '@pkmn/dex';
 
-export interface PokemonInTeam extends PokemonSet {
+export interface PokemonInTeam extends PokemonSet, PokemonInTeamSchema {
   species: SpeciesName;
   item: ItemName;
   ability: AbilityName;
@@ -18,7 +22,10 @@ export interface PokemonInTeam extends PokemonSet {
   moves: MoveName[];
 }
 
-export interface PokemonTeam {
+export interface PokemonTeam extends PokemonTeamSchema {
+  id?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   name: string;
   pokemon: PokemonInTeam[];
   generation: GenerationNum;

@@ -8,10 +8,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 
-// TODO: These tests need to be rewritten for the new FormatSelector component
-// which uses a searchable combobox with format categories instead of separate
-// Format and Tier dropdowns.
-
 // Mock toast
 jest.mock('sonner', () => ({
   toast: {
@@ -75,6 +71,25 @@ jest.mock('../../hooks/useTeamChanges', () => ({
   useTeamChanges: () => ({
     hasChanges: mockHasChanges(),
     markAsSaved: mockMarkAsSaved,
+  }),
+}));
+
+// Mock useTeams (for save functionality)
+const mockSaveTeam = jest.fn(() => Promise.resolve({ id: 'test-id' }));
+const mockUseSaveTeamState = {
+  isPending: false,
+};
+
+jest.mock('../../hooks/useTeams', () => ({
+  useSaveTeam: () => ({
+    saveTeam: mockSaveTeam,
+    get isPending() {
+      return mockUseSaveTeamState.isPending;
+    },
+    isError: false,
+    error: null,
+    isSuccess: false,
+    reset: jest.fn(),
   }),
 }));
 
@@ -267,20 +282,6 @@ describe('TeamConfigurationSection', () => {
 
       expect(screen.getByTestId('validation-summary')).toBeInTheDocument();
     });
-
-    it.skip('should render format description', () => {
-      // TODO: Update for new FormatSelector component
-      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
-
-      expect(screen.getByText(/Standard 1v1 battles/i)).toBeInTheDocument();
-    });
-
-    it.skip('should render tier description', () => {
-      // TODO: Tier selector no longer exists - remove this test
-      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
-
-      expect(screen.getByText('The main competitive tier')).toBeInTheDocument();
-    });
   });
 
   describe('Team Name Input', () => {
@@ -399,64 +400,30 @@ describe('TeamConfigurationSection', () => {
     });
   });
 
-  describe.skip('Format Selector', () => {
-    // TODO: Rewrite these tests for the new FormatSelector component
-    // The new component uses a searchable combobox with categories instead of
-    // separate Format and Tier dropdowns
-    it('should display current format', () => {
+  describe('Format Selector', () => {
+    it('should display format selector', () => {
       renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
+      // The mocked FormatSelector is a simple select element
       const formatSelect = screen.getByLabelText('Format');
-      expect(formatSelect).toHaveTextContent('Singles');
+      expect(formatSelect).toBeInTheDocument();
     });
 
-    it('should change format to Doubles', async () => {
+    it('should call onValueChange when format changes', async () => {
       const user = userEvent.setup();
       renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
       const select = screen.getByLabelText('Format');
-      await user.click(select);
+      await user.selectOptions(select, 'uu');
 
-      const doublesOption = screen.getByRole('option', { name: 'Doubles' });
-      await user.click(doublesOption);
-
-      expect(mockSetFormat).toHaveBeenCalledWith('Doubles');
+      expect(mockSetFormat).toHaveBeenCalledWith('uu');
     });
 
-    it('should call handlers when format changes', async () => {
-      const user = userEvent.setup();
+    it('should display current format value', () => {
       renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
-      const select = screen.getByLabelText('Format');
-      await user.click(select);
-
-      const doublesOption = screen.getByRole('option', { name: 'Doubles' });
-      await user.click(doublesOption);
-
-      expect(mockSetFormat).toHaveBeenCalledWith('Doubles');
-    });
-  });
-
-  describe.skip('Tier Selector', () => {
-    // TODO: Remove these tests - Tier selector no longer exists
-    it('should display current tier', () => {
-      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
-
-      const tierSelect = screen.getByLabelText('Tier');
-      expect(tierSelect).toHaveTextContent('OverUsed');
-    });
-
-    it('should change tier', async () => {
-      const user = userEvent.setup();
-      renderWithClient(<TeamConfigurationSection {...defaultProps} />);
-
-      const select = screen.getByLabelText('Tier');
-      await user.click(select);
-
-      const uuOption = screen.getByRole('option', { name: 'UnderUsed' });
-      await user.click(uuOption);
-
-      expect(mockSetFormat).toHaveBeenCalled();
+      const select = screen.getByLabelText('Format') as HTMLSelectElement;
+      expect(select.value).toBe('ou');
     });
   });
 
@@ -497,16 +464,22 @@ describe('TeamConfigurationSection', () => {
     });
 
     it('should show saving state', async () => {
-      const user = userEvent.setup();
       mockHasChanges.mockReturnValue(true);
+
+      // Set isPending to true to simulate the saving state
+      mockUseSaveTeamState.isPending = true;
+
       renderWithClient(<TeamConfigurationSection {...defaultProps} />);
 
-      const saveButton = screen.getByRole('button', { name: /save team/i });
-      await user.click(saveButton);
+      // Should show "Saving..." text when isPending is true
+      expect(screen.getByText(/saving.../i)).toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(screen.getByText(/saving.../i)).toBeInTheDocument();
-      });
+      // Save button should be disabled while saving
+      const saveButton = screen.getByRole('button', { name: /saving.../i });
+      expect(saveButton).toBeDisabled();
+
+      // Reset state
+      mockUseSaveTeamState.isPending = false;
     });
 
     it('should call markAsSaved and show success toast on save', async () => {
