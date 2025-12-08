@@ -510,13 +510,32 @@ type PokemonInTeam = {
 
 ---
 
-## Next Phase: Frontend Integration
+## Frontend Integration ✅
 
-- [ ] Create API client functions for teams endpoints
-- [ ] Create TanStack Query hooks (`useSaveTeam`, `useLoadTeams`, `useUpdateTeam`, `useDeleteTeam`)
-- [ ] Connect Team Builder Save button to `useSaveTeam` hook
-- [ ] Add team loading UI (list user's saved teams)
-- [ ] Handle loading/error states
+- [x] Create API client functions for teams endpoints (`teams-api.ts`)
+- [x] Create TanStack Query hooks (`useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`, `useSaveTeam`)
+- [x] Connect Team Builder Save button to `useSaveTeam` hook
+- [x] Add team loading UI (server-side fetch in RSC)
+- [x] Extended `PokemonTeam` type with optional `id`, `createdAt`, `updatedAt` fields
+
+### Frontend Files
+
+| File | Purpose |
+|------|---------|
+| `pokehub-team-builder/src/lib/api/teams-api.ts` | API client functions with `withAuthRetry` support |
+| `pokehub-team-builder/src/lib/hooks/useTeams.ts` | TanStack Query mutation hooks |
+| `pokehub-team-builder/src/server.ts` | Server exports (`getUserTeams`, `getTeamById`) for RSC |
+
+### Auth Pattern
+
+Hooks use `useAuthSession()` internally to get access token and `withAuthRetry()` for automatic token refresh on 401:
+
+```typescript
+const { data: session } = useAuthSession();
+const response = await withAuthRetry(accessToken, (token) =>
+  createTeamRequest(token, data)
+);
+```
 
 ## Future Enhancements
 

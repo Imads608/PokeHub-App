@@ -45,6 +45,9 @@ export const TeamEditorContext = createContext<
       // Function needs to be set
     },
   },
+  teamId: {
+    value: undefined,
+  },
   showdownFormatId: 'gen9ou',
 });
 

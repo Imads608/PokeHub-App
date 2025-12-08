@@ -44,6 +44,7 @@ import {
   Shield,
   Upload,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { lazy, Suspense } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -106,10 +107,17 @@ const FormatRulesDisplayFallback = () => (
 export const TeamConfigurationSection = ({
   onOpenTeamAnalysis,
 }: TeamConfigurationSectionProps = {}) => {
-  const { teamName, generation, format, teamPokemon, showdownFormatId } =
-    useTeamEditorContext();
+  const {
+    teamName,
+    teamId,
+    generation,
+    format,
+    teamPokemon,
+    showdownFormatId,
+  } = useTeamEditorContext();
 
   const validation = useTeamValidationContext();
+  const router = useRouter();
 
   const [showGenerationChangeDialog, setShowGenerationChangeDialog] =
     useState(false);
@@ -124,8 +132,8 @@ export const TeamConfigurationSection = ({
     pokemon: teamPokemon.value,
   });
 
-  // Save team hook - assuming we'll get teamId from context in the future
-  const { saveTeam, isPending: isSaving } = useSaveTeam(undefined);
+  // Save team hook
+  const { saveTeam, isPending: isSaving } = useSaveTeam(teamId.value);
 
   // Get Pokemon names for validation summary
   const pokemonNames = useMemo(() => {
@@ -211,6 +219,8 @@ export const TeamConfigurationSection = ({
       toast.success('Team saved successfully!', {
         description: teamName.value || 'Unnamed Team',
       });
+
+      !teamId.value && router.push('/team-builder'); // Redirect if new team
     } catch (error) {
       console.error('Error saving team:', error);
       toast.error('Failed to save team', {
@@ -227,6 +237,8 @@ export const TeamConfigurationSection = ({
     teamPokemon.value,
     saveTeam,
     markAsSaved,
+    teamId,
+    router,
   ]);
 
   // Determine button state

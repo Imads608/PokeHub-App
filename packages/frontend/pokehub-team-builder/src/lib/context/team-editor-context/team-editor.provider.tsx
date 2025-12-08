@@ -38,6 +38,7 @@ export const TeamEditorProvider = ({
   return (
     <TeamEditorContext.Provider
       value={{
+        teamId: { value: team?.id },
         format: {
           value: selectedFormat,
           setValue: setSelectedFormat,

@@ -12,7 +12,7 @@ import {
   Param,
   Post,
   Put,
-  UsePipes,
+  UseGuards,
 } from '@nestjs/common';
 import {
   TokenAuth,
@@ -20,7 +20,6 @@ import {
   User,
   type UserJwtData,
 } from '@pokehub/backend/shared-auth-utils';
-import { UseGuards } from '@nestjs/common';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import {
   CreateTeamDTOSchema,
@@ -42,13 +41,10 @@ export class TeamsController {
   @Post()
   @UseGuards(TokenAuthGuard)
   @TokenAuth('ACCESS_TOKEN')
-  @UsePipes(
-    new ZodValidationPipe(CreateTeamDTOSchema),
-    new ShowdownTeamValidationPipe()
-  )
   async createTeam(
     @User() user: UserJwtData,
-    @Body() data: CreateTeamDTO
+    @Body(new ZodValidationPipe(CreateTeamDTOSchema), ShowdownTeamValidationPipe)
+    data: CreateTeamDTO
   ): Promise<TeamResponseDTO> {
     this.logger.log(`createTeam: Creating team for user ${user.id}`);
     return this.teamsService.createTeam(user.id, data);
@@ -76,14 +72,11 @@ export class TeamsController {
   @Put(':id')
   @UseGuards(TokenAuthGuard)
   @TokenAuth('ACCESS_TOKEN')
-  @UsePipes(
-    new ZodValidationPipe(UpdateTeamDTOSchema),
-    new ShowdownTeamValidationPipe()
-  )
   async updateTeam(
     @User() user: UserJwtData,
     @Param('id') teamId: string,
-    @Body() data: UpdateTeamDTO
+    @Body(new ZodValidationPipe(UpdateTeamDTOSchema), ShowdownTeamValidationPipe)
+    data: UpdateTeamDTO
   ): Promise<TeamResponseDTO> {
     this.logger.log(`updateTeam: Updating team ${teamId} for user ${user.id}`);
     return this.teamsService.updateTeam(teamId, user.id, data);
