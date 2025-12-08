@@ -8,6 +8,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 
+// Mock Next.js router
+const mockPush = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/team-builder',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 // Mock toast
 jest.mock('sonner', () => ({
   toast: {
@@ -36,11 +51,13 @@ jest.mock('../../context/team-editor-context/team-editor.context', () => ({
     teamName: { value: 'My Team', setValue: mockSetTeamName },
     generation: { value: 9 as GenerationNum, setValue: mockSetGeneration },
     format: { value: 'ou', setValue: mockSetFormat },
+    teamId: { value: undefined },
     teamPokemon: {
       value: [],
       hasAnyPokemon: mockHasAnyPokemon,
       clearTeam: mockClearTeam,
     },
+    showdownFormatId: 'gen9ou',
   }),
 }));
 
@@ -91,24 +108,6 @@ jest.mock('../../hooks/useTeams', () => ({
     isSuccess: false,
     reset: jest.fn(),
   }),
-}));
-
-// Mock useTiersStaticData
-jest.mock('../../hooks/useTiersStaticData', () => ({
-  useTiersStaticData: jest.fn(() => ({
-    singlesTiers: [
-      { id: 'OU', name: 'OverUsed', description: 'The main competitive tier' },
-      { id: 'UU', name: 'UnderUsed', description: 'Second tier' },
-    ],
-    doublesTiers: [
-      { id: 'DOU', name: 'Doubles OverUsed', description: 'Doubles main tier' },
-      {
-        id: 'DUU',
-        name: 'Doubles UnderUsed',
-        description: 'Doubles second tier',
-      },
-    ],
-  })),
 }));
 
 // Mock useFormats hook
