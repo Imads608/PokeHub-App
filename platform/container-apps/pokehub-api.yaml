@@ -14,6 +14,14 @@ properties:
     secrets:
       - name: acr-password
         value: REPLACE_WITH_ACR_PASSWORD
+      - name: db-host
+        value: REPLACE_WITH_DB_HOST
+      - name: db-port
+        value: REPLACE_WITH_DB_PORT
+      - name: db-name
+        value: REPLACE_WITH_DB_NAME
+      - name: db-user
+        value: REPLACE_WITH_DB_USER
       - name: db-password
         value: REPLACE_WITH_DB_PASSWORD
       - name: google-client-id
@@ -33,13 +41,13 @@ properties:
           - name: NODE_ENV
             value: production
           - name: DB_HOST
-            value: aws-1-us-east-1.pooler.supabase.com
+            secretRef: db-host
           - name: DB_PORT
-            value: '5432'
+            secretRef: db-port
           - name: DB_NAME
-            value: postgres
+            secretRef: db-name
           - name: DB_USER
-            value: postgres.wxrhnixjscveeamupgam
+            secretRef: db-user
           - name: DB_PASS
             secretRef: db-password
           - name: PORT
