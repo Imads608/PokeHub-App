@@ -10,7 +10,7 @@ export default {
   coverageDirectory: '../../../coverage/packages/frontend/pokehub-nav-components',
   setupFilesAfterEnv: ['<rootDir>/src/jest.setup.ts'],
   transformIgnorePatterns: [
-    'node_modules/(?!(next-auth|@auth/core)/)',
+    'node_modules/(?!(next-auth|@auth/core|jose)/)',
   ],
   moduleNameMapper: {
     '^next-auth$': '<rootDir>/src/__mocks__/next-auth.ts',
