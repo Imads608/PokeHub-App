@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"email" text NOT NULL,
 	"accountRole" "account_role" DEFAULT 'USER' NOT NULL,
 	"accountType" "account_type" NOT NULL,
-	"avatarPath)" text,
+	"avatarPath" text,
 	CONSTRAINT "users_username_unique" UNIQUE("username"),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
