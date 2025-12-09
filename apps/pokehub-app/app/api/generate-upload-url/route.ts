@@ -39,7 +39,7 @@ function getAzureClients() {
 export async function POST(req: NextRequest) {
   try {
     const { sharedKeyCredential, blobServiceClient } = getAzureClients();
-    logger.info('Generating upload url: ', blobServiceClient.url);
+    logger.info(`Generating upload url: ${blobServiceClient.url} `);
 
     const session = await auth();
     if (!session?.accessToken || !session?.user) {

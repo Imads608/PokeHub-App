@@ -6,7 +6,10 @@ const useSSL = process.env.DB_SSL === 'true';
 
 export default defineConfig({
   out: './drizzle',
-  schema: ['packages/backend/pokehub-users-db/src/lib/schema'],
+  schema: [
+    'packages/backend/pokehub-users-db/src/lib/schema',
+    'packages/backend/pokehub-teams-db/src/lib/schema',
+  ],
   dialect: 'postgresql',
   dbCredentials: {
     ssl: useSSL ? { rejectUnauthorized: false } : false,

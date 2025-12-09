@@ -22,10 +22,41 @@ env:
   RESOURCE_GROUP: pokehub_group
 
 jobs:
+  run-migrations:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    if: inputs.app == 'both' || inputs.app == 'api'
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Drizzle migrations
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_SSL: 'true'
+        run: |
+          npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs migrate --config=drizzle.config.pg.ts
+
   deploy-api:
     name: Deploy API
     runs-on: ubuntu-latest
-    if: inputs.app == 'both' || inputs.app == 'api'
+    needs: run-migrations
+    if: always() && (inputs.app == 'both' || inputs.app == 'api') && (needs.run-migrations.result == 'success')
     environment:
       name: production
       url: https://api.pokehub.space
@@ -201,7 +232,7 @@ jobs:
 
   deployment-summary:
     name: Deployment Summary
-    needs: [deploy-api, deploy-app]
+    needs: [run-migrations, deploy-api, deploy-app]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -213,8 +244,9 @@ jobs:
           echo "**Target:** ${{ inputs.app }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Results" >> $GITHUB_STEP_SUMMARY
-          echo "| App | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Database Migrations | ${{ needs.run-migrations.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| pokehub-api | ${{ needs.deploy-api.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| pokehub-app | ${{ needs.deploy-app.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -224,7 +256,8 @@ jobs:
 
       - name: Check deployment status
         run: |
-          if [[ "${{ needs.deploy-api.result }}" == "failure" ]] || \
+          if [[ "${{ needs.run-migrations.result }}" == "failure" ]] || \
+             [[ "${{ needs.deploy-api.result }}" == "failure" ]] || \
              [[ "${{ needs.deploy-app.result }}" == "failure" ]]; then
             echo "One or more deployments failed!"
             exit 1

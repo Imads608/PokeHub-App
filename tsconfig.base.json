@@ -140,6 +140,12 @@
       ],
       "@pokehub/shared/pokemon-showdown-validation": [
         "packages/shared/pokemon-showdown-validation/src/index.ts"
+      ],
+      "@pokehub/backend/pokehub-teams-db": [
+        "packages/backend/pokehub-teams-db/src/index.ts"
+      ],
+      "@pokehub/backend-pokehub-teams-db": [
+        "packages/backend/pokehub-teams-db/src/index.ts"
       ]
     }
   },

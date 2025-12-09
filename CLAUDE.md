@@ -30,8 +30,13 @@ PokeHub is a Next.js Pokemon application built with an Nx monorepo architecture.
 - `nx run-many -t lint` - Lint all projects
 
 ### Database
-- `npx drizzle-kit push` - Push database schema changes
-- `npx drizzle-kit generate` - Generate migrations
+- `npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs generate --config=drizzle.config.pg.ts` - Generate migrations
+- `npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs push --config=drizzle.config.pg.ts` - Push schema changes to database
+
+**Note:** We use `tsx` with `--tsconfig tsconfig.base.json` instead of `npx drizzle-kit` directly because:
+- Drizzle-kit doesn't resolve TypeScript path aliases (e.g., `@pokehub/backend/pokehub-users-db`) by default ([GitHub issue #1228](https://github.com/drizzle-team/drizzle-orm/issues/1228))
+- `tsx` respects tsconfig paths, allowing schemas to import from other packages using aliases
+- `bin.cjs` is the drizzle-kit CLI entry point that we invoke directly to use tsx as the runtime
 
 ## Architecture
 

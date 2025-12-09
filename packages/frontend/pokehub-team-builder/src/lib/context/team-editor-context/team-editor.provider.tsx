@@ -2,10 +2,7 @@
 
 import { TeamEditorContext } from './team-editor.context';
 import type { GenerationNum } from '@pkmn/dex';
-import type {
-  PokemonInTeam,
-  PokemonTeam,
-} from '@pokehub/shared/pokemon-types';
+import type { PokemonInTeam, PokemonTeam } from '@pokehub/shared/pokemon-types';
 import { useMemo, useState } from 'react';
 
 export interface TeamEditorProviderProps {
@@ -18,7 +15,7 @@ export const TeamEditorProvider = ({
   children,
 }: TeamEditorProviderProps) => {
   // State for team configuration
-  const [teamName, setTeamName] = useState(team?.name);
+  const [teamName, setTeamName] = useState(team?.name || '');
   const [selectedGeneration, setSelectedGeneration] = useState<GenerationNum>(
     team?.generation || 9
   );
@@ -41,6 +38,7 @@ export const TeamEditorProvider = ({
   return (
     <TeamEditorContext.Provider
       value={{
+        teamId: { value: team?.id },
         format: {
           value: selectedFormat,
           setValue: setSelectedFormat,

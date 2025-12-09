@@ -16,7 +16,7 @@ export const TeamEditorContext = createContext<
   TeamEditorContextModel<'ReadWrite'>
 >({
   teamName: {
-    value: undefined,
+    value: '',
     setValue: () => {
       // Function needs to be set
     },
@@ -44,6 +44,9 @@ export const TeamEditorContext = createContext<
     setValue: () => {
       // Function needs to be set
     },
+  },
+  teamId: {
+    value: undefined,
   },
   showdownFormatId: 'gen9ou',
 });

@@ -12,7 +12,8 @@ export interface TeamEditorContextModel<T extends ContextFieldType> {
    * Examples: 'ou', 'vgc2024rege', 'nationaldex', 'monotypefire'
    */
   format: ContextField<string, T>;
-  teamName: ContextField<string | undefined, T>;
+  teamName: ContextField<string, T>;
+  teamId: ContextField<string | undefined, 'Read'>;
   teamPokemon: ContextField<PokemonInTeam[], T>;
   activePokemon: ContextField<PokemonInTeam | undefined, T>;
   showdownFormatId: string;

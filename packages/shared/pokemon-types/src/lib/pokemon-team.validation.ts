@@ -9,7 +9,10 @@ export const pokemonInTeamSchema = z.object({
   item: z.string(), // Optional
   nature: z.string().min(1, 'Nature is required'),
   gender: z.enum(['M', 'F', 'N']),
-  level: z.number().min(1, 'Level must be at least 1').max(100, 'Level cannot exceed 100'),
+  level: z
+    .number()
+    .min(1, 'Level must be at least 1')
+    .max(100, 'Level cannot exceed 100'),
   name: z.string().max(12, 'Nickname cannot exceed 12 characters'), // Nickname - optional, max 12 chars like official games
   moves: z
     .array(z.string())
@@ -36,30 +39,56 @@ export const pokemonInTeamSchema = z.object({
       { message: 'Total EVs cannot exceed 510' }
     ),
   ivs: z.object({
-    hp: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
-    atk: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
-    def: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
-    spa: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
-    spd: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
-    spe: z.number().min(0, 'IV must be at least 0').max(31, 'IV cannot exceed 31'),
+    hp: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
+    atk: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
+    def: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
+    spa: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
+    spd: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
+    spe: z
+      .number()
+      .min(0, 'IV must be at least 0')
+      .max(31, 'IV cannot exceed 31'),
   }),
 });
 
 /**
  * Validation schema for a Pokemon team
+ * This is the source of truth for team validation (used by both frontend and API)
  */
 export const pokemonTeamSchema = z.object({
+  id: z.string().uuid().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
   name: z
     .string()
     .min(1, 'Team name is required')
-    .max(50, 'Team name cannot exceed 50 characters'),
-  generation: z.number(),
-  format: z.string().min(1, 'Format is required'),
+    .max(100, 'Team name cannot exceed 100 characters'),
+  generation: z.number().int().min(1).max(9),
+  format: z.string().min(1, 'Format is required').max(50),
   pokemon: z
     .array(pokemonInTeamSchema)
     .min(1, 'Team must have at least one Pokemon')
     .max(6, 'Team cannot have more than 6 Pokemon'),
 });
+
+export type PokemonTeamSchema = z.infer<typeof pokemonTeamSchema>;
+
+export type PokemonInTeamSchema = z.infer<typeof pokemonInTeamSchema>;
 
 /**
  * Validation error type
@@ -173,9 +202,7 @@ export const getPokemonSlotErrors = (
   validationResult: ValidationResult,
   slotIndex: number
 ): ValidationError[] => {
-  return validationResult.errors.filter(
-    (err) => err.pokemonSlot === slotIndex
-  );
+  return validationResult.errors.filter((err) => err.pokemonSlot === slotIndex);
 };
 
 /**
@@ -201,6 +228,8 @@ export const getFieldErrorMessage = (
   errors: ValidationError[],
   field: string
 ): string | undefined => {
-  const error = errors.find((err) => err.field === field || err.field.endsWith(`.${field}`));
+  const error = errors.find(
+    (err) => err.field === field || err.field.endsWith(`.${field}`)
+  );
   return error?.message;
 };

@@ -38,14 +38,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const dataOrError = await response.json();
           if (!response.ok) {
             logger.error(
-              'Response not ok. Error getting user and tokens: ',
-              dataOrError
+              dataOrError,
+              'Response not ok. Error getting user and tokens'
             );
             throw dataOrError;
           }
 
           const data = dataOrError as OAuthLoginResponse;
-          logger.info('Data from backend', !!data.user.username);
+          logger.info({ hasUsername: !!data.user.username }, 'Data from backend');
 
           return {
             ...token,
@@ -57,8 +57,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
         } catch (err) {
           logger.error(
-            `Error getting user and tokens: ${(err as Error).message}`,
-            err
+            err,
+            `Error getting user and tokens: ${(err as Error).message}`
           );
           throw new TypeError('Error getting user and tokens');
         }
@@ -81,10 +81,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const dataOrError = await response.json();
           if (!response.ok) {
-            logger.error('Unable to refresh access token: ', response);
+            logger.error(response, 'Unable to refresh access token');
             throw dataOrError;
           }
-          logger.info('Data from access token refresh', dataOrError);
+          logger.info(dataOrError, 'Data from access token refresh');
 
           const data = dataOrError as AccessToken;
           return {
@@ -93,7 +93,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             expiresAt: data.expirySeconds,
           };
         } catch (err) {
-          logger.error('Error refreshing access token', err);
+          logger.error(err, 'Error refreshing access token');
           throw new TypeError('Error refreshing access token');
         }
       }
@@ -102,7 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Send properties to the client, like an access token and user id from a provider
       //session.accessToken = token.accessToken;
       //session.idToken = token.idToken;
-      logger.info('Session:', session, token);
+      logger.info({ session, token }, 'Session callback');
       session.error = token.error;
       if (token.user) {
         session.user = { ...token.user, emailVerified: new Date() };
