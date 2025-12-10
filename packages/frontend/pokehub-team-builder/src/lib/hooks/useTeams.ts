@@ -1,18 +1,20 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
-import { useAuthSession } from '@pokehub/frontend/shared-auth';
-import type {
-  CreateTeamDTO,
-  UpdateTeamDTO,
-  TeamResponseDTO,
-} from '@pokehub/shared/pokemon-types';
 import {
   createTeamRequest,
   updateTeamRequest,
   deleteTeamRequest,
 } from '../api/teams-api';
+import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
+import { useAuthSession } from '@pokehub/frontend/shared-auth';
+import type { FetchApiError } from '@pokehub/frontend/shared-data-provider';
+import type {
+  CreateTeamDTO,
+  UpdateTeamDTO,
+  TeamResponseDTO,
+} from '@pokehub/shared/pokemon-types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 /**
  * Query keys for teams cache
@@ -43,6 +45,11 @@ export function useCreateTeam() {
     onSuccess: (newTeam) => {
       queryClient.invalidateQueries({ queryKey: teamsKeys.all });
       queryClient.setQueryData(teamsKeys.detail(newTeam.id), newTeam);
+    },
+    onError: (error: FetchApiError) => {
+      toast.error('Failed to save team', {
+        description: error.message || 'Please try again',
+      });
     },
   });
 }
@@ -75,6 +82,12 @@ export function useUpdateTeam() {
       queryClient.setQueryData(teamsKeys.detail(teamId), updatedTeam);
       queryClient.invalidateQueries({ queryKey: teamsKeys.all });
     },
+    onError: (error: FetchApiError) => {
+      console.error('Error updating team in Hook:', error);
+      toast.error('Failed to save team', {
+        description: error.message || 'Please try again',
+      });
+    },
   });
 }
 
@@ -91,7 +104,9 @@ export function useDeleteTeam() {
       if (!accessToken) {
         throw new Error('Access token is required');
       }
-      await withAuthRetry(accessToken, (token) => deleteTeamRequest(token, teamId));
+      await withAuthRetry(accessToken, (token) =>
+        deleteTeamRequest(token, teamId)
+      );
     },
     onSuccess: (_, teamId) => {
       queryClient.removeQueries({ queryKey: teamsKeys.detail(teamId) });
