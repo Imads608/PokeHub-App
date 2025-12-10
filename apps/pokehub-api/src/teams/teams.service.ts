@@ -10,6 +10,7 @@ import {
   TEAMS_DB_SERVICE,
   Team,
 } from '@pokehub/backend/pokehub-teams-db';
+import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import type {
   CreateTeamDTO,
@@ -20,6 +21,8 @@ import type {
 
 @Injectable()
 export class TeamsService implements ITeamsService {
+  private static readonly MAX_TEAMS_PER_USER = 5;
+
   constructor(
     private readonly logger: AppLogger,
     @Inject(TEAMS_DB_SERVICE) private readonly teamsDbService: ITeamsDBService
@@ -31,7 +34,20 @@ export class TeamsService implements ITeamsService {
     userId: string,
     data: CreateTeamDTO
   ): Promise<TeamResponseDTO> {
-    this.logger.log(`${this.createTeam.name}: Creating team for user ${userId}`);
+    this.logger.log(
+      `${this.createTeam.name}: Creating team for user ${userId}`
+    );
+
+    const teamCount = await this.teamsDbService.getTeamCountByUserId(userId);
+    if (teamCount >= TeamsService.MAX_TEAMS_PER_USER) {
+      this.logger.warn(
+        `${this.createTeam.name}: User ${userId} has reached the maximum number of teams (${TeamsService.MAX_TEAMS_PER_USER})`
+      );
+      throw new ServiceError(
+        'BadRequest',
+        `You have reached the maximum number of teams (${TeamsService.MAX_TEAMS_PER_USER}). Please delete an existing team before creating a new one.`
+      );
+    }
 
     const team = await this.teamsDbService.createTeam({
       userId,

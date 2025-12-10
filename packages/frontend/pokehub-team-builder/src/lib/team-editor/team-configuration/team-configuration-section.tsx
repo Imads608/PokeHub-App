@@ -200,34 +200,25 @@ export const TeamConfigurationSection = ({
       return;
     }
 
-    try {
-      // Prepare team data for save
-      const teamData: CreateTeamDTO = {
-        name: teamName.value,
-        generation: generation.value,
-        format: format.value,
-        pokemon: teamPokemon.value,
-      };
+    const teamData: CreateTeamDTO = {
+      name: teamName.value,
+      generation: generation.value,
+      format: format.value,
+      pokemon: teamPokemon.value,
+    };
 
-      // Save team using the hook
-      await saveTeam(teamData);
+    // Save team using the hook
+    await saveTeam(teamData);
 
-      // Mark as saved
-      markAsSaved();
+    // Mark as saved
+    markAsSaved();
 
-      // Show success message
-      toast.success('Team saved successfully!', {
-        description: teamName.value || 'Unnamed Team',
-      });
+    // Show success message
+    toast.success('Team saved successfully!', {
+      description: teamName.value || 'Unnamed Team',
+    });
 
-      !teamId.value && router.push('/team-builder'); // Redirect if new team
-    } catch (error) {
-      console.error('Error saving team:', error);
-      toast.error('Failed to save team', {
-        description:
-          error instanceof Error ? error.message : 'Please try again',
-      });
-    }
+    !teamId.value && router.push('/team-builder'); // Redirect if new team
   }, [
     validation.isReady,
     validation.isTeamValid,

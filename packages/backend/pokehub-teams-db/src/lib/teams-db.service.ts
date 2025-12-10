@@ -10,7 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { POSTGRES_SERVICE } from '@pokehub/backend/pokehub-postgres';
 import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @Injectable()
@@ -71,6 +71,23 @@ class TeamsDBService implements ITeamsDBService {
       `${this.getTeamsByUserId.name}: Found ${res.length} teams for user: ${userId}`
     );
     return res;
+  }
+
+  async getTeamCountByUserId(userId: string) {
+    this.logger.log(
+      `${this.getTeamCountByUserId.name}: Counting teams for user: ${userId}`
+    );
+    const res = await this.dbService
+      .select({ count: count() })
+      .from(teams)
+      .where(eq(teams.userId, userId))
+      .execute();
+
+    const teamCount = res[0]?.count ?? 0;
+    this.logger.log(
+      `${this.getTeamCountByUserId.name}: User ${userId} has ${teamCount} teams`
+    );
+    return teamCount;
   }
 
   async updateTeam(

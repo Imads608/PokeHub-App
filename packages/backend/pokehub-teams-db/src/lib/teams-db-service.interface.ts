@@ -9,6 +9,8 @@ export interface ITeamsDBService {
 
   getTeamsByUserId(userId: string): Promise<Team[]>;
 
+  getTeamCountByUserId(userId: string): Promise<number>;
+
   updateTeam(
     id: string,
     data: Partial<Omit<NewTeam, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
