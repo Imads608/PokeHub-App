@@ -18,6 +18,8 @@ export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './src' }),
   /* Global setup - runs once before all tests */
   globalSetup: require.resolve('./src/global-setup.ts'),
+  /* Configure parallel workers - use 2 in CI for faster execution */
+  workers: process.env.CI ? 2 : undefined,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
