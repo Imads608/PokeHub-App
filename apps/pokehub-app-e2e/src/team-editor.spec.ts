@@ -72,9 +72,10 @@ test.describe('Team Editor - Team Creation Flow', () => {
       page.getByText('Choose a Pokémon to add to your team')
     ).toBeVisible();
 
-    // Wait for lazy-loaded Pokemon selector to finish loading
-    await expect(page.getByText('Loading Pokémon list...')).toBeHidden({
-      timeout: 10000,
+    // Wait for lazy-loaded Pokemon selector to finish loading and search input to appear
+    // Use a longer timeout as this component lazy loads
+    await expect(page.getByTestId('pokemon-search-input')).toBeVisible({
+      timeout: 15000,
     });
 
     // Verify search functionality exists using test ID

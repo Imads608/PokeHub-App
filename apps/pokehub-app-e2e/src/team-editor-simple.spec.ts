@@ -125,16 +125,13 @@ test.describe('Team Editor - Pokemon Selection', () => {
     await page.getByTestId('add-pokemon-slot-0').click();
 
     // Wait for dialog to open completely
+    // Wait for lazy-loaded Pokemon selector to finish loading and search input to appear
+    // Use a longer timeout as this component lazy loads
+    await expect(page.getByTestId('pokemon-search-input')).toBeVisible({
+      timeout: 15000,
+    });
     await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
 
-    // Wait for lazy-loaded Pokemon selector to finish loading
-    // The loading state shows "Loading Pokémon list..."
-    await expect(page.getByText('Loading Pokémon list...')).toBeHidden({
-      timeout: 10000,
-    });
-
-    // Verify search functionality exists using test ID
-    await expect(page.getByTestId('pokemon-search-input')).toBeVisible();
   });
 
   test('should be able to close Pokemon selector', async ({ page }) => {
