@@ -45,7 +45,9 @@ test.describe('Team Editor - Authenticated Access', () => {
     await expect(page.getByText('Team Configuration')).toBeVisible();
     await expect(page.getByLabel('Team Name')).toBeVisible();
     await expect(page.getByLabel('Generation')).toBeVisible();
-    await expect(page.getByLabel('Format')).toBeVisible();
+
+    // Format selector may lazy load, use testid for reliability
+    await expect(page.getByTestId('format-selector')).toBeVisible();
   });
 
   test('should allow entering team name', async ({ page }) => {
@@ -124,6 +126,12 @@ test.describe('Team Editor - Pokemon Selection', () => {
 
     // Wait for dialog to open completely
     await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
+
+    // Wait for lazy-loaded Pokemon selector to finish loading
+    // The loading state shows "Loading Pokémon list..."
+    await expect(page.getByText('Loading Pokémon list...')).toBeHidden({
+      timeout: 10000,
+    });
 
     // Verify search functionality exists using test ID
     await expect(page.getByTestId('pokemon-search-input')).toBeVisible();

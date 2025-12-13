@@ -39,6 +39,8 @@ export interface ComboboxProps {
   className?: string;
   /** ID for accessibility and label association */
   id?: string;
+  /** data-testid for testing */
+  'data-testid'?: string;
 }
 
 /**
@@ -80,6 +82,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       disabled = false,
       className,
       id,
+      'data-testid': dataTestId,
     },
     ref
   ) => {
@@ -177,6 +180,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           <Button
             ref={ref}
             id={id}
+            data-testid={dataTestId}
             variant="outline"
             role="combobox"
             aria-expanded={open}

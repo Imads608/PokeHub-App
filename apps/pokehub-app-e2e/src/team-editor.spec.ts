@@ -45,9 +45,8 @@ test.describe('Team Editor - Team Creation Flow', () => {
     const generationSelect = page.getByLabel('Generation');
     await expect(generationSelect).toBeVisible();
 
-    // Verify format selector
-    const formatSelect = page.getByLabel('Format');
-    await expect(formatSelect).toBeVisible();
+    // Verify format selector using test ID (may lazy load)
+    await expect(page.getByTestId('format-selector')).toBeVisible();
 
     // Verify empty team slots using test ID
     await expect(page.getByTestId('add-pokemon-slot-0')).toBeVisible();
@@ -72,6 +71,11 @@ test.describe('Team Editor - Team Creation Flow', () => {
     await expect(
       page.getByText('Choose a Pokémon to add to your team')
     ).toBeVisible();
+
+    // Wait for lazy-loaded Pokemon selector to finish loading
+    await expect(page.getByText('Loading Pokémon list...')).toBeHidden({
+      timeout: 10000,
+    });
 
     // Verify search functionality exists using test ID
     await expect(page.getByTestId('pokemon-search-input')).toBeVisible();
