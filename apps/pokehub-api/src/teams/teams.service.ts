@@ -1,3 +1,4 @@
+import type { PokeHubApiConfiguration } from '../config/configuration.model';
 import { ITeamsService } from './teams.service.interface';
 import {
   Inject,
@@ -5,6 +6,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ITeamsDBService,
   TEAMS_DB_SERVICE,
@@ -21,13 +23,16 @@ import type {
 
 @Injectable()
 export class TeamsService implements ITeamsService {
-  private static readonly MAX_TEAMS_PER_USER = 5;
+  private readonly maxTeamsPerUser: number;
 
   constructor(
     private readonly logger: AppLogger,
-    @Inject(TEAMS_DB_SERVICE) private readonly teamsDbService: ITeamsDBService
+    @Inject(TEAMS_DB_SERVICE) private readonly teamsDbService: ITeamsDBService,
+    private readonly configService: ConfigService<PokeHubApiConfiguration>
   ) {
     this.logger.setContext(TeamsService.name);
+    this.maxTeamsPerUser =
+      this.configService.get('teams', { infer: true })?.maxTeamsPerUser ?? 5;
   }
 
   async createTeam(
@@ -39,13 +44,13 @@ export class TeamsService implements ITeamsService {
     );
 
     const teamCount = await this.teamsDbService.getTeamCountByUserId(userId);
-    if (teamCount >= TeamsService.MAX_TEAMS_PER_USER) {
+    if (teamCount >= this.maxTeamsPerUser) {
       this.logger.warn(
-        `${this.createTeam.name}: User ${userId} has reached the maximum number of teams (${TeamsService.MAX_TEAMS_PER_USER})`
+        `${this.createTeam.name}: User ${userId} has reached the maximum number of teams (${this.maxTeamsPerUser})`
       );
       throw new ServiceError(
         'BadRequest',
-        `You have reached the maximum number of teams (${TeamsService.MAX_TEAMS_PER_USER}). Please delete an existing team before creating a new one.`
+        `You have reached the maximum number of teams (${this.maxTeamsPerUser}). Please delete an existing team before creating a new one.`
       );
     }
 
@@ -142,6 +147,21 @@ export class TeamsService implements ITeamsService {
     this.logger.log(
       `${this.deleteTeam.name}: Deleting team ${teamId} for user ${userId}`
     );
+
+    // Verify ownership first
+    const existingTeam = await this.teamsDbService.getTeam(teamId);
+
+    if (!existingTeam) {
+      this.logger.warn(`${this.deleteTeam.name}: Team ${teamId} not found`);
+      throw new NotFoundException('Team not found');
+    }
+
+    if (existingTeam.userId !== userId) {
+      this.logger.warn(
+        `${this.deleteTeam.name}: User ${userId} attempted to delete team ${teamId} owned by ${existingTeam.userId}`
+      );
+      throw new ForbiddenException('You do not have access to this team');
+    }
 
     const deleted = await this.teamsDbService.deleteTeam(teamId, userId);
 

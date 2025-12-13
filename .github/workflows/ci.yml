@@ -247,6 +247,9 @@ jobs:
         with:
           main-branch-name: 'main'
 
+      - name: Run database migrations
+        run: npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs migrate --config=drizzle.config.pg.ts
+
       - name: Run E2E tests
         run: npx nx affected -t e2e --parallel=1
 

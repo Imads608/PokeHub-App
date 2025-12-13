@@ -206,10 +206,18 @@ export function PokemonCard({
               onClick={onEdit}
               onMouseEnter={onEditHover}
               onFocus={onEditHover}
+              data-testid={`pokemon-card-${index}-edit-button`}
+              aria-label="Edit Pokemon"
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onRemove}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+              data-testid={`pokemon-card-${index}-remove-button`}
+              aria-label="Remove Pokemon"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
             <Button

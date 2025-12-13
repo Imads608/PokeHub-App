@@ -1,12 +1,12 @@
 'use client';
 
-import { cn } from '../utils';
-import { Check, ChevronDown, ChevronRight, Search } from 'lucide-react';
-import * as React from 'react';
 import { Button } from '../button/button';
 import { Input } from '../input/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover/popover';
 import { ScrollArea } from '../scroll-area/scroll-area';
+import { cn } from '../utils';
+import { Check, ChevronDown, ChevronRight, Search } from 'lucide-react';
+import * as React from 'react';
 
 export interface ComboboxOption {
   value: string;
@@ -37,6 +37,8 @@ export interface ComboboxProps {
   disabled?: boolean;
   /** Custom className for the trigger button */
   className?: string;
+  /** ID for accessibility and label association */
+  id?: string;
 }
 
 /**
@@ -77,6 +79,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       emptyText = 'No results found.',
       disabled = false,
       className,
+      id,
     },
     ref
   ) => {
@@ -173,6 +176,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
         <PopoverTrigger asChild>
           <Button
             ref={ref}
+            id={id}
             variant="outline"
             role="combobox"
             aria-expanded={open}
@@ -209,68 +213,71 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
 
                 {hasResults && (
                   <div className="space-y-1">
-                  {filteredGroups.map((group) => {
-                    const isExpanded = expandedCategories.has(group.category);
+                    {filteredGroups.map((group) => {
+                      const isExpanded = expandedCategories.has(group.category);
 
-                    return (
-                      <div key={group.category}>
-                        {/* Category Header */}
-                        <button
-                          type="button"
-                          onClick={() => toggleCategory(group.category)}
-                          className="flex w-full items-center gap-1 rounded-sm px-2 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-3 w-3" />
-                          ) : (
-                            <ChevronRight className="h-3 w-3" />
-                          )}
-                          <span className="uppercase">{group.category}</span>
-                          <span className="ml-auto text-xs">
-                            ({group.options.length})
-                          </span>
-                        </button>
+                      return (
+                        <div key={group.category}>
+                          {/* Category Header */}
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(group.category)}
+                            className="flex w-full items-center gap-1 rounded-sm px-2 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-3 w-3" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3" />
+                            )}
+                            <span className="uppercase">{group.category}</span>
+                            <span className="ml-auto text-xs">
+                              ({group.options.length})
+                            </span>
+                          </button>
 
-                        {/* Category Options */}
-                        {isExpanded && (
-                          <div className="ml-4 space-y-0.5">
-                            {group.options.map((option) => {
-                              const isSelected = value === option.value;
+                          {/* Category Options */}
+                          {isExpanded && (
+                            <div className="ml-4 space-y-0.5">
+                              {group.options.map((option) => {
+                                const isSelected = value === option.value;
 
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() => handleSelect(option.value)}
-                                  className={cn(
-                                    'flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-sm outline-none',
-                                    'hover:bg-accent hover:text-accent-foreground',
-                                    isSelected && 'bg-accent text-accent-foreground'
-                                  )}
-                                >
-                                  <div className="flex h-4 w-4 shrink-0 items-center justify-center">
-                                    {isSelected && <Check className="h-4 w-4" />}
-                                  </div>
-                                  <div className="flex flex-col items-start gap-0.5">
-                                    <span className="font-medium">
-                                      {option.label}
-                                    </span>
-                                    {option.description && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {option.description}
-                                      </span>
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleSelect(option.value)}
+                                    className={cn(
+                                      'flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-sm outline-none',
+                                      'hover:bg-accent hover:text-accent-foreground',
+                                      isSelected &&
+                                        'bg-accent text-accent-foreground'
                                     )}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                                  >
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+                                      {isSelected && (
+                                        <Check className="h-4 w-4" />
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="font-medium">
+                                        {option.label}
+                                      </span>
+                                      {option.description && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {option.description}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>

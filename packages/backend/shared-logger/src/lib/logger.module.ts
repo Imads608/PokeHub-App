@@ -1,4 +1,4 @@
-import { requestContext } from '@pokehub/frontend/shared-logger/server';
+import { requestContext } from '@pokehub/shared/shared-request-context';
 import { AppLogger } from './logger.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,7 +8,7 @@ import * as winston from 'winston';
 const traceFormat = winston.format((info) => {
   const traceId = requestContext.getStore()?.traceId;
   if (traceId) {
-    info.traceId = traceId;
+    info['traceId'] = traceId;
   }
   return info;
 });
