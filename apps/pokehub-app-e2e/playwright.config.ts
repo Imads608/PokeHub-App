@@ -20,6 +20,11 @@ export default defineConfig({
   globalSetup: require.resolve('./src/global-setup.ts'),
   /* Configure parallel workers - use 2 in CI for faster execution */
   workers: process.env.CI ? 2 : undefined,
+  /* Increase timeouts for CI environment */
+  timeout: process.env.CI ? 60000 : 30000, // Test timeout: 60s in CI, 30s locally
+  expect: {
+    timeout: process.env.CI ? 10000 : 5000, // Assertion timeout: 10s in CI, 5s locally
+  },
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,

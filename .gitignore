@@ -34,6 +34,8 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+**/playwright-report
+test-output
 
 # System Files
 .DS_Store
@@ -49,6 +51,7 @@ Thumbs.db
 pokehub.code-workspace
 /.legacy
 **/*.tgz
+**/*.zip
 
 # Index files
 tags
