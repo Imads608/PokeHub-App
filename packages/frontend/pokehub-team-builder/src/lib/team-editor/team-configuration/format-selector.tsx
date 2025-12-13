@@ -92,6 +92,8 @@ export function FormatSelector({
   // Render combobox
   return (
     <Combobox
+      id="format"
+      data-testid="format-selector"
       value={value}
       onValueChange={onValueChange}
       groups={groups}

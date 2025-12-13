@@ -104,7 +104,7 @@ export const FormatRulesDisplay = ({
 
   if (!formatRules || formatRules.banlist.length === 0) {
     return (
-      <Card>
+      <Card data-testid="format-rules-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -128,7 +128,7 @@ export const FormatRulesDisplay = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card>
+      <Card data-testid="format-rules-card">
         <CardHeader>
           <CollapsibleTrigger className="flex w-full items-center justify-between hover:opacity-70 [&[data-state=open]>svg]:rotate-180">
             <div className="flex flex-col items-start gap-1.5">

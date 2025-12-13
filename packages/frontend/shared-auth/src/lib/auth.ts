@@ -1,3 +1,4 @@
+import { getTestCredentialsProvider } from './test-provider';
 import '@pokehub/frontend/global-next-types';
 import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { getLogger } from '@pokehub/frontend/shared-logger/server';
@@ -11,11 +12,14 @@ import Google from 'next-auth/providers/google';
 
 const logger = getLogger('Authjs');
 
+const testProvider = getTestCredentialsProvider();
+const providers = testProvider ? [Google, testProvider] : [Google];
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
-  providers: [Google],
+  providers,
   callbacks: {
-    async jwt({ token, account, /*profile,*/ trigger, session }) {
+    async jwt({ token, account, /*profile,*/ trigger, session, user }) {
       // Persist the OAuth access token to the token right after signin
       //console.log('Got Data back', token, account, profile);
       // On Initial Sign In
@@ -26,7 +30,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ...token,
           user: session.user,
         };
-      } else if (account) {
+      }
+      // Handle test credentials provider (E2E testing)
+      else if (account?.provider === 'test-credentials' && user) {
+        logger.info(
+          'Test credentials provider - creating session from test user'
+        );
+
+        // User object contains embedded OAuthLoginResponse data in testCreds
+        // Extract tokens and user data to create session
+        if (!user.testCreds?.user || !user.testCreds?.tokens) {
+          logger.error('Test user missing required testCreds fields');
+          throw new TypeError(
+            'Test user missing testCreds.user or testCreds.tokens data'
+          );
+        }
+
+        return {
+          ...token,
+          user: user.testCreds.user,
+          accessToken: user.testCreds.tokens.accessToken.value,
+          refreshToken: user.testCreds.tokens.refreshToken,
+          expiresAt:
+            Date.now() + user.testCreds.tokens.accessToken.expirySeconds * 1000,
+        };
+      }
+      // Handle Google OAuth provider
+      else if (account) {
         // Call backend service to get tokens
         try {
           const response = await getFetchClient(
@@ -45,7 +75,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = dataOrError as OAuthLoginResponse;
-          logger.info({ hasUsername: !!data.user.username }, 'Data from backend');
+          logger.info(
+            { hasUsername: !!data.user.username },
+            'Data from backend'
+          );
 
           return {
             ...token,

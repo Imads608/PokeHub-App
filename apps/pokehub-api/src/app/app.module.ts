@@ -1,9 +1,11 @@
-import { TraceMiddleware } from '../common/middleware/trace.middleware';
 import { AuthModule } from '../auth/auth.module';
 import { CommonModule } from '../common/common.module';
+import { TraceMiddleware } from '../common/middleware/trace.middleware';
 import configuration from '../config/configuration';
 import { TeamsModule } from '../teams/teams.module';
+import { TestModule } from '../test/test.module';
 import { UsersModule } from '../users/users.module';
+import { AppController } from './app.controller';
 import { routes } from './app.routes';
 import { CatchEverythingFilter } from './global-exceptions.filter';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -16,6 +18,7 @@ import { APP_FILTER, RouterModule } from '@nestjs/core';
     AuthModule,
     UsersModule,
     TeamsModule,
+    TestModule, // Test endpoints (secured by controller guard)
     RouterModule.register(routes),
     ConfigModule.forRoot({
       envFilePath: '.env',
@@ -23,6 +26,7 @@ import { APP_FILTER, RouterModule } from '@nestjs/core';
       load: [configuration],
     }),
   ],
+  controllers: [AppController],
   exports: [],
   providers: [{ provide: APP_FILTER, useClass: CatchEverythingFilter }],
 })

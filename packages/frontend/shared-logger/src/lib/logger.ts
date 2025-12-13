@@ -1,7 +1,7 @@
 
 import pino from 'pino';
 
-import { requestContext } from './request-context';
+import { requestContext } from '@pokehub/shared/shared-request-context';
 
 const pinoConfig = {
   level: process.env.LOG_LEVEL || 'info',

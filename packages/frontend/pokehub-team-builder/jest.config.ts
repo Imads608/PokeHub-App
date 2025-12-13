@@ -10,6 +10,11 @@ export default {
   coverageDirectory:
     '../../../coverage/packages/frontend/pokehub-team-builder',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+  // Transform ESM packages that Jest can't handle natively
+  // next-auth and its dependencies use ESM exports
+  transformIgnorePatterns: [
+    '/node_modules/(?!(next-auth|@auth/core|jose|oauth4webapi|@panva|preact)/)',
+  ],
   coverageThreshold: {
     global: {
       branches: 49,

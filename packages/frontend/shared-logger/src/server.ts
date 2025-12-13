@@ -1,2 +1,2 @@
 export * from './lib/logger';
-export * from './lib/request-context';
+export * from '@pokehub/shared/shared-request-context';

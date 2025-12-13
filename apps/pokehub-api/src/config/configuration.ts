@@ -32,4 +32,9 @@ export default (): PokeHubApiConfiguration => ({
       avatarContainerName: process.env.AZURE_STORAGE_CONTAINER || 'avatars',
     },
   },
+  teams: {
+    maxTeamsPerUser: process.env.MAX_TEAMS_PER_USER
+      ? parseInt(process.env.MAX_TEAMS_PER_USER, 10)
+      : 5,
+  },
 });

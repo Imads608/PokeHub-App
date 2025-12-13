@@ -38,6 +38,17 @@ export class ShowdownTeamValidationPipe
 
     if (!result.isValid) {
       this.logger.warn(`Team validation failed for format ${formatId}`);
+      this.logger.warn(`Team-level errors: ${JSON.stringify(result.errors)}`);
+
+      // Log Pokemon-specific errors
+      result.pokemonResults.forEach((pokemonResult, slot) => {
+        if (!pokemonResult.isValid) {
+          this.logger.warn(
+            `Pokemon ${slot} (${value.pokemon[slot]?.species || 'unknown'}) errors: ${JSON.stringify(pokemonResult.errors)}`
+          );
+        }
+      });
+
       throw new BadRequestException({
         message: 'Team validation failed',
         formatId,

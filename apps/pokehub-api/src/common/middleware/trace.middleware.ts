@@ -1,5 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { requestContext } from '@pokehub/frontend/shared-logger/server';
+import { requestContext } from '@pokehub/shared/shared-request-context';
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 
