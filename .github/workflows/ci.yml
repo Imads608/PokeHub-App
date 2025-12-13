@@ -206,14 +206,20 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
+      # Database Configuration
       DB_HOST: localhost
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: pokehub_test
+      # Authentication Configuration
       AUTH_SECRET: ci-test-secret-not-for-production
       NEXTAUTH_SECRET: ci-test-secret-not-for-production
       AUTH_TRUST_HOST: true
+      JWT_SECRET: ci-test-jwt-secret-not-for-production
+      # E2E Testing Configuration
+      E2E_TESTING: true
+      # API URLs
       NEXT_PUBLIC_POKEHUB_API_URL: http://localhost:3000/api
       POKEHUB_API_URL: http://localhost:3000/api
     steps:
@@ -250,8 +256,13 @@ jobs:
       - name: Run database migrations
         run: npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs migrate --config=drizzle.config.pg.ts
 
-      - name: Run E2E tests
-        run: npx nx affected -t e2e --parallel=1
+      - name: Run backend API E2E tests
+        if: needs.setup.outputs.has-api-changes == 'true'
+        run: npx nx e2e pokehub-api-e2e
+
+      - name: Run frontend Playwright E2E tests
+        if: needs.setup.outputs.has-app-changes == 'true'
+        run: npx nx e2e pokehub-app-e2e --project=chromium
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
