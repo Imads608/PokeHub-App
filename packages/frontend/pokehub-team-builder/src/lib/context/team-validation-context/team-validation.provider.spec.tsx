@@ -1,7 +1,10 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { TeamValidationProvider } from './team-validation.provider';
+import { useTeamEditorContext } from '../team-editor-context/team-editor.context';
+import { validateTeamForFormat } from './showdown-validation-utils';
 import { useTeamValidationContext } from './team-validation.context';
+import { TeamValidationProvider } from './team-validation.provider';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
+import { validateTeam } from '@pokehub/shared/pokemon-types';
+import { renderHook, waitFor } from '@testing-library/react';
 
 // Mock team editor context
 jest.mock('../team-editor-context/team-editor.context', () => ({
@@ -18,35 +21,53 @@ jest.mock('./showdown-validation-utils', () => ({
   validateTeamForFormat: jest.fn(),
 }));
 
-import { useTeamEditorContext } from '../team-editor-context/team-editor.context';
-import { validateTeam } from '@pokehub/shared/pokemon-types';
-import { validateTeamForFormat } from './showdown-validation-utils';
-
 const mockUseTeamEditorContext = useTeamEditorContext as jest.Mock;
 const mockValidateTeam = validateTeam as jest.Mock;
 const mockValidateTeamForFormat = validateTeamForFormat as jest.Mock;
 
 // Helper to create a valid Pokemon for testing
-const createValidPokemon = (overrides?: Partial<PokemonInTeam>): PokemonInTeam => ({
-  species: 'Pikachu',
+const createValidPokemon = (
+  overrides?: Partial<PokemonInTeam>
+): PokemonInTeam => ({
+  species: 'Pikachu' as PokemonInTeam['species'],
   name: 'Sparky',
-  ability: 'Static',
-  item: 'Light Ball',
-  nature: 'Timid',
+  ability: 'Static' as PokemonInTeam['ability'],
+  item: 'Light Ball' as PokemonInTeam['item'],
+  nature: 'Timid' as PokemonInTeam['nature'],
   gender: 'M',
   level: 50,
-  moves: ['Thunderbolt', 'Volt Switch', 'Surf', 'Grass Knot'],
+  moves: [
+    'Thunderbolt',
+    'Volt Switch',
+    'Surf',
+    'Grass Knot',
+  ] as PokemonInTeam['moves'],
   evs: { hp: 0, atk: 0, def: 0, spa: 252, spd: 4, spe: 252 },
   ivs: { hp: 31, atk: 0, def: 31, spa: 31, spd: 31, spe: 31 },
   ...overrides,
 });
 
+// Helper to create mock teamPokemon with all required methods
+const createMockTeamPokemon = (
+  pokemon: PokemonInTeam[] = [createValidPokemon()]
+) => ({
+  value: pokemon,
+  setValue: jest.fn(),
+  addActivePokemonToTeam: jest.fn(),
+  clearTeam: jest.fn(),
+  hasAnyPokemon: jest.fn(),
+  removePokemonFromTeam: jest.fn(),
+  updatePokemonInTeam: jest.fn(),
+});
+
 // Default mock context values
-const createMockContextValue = (overrides?: Partial<ReturnType<typeof useTeamEditorContext>>) => ({
+const createMockContextValue = (
+  overrides?: Partial<ReturnType<typeof useTeamEditorContext>>
+) => ({
   teamName: { value: 'Test Team', setValue: jest.fn() },
   generation: { value: 9, setValue: jest.fn() },
   format: { value: 'ou', setValue: jest.fn() },
-  teamPokemon: { value: [createValidPokemon()], setValue: jest.fn() },
+  teamPokemon: createMockTeamPokemon(),
   showdownFormatId: 'gen9ou',
   activePokemon: { value: undefined, setValue: jest.fn() },
   teamId: { value: undefined },
@@ -78,7 +99,9 @@ describe('TeamValidationProvider', () => {
 
   describe('initialization', () => {
     it('should provide initial state before validation loads', () => {
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       // Initially, validation is not ready yet (async load pending)
       expect(result.current.state.errors).toEqual([]);
@@ -86,7 +109,9 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should set isReady to true after validation module loads', async () => {
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -94,7 +119,9 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should run validation after module loads', async () => {
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -108,7 +135,9 @@ describe('TeamValidationProvider', () => {
 
   describe('validation with valid team', () => {
     it('should return isTeamValid true for valid team', async () => {
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -126,7 +155,9 @@ describe('TeamValidationProvider', () => {
       });
       mockUseTeamEditorContext.mockReturnValue(mockContext);
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -141,11 +172,15 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should call showdown validation with correct format ID', async () => {
-      mockUseTeamEditorContext.mockReturnValue(createMockContextValue({
-        showdownFormatId: 'gen9ou',
-      }));
+      mockUseTeamEditorContext.mockReturnValue(
+        createMockContextValue({
+          showdownFormatId: 'gen9ou',
+        })
+      );
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -165,7 +200,9 @@ describe('TeamValidationProvider', () => {
         errors: [{ field: 'name', message: 'Team name is required' }],
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -185,7 +222,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: new Map(),
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -209,7 +248,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: new Map(),
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -227,7 +268,10 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should include Pokemon-specific errors from Showdown validation', async () => {
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, {
         errors: ['Pikachu cannot learn Hydro Pump'],
         warnings: [],
@@ -243,7 +287,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -269,7 +315,10 @@ describe('TeamValidationProvider', () => {
         errors: [{ field: 'name', message: 'Team name is required' }],
       });
 
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, {
         errors: ['Invalid move'],
         warnings: [],
@@ -281,7 +330,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -300,9 +351,11 @@ describe('TeamValidationProvider', () => {
       });
 
       // Should not include Pokemon-specific errors
-      expect(teamErrors).not.toContainEqual(expect.objectContaining({
-        pokemonSlot: expect.any(Number),
-      }));
+      expect(teamErrors).not.toContainEqual(
+        expect.objectContaining({
+          pokemonSlot: expect.any(Number),
+        })
+      );
     });
 
     it('should return empty array when no team errors exist', async () => {
@@ -313,7 +366,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: new Map(),
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -325,7 +380,10 @@ describe('TeamValidationProvider', () => {
 
   describe('getPokemonErrors helper', () => {
     it('should return errors for specific Pokemon slot', async () => {
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, { errors: ['Error for slot 0'], warnings: [] });
       pokemonErrors.set(1, { errors: ['Error for slot 1'], warnings: [] });
       pokemonErrors.set(2, { errors: ['Error for slot 2'], warnings: [] });
@@ -336,7 +394,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -353,7 +413,10 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should return empty array for slot with no errors', async () => {
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, { errors: ['Error for slot 0'], warnings: [] });
 
       mockValidateTeamForFormat.mockReturnValue({
@@ -362,7 +425,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -372,7 +437,10 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should return multiple errors for same Pokemon slot', async () => {
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, {
         errors: ['Cannot learn this move', 'Invalid ability'],
         warnings: [],
@@ -384,7 +452,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -410,7 +480,9 @@ describe('TeamValidationProvider', () => {
     it('should update timestamp when validation runs', async () => {
       const mockDateNow = jest.spyOn(Date, 'now').mockReturnValue(1234567890);
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -422,11 +494,15 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should include showdownFormatId in validation state', async () => {
-      mockUseTeamEditorContext.mockReturnValue(createMockContextValue({
-        showdownFormatId: 'gen8ubers',
-      }));
+      mockUseTeamEditorContext.mockReturnValue(
+        createMockContextValue({
+          showdownFormatId: 'gen8ubers',
+        })
+      );
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -443,7 +519,10 @@ describe('TeamValidationProvider', () => {
       const mockContext = createMockContextValue();
       mockUseTeamEditorContext.mockReturnValue(mockContext);
 
-      const { result, rerender } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result, rerender } = renderHook(
+        () => useTeamValidationContext(),
+        { wrapper }
+      );
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -466,11 +545,14 @@ describe('TeamValidationProvider', () => {
     it('should re-validate when Pokemon are added', async () => {
       const initialPokemon = [createValidPokemon()];
       const mockContext = createMockContextValue({
-        teamPokemon: { value: initialPokemon, setValue: jest.fn() },
+        teamPokemon: createMockTeamPokemon(initialPokemon),
       });
       mockUseTeamEditorContext.mockReturnValue(mockContext);
 
-      const { result, rerender } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result, rerender } = renderHook(
+        () => useTeamValidationContext(),
+        { wrapper }
+      );
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -479,15 +561,22 @@ describe('TeamValidationProvider', () => {
       const initialCallCount = mockValidateTeam.mock.calls.length;
 
       // Add another Pokemon
-      const updatedPokemon = [...initialPokemon, createValidPokemon({ species: 'Charizard' })];
+      const updatedPokemon = [
+        ...initialPokemon,
+        createValidPokemon({
+          species: 'Charizard' as PokemonInTeam['species'],
+        }),
+      ];
       mockUseTeamEditorContext.mockReturnValue({
         ...mockContext,
-        teamPokemon: { value: updatedPokemon, setValue: jest.fn() },
+        teamPokemon: createMockTeamPokemon(updatedPokemon),
       });
       rerender();
 
       await waitFor(() => {
-        expect(mockValidateTeam.mock.calls.length).toBeGreaterThan(initialCallCount);
+        expect(mockValidateTeam.mock.calls.length).toBeGreaterThan(
+          initialCallCount
+        );
       });
     });
 
@@ -497,7 +586,10 @@ describe('TeamValidationProvider', () => {
       });
       mockUseTeamEditorContext.mockReturnValue(mockContext);
 
-      const { result, rerender } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result, rerender } = renderHook(
+        () => useTeamValidationContext(),
+        { wrapper }
+      );
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -524,7 +616,10 @@ describe('TeamValidationProvider', () => {
     it('should not duplicate Pokemon errors in team errors', async () => {
       // Showdown returns errors both at team level and per-Pokemon
       const pokemonError = 'Pikachu cannot learn Hydro Pump';
-      const pokemonErrors = new Map<number, { errors: string[]; warnings: string[] }>();
+      const pokemonErrors = new Map<
+        number,
+        { errors: string[]; warnings: string[] }
+      >();
       pokemonErrors.set(0, { errors: [pokemonError], warnings: [] });
 
       mockValidateTeamForFormat.mockReturnValue({
@@ -534,7 +629,9 @@ describe('TeamValidationProvider', () => {
         pokemonResults: pokemonErrors,
       });
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -542,7 +639,7 @@ describe('TeamValidationProvider', () => {
 
       // Count occurrences of the Pokemon error
       const pokemonErrorCount = result.current.state.errors.filter(
-        e => e.message === pokemonError
+        (e) => e.message === pokemonError
       ).length;
 
       // Should only appear once (as a Pokemon error, not also as team error)
@@ -558,11 +655,15 @@ describe('TeamValidationProvider', () => {
 
   describe('empty team handling', () => {
     it('should handle empty team Pokemon array', async () => {
-      mockUseTeamEditorContext.mockReturnValue(createMockContextValue({
-        teamPokemon: { value: [], setValue: jest.fn() },
-      }));
+      mockUseTeamEditorContext.mockReturnValue(
+        createMockContextValue({
+          teamPokemon: createMockTeamPokemon([]),
+        })
+      );
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -574,11 +675,15 @@ describe('TeamValidationProvider', () => {
     });
 
     it('should handle empty team name', async () => {
-      mockUseTeamEditorContext.mockReturnValue(createMockContextValue({
-        teamName: { value: '', setValue: jest.fn() },
-      }));
+      mockUseTeamEditorContext.mockReturnValue(
+        createMockContextValue({
+          teamName: { value: '', setValue: jest.fn() },
+        })
+      );
 
-      const { result } = renderHook(() => useTeamValidationContext(), { wrapper });
+      const { result } = renderHook(() => useTeamValidationContext(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);

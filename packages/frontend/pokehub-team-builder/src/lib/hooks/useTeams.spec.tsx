@@ -1,6 +1,8 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import {
+  createTeamRequest,
+  updateTeamRequest,
+  deleteTeamRequest,
+} from '../api/teams-api';
 import {
   useCreateTeam,
   useUpdateTeam,
@@ -8,7 +10,6 @@ import {
   useSaveTeam,
   teamsKeys,
 } from './useTeams';
-import { createTeamRequest, updateTeamRequest, deleteTeamRequest } from '../api/teams-api';
 import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import type {
@@ -16,6 +17,9 @@ import type {
   TeamResponseDTO,
   PokemonInTeam,
 } from '@pokehub/shared/pokemon-types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 // Mock dependencies
 jest.mock('@pokehub/frontend/shared-auth', () => ({
@@ -90,8 +94,8 @@ describe('useTeams hooks', () => {
     generation: 9,
     format: 'ou',
     pokemon: [createMockPokemon()],
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z',
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2024-01-01T00:00:00.000Z'),
     ...overrides,
   });
 
@@ -136,7 +140,11 @@ describe('useTeams hooks', () => {
     });
 
     it('should generate correct detail key', () => {
-      expect(teamsKeys.detail('team-123')).toEqual(['teams', 'detail', 'team-123']);
+      expect(teamsKeys.detail('team-123')).toEqual([
+        'teams',
+        'detail',
+        'team-123',
+      ]);
     });
   });
 
@@ -190,7 +198,10 @@ describe('useTeams hooks', () => {
       const withAuthRetryCallback = mockWithAuthRetry.mock.calls[0][1];
       await withAuthRetryCallback(mockAccessToken);
 
-      expect(mockCreateTeamRequest).toHaveBeenCalledWith(mockAccessToken, teamDTO);
+      expect(mockCreateTeamRequest).toHaveBeenCalledWith(
+        mockAccessToken,
+        teamDTO
+      );
     });
 
     it('should throw error when access token is missing', async () => {
@@ -471,7 +482,10 @@ describe('useTeams hooks', () => {
       const withAuthRetryCallback = mockWithAuthRetry.mock.calls[0][1];
       await withAuthRetryCallback(mockAccessToken);
 
-      expect(mockDeleteTeamRequest).toHaveBeenCalledWith(mockAccessToken, teamId);
+      expect(mockDeleteTeamRequest).toHaveBeenCalledWith(
+        mockAccessToken,
+        teamId
+      );
     });
 
     it('should throw error when access token is missing', async () => {
@@ -530,7 +544,9 @@ describe('useTeams hooks', () => {
         };
         mockCreateTeamRequest.mockResolvedValue(mockFetchResponse);
 
-        const { result } = renderHook(() => useSaveTeam(undefined), { wrapper });
+        const { result } = renderHook(() => useSaveTeam(undefined), {
+          wrapper,
+        });
 
         const teamDTO = createMockTeamDTO();
         let savedTeam: TeamResponseDTO | undefined;
@@ -555,7 +571,9 @@ describe('useTeams hooks', () => {
 
         mockCreateTeamRequest.mockReturnValue(pendingPromise);
 
-        const { result } = renderHook(() => useSaveTeam(undefined), { wrapper });
+        const { result } = renderHook(() => useSaveTeam(undefined), {
+          wrapper,
+        });
 
         expect(result.current.isPending).toBe(false);
 
