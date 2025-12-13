@@ -217,7 +217,10 @@ export const TeamEditor = () => {
         open={isPokemonSelectorOpen}
         onOpenChange={setIsPokemonSelectorOpen}
       >
-        <DialogContent className="sm:max-w-6xl">
+        <DialogContent
+          data-testid="pokemon-selector-dialog"
+          className="sm:max-w-6xl"
+        >
           <DialogHeader>
             <DialogTitle>Select a Pokémon</DialogTitle>
             <DialogDescription>

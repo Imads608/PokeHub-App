@@ -49,8 +49,8 @@ test.describe('Team Editor - Team Creation Flow', () => {
     const formatSelect = page.getByLabel('Format');
     await expect(formatSelect).toBeVisible();
 
-    // Verify empty team slots
-    await expect(page.getByText('Add Pokémon')).toBeVisible();
+    // Verify empty team slots using test ID
+    await expect(page.getByTestId('add-pokemon-slot-0')).toBeVisible();
 
     // Verify Save button exists and is disabled (no changes/validation)
     const saveButton = page.getByRole('button', { name: /Save Team/i });
@@ -63,18 +63,18 @@ test.describe('Team Editor - Team Creation Flow', () => {
   }) => {
     await page.goto('/team-builder/new');
 
-    // Click "Add Pokémon" button
-    await page.getByText('Add Pokémon').first().click();
+    // Click "Add Pokémon" button using test ID
+    await page.getByTestId('add-pokemon-slot-0').click();
 
     // Verify Pokemon Selector dialog opens
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
     await expect(page.getByText('Select a Pokémon')).toBeVisible();
     await expect(
       page.getByText('Choose a Pokémon to add to your team')
     ).toBeVisible();
 
-    // Verify search functionality exists
-    await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+    // Verify search functionality exists using test ID
+    await expect(page.getByTestId('pokemon-search-input')).toBeVisible();
   });
 
   test('should handle generation change with team clearance warning', async ({
@@ -221,8 +221,13 @@ test.describe('Team Editor - Validation Feedback', () => {
 
     await page.goto(`/team-builder/${fullTeam.id}`);
 
+    // Wait for page to load
+    await expect(
+      page.getByRole('heading', { name: 'Team Builder' })
+    ).toBeVisible();
+
     // "Add Pokémon" button should not be visible (team is full)
-    await expect(page.getByText('Add Pokémon')).toBeHidden();
+    await expect(page.getByTestId('add-pokemon-slot-0')).toBeHidden();
   });
 });
 
@@ -350,13 +355,15 @@ test.describe('Team Editor - Format Configuration', () => {
   test('should display format rules for selected format', async ({ page }) => {
     await page.goto('/team-builder/new');
 
-    // Format rules should be displayed
+    // Wait for page to load
     await expect(
-      page.getByRole('button', { name: /Format Rules/i })
+      page.getByRole('heading', { name: 'Team Builder' })
     ).toBeVisible();
 
-    // Should show specific rules for the format
-    // Note: Depends on lazy loading completion
+    // Format rules should be displayed (lazy loaded component)
+    await expect(page.getByTestId('format-rules-card')).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should update format rules when format changes', async ({ page }) => {

@@ -36,6 +36,11 @@ test.describe('Team Editor - Authenticated Access', () => {
   test('should show team configuration section', async ({ page }) => {
     await page.goto('/team-builder/new');
 
+    // Wait for page to be fully loaded - check for heading first
+    await expect(
+      page.getByRole('heading', { name: 'Team Builder' })
+    ).toBeVisible();
+
     // Verify Team Configuration section is visible
     await expect(page.getByText('Team Configuration')).toBeVisible();
     await expect(page.getByLabel('Team Name')).toBeVisible();
@@ -103,36 +108,41 @@ test.describe('Team Editor - Pokemon Selection', () => {
   }) => {
     await page.goto('/team-builder/new');
 
-    // Click "Add Pokémon" button
-    await page.getByText('Add Pokémon').first().click();
+    // Click "Add Pokémon" button using test ID
+    await page.getByTestId('add-pokemon-slot-0').click();
 
     // Verify Pokemon Selector dialog opens
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
     await expect(page.getByText('Select a Pokémon')).toBeVisible();
   });
 
   test('Pokemon selector should have search', async ({ page }) => {
     await page.goto('/team-builder/new');
 
-    await page.getByText('Add Pokémon').first().click();
+    // Click first add Pokemon slot using test ID
+    await page.getByTestId('add-pokemon-slot-0').click();
 
-    // Verify search functionality exists
-    await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+    // Wait for dialog to open completely
+    await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
+
+    // Verify search functionality exists using test ID
+    await expect(page.getByTestId('pokemon-search-input')).toBeVisible();
   });
 
   test('should be able to close Pokemon selector', async ({ page }) => {
     await page.goto('/team-builder/new');
 
-    await page.getByText('Add Pokémon').first().click();
+    // Click add Pokemon slot using test ID
+    await page.getByTestId('add-pokemon-slot-0').click();
 
     // Dialog is open
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByTestId('pokemon-selector-dialog')).toBeVisible();
 
     // Close it (press Escape)
     await page.keyboard.press('Escape');
 
     // Dialog should be closed
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByTestId('pokemon-selector-dialog')).not.toBeVisible();
   });
 });
 
