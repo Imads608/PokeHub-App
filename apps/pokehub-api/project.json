@@ -41,6 +41,26 @@
         }
       }
     },
+    "verify": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build", "^lint", "^test"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/pokehub-api",
+        "main": "apps/pokehub-api/src/main.ts",
+        "tsConfig": "apps/pokehub-api/tsconfig.app.json",
+        "assets": ["apps/pokehub-api/src/assets"],
+        "webpackConfig": "apps/pokehub-api/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint"
     },
