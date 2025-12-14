@@ -15,6 +15,7 @@ PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive P
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Next.js 14** with App Router for modern React development
 - **TypeScript** for type-safe code
 - **Tailwind CSS** for utility-first styling
@@ -24,6 +25,7 @@ PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive P
 - **React Hook Form + Zod** for type-safe form validation
 
 ### Backend
+
 - **NestJS** for scalable Node.js server architecture
 - **PostgreSQL** with **Drizzle ORM** for type-safe database operations
 - **Passport.js** with JWT authentication strategies
@@ -31,11 +33,13 @@ PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive P
 - **Azure Blob Storage** for file uploads
 
 ### Data Sources
+
 - **@pkmn/dex** & **@pkmn/data** for comprehensive Pokemon information
 - **PokeAPI** integration for additional Pokemon data
 - **Pokemon Showdown** data for competitive moves and abilities
 
 ### Development & Infrastructure
+
 - **Nx** monorepo for efficient build orchestration
 - **Jest** & **React Testing Library** for testing
 - **Playwright** for end-to-end testing
@@ -55,6 +59,7 @@ This project is organized as an Nx monorepo with clear separation of concerns:
 ## 🚦 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - PostgreSQL database
 - Google OAuth credentials (for authentication)
@@ -68,31 +73,35 @@ npm install
 ### Development
 
 Start the frontend:
+
 ```bash
 nx serve pokehub-app
 ```
 
 Start the backend:
+
 ```bash
 nx serve pokehub-api
 ```
 
 Start both together:
+
 ```bash
 nx serve pokehub-app pokehub-api
 ```
 
 Navigate to http://localhost:4200/ to see the app in action!
 
-
 ## 🧪 Testing
 
 Run all tests:
+
 ```bash
 nx run-many -t test
 ```
 
 Test specific projects:
+
 ```bash
 nx test pokehub-app
 nx test pokehub-api
@@ -102,12 +111,14 @@ nx test frontend-shared-ui-components
 ## 🏗️ Building
 
 Build for production:
+
 ```bash
 nx build pokehub-app
 nx build pokehub-api
 ```
 
 Build all projects:
+
 ```bash
 nx run-many -t build
 ```
@@ -115,11 +126,13 @@ nx run-many -t build
 ## 📊 Database
 
 Push schema changes:
+
 ```bash
 npx drizzle-kit push
 ```
 
 Generate migrations:
+
 ```bash
 npx drizzle-kit generate
 ```
@@ -136,6 +149,11 @@ Comprehensive documentation is available in the `docs/` directory:
   - [Troubleshooting](./docs/deployment/container-apps/troubleshooting.md)
   - [Database Configuration](./docs/deployment/database.md)
 - **[Development Setup](./docs/development/environment-setup.md)** - Environment configuration
+- **[Testing](./docs/development/)** - Testing documentation
+  - [Unit & Integration Testing](./docs/development/unit-integration-testing.md)
+  - [Frontend E2E Testing](./docs/development/frontend-e2e-testing.md)
+  - [Backend E2E Testing](./docs/development/backend-e2e-testing.md)
+  - [E2E Test Reliability Fixes](./docs/development/e2e-test-reliability-fixes.md) - CI/CD reliability improvements
 - **[Features](./docs/features/)** - Feature documentation
   - [Authentication](./docs/features/authentication.md)
   - [Pokedex](./docs/features/pokedex.md)
@@ -144,6 +162,7 @@ Comprehensive documentation is available in the `docs/` directory:
 ## 🎯 Project Goals
 
 PokeHub aims to:
+
 - Provide a modern alternative to Pokemon Showdown with improved UX
 - Demonstrate best practices in monorepo architecture
 - Showcase type-safe full-stack development

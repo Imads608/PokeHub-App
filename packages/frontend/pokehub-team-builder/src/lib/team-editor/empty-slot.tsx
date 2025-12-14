@@ -14,10 +14,11 @@ export function EmptySlot({
   index,
   onClick,
   onMouseEnter,
-  onFocus
+  onFocus,
 }: EmptySlotProps) {
   return (
     <Card
+      data-testid={`add-pokemon-slot-${index}`}
       className="flex h-[200px] cursor-pointer flex-col items-center justify-center border-dashed transition-colors hover:bg-muted/50"
       onClick={onClick}
       onMouseEnter={onMouseEnter}

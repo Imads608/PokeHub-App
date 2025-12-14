@@ -16,7 +16,7 @@ export const postgresProvider = {
     const dbCreds = configService.get('db', { infer: true });
 
     // Enable SSL in production, disable in development
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = process.env['NODE_ENV'] === 'production';
 
     // Build IPv4-compatible connection string
     const connectionString = `postgresql://${dbCreds.user}:${dbCreds.password}@${dbCreds.host}:${dbCreds.port}/${dbCreds.name}`;

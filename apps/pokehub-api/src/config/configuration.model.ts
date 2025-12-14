@@ -14,4 +14,7 @@ export interface PokeHubApiConfiguration
       avatarContainerName: string;
     };
   };
+  teams: {
+    maxTeamsPerUser: number;
+  };
 }

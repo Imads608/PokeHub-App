@@ -8,7 +8,7 @@
     "build": {
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
-      "dependsOn": ["^build", "^lint", "^test"],
+      "dependsOn": ["^build"],
       "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/pokehub-app"
@@ -40,6 +40,21 @@
       "executor": "@nx/next:export",
       "options": {
         "buildTarget": "pokehub-app:build:production"
+      }
+    },
+    "verify": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build", "^lint", "^test"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/pokehub-app"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "apps/pokehub-app"
+        },
+        "production": {}
       }
     },
     "test": {
