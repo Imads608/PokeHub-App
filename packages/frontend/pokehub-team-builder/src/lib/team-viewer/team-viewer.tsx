@@ -8,6 +8,7 @@ import { useTeamViewerFilters } from './context/team-viewer.context';
 import type { TeamSortBy } from './context/team-viewer.context.model';
 import { useFilteredTeams } from './hooks/useFilteredTeams';
 import type { GenerationNum } from '@pkmn/dex';
+import { getFormatDisplayName } from '@pokehub/frontend/dex-data-provider';
 import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
 import {
   Button,
@@ -63,10 +64,12 @@ export const TeamViewer = () => {
   // Filter and sort teams
   const filteredTeams = useFilteredTeams(teams);
 
-  // Get unique formats from user's teams for the filter dropdown
+  // Get unique full showdown format IDs from user's teams for the filter dropdown
   const availableFormats = useMemo(() => {
     if (!teams) return [];
-    const formatSet = new Set(teams.map((team) => team.format));
+    const formatSet = new Set(
+      teams.map((team) => getFormatDisplayName(team.generation, team.format))
+    );
     return Array.from(formatSet).sort();
   }, [teams]);
 

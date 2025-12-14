@@ -1,6 +1,7 @@
 'use client';
 
 import { Icons } from '@pkmn/img';
+import { getFormatDisplayName } from '@pokehub/frontend/dex-data-provider';
 import {
   Card,
   CardContent,
@@ -68,11 +69,8 @@ export function TeamCard({
       <Link href={`/team-builder/${team.id}`}>
         <div className="bg-muted/50 p-4">
           <div className="mb-2 flex gap-2">
-            <Badge variant="secondary" className="text-xs">
-              Gen {team.generation}
-            </Badge>
             <Badge variant="outline" className="text-xs">
-              {team.format}
+              {getFormatDisplayName(team.generation, team.format)}
             </Badge>
           </div>
 

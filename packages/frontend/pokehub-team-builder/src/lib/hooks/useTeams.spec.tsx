@@ -3,12 +3,12 @@ import {
   updateTeamRequest,
   deleteTeamRequest,
 } from '../api/teams-api';
+import { teamsKeys } from '../utils/teams-query-keys';
 import {
   useCreateTeam,
   useUpdateTeam,
   useDeleteTeam,
   useSaveTeam,
-  teamsKeys,
 } from './useTeams';
 import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTeamViewerFilters } from '../context/team-viewer.context';
+import { getFormatDisplayName } from '@pokehub/frontend/dex-data-provider';
 import type { PokemonTeam } from '@pokehub/shared/pokemon-types';
 import { useMemo } from 'react';
 
@@ -32,10 +33,12 @@ export function useFilteredTeams(teams: PokemonTeam[] | undefined) {
       );
     }
 
-    // Filter by format
+    // Filter by format (compares against full showdown format ID like 'gen9ou')
     if (selectedFormat.value !== 'all') {
       filtered = filtered.filter(
-        (team) => team.format === selectedFormat.value
+        (team) =>
+          getFormatDisplayName(team.generation, team.format) ===
+          selectedFormat.value
       );
     }
 

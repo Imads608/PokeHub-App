@@ -1,6 +1,7 @@
 'use client';
 
 import { Icons } from '@pkmn/img';
+import { getFormatDisplayName } from '@pokehub/frontend/dex-data-provider';
 import { Badge, Button } from '@pokehub/frontend/shared-ui-components';
 import type { PokemonTeam } from '@pokehub/shared/pokemon-types';
 import { formatDistanceToNow } from 'date-fns';
@@ -48,11 +49,8 @@ export function TeamListItem({
       >
         <h3 className="truncate font-semibold">{team.name}</h3>
         <div className="mt-1 flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs">
-            Gen {team.generation}
-          </Badge>
           <Badge variant="outline" className="text-xs">
-            {team.format}
+            {getFormatDisplayName(team.generation, team.format)}
           </Badge>
           {timeAgo && (
             <span className="text-xs text-muted-foreground">

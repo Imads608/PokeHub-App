@@ -321,21 +321,33 @@ export const TeamConfigurationSection = ({
               </div>
               <div>
                 <Label htmlFor="generation">Generation</Label>
-                <Select
-                  value={generation.value.toString()}
-                  onValueChange={handleGenerationChange}
-                >
-                  <SelectTrigger id="generation" className="mt-1">
-                    <SelectValue placeholder="Select Generation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getGenerationsData().map((gen) => (
-                      <SelectItem key={gen.id} value={gen.id.toString()}>
-                        {gen.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Select
+                        value={generation.value.toString()}
+                        onValueChange={handleGenerationChange}
+                        disabled={!!teamId.value}
+                      >
+                        <SelectTrigger id="generation" className="mt-1">
+                          <SelectValue placeholder="Select Generation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getGenerationsData().map((gen) => (
+                            <SelectItem key={gen.id} value={gen.id.toString()}>
+                              {gen.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TooltipTrigger>
+                  {teamId.value && (
+                    <TooltipContent>
+                      Generation cannot be changed for existing teams
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </div>
               <div>
                 <Label htmlFor="format">Format</Label>

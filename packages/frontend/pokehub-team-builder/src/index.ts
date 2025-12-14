@@ -9,4 +9,5 @@ export {
   TeamViewerProvider,
   type TeamViewerProviderProps,
 } from './lib/team-viewer/context/team-viewer.provider';
-export { useUserTeams, teamsKeys } from './lib/hooks/useTeams';
+export { useUserTeams } from './lib/hooks/useTeams';
+export { teamsKeys } from './lib/utils/teams-query-keys';
