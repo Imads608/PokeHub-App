@@ -153,6 +153,7 @@ Comprehensive documentation is available in the `docs/` directory:
   - [Unit & Integration Testing](./docs/development/unit-integration-testing.md)
   - [Frontend E2E Testing](./docs/development/frontend-e2e-testing.md)
   - [Backend E2E Testing](./docs/development/backend-e2e-testing.md)
+  - [E2E Test Reliability Fixes](./docs/development/e2e-test-reliability-fixes.md) - CI/CD reliability improvements
 - **[Features](./docs/features/)** - Feature documentation
   - [Authentication](./docs/features/authentication.md)
   - [Pokedex](./docs/features/pokedex.md)
