@@ -5,3 +5,8 @@ export {
   TeamEditorProvider,
   type TeamEditorProviderProps,
 } from './lib/context/team-editor-context/team-editor.provider';
+export {
+  TeamViewerProvider,
+  type TeamViewerProviderProps,
+} from './lib/team-viewer/context/team-viewer.provider';
+export { useUserTeams, teamsKeys } from './lib/hooks/useTeams';

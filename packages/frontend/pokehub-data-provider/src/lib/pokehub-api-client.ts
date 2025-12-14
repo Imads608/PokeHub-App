@@ -21,3 +21,23 @@ export const withAuthRetry = async <Data>(
     throw error;
   }
 };
+
+export const withAuthRetryWithoutResponse = async <Data>(
+  accessToken: string,
+  request: (accessToken: string) => Promise<Data>
+): Promise<Data> => {
+  try {
+    const res = await request(accessToken);
+    return res;
+  } catch (error) {
+    if ((error as FetchApiError).status === 401) {
+      const session = await getAuthSession();
+      if (!session?.accessToken) {
+        throw new FetchApiError('Unauthorized', 401);
+      }
+      const res = await request(session.accessToken);
+      return res;
+    }
+    throw error;
+  }
+};
