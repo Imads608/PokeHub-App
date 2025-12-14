@@ -81,13 +81,12 @@ export const createFetchClient = (
           'Content-Type': 'application/json',
         },
       });
-      if (!res.ok || (res.status !== 200 && res.status !== 201)) {
+      if (!res.ok || [200, 201, 204].indexOf(res.status) === -1) {
         if (init?.method === 'HEAD') {
           throw new FetchApiError('HEAD request failed', res.status);
         }
-        const jsonRes = await res.json();
-        console.log(`Error fetching ${apiPath}:`, jsonRes);
-        const err = jsonRes as FetchApiError;
+        const err = await tryParseJSONError(res);
+        console.log(`Error fetching ${apiPath}:`, err);
         throw err;
       }
       return res;
@@ -104,4 +103,18 @@ export const doesClientExist = (key: AppFetchClientKeys): boolean =>
 
 export const getFetchClient = (key: AppFetchClientKeys): FetchClient => {
   return clients[key] || createFetchClient(key, defaultClientURLs[key]);
+};
+
+const tryParseJSONError = async (res: Response): Promise<FetchApiError> => {
+  let jsonRes: unknown;
+  try {
+    jsonRes = await res.json();
+  } catch {
+    jsonRes = {
+      message: 'An Error occurred',
+      status: res.status,
+    } as FetchApiError;
+  }
+
+  return jsonRes as FetchApiError;
 };

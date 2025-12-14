@@ -87,20 +87,16 @@ export const TeamViewer = () => {
 
   const handleDuplicateTeam = useCallback(
     async (team: PokemonTeam) => {
-      try {
-        const duplicatedTeam = await createTeamMutation.mutateAsync({
-          name: `${team.name} (Copy)`,
-          generation: team.generation,
-          format: team.format,
-          pokemon: team.pokemon,
-        });
-        toast.success('Team duplicated', {
-          description: `"${duplicatedTeam.name}" has been created`,
-        });
-        router.push(`/team-builder/${duplicatedTeam.id}`);
-      } catch {
-        // Error is already handled by the mutation hook
-      }
+      const duplicatedTeam = await createTeamMutation.mutateAsync({
+        name: `${team.name} (Copy)`,
+        generation: team.generation,
+        format: team.format,
+        pokemon: team.pokemon,
+      });
+      toast.success('Team duplicated', {
+        description: `"${duplicatedTeam.name}" has been created`,
+      });
+      router.push(`/team-builder/${duplicatedTeam.id}`);
     },
     [createTeamMutation, router]
   );
@@ -112,17 +108,11 @@ export const TeamViewer = () => {
   const confirmDelete = useCallback(async () => {
     if (!teamToDelete?.id) return;
 
-    try {
-      await deleteTeamMutation.mutateAsync(teamToDelete.id);
-      toast.success('Team deleted', {
-        description: `"${teamToDelete.name}" has been deleted`,
-      });
-      setTeamToDelete(null);
-    } catch {
-      toast.error('Failed to delete team', {
-        description: 'Please try again',
-      });
-    }
+    await deleteTeamMutation.mutateAsync(teamToDelete.id);
+    toast.success('Team deleted', {
+      description: `"${teamToDelete.name}" has been deleted`,
+    });
+    setTeamToDelete(null);
   }, [teamToDelete, deleteTeamMutation]);
 
   const handleGenerationChange = useCallback(

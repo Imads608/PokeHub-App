@@ -33,7 +33,7 @@ export function useUserTeams() {
     queryFn: async (): Promise<PokemonTeam[]> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to delete a team');
       }
       // Cast to PokemonTeam[] - the API returns compatible structure
       // but with plain strings instead of branded types
@@ -57,7 +57,7 @@ export function useCreateTeam() {
     mutationFn: async (data: CreateTeamDTO): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to delete a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         createTeamRequest(token, data)
@@ -93,7 +93,7 @@ export function useUpdateTeam() {
     }): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to delete a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         updateTeamRequest(token, teamId, data)
@@ -124,7 +124,7 @@ export function useDeleteTeam() {
     mutationFn: async (teamId: string): Promise<void> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to delete a team');
       }
       await withAuthRetry(accessToken, (token) =>
         deleteTeamRequest(token, teamId)
@@ -133,6 +133,12 @@ export function useDeleteTeam() {
     onSuccess: (_, teamId) => {
       queryClient.removeQueries({ queryKey: teamsKeys.detail(teamId) });
       queryClient.invalidateQueries({ queryKey: teamsKeys.all });
+    },
+    onError: (error: FetchApiError) => {
+      console.error('Error deleting team in Hook:', error);
+      toast.error('Failed to delete team', {
+        description: error.message || 'Please try again',
+      });
     },
   });
 }
