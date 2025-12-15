@@ -1,7 +1,7 @@
 import { addTypecheckSpecGenerator } from './add-typecheck-spec';
-import { AddTypecheckSpecGeneratorSchema } from './schema';
+import type { AddTypecheckSpecGeneratorSchema } from './schema';
 import {
-  Tree,
+  type Tree,
   readProjectConfiguration,
   addProjectConfiguration,
 } from '@nx/devkit';

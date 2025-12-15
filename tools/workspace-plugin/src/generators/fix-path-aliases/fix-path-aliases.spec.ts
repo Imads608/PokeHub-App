@@ -1,6 +1,6 @@
 import { fixPathAliasesGenerator } from './fix-path-aliases';
-import { FixPathAliasesGeneratorSchema } from './schema';
-import { Tree, readJson } from '@nx/devkit';
+import type { FixPathAliasesGeneratorSchema } from './schema';
+import { type Tree, readJson } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 
 describe('fix-path-aliases generator', () => {

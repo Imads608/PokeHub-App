@@ -1,5 +1,11 @@
-import { FixPathAliasesGeneratorSchema } from './schema';
-import { formatFiles, logger, Tree, readJson, writeJson } from '@nx/devkit';
+import type { FixPathAliasesGeneratorSchema } from './schema';
+import {
+  formatFiles,
+  logger,
+  type Tree,
+  readJson,
+  writeJson,
+} from '@nx/devkit';
 
 /**
  * Expected path alias format: @pokehub/<domain>/<package-name>

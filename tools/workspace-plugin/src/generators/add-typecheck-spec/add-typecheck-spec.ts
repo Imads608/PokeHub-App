@@ -1,9 +1,9 @@
-import { AddTypecheckSpecGeneratorSchema } from './schema';
+import type { AddTypecheckSpecGeneratorSchema } from './schema';
 import {
   formatFiles,
   getProjects,
   logger,
-  Tree,
+  type Tree,
   updateProjectConfiguration,
   readProjectConfiguration,
   joinPathFragments,
