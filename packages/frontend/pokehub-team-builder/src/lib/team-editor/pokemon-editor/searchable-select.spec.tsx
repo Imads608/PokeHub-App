@@ -9,11 +9,13 @@ const mockSetSearchTerm = jest.fn();
 const mockHandleScroll = jest.fn();
 
 // Get mocked hooks after mock is set up
-const { useDebouncedSearch: mockUseDebouncedSearch, useInfiniteScroll: mockUseInfiniteScroll } =
-  jest.requireMock('@pokehub/frontend/shared-utils') as {
-    useDebouncedSearch: jest.Mock;
-    useInfiniteScroll: jest.Mock;
-  };
+const {
+  useDebouncedSearch: mockUseDebouncedSearch,
+  useInfiniteScroll: mockUseInfiniteScroll,
+} = jest.requireMock('@pokehub/frontend/shared-utils') as {
+  useDebouncedSearch: jest.Mock;
+  useInfiniteScroll: jest.Mock;
+};
 
 describe('SearchableSelect', () => {
   const mockItems = [
@@ -60,7 +62,9 @@ describe('SearchableSelect', () => {
     it('should render trigger button with placeholder when no value selected', () => {
       render(<SearchableSelect {...defaultProps} />);
 
-      expect(screen.getByRole('combobox')).toHaveTextContent('Select a Pokemon');
+      expect(screen.getByRole('combobox')).toHaveTextContent(
+        'Select a Pokemon'
+      );
     });
 
     it('should render trigger button with selected item when value is provided', () => {
@@ -86,7 +90,9 @@ describe('SearchableSelect', () => {
 
       // Search input should appear
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search pokemon...')).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText('Search pokemon...')
+        ).toBeInTheDocument();
       });
     });
 
@@ -123,7 +129,9 @@ describe('SearchableSelect', () => {
     it('should call onValueChange when item is clicked', async () => {
       const user = userEvent.setup();
       const onValueChange = jest.fn();
-      render(<SearchableSelect {...defaultProps} onValueChange={onValueChange} />);
+      render(
+        <SearchableSelect {...defaultProps} onValueChange={onValueChange} />
+      );
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -183,7 +191,9 @@ describe('SearchableSelect', () => {
       await user.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search pokemon...')).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText('Search pokemon...')
+        ).toBeInTheDocument();
       });
     });
 
@@ -195,7 +205,9 @@ describe('SearchableSelect', () => {
       await user.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search pokemon...')).toBeInTheDocument();
+        expect(
+          screen.getByPlaceholderText('Search pokemon...')
+        ).toBeInTheDocument();
       });
 
       const searchInput = screen.getByPlaceholderText('Search pokemon...');
@@ -246,8 +258,11 @@ describe('SearchableSelect', () => {
     });
 
     it('should use custom filterItems function if provided', async () => {
-      const customFilter = jest.fn((items: typeof mockItems, searchTerm: string) =>
-        items.filter((item: typeof mockItems[0]) => item.name.startsWith(searchTerm))
+      const customFilter = jest.fn(
+        (items: typeof mockItems, searchTerm: string) =>
+          items.filter((item: (typeof mockItems)[0]) =>
+            item.name.startsWith(searchTerm)
+          )
       );
 
       mockUseDebouncedSearch.mockReturnValue({
@@ -298,7 +313,9 @@ describe('SearchableSelect', () => {
     it('should call onClear when "None" is clicked', async () => {
       const user = userEvent.setup();
       const onClear = jest.fn();
-      render(<SearchableSelect {...defaultProps} onClear={onClear} value="Pikachu" />);
+      render(
+        <SearchableSelect {...defaultProps} onClear={onClear} value="Pikachu" />
+      );
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -316,7 +333,13 @@ describe('SearchableSelect', () => {
     it('should highlight "None" when no value is selected', async () => {
       const user = userEvent.setup();
       const onClear = jest.fn();
-      render(<SearchableSelect {...defaultProps} onClear={onClear} value={undefined} />);
+      render(
+        <SearchableSelect
+          {...defaultProps}
+          onClear={onClear}
+          value={undefined}
+        />
+      );
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -360,7 +383,7 @@ describe('SearchableSelect', () => {
 
   describe('Custom Render Functions', () => {
     it('should use custom renderTriggerContent if provided', () => {
-      const customRender = (item: typeof mockItems[0] | undefined) => (
+      const customRender = (item: (typeof mockItems)[0] | undefined) => (
         <span>Custom: {item?.name || 'None'}</span>
       );
 
@@ -377,15 +400,13 @@ describe('SearchableSelect', () => {
 
     it('should use custom renderItemContent if provided', async () => {
       const user = userEvent.setup();
-      const customRender = (item: typeof mockItems[0], isSelected: boolean) => (
-        <span>Custom Item: {item.name}</span>
-      );
+      const customRender = (
+        item: (typeof mockItems)[0],
+        _isSelected: boolean
+      ) => <span>Custom Item: {item.name}</span>;
 
       render(
-        <SearchableSelect
-          {...defaultProps}
-          renderItemContent={customRender}
-        />
+        <SearchableSelect {...defaultProps} renderItemContent={customRender} />
       );
 
       const trigger = screen.getByRole('combobox');

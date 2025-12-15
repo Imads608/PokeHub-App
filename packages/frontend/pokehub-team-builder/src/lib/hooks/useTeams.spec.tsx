@@ -15,6 +15,7 @@ import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import type {
   CreateTeamDTO,
   TeamResponseDTO,
+  PokemonTeam,
   PokemonInTeam,
 } from '@pokehub/shared/pokemon-types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -219,7 +220,7 @@ describe('useTeams hooks', () => {
         act(async () => {
           await result.current.mutateAsync(teamDTO);
         })
-      ).rejects.toThrow('Access token is required');
+      ).rejects.toThrow('You must be logged in to delete a team');
     });
 
     it('should invalidate teams cache on success', async () => {
@@ -374,7 +375,7 @@ describe('useTeams hooks', () => {
             data: createMockTeamDTO(),
           });
         })
-      ).rejects.toThrow('Access token is required');
+      ).rejects.toThrow('You must be logged in to delete a team');
     });
 
     it('should update cache on success', async () => {
@@ -501,7 +502,7 @@ describe('useTeams hooks', () => {
         act(async () => {
           await result.current.mutateAsync('team-123');
         })
-      ).rejects.toThrow('Access token is required');
+      ).rejects.toThrow('You must be logged in to delete a team');
     });
 
     it('should remove query and invalidate cache on success', async () => {
@@ -549,7 +550,7 @@ describe('useTeams hooks', () => {
         });
 
         const teamDTO = createMockTeamDTO();
-        let savedTeam: TeamResponseDTO | undefined;
+        let savedTeam: TeamResponseDTO | PokemonTeam | undefined;
 
         await act(async () => {
           savedTeam = await result.current.saveTeam(teamDTO);
@@ -606,7 +607,7 @@ describe('useTeams hooks', () => {
         const { result } = renderHook(() => useSaveTeam(teamId), { wrapper });
 
         const teamDTO = createMockTeamDTO({ name: 'Updated Team' });
-        let savedTeam: TeamResponseDTO | undefined;
+        let savedTeam: TeamResponseDTO | PokemonTeam | undefined;
 
         await act(async () => {
           savedTeam = await result.current.saveTeam(teamDTO);

@@ -1,6 +1,9 @@
 import { PokemonCard } from './pokemon-card';
 import { Icons } from '@pkmn/img';
-import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
+import type {
+  PokemonInTeam,
+  ValidationError,
+} from '@pokehub/shared/pokemon-types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -16,7 +19,7 @@ jest.mock('../context/team-editor-context/team-editor.context', () => ({
 }));
 
 // Mock team validation context
-const mockGetPokemonErrors = jest.fn(() => []);
+const mockGetPokemonErrors = jest.fn<ValidationError[], [number]>(() => []);
 jest.mock('../context/team-validation-context/team-validation.context', () => ({
   useTeamValidationContext: () => ({
     getPokemonErrors: mockGetPokemonErrors,
@@ -89,9 +92,17 @@ describe('PokemonCard', () => {
 
     // Setup @pkmn/img mocks
     mockGetPokemon.mockImplementation((species: string) => ({
+      style: '',
+      url: `pokemon-${species}.png`,
+      left: 0,
+      top: 0,
       css: { backgroundImage: `url(pokemon-${species}.png)` },
     }));
     mockGetItem.mockImplementation((item: string) => ({
+      style: '',
+      url: `item-${item}.png`,
+      left: 0,
+      top: 0,
       css: { backgroundImage: `url(item-${item}.png)` },
     }));
 
@@ -448,7 +459,7 @@ describe('PokemonCard', () => {
 
     it('should show error icon when there are validation errors', () => {
       mockGetPokemonErrors.mockReturnValue([
-        { message: 'Pokemon must have at least one move', path: 'moves' },
+        { message: 'Pokemon must have at least one move', field: 'moves' },
       ]);
 
       const { container } = render(<PokemonCard {...defaultProps} />);
@@ -464,7 +475,7 @@ describe('PokemonCard', () => {
 
     it('should show red border when there are validation errors', () => {
       mockGetPokemonErrors.mockReturnValue([
-        { message: 'Pokemon must have at least one move', path: 'moves' },
+        { message: 'Pokemon must have at least one move', field: 'moves' },
       ]);
 
       const { container } = render(<PokemonCard {...defaultProps} />);
@@ -476,8 +487,8 @@ describe('PokemonCard', () => {
 
     it('should display error messages in tooltip', async () => {
       mockGetPokemonErrors.mockReturnValue([
-        { message: 'Pokemon must have at least one move', path: 'moves' },
-        { message: 'Invalid ability for this Pokemon', path: 'ability' },
+        { message: 'Pokemon must have at least one move', field: 'moves' },
+        { message: 'Invalid ability for this Pokemon', field: 'ability' },
       ]);
 
       const user = userEvent.setup();

@@ -24,6 +24,7 @@ export interface PokemonInTeam extends PokemonSet, PokemonInTeamSchema {
 
 export interface PokemonTeam extends PokemonTeamSchema {
   id?: string;
+  userId?: string;
   createdAt?: Date;
   updatedAt?: Date;
   name: string;

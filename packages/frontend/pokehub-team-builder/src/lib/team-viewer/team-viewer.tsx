@@ -9,7 +9,6 @@ import type { TeamSortBy } from './context/team-viewer.context.model';
 import { useFilteredTeams } from './hooks/useFilteredTeams';
 import type { GenerationNum } from '@pkmn/dex';
 import { getFormatDisplayName } from '@pokehub/frontend/dex-data-provider';
-import { getGenerationsData } from '@pokehub/frontend/pokemon-static-data';
 import {
   Button,
   Card,
@@ -64,14 +63,30 @@ export const TeamViewer = () => {
   // Filter and sort teams
   const filteredTeams = useFilteredTeams(teams);
 
-  // Get unique full showdown format IDs from user's teams for the filter dropdown
+  // Get unique generations from user's teams for the filter dropdown
+  const availableGenerations = useMemo(() => {
+    if (!teams) return [];
+    const genSet = new Set(teams.map((team) => team.generation));
+    return Array.from(genSet).sort((a, b) => a - b);
+  }, [teams]);
+
+  // Get unique formats from user's teams, filtered by selected generation
   const availableFormats = useMemo(() => {
     if (!teams) return [];
+
+    // Filter teams by selected generation if one is selected
+    const teamsToConsider =
+      selectedGeneration.value === 'all'
+        ? teams
+        : teams.filter((team) => team.generation === selectedGeneration.value);
+
     const formatSet = new Set(
-      teams.map((team) => getFormatDisplayName(team.generation, team.format))
+      teamsToConsider.map((team) =>
+        getFormatDisplayName(team.generation, team.format)
+      )
     );
     return Array.from(formatSet).sort();
-  }, [teams]);
+  }, [teams, selectedGeneration.value]);
 
   // Handlers
   const handleCreateTeam = useCallback(() => {
@@ -270,9 +285,9 @@ export const TeamViewer = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Generations</SelectItem>
-                      {getGenerationsData().map((gen) => (
-                        <SelectItem key={gen.id} value={gen.id.toString()}>
-                          {gen.name}
+                      {availableGenerations.map((gen) => (
+                        <SelectItem key={gen} value={gen.toString()}>
+                          Generation {gen}
                         </SelectItem>
                       ))}
                     </SelectContent>
