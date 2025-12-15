@@ -1,7 +1,25 @@
 'use client';
 
-import type { TeamViewerFilters } from './team-viewer.context.model';
+import type {
+  TeamViewerFilters,
+  TeamSortBy,
+  SortOrder,
+  ViewMode,
+} from './team-viewer.context.model';
+import type { ContextField } from '@pokehub/frontend/shared-context';
+import type { GenerationNum } from '@pkmn/dex';
 import { createContext, useContext } from 'react';
+
+export interface UseTeamViewerFiltersReturn {
+  searchTerm: ContextField<string, 'ReadWrite'>;
+  selectedGeneration: ContextField<GenerationNum | 'all', 'ReadWrite'>;
+  selectedFormat: ContextField<string | 'all', 'ReadWrite'>;
+  sortBy: ContextField<TeamSortBy, 'ReadWrite'>;
+  sortOrder: ContextField<SortOrder, 'ReadWrite'> & { toggleSortOrder: () => void };
+  viewMode: ContextField<ViewMode, 'ReadWrite'> & { toggleViewMode: () => void };
+  resetFilters: () => void;
+  hasActiveFilters: boolean;
+}
 
 export const TeamViewerFiltersContext = createContext<
   TeamViewerFilters<'ReadWrite'>
@@ -44,7 +62,7 @@ export const TeamViewerFiltersContext = createContext<
   },
 });
 
-export const useTeamViewerFilters = () => {
+export const useTeamViewerFilters = (): UseTeamViewerFiltersReturn => {
   const {
     searchTerm,
     selectedGeneration,

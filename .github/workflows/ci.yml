@@ -101,23 +101,26 @@ jobs:
       - name: Build workspace-plugin
         run: npx nx build workspace-plugin
 
-      - name: Run generator to check for missing targets
+      - name: Check for missing typecheck-spec targets
         run: npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all
+
+      - name: Check for incorrect path aliases
+        run: npx nx g @pokehub/workspace-plugin:fix-path-aliases
 
       - name: Check for uncommitted changes
         run: |
           if [[ -n $(git status --porcelain) ]]; then
-            echo "::error::Missing typecheck-spec targets detected!"
+            echo "::error::Workspace configuration issues detected!"
             echo ""
             echo "The following files need updates:"
             git diff --name-only
             echo ""
-            echo "Run one of these commands locally and commit the changes:"
-            echo "  npx nx g @pokehub/workspace-plugin:add-typecheck-spec --project=<project-name>"
+            echo "Run these commands locally and commit the changes:"
             echo "  npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all"
+            echo "  npx nx g @pokehub/workspace-plugin:fix-path-aliases"
             exit 1
           fi
-          echo "All projects have typecheck-spec targets"
+          echo "All workspace configurations are correct"
 
   lint:
     name: Lint

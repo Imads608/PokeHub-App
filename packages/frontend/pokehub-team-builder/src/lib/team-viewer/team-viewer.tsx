@@ -280,7 +280,7 @@ export const TeamViewer = () => {
                     }
                     onValueChange={handleGenerationChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-testid="generation-filter">
                       <SelectValue placeholder="All Generations" />
                     </SelectTrigger>
                     <SelectContent>
@@ -303,7 +303,7 @@ export const TeamViewer = () => {
                     value={selectedFormat.value}
                     onValueChange={(value) => selectedFormat.setValue(value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-testid="format-filter">
                       <SelectValue placeholder="All Formats" />
                     </SelectTrigger>
                     <SelectContent>
@@ -327,7 +327,10 @@ export const TeamViewer = () => {
                       value={sortBy.value}
                       onValueChange={handleSortChange}
                     >
-                      <SelectTrigger className="flex-1">
+                      <SelectTrigger
+                        className="flex-1"
+                        data-testid="sort-filter"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
