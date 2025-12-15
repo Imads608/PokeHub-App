@@ -20,6 +20,9 @@
       "@pokehub/backend/pokehub-postgres": [
         "packages/backend/pokehub-postgres/src/index.ts"
       ],
+      "@pokehub/backend/pokehub-teams-db": [
+        "packages/backend/pokehub-teams-db/src/index.ts"
+      ],
       "@pokehub/backend/pokehub-users-db": [
         "packages/backend/pokehub-users-db/src/index.ts"
       ],
@@ -32,9 +35,6 @@
       "@pokehub/backend/shared-logger": [
         "packages/backend/shared-logger/src/index.ts"
       ],
-      "@pokehub/frontend/pokehub-data-provider": [
-        "packages/frontend/pokehub-data-provider/src/index.ts"
-      ],
       "@pokehub/frontend/dex-data-provider": [
         "packages/frontend/dex-data-provider/src/index.ts"
       ],
@@ -46,6 +46,9 @@
       ],
       "@pokehub/frontend/pokehub-auth-forms/server": [
         "packages/frontend/pokehub-auth-forms/src/server.ts"
+      ],
+      "@pokehub/frontend/pokehub-data-provider": [
+        "packages/frontend/pokehub-data-provider/src/index.ts"
       ],
       "@pokehub/frontend/pokehub-dex-components": [
         "packages/frontend/pokehub-dex-components/src/index.ts"
@@ -129,26 +132,20 @@
         "packages/frontend/shared-utils/src/server.ts"
       ],
       "@pokehub/nest-custom-plugin": ["tools/nest-custom-plugin/src/index.ts"],
-      "@pokehub/shared/shared-auth-models": [
-        "packages/shared/shared-auth-models/src/index.ts"
-      ],
-      "@pokehub/shared/shared-user-models": [
-        "packages/shared/shared-user-models/src/index.ts"
+      "@pokehub/shared/pokemon-showdown-validation": [
+        "packages/shared/pokemon-showdown-validation/src/index.ts"
       ],
       "@pokehub/shared/pokemon-types": [
         "packages/shared/pokemon-types/src/index.ts"
       ],
-      "@pokehub/shared/pokemon-showdown-validation": [
-        "packages/shared/pokemon-showdown-validation/src/index.ts"
-      ],
-      "@pokehub/backend/pokehub-teams-db": [
-        "packages/backend/pokehub-teams-db/src/index.ts"
-      ],
-      "@pokehub/backend-pokehub-teams-db": [
-        "packages/backend/pokehub-teams-db/src/index.ts"
+      "@pokehub/shared/shared-auth-models": [
+        "packages/shared/shared-auth-models/src/index.ts"
       ],
       "@pokehub/shared/shared-request-context": [
         "packages/shared/shared-request-context/src/index.ts"
+      ],
+      "@pokehub/shared/shared-user-models": [
+        "packages/shared/shared-user-models/src/index.ts"
       ],
       "@pokehub/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
     }

@@ -4,6 +4,11 @@
       "factory": "./src/generators/add-typecheck-spec/add-typecheck-spec",
       "schema": "./src/generators/add-typecheck-spec/schema.json",
       "description": "add-typecheck-spec generator"
+    },
+    "fix-path-aliases": {
+      "factory": "./src/generators/fix-path-aliases/fix-path-aliases",
+      "schema": "./src/generators/fix-path-aliases/schema.json",
+      "description": "fix-path-aliases generator"
     }
   }
 }

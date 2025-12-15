@@ -80,6 +80,87 @@ Then commit the changes.
 - **Projects without `tsconfig.spec.json`**: The generator skips these projects
 - **Existing targets**: Skipped unless `--force` is used
 
+---
+
+### fix-path-aliases
+
+Fixes path aliases in `tsconfig.base.json` to follow the correct naming convention.
+
+#### Why?
+
+When Nx generates a new package, it may create path aliases in the wrong format:
+
+```
+@pokehub/frontend-my-package  ❌ Wrong
+@pokehub/frontend/my-package  ✅ Correct
+```
+
+This generator automatically fixes these aliases to use the correct format with a slash separator between the domain and package name.
+
+#### Usage
+
+Fix all incorrect path aliases:
+
+```bash
+npx nx g @pokehub/workspace-plugin:fix-path-aliases
+```
+
+Preview changes without modifying files:
+
+```bash
+npx nx g @pokehub/workspace-plugin:fix-path-aliases --dry-run
+```
+
+#### Options
+
+| Option     | Type    | Description                             |
+| ---------- | ------- | --------------------------------------- |
+| `--dryRun` | boolean | Preview changes without modifying files |
+
+#### What it fixes
+
+| Incorrect                      | Correct                        |
+| ------------------------------ | ------------------------------ |
+| `@pokehub/frontend-my-package` | `@pokehub/frontend/my-package` |
+| `@pokehub/backend-my-service`  | `@pokehub/backend/my-service`  |
+| `@pokehub/shared-my-types`     | `@pokehub/shared/my-types`     |
+
+#### CI Integration
+
+The CI workflow automatically runs this generator and fails if any path aliases need fixing. If CI fails, run:
+
+```bash
+npx nx g @pokehub/workspace-plugin:fix-path-aliases
+```
+
+Then commit the changes.
+
+#### Behavior
+
+- **Duplicates**: If both incorrect and correct versions exist, the incorrect one is removed
+- **Tool plugins**: Aliases like `@pokehub/workspace-plugin` are preserved (no domain prefix)
+- **Sorting**: Path aliases are sorted alphabetically after fixing
+
+---
+
+## CI Integration
+
+The CI workflow runs both generators to ensure workspace consistency:
+
+1. **check-typecheck-targets** job:
+   - Runs `add-typecheck-spec --all`
+   - Runs `fix-path-aliases`
+   - Fails if any changes are detected
+
+If CI fails with "Workspace configuration issues detected!", run:
+
+```bash
+npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all
+npx nx g @pokehub/workspace-plugin:fix-path-aliases
+```
+
+Then commit the changes.
+
 ## Development
 
 ### Building the plugin
