@@ -1,5 +1,5 @@
-import { Dex } from '@pkmn/sim';
 import type { GenerationNum } from '@pkmn/dex';
+import { Dex } from '@pkmn/sim';
 
 /**
  * Represents a battle format from Pokemon Showdown
@@ -56,7 +56,23 @@ function categorizeFormat(formatId: string): FormatCategory {
 
   // Singles tier formats - match standard tier patterns
   // Check if the format ends with a known singles tier name
-  const singlesTiers = ['ou', 'uu', 'ru', 'nu', 'pu', 'zu', 'lc', 'ubers', 'anythinggoes', 'ag', 'nfe', 'uubl', 'rubl', 'nubl', 'publ'];
+  const singlesTiers = [
+    'ou',
+    'uu',
+    'ru',
+    'nu',
+    'pu',
+    'zu',
+    'lc',
+    'ubers',
+    'anythinggoes',
+    'ag',
+    'nfe',
+    'uubl',
+    'rubl',
+    'nubl',
+    'publ',
+  ];
   for (const tier of singlesTiers) {
     if (id.endsWith(tier)) {
       return 'Singles';

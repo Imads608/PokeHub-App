@@ -14,6 +14,22 @@
       "options": {
         "jestConfig": "packages/shared/shared-auth-models/jest.config.ts"
       }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "if ls packages/shared/shared-auth-models/src/**/*.spec.ts packages/shared/shared-auth-models/src/**/*.spec.tsx 1> /dev/null 2>&1; then tsc --noEmit -p packages/shared/shared-auth-models/tsconfig.spec.json; else echo \"No spec files found, skipping typecheck\"; fi",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tsconfig.spec.json",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx",
+        "{projectRoot}/src/**/*.spec.ts",
+        "{projectRoot}/src/**/*.spec.tsx",
+        "{workspaceRoot}/tsconfig.base.json"
+      ]
     }
   }
 }

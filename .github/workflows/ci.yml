@@ -73,6 +73,52 @@ jobs:
             echo "has-app=false" >> $GITHUB_OUTPUT
           fi
 
+  check-typecheck-targets:
+    name: Check typecheck-spec Targets
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspace-plugin
+        run: npx nx build workspace-plugin
+
+      - name: Run generator to check for missing targets
+        run: npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "::error::Missing typecheck-spec targets detected!"
+            echo ""
+            echo "The following files need updates:"
+            git diff --name-only
+            echo ""
+            echo "Run one of these commands locally and commit the changes:"
+            echo "  npx nx g @pokehub/workspace-plugin:add-typecheck-spec --project=<project-name>"
+            echo "  npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all"
+            exit 1
+          fi
+          echo "All projects have typecheck-spec targets"
+
   lint:
     name: Lint
     needs: setup
@@ -107,6 +153,41 @@ jobs:
 
       - name: Lint affected projects
         run: npx nx affected -t lint --parallel=3
+
+  typecheck-spec:
+    name: Typecheck Spec Files
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Derive SHAs for affected commands
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: 'main'
+
+      - name: Typecheck affected spec files
+        run: npx nx affected -t typecheck-spec --parallel=3
 
   test:
     name: Test
@@ -278,13 +359,15 @@ jobs:
 
   ci-success:
     name: CI Success
-    needs: [lint, test, build, e2e]
+    needs: [check-typecheck-targets, lint, typecheck-spec, test, build, e2e]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check CI status
         run: |
-          if [[ "${{ needs.lint.result }}" == "failure" ]] || \
+          if [[ "${{ needs.check-typecheck-targets.result }}" == "failure" ]] || \
+             [[ "${{ needs.lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.typecheck-spec.result }}" == "failure" ]] || \
              [[ "${{ needs.test.result }}" == "failure" ]] || \
              [[ "${{ needs.build.result }}" == "failure" ]] || \
              [[ "${{ needs.e2e.result }}" == "failure" ]]; then

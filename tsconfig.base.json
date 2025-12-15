@@ -149,7 +149,8 @@
       ],
       "@pokehub/shared/shared-request-context": [
         "packages/shared/shared-request-context/src/index.ts"
-      ]
+      ],
+      "@pokehub/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
