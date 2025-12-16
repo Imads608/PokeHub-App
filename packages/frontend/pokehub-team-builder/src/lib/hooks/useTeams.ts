@@ -33,7 +33,7 @@ export function useUserTeams() {
     queryFn: async (): Promise<PokemonTeam[]> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('You must be logged in to delete a team');
+        throw new Error('You must be logged in to view teams');
       }
       // Cast to PokemonTeam[] - the API returns compatible structure
       // but with plain strings instead of branded types
@@ -57,7 +57,7 @@ export function useCreateTeam() {
     mutationFn: async (data: CreateTeamDTO): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('You must be logged in to delete a team');
+        throw new Error('You must be logged in to create a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         createTeamRequest(token, data)
@@ -93,7 +93,7 @@ export function useUpdateTeam() {
     }): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('You must be logged in to delete a team');
+        throw new Error('You must be logged in to update a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         updateTeamRequest(token, teamId, data)

@@ -370,7 +370,7 @@ describe('useTeams hooks', () => {
         act(async () => {
           await result.current.mutateAsync(teamDTO);
         })
-      ).rejects.toThrow('You must be logged in to delete a team');
+      ).rejects.toThrow('You must be logged in to create a team');
     });
 
     it('should invalidate teams cache on success', async () => {
@@ -525,7 +525,7 @@ describe('useTeams hooks', () => {
             data: createMockTeamDTO(),
           });
         })
-      ).rejects.toThrow('You must be logged in to delete a team');
+      ).rejects.toThrow('You must be logged in to update a team');
     });
 
     it('should update cache on success', async () => {
@@ -854,7 +854,10 @@ describe('useTeams hooks', () => {
       const initialTeams = [createMockTeamResponse({ id: 'existing-team' })];
       queryClient.setQueryData(teamsKeys.all, initialTeams);
 
-      const newTeam = createMockTeamResponse({ id: 'new-team', name: 'New Team' });
+      const newTeam = createMockTeamResponse({
+        id: 'new-team',
+        name: 'New Team',
+      });
       const mockFetchResponse = {
         json: jest.fn().mockResolvedValue(newTeam),
         ok: true,
