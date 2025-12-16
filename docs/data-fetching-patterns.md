@@ -21,6 +21,7 @@ This guide documents all data fetching patterns used in PokeHub. The application
 6. [Loading States](#loading-states)
 7. [Cache Management](#cache-management)
 8. [Authentication & Token Retry](#authentication--token-retry)
+9. [Server-Side Prefetch with HydrationBoundary](#server-side-prefetch-with-hydrationboundary)
 
 ---
 
@@ -910,6 +911,177 @@ const response = await withAuthRetry(
   (token) => getFetchClient('API').fetchThrowsError('/protected', {
     headers: { Authorization: `Bearer ${token}` },
   })
+);
+```
+
+---
+
+## Server-Side Prefetch with HydrationBoundary
+
+### Overview
+
+For pages that need data immediately on load, use server-side prefetching with React Query's `HydrationBoundary`. This pattern:
+- Fetches data on the server during SSR
+- Dehydrates the cache state and sends it to the client
+- Hydrates the client-side cache with prefetched data
+- Eliminates loading states on initial render
+
+### When to Use
+
+- Pages where data is critical for initial render
+- Authenticated pages where you have the session on the server
+- Lists or dashboards that should display immediately
+- Avoiding client-side request waterfalls
+
+### Implementation Pattern
+
+**Server Component (Page)**:
+```typescript
+// app/team-builder/page.tsx
+import { auth } from '@pokehub/frontend/shared-auth/server';
+import { getQueryClient } from '@pokehub/frontend/shared-data-provider';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { getUserTeams, teamsKeys } from '@pokehub/frontend/pokehub-team-builder';
+import { redirect } from 'next/navigation';
+
+export default async function TeamBuilderPage() {
+  // 1. Get session on server
+  const session = await auth();
+
+  if (!session?.accessToken) {
+    redirect('/login');
+  }
+
+  // 2. Create query client for this request
+  const queryClient = getQueryClient();
+
+  // 3. Prefetch data using same query key as client hook
+  await queryClient.prefetchQuery({
+    queryKey: teamsKeys.all,
+    queryFn: () => getUserTeams(session.accessToken),
+  });
+
+  // 4. Wrap client components with HydrationBoundary
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TeamViewerProvider>
+        <TeamViewer />
+      </TeamViewerProvider>
+    </HydrationBoundary>
+  );
+}
+```
+
+**Client Component (Hook)**:
+```typescript
+// hooks/useTeams.ts
+export function useUserTeams() {
+  const { data: session } = useAuthSession();
+
+  return useQuery({
+    queryKey: teamsKeys.all,  // Same key as prefetch!
+    queryFn: async () => {
+      const { accessToken } = session || {};
+      if (!accessToken) throw new Error('Access token is required');
+      return getUserTeams(accessToken);
+    },
+    enabled: !!session?.accessToken,
+    staleTime: 30000, // 30 seconds
+  });
+}
+```
+
+### Key Requirements
+
+1. **Same Query Key**: The `queryKey` in `prefetchQuery` MUST match the client hook's `queryKey`
+2. **Export API Function**: The data fetching function (e.g., `getUserTeams`) must be callable from both server and client
+3. **Server-Side Auth**: Use `auth()` from server auth package, not client hooks
+4. **Dehydrate State**: Always wrap with `dehydrate(queryClient)` to serialize the cache
+
+### Benefits
+
+| Without Prefetch | With Prefetch |
+|-----------------|---------------|
+| Page loads → Loading spinner → Data fetches → Content renders | Page loads → Content renders immediately |
+| 2+ network round trips | 1 network round trip (during SSR) |
+| Layout shift when content loads | No layout shift |
+| Visible loading state | No loading state on initial render |
+
+### Real Example: Team Viewer
+
+```typescript
+// app/team-builder/page.tsx
+export default async function TeamBuilderPage() {
+  const session = await auth();
+
+  if (!session?.accessToken) {
+    redirect('/login');
+  }
+
+  const queryClient = getQueryClient();
+
+  // Prefetch teams data on server
+  await queryClient.prefetchQuery({
+    queryKey: teamsKeys.all,
+    queryFn: () => getUserTeams(session.accessToken),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TeamViewerProvider>
+        <TeamViewer />
+      </TeamViewerProvider>
+    </HydrationBoundary>
+  );
+}
+```
+
+The `TeamViewer` component uses `useUserTeams()` which automatically picks up the prefetched data—no loading state, instant render.
+
+### Common Mistakes
+
+**❌ Different query keys**:
+```typescript
+// Server
+await queryClient.prefetchQuery({
+  queryKey: ['teams'],  // Wrong!
+  queryFn: () => getUserTeams(token),
+});
+
+// Client
+useQuery({
+  queryKey: teamsKeys.all,  // ['teams', 'all'] - Different key!
+  queryFn: () => getUserTeams(token),
+});
+```
+
+**✅ Same query keys**:
+```typescript
+// Server
+await queryClient.prefetchQuery({
+  queryKey: teamsKeys.all,  // Use the same key helper
+  queryFn: () => getUserTeams(token),
+});
+
+// Client
+useQuery({
+  queryKey: teamsKeys.all,  // Same key!
+  queryFn: () => getUserTeams(token),
+});
+```
+
+**❌ Forgetting HydrationBoundary**:
+```typescript
+// This won't work - data won't transfer to client
+return <TeamViewer />;
+```
+
+**✅ With HydrationBoundary**:
+```typescript
+return (
+  <HydrationBoundary state={dehydrate(queryClient)}>
+    <TeamViewer />
+  </HydrationBoundary>
 );
 ```
 
