@@ -24,6 +24,7 @@ import {
   Skeleton,
   Badge,
 } from '@pokehub/frontend/shared-ui-components';
+import { useDebouncedSearch } from '@pokehub/frontend/shared-utils';
 import type { PokemonTeam } from '@pokehub/shared/pokemon-types';
 import {
   Filter,
@@ -36,7 +37,7 @@ import {
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export const TeamViewer = () => {
@@ -60,8 +61,26 @@ export const TeamViewer = () => {
     hasActiveFilters,
   } = useTeamViewerFilters();
 
+  // Debounced search - local state for responsive input, syncs to context for filtering
+  const {
+    searchTerm: localSearchTerm,
+    setSearchTerm: setLocalSearchTerm,
+    debouncedSearchTerm,
+  } = useDebouncedSearch({ initialVal: searchTerm.value });
+
+  // Sync debounced search term to context for filtering
+  useEffect(() => {
+    searchTerm.setValue(debouncedSearchTerm);
+  }, [debouncedSearchTerm, searchTerm]);
+
   // Filter and sort teams
   const filteredTeams = useFilteredTeams(teams);
+
+  // Wrap resetFilters to also clear local search term
+  const handleResetFilters = useCallback(() => {
+    setLocalSearchTerm('');
+    resetFilters();
+  }, [resetFilters, setLocalSearchTerm]);
 
   // Get unique generations from user's teams for the filter dropdown
   const availableGenerations = useMemo(() => {
@@ -206,7 +225,11 @@ export const TeamViewer = () => {
               Manage your competitive Pokemon teams
             </p>
           </div>
-          <Button onClick={handleCreateTeam} size="lg" data-testid="create-team-button">
+          <Button
+            onClick={handleCreateTeam}
+            size="lg"
+            data-testid="create-team-button"
+          >
             <Plus className="mr-2 h-5 w-5" />
             Create New Team
           </Button>
@@ -262,8 +285,8 @@ export const TeamViewer = () => {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Search teams..."
-                      value={searchTerm.value}
-                      onChange={(e) => searchTerm.setValue(e.target.value)}
+                      value={localSearchTerm}
+                      onChange={(e) => setLocalSearchTerm(e.target.value)}
                       className="pl-9"
                       data-testid="search-input"
                     />
@@ -362,7 +385,12 @@ export const TeamViewer = () => {
                   <p className="text-sm text-muted-foreground">
                     Showing {filteredTeams.length} of {teams?.length} teams
                   </p>
-                  <Button variant="ghost" size="sm" onClick={resetFilters} data-testid="clear-filters-button">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    data-testid="clear-filters-button"
+                  >
                     <X className="mr-2 h-4 w-4" />
                     Clear Filters
                   </Button>
@@ -398,7 +426,11 @@ export const TeamViewer = () => {
                 No teams match your current filters. Try adjusting your search
                 criteria.
               </p>
-              <Button variant="outline" onClick={resetFilters} data-testid="no-results-clear-filters">
+              <Button
+                variant="outline"
+                onClick={handleResetFilters}
+                data-testid="no-results-clear-filters"
+              >
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
               </Button>
@@ -406,7 +438,10 @@ export const TeamViewer = () => {
           </Card>
         ) : viewMode.value === 'grid' ? (
           // Grid view
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="teams-grid">
+          <div
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            data-testid="teams-grid"
+          >
             {filteredTeams.map((team) => (
               <TeamCard
                 key={team.id}

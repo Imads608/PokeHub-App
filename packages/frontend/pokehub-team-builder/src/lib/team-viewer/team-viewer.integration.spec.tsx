@@ -261,7 +261,7 @@ describe('TeamViewer Integration Tests', () => {
   });
 
   describe('Complete Filter Flow', () => {
-    it('should filter teams by search term in real-time', async () => {
+    it('should filter teams by search term with debounce', async () => {
       const user = userEvent.setup();
       renderTeamViewer();
 
@@ -273,14 +273,13 @@ describe('TeamViewer Integration Tests', () => {
       const searchInput = screen.getByPlaceholderText('Search teams...');
       await user.type(searchInput, 'VGC');
 
-      // Should show only VGC teams
+      // Should show only VGC teams after debounce
       await waitFor(() => {
         expect(screen.getByText('VGC Regulation E')).toBeInTheDocument();
         expect(screen.getByText('Alpha VGC Team')).toBeInTheDocument();
+        expect(screen.queryByText('Gen 9 OU Team')).not.toBeInTheDocument();
+        expect(screen.queryByText('Gen 8 OU Classic')).not.toBeInTheDocument();
       });
-
-      expect(screen.queryByText('Gen 9 OU Team')).not.toBeInTheDocument();
-      expect(screen.queryByText('Gen 8 OU Classic')).not.toBeInTheDocument();
 
       // Should show filter count
       await waitFor(() => {
@@ -355,7 +354,9 @@ describe('TeamViewer Integration Tests', () => {
         expect(screen.queryByText('Gen 8 OU Classic')).not.toBeInTheDocument();
       });
 
-      expect(screen.getByText(/Showing 1 of 4 teams/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText(/Showing 1 of 4 teams/i)).toBeInTheDocument();
+      });
     });
 
     it('should reset all filters when Clear Filters is clicked', async () => {
@@ -403,11 +404,10 @@ describe('TeamViewer Integration Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText('No teams found')).toBeInTheDocument();
+        expect(
+          screen.getByText(/no teams match your current filters/i)
+        ).toBeInTheDocument();
       });
-
-      expect(
-        screen.getByText(/no teams match your current filters/i)
-      ).toBeInTheDocument();
     });
   });
 
