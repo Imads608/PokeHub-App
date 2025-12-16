@@ -15,6 +15,22 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint"
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "if ls apps/pokehub-api-e2e/src/**/*.spec.ts apps/pokehub-api-e2e/src/**/*.spec.tsx 1> /dev/null 2>&1; then tsc --noEmit -p apps/pokehub-api-e2e/tsconfig.spec.json; else echo \"No spec files found, skipping typecheck\"; fi",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tsconfig.spec.json",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx",
+        "{projectRoot}/src/**/*.spec.ts",
+        "{projectRoot}/src/**/*.spec.tsx",
+        "{workspaceRoot}/tsconfig.base.json"
+      ]
     }
   }
 }

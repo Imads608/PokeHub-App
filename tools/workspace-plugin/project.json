@@ -1,0 +1,66 @@
+{
+  "name": "workspace-plugin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/workspace-plugin/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/tools/workspace-plugin",
+        "main": "tools/workspace-plugin/src/index.ts",
+        "tsConfig": "tools/workspace-plugin/tsconfig.lib.json",
+        "assets": [
+          {
+            "input": "./tools/workspace-plugin/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/workspace-plugin/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/workspace-plugin",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./tools/workspace-plugin",
+            "glob": "executors.json",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "tools/workspace-plugin/jest.config.ts"
+      }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "if ls tools/workspace-plugin/src/**/*.spec.ts tools/workspace-plugin/src/**/*.spec.tsx 1> /dev/null 2>&1; then tsc --noEmit -p tools/workspace-plugin/tsconfig.spec.json; else echo \"No spec files found, skipping typecheck\"; fi",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tsconfig.spec.json",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx",
+        "{projectRoot}/src/**/*.spec.ts",
+        "{projectRoot}/src/**/*.spec.tsx",
+        "{workspaceRoot}/tsconfig.base.json"
+      ]
+    }
+  }
+}

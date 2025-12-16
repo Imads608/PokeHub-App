@@ -6,6 +6,282 @@ The Team Builder feature allows users to create and customize competitive Pokemo
 
 **Status**: In Development (Core editing complete, validation implemented, team analysis implemented, backend persistence implemented - frontend integration pending)
 
+---
+
+## Team Viewer
+
+The Team Viewer is the main entry point for the `/team-builder` route, displaying all user teams with filtering, sorting, and management capabilities.
+
+### Features
+
+- **View Teams**: Display all user teams in grid or list view
+- **Search**: Filter teams by name (case-insensitive)
+- **Filter**: By generation and format
+- **Sort**: By name, created date, or updated date (ascending/descending)
+- **Actions**: Create, edit, duplicate, and delete teams
+- **View Modes**: Toggle between grid and list layouts
+
+### Component Structure
+
+```
+team-viewer/
+├── team-viewer.tsx                    # Main viewer container with filters
+├── components/
+│   ├── team-card.tsx                  # Grid view team card
+│   ├── team-list-item.tsx             # List view team item
+│   └── delete-team-dialog.tsx         # Deletion confirmation dialog
+├── context/
+│   ├── team-viewer.context.ts         # Context definition
+│   ├── team-viewer.context.model.ts   # TypeScript types
+│   └── team-viewer.provider.tsx       # Provider with state management
+└── hooks/
+    └── useFilteredTeams.ts            # Client-side filtering/sorting logic
+```
+
+### State Management
+
+**Context**: `TeamViewerFiltersContext` provides filter state:
+
+```typescript
+interface TeamViewerFiltersState {
+  searchTerm: string;                    // Team name search
+  selectedGeneration: GenerationNum | 'all';
+  selectedFormat: string | 'all';
+  sortBy: 'created' | 'updated' | 'name';
+  sortOrder: 'asc' | 'desc';
+  viewMode: 'grid' | 'list';
+}
+```
+
+**Key Methods**:
+- `setSearchTerm(term)` - Update search filter
+- `setSelectedGeneration(gen)` - Filter by generation
+- `setSelectedFormat(format)` - Filter by format
+- `setSortBy(field)` - Change sort field
+- `toggleSortOrder()` - Toggle asc/desc
+- `toggleViewMode()` - Switch between grid/list
+- `resetFilters()` - Clear all filters
+- `hasActiveFilters` - Computed: true if any filter is active
+
+### Data Fetching
+
+Uses `useUserTeams()` hook with server-side prefetch:
+
+```typescript
+// Hook (client-side)
+export function useUserTeams() {
+  const { data: session } = useAuthSession();
+
+  return useQuery({
+    queryKey: teamsKeys.all,
+    queryFn: async () => {
+      return withAuthRetryWithoutResponse(
+        session!.accessToken,
+        (token) => getUserTeams(token)
+      );
+    },
+    enabled: !!session?.accessToken,
+    staleTime: 30000, // 30 seconds
+  });
+}
+```
+
+**Server-Side Prefetch** (see [Data Fetching Patterns](../data-fetching-patterns.md#server-side-prefetch-with-hydrationboundary)):
+
+```typescript
+// app/team-builder/page.tsx
+export default async function TeamBuilderPage() {
+  const session = await auth();
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: teamsKeys.all,
+    queryFn: () => getUserTeams(session.accessToken),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TeamViewerProvider>
+        <TeamViewer />
+      </TeamViewerProvider>
+    </HydrationBoundary>
+  );
+}
+```
+
+### Client-Side Filtering
+
+The `useFilteredTeams` hook performs filtering and sorting on the client:
+
+```typescript
+export function useFilteredTeams(teams: TeamResponseDTO[]) {
+  const { searchTerm, selectedGeneration, selectedFormat, sortBy, sortOrder } =
+    useTeamViewerFilters();
+
+  return useMemo(() => {
+    let filtered = [...teams];
+
+    // Search filter (case-insensitive)
+    if (searchTerm) {
+      filtered = filtered.filter((team) =>
+        team.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Generation filter
+    if (selectedGeneration !== 'all') {
+      filtered = filtered.filter((team) => team.generation === selectedGeneration);
+    }
+
+    // Format filter
+    if (selectedFormat !== 'all') {
+      filtered = filtered.filter((team) => team.format === selectedFormat);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'created':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'updated':
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [teams, searchTerm, selectedGeneration, selectedFormat, sortBy, sortOrder]);
+}
+```
+
+### Team Actions
+
+#### Duplicate Team
+
+1. Calls `useCreateTeam()` with modified team data
+2. Appends "(Copy)" to team name
+3. Navigates to `/team-builder/[newTeamId]` on success
+4. Shows toast notification
+
+```typescript
+const handleDuplicate = async (team: TeamResponseDTO) => {
+  const newTeam = await createTeam.mutateAsync({
+    ...team,
+    name: `${team.name} (Copy)`,
+  });
+  router.push(`/team-builder/${newTeam.id}`);
+  toast.success('Team duplicated');
+};
+```
+
+#### Delete Team
+
+1. Opens confirmation dialog with team name
+2. Calls `useDeleteTeam()` on confirm
+3. Cache automatically invalidates
+4. Shows toast notification
+
+```typescript
+const handleDelete = async (teamId: string) => {
+  await deleteTeam.mutateAsync(teamId);
+  setDeleteDialogOpen(false);
+  toast.success('Team deleted');
+};
+```
+
+### UI Components
+
+#### TeamCard (Grid View)
+
+- Team name with generation/format badges
+- Pokemon sprites (up to 6) using `@pkmn/img`
+- Last updated timestamp (relative, e.g., "2 hours ago")
+- Dropdown menu: Edit, Duplicate, Delete
+- Click card to navigate to editor
+
+#### TeamListItem (List View)
+
+- Horizontal layout with Pokemon sprites inline
+- Team name and metadata
+- Action buttons visible on hover
+- Same actions as TeamCard
+
+#### DeleteTeamDialog
+
+- AlertTriangle icon for destructive action
+- Shows team name for confirmation
+- Cancel and Delete buttons
+- Disabled state during deletion
+
+### Empty States
+
+**No Teams**:
+```tsx
+<Card>
+  <h3>No teams yet</h3>
+  <p>Create your first team to get started</p>
+  <Button onClick={() => router.push('/team-builder/new')}>
+    Create Your First Team
+  </Button>
+</Card>
+```
+
+**No Filtered Results**:
+```tsx
+<Card>
+  <h3>No teams found</h3>
+  <p>No teams match your current filters</p>
+  <Button onClick={resetFilters}>Clear Filters</Button>
+</Card>
+```
+
+### Test IDs
+
+For reliable E2E testing (see [E2E Test Reliability](../development/e2e-test-reliability-fixes.md)):
+
+```typescript
+// Containers
+data-testid="teams-grid"
+data-testid="teams-list"
+
+// Team cards/items
+data-testid={`team-card-${team.id}`}
+data-testid={`team-card-menu-${team.id}`}
+data-testid={`team-card-edit-${team.id}`}
+data-testid={`team-card-duplicate-${team.id}`}
+data-testid={`team-card-delete-${team.id}`}
+
+// List view
+data-testid={`team-list-item-${team.id}`}
+data-testid={`team-list-edit-${team.id}`}
+data-testid={`team-list-duplicate-${team.id}`}
+data-testid={`team-list-delete-${team.id}`}
+
+// Dialogs
+data-testid="delete-team-dialog"
+data-testid="delete-team-cancel"
+data-testid="delete-team-confirm"
+
+// Filters
+data-testid="search-input"
+data-testid="generation-filter"
+data-testid="format-filter"
+data-testid="sort-filter"
+data-testid="sort-order-toggle"
+data-testid="clear-filters-button"
+data-testid="no-results-clear-filters"
+```
+
+---
+
+## Team Editor
+
 ## Architecture
 
 ### Component Structure

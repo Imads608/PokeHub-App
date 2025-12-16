@@ -10,6 +10,8 @@ import type {
   PokemonTeam,
   TeamResponseDTO,
 } from '@pokehub/shared/pokemon-types';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 const logger = getLogger('TeamEditPage');
@@ -59,6 +61,13 @@ export default async function TeamEditPage({
       <div className="mx-auto max-w-7xl px-4">
         {/* Header */}
         <div className="mb-8">
+          <Link
+            href="/team-builder"
+            className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Back to Teams
+          </Link>
           <h1 className="text-4xl font-bold">Team Builder</h1>
           <p className="mt-2 text-muted-foreground">
             Build and customize your competitive Pokémon team

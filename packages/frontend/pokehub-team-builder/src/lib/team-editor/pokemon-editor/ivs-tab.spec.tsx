@@ -38,7 +38,7 @@ jest.mock('../../context/team-editor-context/team-editor.context', () => ({
 
 // Mock data provider functions
 jest.mock('@pokehub/frontend/dex-data-provider', () => ({
-  getStats: jest.fn((generation: number) => [
+  getStats: jest.fn((_generation: number) => [
     'hp',
     'atk',
     'def',
@@ -46,7 +46,7 @@ jest.mock('@pokehub/frontend/dex-data-provider', () => ({
     'spd',
     'spe',
   ]),
-  getStatName: jest.fn((statId: string, generation: number) => {
+  getStatName: jest.fn((statId: string, _generation: number) => {
     const names: Record<string, string> = {
       hp: 'HP',
       atk: 'Attack',

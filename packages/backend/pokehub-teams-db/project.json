@@ -14,6 +14,22 @@
       "options": {
         "jestConfig": "packages/backend/pokehub-teams-db/jest.config.ts"
       }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "if ls packages/backend/pokehub-teams-db/src/**/*.spec.ts packages/backend/pokehub-teams-db/src/**/*.spec.tsx 1> /dev/null 2>&1; then tsc --noEmit -p packages/backend/pokehub-teams-db/tsconfig.spec.json; else echo \"No spec files found, skipping typecheck\"; fi",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/tsconfig.spec.json",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx",
+        "{projectRoot}/src/**/*.spec.ts",
+        "{projectRoot}/src/**/*.spec.tsx",
+        "{workspaceRoot}/tsconfig.base.json"
+      ]
     }
   }
 }

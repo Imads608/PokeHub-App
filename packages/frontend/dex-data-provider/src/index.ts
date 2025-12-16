@@ -46,5 +46,6 @@ export {
   getCategoryLabel,
   getShowdownFormatId,
 } from './lib/api/formats.api';
+export { getFormatDisplayName } from './lib/utils/format-display';
 export type { BattleFormatInfo, FormatCategory } from './lib/api/formats.api';
 export { getFormatRules, type FormatRules } from './lib/api/format-rules.api';

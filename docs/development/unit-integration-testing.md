@@ -436,6 +436,294 @@ export const createMockTeamState = () => ({
 });
 ```
 
+### Mock Data Factories
+
+Use factory functions to create consistent mock data across tests:
+
+```typescript
+// packages/frontend/pokehub-team-builder/src/lib/hooks/useTeams.spec.tsx
+
+// Team Response DTO factory
+export const createMockTeamResponse = (
+  overrides?: Partial<TeamResponseDTO>
+): TeamResponseDTO => ({
+  id: 'team-123',
+  userId: 'user-123',
+  name: 'Test Team',
+  generation: 9,
+  format: 'ou',
+  pokemon: [createMockPokemonInTeam()],
+  createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-15').toISOString(),
+  ...overrides,
+});
+
+// Team DTO factory (for create/update requests)
+export const createMockTeamDTO = (
+  overrides?: Partial<TeamDTO>
+): TeamDTO => ({
+  name: 'Test Team',
+  generation: 9,
+  format: 'ou',
+  pokemon: [createMockPokemonInTeam()],
+  ...overrides,
+});
+
+// Pokemon factory
+export const createMockPokemonInTeam = (
+  overrides?: Partial<PokemonInTeam>
+): PokemonInTeam => ({
+  species: 'Pikachu',
+  name: '',
+  ability: 'Static',
+  item: 'Light Ball',
+  nature: 'Jolly',
+  gender: 'M',
+  level: 100,
+  shiny: false,
+  moves: ['Thunderbolt', 'Volt Tackle', 'Iron Tail', 'Quick Attack'],
+  evs: { hp: 0, atk: 252, def: 0, spa: 0, spd: 4, spe: 252 },
+  ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+  ...overrides,
+});
+```
+
+**Benefits**:
+- Consistent mock data across all tests
+- Easy to override specific properties
+- Type-safe with TypeScript
+- Reduces boilerplate in test files
+
+### Render with Providers Pattern
+
+For testing components that require context providers:
+
+```typescript
+import { render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TeamViewerProvider } from '../context/team-viewer.provider';
+
+// Create a test query client with retries disabled
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+// Render helper with all required providers
+export function renderWithTeamViewerProvider(
+  ui: React.ReactElement,
+  options?: {
+    queryClient?: QueryClient;
+    initialFilters?: Partial<TeamViewerFiltersState>;
+  }
+) {
+  const queryClient = options?.queryClient ?? createTestQueryClient();
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <TeamViewerProvider initialState={options?.initialFilters}>
+        {ui}
+      </TeamViewerProvider>
+    </QueryClientProvider>
+  );
+}
+
+// Usage in tests
+describe('TeamViewer', () => {
+  it('should render teams', () => {
+    renderWithTeamViewerProvider(<TeamViewer />);
+    // ... assertions
+  });
+
+  it('should render with custom initial filters', () => {
+    renderWithTeamViewerProvider(<TeamViewer />, {
+      initialFilters: { searchTerm: 'Test', viewMode: 'list' },
+    });
+    // ... assertions
+  });
+});
+```
+
+### Integration Test Setup (Mock API Layer, Real Hooks)
+
+For integration tests, mock only the API layer while using real hooks:
+
+```typescript
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useUserTeams, useCreateTeam, useDeleteTeam } from './useTeams';
+
+// Mock only the API layer
+jest.mock('../api/teams-api', () => ({
+  createTeamRequest: jest.fn(),
+  updateTeamRequest: jest.fn(),
+  deleteTeamRequest: jest.fn(),
+  getUserTeams: jest.fn(),
+}));
+
+// Mock auth session
+jest.mock('@pokehub/frontend/shared-auth', () => ({
+  useAuthSession: jest.fn(() => ({
+    data: { accessToken: 'mock-token', user: { id: 'user-123' } },
+    status: 'authenticated',
+  })),
+}));
+
+describe('useTeams Integration', () => {
+  let queryClient: QueryClient;
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    jest.clearAllMocks();
+  });
+
+  describe('Cache Invalidation', () => {
+    it('should invalidate teams list after create', async () => {
+      // Pre-populate cache
+      queryClient.setQueryData(teamsKeys.all, [createMockTeamResponse()]);
+
+      const newTeam = createMockTeamResponse({ id: 'new-team' });
+      mockCreateTeamRequest.mockResolvedValue({
+        json: jest.fn().mockResolvedValue(newTeam),
+        ok: true,
+      });
+
+      const { result } = renderHook(() => useCreateTeam(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync(createMockTeamDTO());
+      });
+
+      // Verify cache was invalidated
+      expect(queryClient.getQueryState(teamsKeys.all)?.isInvalidated).toBe(true);
+    });
+
+    it('should remove team from cache after delete', async () => {
+      const teamId = 'team-to-delete';
+
+      // Pre-populate caches
+      queryClient.setQueryData(teamsKeys.all, [
+        createMockTeamResponse({ id: teamId }),
+      ]);
+      queryClient.setQueryData(
+        teamsKeys.detail(teamId),
+        createMockTeamResponse({ id: teamId })
+      );
+
+      mockDeleteTeamRequest.mockResolvedValue({ ok: true, status: 204 });
+
+      const { result } = renderHook(() => useDeleteTeam(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync(teamId);
+      });
+
+      // Verify detail cache was removed
+      expect(queryClient.getQueryData(teamsKeys.detail(teamId))).toBeUndefined();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle 401 Unauthorized', async () => {
+      mockGetUserTeams.mockRejectedValue(new Error('Unauthorized'));
+
+      const { result } = renderHook(() => useUserTeams(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      expect(result.current.error).toBeDefined();
+    });
+
+    it('should handle 500 Server Error', async () => {
+      mockCreateTeamRequest.mockRejectedValue(
+        new Error('Internal Server Error')
+      );
+
+      const { result } = renderHook(() => useCreateTeam(), { wrapper });
+
+      await act(async () => {
+        try {
+          await result.current.mutateAsync(createMockTeamDTO());
+        } catch {
+          // Expected error
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+    });
+  });
+});
+```
+
+### Mocking Context with Mutable State
+
+When testing components that use context, use getters for dynamic mock values:
+
+```typescript
+// Create mutable mock state
+const mockValidationState = {
+  isValid: true,
+  errors: [],
+  showdownFormatId: 'gen9ou',
+  timestamp: Date.now(),
+};
+
+// Mock context with getters for dynamic values
+jest.mock('../context/team-editor.context', () => ({
+  useTeamEditorContext: () => ({
+    validation: {
+      get state() {
+        return mockValidationState;
+      },
+      getTeamErrors: jest.fn(() => []),
+      getPokemonErrors: jest.fn(() => []),
+      get isTeamValid() {
+        return mockValidationState.isValid;
+      },
+      showdownFormatId: 'gen9ou',
+    },
+  }),
+}));
+
+describe('Component with validation context', () => {
+  it('should show error state when invalid', () => {
+    // Modify mock state before rendering
+    mockValidationState.isValid = false;
+    mockValidationState.errors = [{ field: 'name', message: 'Required' }];
+
+    render(<ComponentUnderTest />);
+
+    expect(screen.getByText('Validation Errors')).toBeInTheDocument();
+  });
+
+  it('should show success state when valid', () => {
+    // Reset mock state
+    mockValidationState.isValid = true;
+    mockValidationState.errors = [];
+
+    render(<ComponentUnderTest />);
+
+    expect(screen.getByText('Team Valid')).toBeInTheDocument();
+  });
+});
+```
+
 ---
 
 ## Technical Challenges & Solutions

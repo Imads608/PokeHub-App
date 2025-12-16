@@ -4,25 +4,47 @@ import {
   createTeamRequest,
   updateTeamRequest,
   deleteTeamRequest,
+  getUserTeams,
 } from '../api/teams-api';
-import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
+import { teamsKeys } from '../utils/teams-query-keys';
+import {
+  withAuthRetry,
+  withAuthRetryWithoutResponse,
+} from '@pokehub/frontend/pokehub-data-provider';
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
 import type { FetchApiError } from '@pokehub/frontend/shared-data-provider';
 import type {
   CreateTeamDTO,
   UpdateTeamDTO,
-  TeamResponseDTO,
+  PokemonTeam,
 } from '@pokehub/shared/pokemon-types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 /**
- * Query keys for teams cache
+ * Hook to fetch all teams for the authenticated user
+ * Uses server-prefetched data when available
  */
-export const teamsKeys = {
-  all: ['teams'] as const,
-  detail: (id: string) => ['teams', 'detail', id] as const,
-};
+export function useUserTeams() {
+  const { data: session } = useAuthSession();
+
+  return useQuery({
+    queryKey: teamsKeys.all,
+    queryFn: async (): Promise<PokemonTeam[]> => {
+      const { accessToken } = session || {};
+      if (!accessToken) {
+        throw new Error('You must be logged in to view teams');
+      }
+      // Cast to PokemonTeam[] - the API returns compatible structure
+      // but with plain strings instead of branded types
+      return withAuthRetryWithoutResponse(accessToken, (token) =>
+        getUserTeams(token)
+      ) as unknown as Promise<PokemonTeam[]>;
+    },
+    enabled: !!session?.accessToken,
+    staleTime: 30000, // 30 seconds
+  });
+}
 
 /**
  * Hook to create a new team
@@ -32,19 +54,19 @@ export function useCreateTeam() {
   const { data: session } = useAuthSession();
 
   return useMutation({
-    mutationFn: async (data: CreateTeamDTO): Promise<TeamResponseDTO> => {
+    mutationFn: async (data: CreateTeamDTO): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to create a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         createTeamRequest(token, data)
       );
-      return response.json();
+      return response.json() as unknown as Promise<PokemonTeam>;
     },
     onSuccess: (newTeam) => {
       queryClient.invalidateQueries({ queryKey: teamsKeys.all });
-      queryClient.setQueryData(teamsKeys.detail(newTeam.id), newTeam);
+      queryClient.setQueryData(teamsKeys.detail(newTeam.id!), newTeam);
     },
     onError: (error: FetchApiError) => {
       toast.error('Failed to save team', {
@@ -68,15 +90,15 @@ export function useUpdateTeam() {
     }: {
       teamId: string;
       data: UpdateTeamDTO;
-    }): Promise<TeamResponseDTO> => {
+    }): Promise<PokemonTeam> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to update a team');
       }
       const response = await withAuthRetry(accessToken, (token) =>
         updateTeamRequest(token, teamId, data)
       );
-      return response.json();
+      return response.json() as unknown as Promise<PokemonTeam>;
     },
     onSuccess: (updatedTeam, { teamId }) => {
       queryClient.setQueryData(teamsKeys.detail(teamId), updatedTeam);
@@ -102,7 +124,7 @@ export function useDeleteTeam() {
     mutationFn: async (teamId: string): Promise<void> => {
       const { accessToken } = session || {};
       if (!accessToken) {
-        throw new Error('Access token is required');
+        throw new Error('You must be logged in to delete a team');
       }
       await withAuthRetry(accessToken, (token) =>
         deleteTeamRequest(token, teamId)
@@ -111,6 +133,12 @@ export function useDeleteTeam() {
     onSuccess: (_, teamId) => {
       queryClient.removeQueries({ queryKey: teamsKeys.detail(teamId) });
       queryClient.invalidateQueries({ queryKey: teamsKeys.all });
+    },
+    onError: (error: FetchApiError) => {
+      console.error('Error deleting team in Hook:', error);
+      toast.error('Failed to delete team', {
+        description: error.message || 'Please try again',
+      });
     },
   });
 }
@@ -126,7 +154,7 @@ export function useSaveTeam(teamId: string | undefined) {
   const isUpdate = !!teamId;
   const activeMutation = isUpdate ? updateMutation : createMutation;
 
-  const saveTeam = async (data: CreateTeamDTO): Promise<TeamResponseDTO> => {
+  const saveTeam = async (data: CreateTeamDTO): Promise<PokemonTeam> => {
     if (isUpdate) {
       return updateMutation.mutateAsync({ teamId, data });
     }

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "FixPathAliases",
+  "title": "Fix path aliases in tsconfig.base.json",
+  "type": "object",
+  "properties": {
+    "dryRun": {
+      "type": "boolean",
+      "description": "Preview changes without modifying files",
+      "default": false
+    }
+  },
+  "required": []
+}
