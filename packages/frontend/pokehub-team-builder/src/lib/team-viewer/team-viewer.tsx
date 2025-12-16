@@ -206,7 +206,7 @@ export const TeamViewer = () => {
               Manage your competitive Pokemon teams
             </p>
           </div>
-          <Button onClick={handleCreateTeam} size="lg">
+          <Button onClick={handleCreateTeam} size="lg" data-testid="create-team-button">
             <Plus className="mr-2 h-5 w-5" />
             Create New Team
           </Button>
@@ -233,6 +233,7 @@ export const TeamViewer = () => {
                     size="icon"
                     onClick={() => viewMode.setValue('grid')}
                     className="h-8 w-8"
+                    data-testid="view-mode-grid"
                   >
                     <LayoutGrid className="h-4 w-4" />
                     <span className="sr-only">Grid view</span>
@@ -242,6 +243,7 @@ export const TeamViewer = () => {
                     size="icon"
                     onClick={() => viewMode.setValue('list')}
                     className="h-8 w-8"
+                    data-testid="view-mode-list"
                   >
                     <List className="h-4 w-4" />
                     <span className="sr-only">List view</span>
@@ -263,6 +265,7 @@ export const TeamViewer = () => {
                       value={searchTerm.value}
                       onChange={(e) => searchTerm.setValue(e.target.value)}
                       className="pl-9"
+                      data-testid="search-input"
                     />
                   </div>
                 </div>
@@ -344,6 +347,7 @@ export const TeamViewer = () => {
                       size="icon"
                       onClick={sortOrder.toggleSortOrder}
                       className="shrink-0"
+                      data-testid="sort-order-toggle"
                     >
                       <ArrowUpDown className="h-4 w-4" />
                       <span className="sr-only">Toggle sort order</span>
@@ -358,7 +362,7 @@ export const TeamViewer = () => {
                   <p className="text-sm text-muted-foreground">
                     Showing {filteredTeams.length} of {teams?.length} teams
                   </p>
-                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  <Button variant="ghost" size="sm" onClick={resetFilters} data-testid="clear-filters-button">
                     <X className="mr-2 h-4 w-4" />
                     Clear Filters
                   </Button>
@@ -394,7 +398,7 @@ export const TeamViewer = () => {
                 No teams match your current filters. Try adjusting your search
                 criteria.
               </p>
-              <Button variant="outline" onClick={resetFilters}>
+              <Button variant="outline" onClick={resetFilters} data-testid="no-results-clear-filters">
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
               </Button>
@@ -402,7 +406,7 @@ export const TeamViewer = () => {
           </Card>
         ) : viewMode.value === 'grid' ? (
           // Grid view
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="teams-grid">
             {filteredTeams.map((team) => (
               <TeamCard
                 key={team.id}
@@ -415,7 +419,7 @@ export const TeamViewer = () => {
           </div>
         ) : (
           // List view
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2" data-testid="teams-list">
             {filteredTeams.map((team) => (
               <TeamListItem
                 key={team.id}

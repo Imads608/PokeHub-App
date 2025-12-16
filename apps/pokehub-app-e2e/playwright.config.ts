@@ -55,7 +55,7 @@ export default defineConfig({
     },
     {
       command:
-        'E2E_TESTING=true API_URL=http://localhost:9876/api npx nx serve pokehub-app',
+        'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
       url: 'http://127.0.0.1:4200',
       reuseExistingServer: false, // Always start fresh to get latest code
       cwd: workspaceRoot,

@@ -24,6 +24,12 @@
 - [Testing](#testing)
   - [Run E2E Tests Locally](#run-e2e-tests-locally)
   - [View Test Reports](#view-test-reports)
+- [MSW Proxy Server Configuration](#msw-proxy-server-configuration)
+  - [9. CORS Support for Mutations](#9-cors-support-for-mutations)
+  - [10. Dynamic Team Storage for Create/Duplicate Flows](#10-dynamic-team-storage-for-createduplicate-flows)
+  - [11. Client-Side vs Server-Side API URL](#11-client-side-vs-server-side-api-url)
+  - [Debugging Proxy Issues](#debugging-proxy-issues)
+  - [Test ID Conventions for Team Viewer](#test-id-conventions-for-team-viewer)
 - [Troubleshooting](#troubleshooting)
   - [Tests Pass Locally but Fail in CI](#tests-pass-locally-but-fail-in-ci)
   - [Flaky Tests (Pass/Fail Randomly)](#flaky-tests-passfail-randomly)
@@ -426,6 +432,172 @@ npx playwright show-report dist/.playwright/apps/pokehub-app-e2e/playwright-repo
 # View trace for a specific test
 npx playwright show-trace dist/.playwright/apps/pokehub-app-e2e/test-output/<test-name>/trace.zip
 ```
+
+---
+
+## MSW Proxy Server Configuration
+
+The e2e tests use an Express-based MSW proxy server (`/apps/pokehub-app-e2e/src/mocks/proxy-server.ts`) that intercepts API calls. This section covers key configuration requirements discovered while implementing Team Viewer tests.
+
+### 9. CORS Support for Mutations
+
+**Issue:** DELETE and POST requests were failing silently in e2e tests while GET requests worked fine.
+
+**Root Cause:** Browsers send CORS preflight (OPTIONS) requests before "non-simple" requests like POST, PUT, DELETE with custom headers (e.g., `Authorization`, `x-traceId`). The MSW proxy wasn't handling OPTIONS requests, causing the preflight to fail and blocking the actual mutation.
+
+**Symptoms:**
+- `[MSW Proxy] OPTIONS /api/teams/...` appears in logs before POST/DELETE
+- Mutations fail with no network error visible
+- TanStack Query devtools shows "1 error" but no toast appears
+- Dialog stays open after clicking confirm (mutation never completes)
+
+**Fix:** Add CORS middleware to handle preflight requests:
+
+```typescript
+// apps/pokehub-app-e2e/src/mocks/proxy-server.ts
+app.use('/api', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-traceId');
+
+  // Handle OPTIONS preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(204).send();
+  }
+  next();
+});
+```
+
+**Impact:** POST, PUT, and DELETE mutations now work correctly in e2e tests.
+
+---
+
+### 10. Dynamic Team Storage for Create/Duplicate Flows
+
+**Issue:** After duplicating a team (POST creates new team), navigating to the new team's editor page failed with 404.
+
+**Root Cause:** The proxy's GET handler only knew about the static mock team. When POST created a new team with a new ID, the subsequent GET request for that ID returned 404.
+
+**Symptoms:**
+- POST `/api/teams` succeeds and returns new team with new ID
+- Navigation to `/team-builder/{newId}` triggers GET `/api/teams/{newId}`
+- GET returns 404, page shows error
+- Test fails waiting for Team Builder heading
+
+**Fix:** Store dynamically created teams so they can be fetched later:
+
+```typescript
+// apps/pokehub-app-e2e/src/mocks/proxy-server.ts
+
+// Store for dynamically created teams
+const createdTeams: Map<string, typeof mockTeam> = new Map();
+
+// POST handler stores new teams
+app.post('/api/teams', express.json(), (req, res) => {
+  const newId = '550e8400-e29b-41d4-a716-446655440002';
+  const newTeam = { ...mockTeam, ...req.body, id: newId };
+  createdTeams.set(newId, newTeam);  // Store for later retrieval
+  return res.status(201).json(newTeam);
+});
+
+// GET handler checks both static and dynamic teams
+app.get('/api/teams/:id', (req, res) => {
+  if (req.params.id === mockTeam.id) return res.json(mockTeam);
+
+  // Check for dynamically created teams
+  const createdTeam = createdTeams.get(req.params.id);
+  if (createdTeam) return res.json(createdTeam);
+
+  return res.status(404).json({ message: 'Team not found' });
+});
+```
+
+**Impact:** Create and duplicate flows now work correctly in e2e tests.
+
+---
+
+### 11. Client-Side vs Server-Side API URL
+
+**Issue:** GET requests worked but POST/DELETE mutations failed even with CORS headers.
+
+**Root Cause:** Next.js uses different environment variables for server-side and client-side code:
+- `API_URL` - Available to server-side code (SSR)
+- `NEXT_PUBLIC_POKEHUB_API_URL` - Inlined into client-side bundle
+
+GET requests were happening during SSR (where `API_URL` pointed to proxy), but mutations happen in the browser (where `NEXT_PUBLIC_POKEHUB_API_URL` from `.env.local` pointed to real backend).
+
+**Fix:** Set BOTH environment variables in `playwright.config.ts`:
+
+```typescript
+// apps/pokehub-app-e2e/playwright.config.ts
+{
+  command:
+    'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
+  // ...
+}
+```
+
+**Impact:** Both server-side and client-side requests now go through the MSW proxy.
+
+---
+
+### Debugging Proxy Issues
+
+Add request logging to see what's reaching the proxy:
+
+```typescript
+// Use console.error (not console.log) - Playwright only captures stderr
+app.use((req, res, next) => {
+  console.error(`[MSW Proxy] ${req.method} ${req.url}`);
+  next();
+});
+```
+
+**What to look for:**
+- `OPTIONS` before `POST`/`DELETE` → CORS preflight (ensure it returns 204)
+- Only `GET` requests appearing → Client requests not reaching proxy (check `NEXT_PUBLIC_` env var)
+- No mock log after request log → Handler not matching (check route patterns)
+
+---
+
+### Test ID Conventions for Team Viewer
+
+Use consistent `data-testid` patterns for reliable selectors:
+
+```typescript
+// Grid/List containers
+data-testid="teams-grid"
+data-testid="teams-list"
+
+// Team cards/items (include team ID for uniqueness)
+data-testid={`team-card-${team.id}`}
+data-testid={`team-card-menu-${team.id}`}
+data-testid={`team-card-edit-${team.id}`}
+data-testid={`team-card-duplicate-${team.id}`}
+data-testid={`team-card-delete-${team.id}`}
+
+// List view items
+data-testid={`team-list-item-${team.id}`}
+data-testid={`team-list-edit-${team.id}`}
+data-testid={`team-list-duplicate-${team.id}`}
+data-testid={`team-list-delete-${team.id}`}
+
+// Dialogs
+data-testid="delete-team-dialog"
+data-testid="delete-team-cancel"
+data-testid="delete-team-confirm"
+
+// Filters
+data-testid="search-input"
+data-testid="generation-filter"
+data-testid="format-filter"
+data-testid="sort-filter"
+data-testid="sort-order-toggle"
+data-testid="clear-filters-button"
+data-testid="no-results-clear-filters"  // Distinguish from filter panel button
+```
+
+**Note:** When there are multiple similar elements (e.g., two "Clear Filters" buttons), use distinct test IDs to avoid ambiguity.
 
 ---
 

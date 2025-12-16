@@ -26,7 +26,10 @@ export function TeamListItem({
     : null;
 
   return (
-    <div className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition-all hover:shadow-md">
+    <div
+      className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition-all hover:shadow-md"
+      data-testid={`team-list-item-${team.id}`}
+    >
       {/* Pokemon sprites - horizontal layout */}
       <div className="flex shrink-0 gap-1">
         {team.pokemon.map((pokemon, index) => {
@@ -67,6 +70,7 @@ export function TeamListItem({
           size="icon"
           className="h-8 w-8"
           onClick={() => onEdit(team.id!)}
+          data-testid={`team-list-edit-${team.id}`}
         >
           <Edit className="h-4 w-4" />
           <span className="sr-only">Edit</span>
@@ -76,6 +80,7 @@ export function TeamListItem({
           size="icon"
           className="h-8 w-8"
           onClick={() => onDuplicate(team)}
+          data-testid={`team-list-duplicate-${team.id}`}
         >
           <Copy className="h-4 w-4" />
           <span className="sr-only">Duplicate</span>
@@ -85,6 +90,7 @@ export function TeamListItem({
           size="icon"
           className="h-8 w-8 text-destructive hover:text-destructive"
           onClick={() => onDelete(team)}
+          data-testid={`team-list-delete-${team.id}`}
         >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Delete</span>

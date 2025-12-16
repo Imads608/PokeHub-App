@@ -36,21 +36,35 @@ export function TeamCard({
     : null;
 
   return (
-    <Card className="group relative overflow-hidden transition-all hover:shadow-md">
+    <Card
+      className="group relative overflow-hidden transition-all hover:shadow-md"
+      data-testid={`team-card-${team.id}`}
+    >
       <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              data-testid={`team-card-menu-${team.id}`}
+            >
               <MoreHorizontal className="h-4 w-4" />
               <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(team.id!)}>
+            <DropdownMenuItem
+              onClick={() => onEdit(team.id!)}
+              data-testid={`team-card-edit-${team.id}`}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDuplicate(team)}>
+            <DropdownMenuItem
+              onClick={() => onDuplicate(team)}
+              data-testid={`team-card-duplicate-${team.id}`}
+            >
               <Copy className="mr-2 h-4 w-4" />
               Duplicate
             </DropdownMenuItem>
@@ -58,6 +72,7 @@ export function TeamCard({
             <DropdownMenuItem
               onClick={() => onDelete(team)}
               className="text-destructive focus:text-destructive"
+              data-testid={`team-card-delete-${team.id}`}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete

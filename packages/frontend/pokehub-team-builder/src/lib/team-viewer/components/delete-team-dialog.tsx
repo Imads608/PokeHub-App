@@ -29,7 +29,7 @@ export function DeleteTeamDialog({
 }: DeleteTeamDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="delete-team-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -46,6 +46,7 @@ export function DeleteTeamDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isDeleting}
+            data-testid="delete-team-cancel"
           >
             Cancel
           </Button>
@@ -53,6 +54,7 @@ export function DeleteTeamDialog({
             variant="destructive"
             onClick={onConfirm}
             disabled={isDeleting}
+            data-testid="delete-team-confirm"
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
           </Button>
