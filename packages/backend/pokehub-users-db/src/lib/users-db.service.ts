@@ -26,7 +26,7 @@ class UsersDBService implements IUsersDBService {
 
   async updateUserProfile(
     userId: string,
-    data: Omit<IUpdateUserProfile, 'avatar'> & { avatarFilename: string }
+    data: Omit<IUpdateUserProfile, 'avatar'> & { avatarFilename?: string }
   ) {
     this.logger.log(`${this.updateUserProfile.name}: Updating User Profile`);
     const res = await this.dbService

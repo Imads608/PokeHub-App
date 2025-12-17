@@ -31,10 +31,10 @@ export class UsersService implements IUsersService {
       `${this.updateUserProfile.name}: Updating user profile for user ${userId}`
     );
 
-    const fileExt = data.avatar.split('.')[1];
+    const fileExt = data.avatar?.split('.')[1];
     await this.usersDbService.updateUserProfile(userId, {
       username: data.username,
-      avatarFilename: `avatar.${fileExt}`, // Assuming data.avatar holds the filename
+      avatarFilename: data.avatar ? `avatar.${fileExt}` : undefined, // Assuming data.avatar holds the filename
     });
 
     if (data.avatar) {

@@ -19,42 +19,40 @@ export const useCreateProfile = (avatarFile: File | null) => {
   const { data, update } = useAuthSession();
   return useMutation({
     mutationFn: async (profile: ProfileFormData) => {
-      if (!avatarFile) {
-        throw new Error('Avatar file not selected');
-      }
+      if (avatarFile) {
+        if (!isValidAvatarFileName(avatarFile.name)) {
+          throw new Error('Invalid avatar filename');
+        }
 
-      if (!isValidAvatarFileName(avatarFile.name)) {
-        throw new Error('Invalid avatar filename');
-      }
+        // 1. Get the secure upload URL
+        const uploadUrlResponse = await getFetchClient(
+          'NEXT_API'
+        ).fetchThrowsError<BlobStorageResponse>('/api/generate-upload-url', {
+          method: 'POST',
+          body: JSON.stringify({
+            fileName: avatarFile.name,
+            fileType: avatarFile.type,
+          }),
+        });
 
-      // 1. Get the secure upload URL
-      const uploadUrlResponse = await getFetchClient(
-        'NEXT_API'
-      ).fetchThrowsError<BlobStorageResponse>('/api/generate-upload-url', {
-        method: 'POST',
-        body: JSON.stringify({
-          fileName: avatarFile.name,
-          fileType: avatarFile.type,
-        }),
-      });
+        const { uploadUrl } = await uploadUrlResponse.json();
 
-      const { uploadUrl } = await uploadUrlResponse.json();
+        // 2. Upload the file to Azure Blob Storage
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'x-ms-blob-type': 'BlockBlob',
+            'Content-Type': avatarFile.type,
+          },
+          body: avatarFile,
+        });
 
-      // 2. Upload the file to Azure Blob Storage
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': avatarFile.type,
-        },
-        body: avatarFile,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new FetchApiError(
-          'Failed to upload avatar',
-          uploadResponse.status
-        );
+        if (!uploadResponse.ok) {
+          throw new FetchApiError(
+            'Failed to upload avatar',
+            uploadResponse.status
+          );
+        }
       }
 
       // 3. Save the profile data to the backend
@@ -70,7 +68,7 @@ export const useCreateProfile = (avatarFile: File | null) => {
               },
               body: JSON.stringify({
                 username: profile.username,
-                avatar: avatarFile.name,
+                ...(avatarFile ? { avatar: avatarFile.name } : {}),
               } as IUpdateUserProfile),
             }
           )
@@ -86,9 +84,10 @@ export const useCreateProfile = (avatarFile: File | null) => {
       toast.success('Profile was updated successfully');
     },
     onError: (error) => {
-      toast.error('Uh oh. Something went wrong :(');
+      const errMessage =
+        (error as Error).message || 'Uh oh. Something went wrong :(';
+      toast.error(errMessage);
       console.error('Error creating profile:', error);
-      //setError('username', { message: 'Failed to create profile' });
     },
   });
 };
