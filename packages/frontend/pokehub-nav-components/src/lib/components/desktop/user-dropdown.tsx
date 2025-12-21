@@ -27,10 +27,11 @@ export const UserDropdown = ({ user }: UserDropdownProps) => {
           size="sm"
           className="rounded-full p-1 text-foreground hover:bg-muted"
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8" data-testid="nav-user-avatar">
             <AvatarImage
               src={user.avatarUrl || ''}
               alt={user.username || 'User'}
+              data-testid="nav-user-avatar-image"
             />
             <AvatarFallback className="bg-primary text-sm font-medium text-primary-foreground">
               {user.username?.charAt(0)?.toUpperCase() || 'U'}

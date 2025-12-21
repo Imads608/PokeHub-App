@@ -83,16 +83,31 @@ export function CreateProfileContainer() {
 
   const getUsernameInputStatus = () => {
     if (isLoading) {
-      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+      return (
+        <Loader2
+          className="h-4 w-4 animate-spin text-muted-foreground"
+          data-testid="username-loading-indicator"
+        />
+      );
     }
     if (status === 'success') {
-      return <X className="h-4 w-4 text-red-500" />;
+      return (
+        <X
+          className="h-4 w-4 text-red-500"
+          data-testid="username-taken-indicator"
+        />
+      );
     }
     if (
       status === 'error' &&
       (usernameCheckError as FetchApiError).status === 404
     ) {
-      return <Check className="h-4 w-4 text-green-500" />;
+      return (
+        <Check
+          className="h-4 w-4 text-green-500"
+          data-testid="username-available-indicator"
+        />
+      );
     }
     return null;
   };
@@ -133,6 +148,7 @@ export function CreateProfileContainer() {
                     <AvatarImage
                       src={watchedAvatar || '/placeholder.svg'}
                       alt="Avatar"
+                      data-testid="avatar-preview"
                     />
                     <AvatarFallback>
                       <User className="h-12 w-12" />
@@ -151,6 +167,7 @@ export function CreateProfileContainer() {
                         accept=".png,.jpg,.jpeg,.gif"
                         className="hidden"
                         onChange={handleAvatarChange}
+                        data-testid="avatar-file-input"
                       />
                     </Label>
                   </div>
@@ -166,6 +183,7 @@ export function CreateProfileContainer() {
                       id="username"
                       {...register('username')}
                       placeholder="Enter your trainer name"
+                      data-testid="username-input"
                       className={`pr-10 ${
                         errors.username || status === 'success'
                           ? 'border-destructive'
@@ -181,7 +199,10 @@ export function CreateProfileContainer() {
                   </div>
 
                   {errors.username && (
-                    <p className="text-xs text-destructive">
+                    <p
+                      className="text-xs text-destructive"
+                      data-testid="username-error"
+                    >
                       {errors.username.message}
                     </p>
                   )}
@@ -207,6 +228,7 @@ export function CreateProfileContainer() {
                 size="lg"
                 onClick={handleSubmit(onSubmit)}
                 disabled={isSubmitting || !isFormReady || isSubmitSuccessful}
+                data-testid="submit-button"
               >
                 {isSubmitting ? (
                   <>

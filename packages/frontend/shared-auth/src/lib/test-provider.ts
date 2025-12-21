@@ -47,7 +47,6 @@ export const getTestCredentialsProvider = () => {
         return null;
       }
 
-      // Call backend test endpoint to create user and get OAuth-compatible tokens
       const response = await getFetchClient('API').fetchApi<OAuthLoginResponse>(
         '/test/auth/create-session',
         {
@@ -61,7 +60,11 @@ export const getTestCredentialsProvider = () => {
       );
 
       if (!response.ok) {
-        logger.error('Failed to create test session');
+        const errorBody = await response.text();
+        logger.error(
+          { status: response.status, body: errorBody },
+          'Failed to create test session'
+        );
         return null;
       }
 

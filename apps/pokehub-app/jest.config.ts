@@ -9,4 +9,7 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/pokehub-app',
   setupFilesAfterEnv: ['<rootDir>/test-setup.ts'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(next-auth|@auth/core|jose|oauth4webapi|@panva|preact)/)',
+  ],
 };
