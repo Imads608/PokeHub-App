@@ -2,7 +2,7 @@ import { CreateProfileContainer } from './profile';
 import { useCheckUsername } from './useCheckUsername';
 import { useCreateProfile } from './useCreateProfile';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 
@@ -159,8 +159,10 @@ describe('CreateProfileContainer', () => {
       // Check not called immediately
       expect(mockUseCheckUsername).toHaveBeenLastCalledWith('');
 
-      // Advance timers for debounce
-      jest.advanceTimersByTime(500);
+      // Advance timers for debounce - wrap in act() since it triggers state updates
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         expect(mockUseCheckUsername).toHaveBeenLastCalledWith('validuser');
@@ -181,7 +183,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'testuser');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         expect(screen.getByTestId('loader-icon')).toBeInTheDocument();
@@ -200,7 +204,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'takenuser');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         expect(screen.getByTestId('x-icon')).toBeInTheDocument();
@@ -219,7 +225,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'availableuser');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         expect(screen.getByTestId('check-icon')).toBeInTheDocument();
@@ -240,7 +248,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'availableuser');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         const submitButton = screen.getByRole('button', {
@@ -263,7 +273,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'newusername');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         const submitButton = screen.getByRole('button', {
@@ -298,7 +310,9 @@ describe('CreateProfileContainer', () => {
 
       const usernameInput = screen.getByLabelText(/username/i);
       await user.type(usernameInput, 'takenuser');
-      jest.advanceTimersByTime(500);
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
 
       await waitFor(() => {
         const submitButton = screen.getByRole('button', {

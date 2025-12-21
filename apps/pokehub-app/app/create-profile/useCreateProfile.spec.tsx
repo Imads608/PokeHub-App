@@ -50,7 +50,7 @@ describe('useCreateProfile', () => {
   const mockUpdate = jest.fn();
   const mockFetchThrowsError = jest.fn();
 
-  const createMockFile = (name: string, type: string = 'image/png'): File => {
+  const createMockFile = (name: string, type = 'image/png'): File => {
     return new File(['mock-content'], name, { type });
   };
 
@@ -108,7 +108,9 @@ describe('useCreateProfile', () => {
   describe('profile creation without avatar', () => {
     it('should create profile with username only', async () => {
       mockFetchThrowsError.mockResolvedValue({
-        json: jest.fn().mockResolvedValue({ username: 'newuser', avatar: null }),
+        json: jest
+          .fn()
+          .mockResolvedValue({ username: 'newuser', avatar: null }),
       });
 
       const { result } = renderHook(() => useCreateProfile(null), { wrapper });
@@ -155,7 +157,9 @@ describe('useCreateProfile', () => {
 
     it('should update session after successful profile creation', async () => {
       mockFetchThrowsError.mockResolvedValue({
-        json: jest.fn().mockResolvedValue({ username: 'newuser', avatar: null }),
+        json: jest
+          .fn()
+          .mockResolvedValue({ username: 'newuser', avatar: null }),
       });
 
       const { result } = renderHook(() => useCreateProfile(null), { wrapper });
@@ -217,7 +221,9 @@ describe('useCreateProfile', () => {
         expect(result.current.isError).toBe(true);
       });
 
-      expect(mockIsValidAvatarFileName).toHaveBeenCalledWith('invalid@file.exe');
+      expect(mockIsValidAvatarFileName).toHaveBeenCalledWith(
+        'invalid@file.exe'
+      );
     });
 
     it('should get upload URL from Next.js API', async () => {

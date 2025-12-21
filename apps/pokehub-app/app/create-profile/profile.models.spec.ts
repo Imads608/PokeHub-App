@@ -1,4 +1,5 @@
-import { profileSchema, ProfileFormData } from './profile.models';
+import type { ProfileFormData } from './profile.models';
+import { profileSchema } from './profile.models';
 
 describe('profileSchema', () => {
   describe('username validation', () => {
