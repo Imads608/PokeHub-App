@@ -56,6 +56,8 @@ This project is organized as an Nx monorepo with clear separation of concerns:
 - `packages/backend/*` - Shared NestJS modules and services
 - `packages/shared/*` - Cross-platform models and types
 
+For a comprehensive overview of the system architecture, data flows, and design decisions, see the **[Architecture Documentation](./docs/ARCHITECTURE.md)**.
+
 ## 🚦 Quick Start
 
 ### Prerequisites
