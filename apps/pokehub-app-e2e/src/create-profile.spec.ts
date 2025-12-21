@@ -1,13 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import path from 'path';
 
 /**
  * E2E Tests for Create Profile Flow
  *
- * Approach: Uses separate auth state for "new user" without username
- * - global-setup.ts creates two auth states:
- *   1. user.json - existing user WITH username (default for other tests)
- *   2. new-user.json - new user WITHOUT username (for this test file)
+ * Approach: Parallel-safe tests with unique users for state-modifying tests
+ *
+ * - Read-only tests (validation, rendering, availability) share the base
+ *   new-user.json auth state since they don't modify user data
+ * - Submission tests create unique users dynamically via NextAuth
+ *   test-credentials provider, allowing full parallel execution
  *
  * Test Flows:
  * 1. Route Guards - verify redirects for new/existing users
@@ -15,14 +17,50 @@ import path from 'path';
  * 3. Username Validation - client-side validation messages
  * 4. Username Availability - loading, available (green), taken (red)
  * 5. Avatar Upload - file selection and preview
- * 6. Form Submission - successful profile creation
+ * 6. Form Submission - successful profile creation (unique user per test)
  */
 
-// Use "new user" auth state (user without username) for most tests
-test.describe('Create Profile Flow - New User', () => {
-  // Run tests sequentially to avoid race conditions with shared user state
-  test.describe.configure({ mode: 'serial' });
+const BASE_URL = 'http://127.0.0.1:4200';
 
+/**
+ * Creates a unique test user and authenticates them via NextAuth test-credentials.
+ * The user is created without a username, requiring profile creation.
+ *
+ * Uses page.request (not the standalone request fixture) so cookies are shared
+ * with the page context automatically.
+ *
+ * @param page - Playwright page instance
+ * @returns The unique email of the created user
+ */
+async function createAndAuthenticateUser(page: Page): Promise<string> {
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const email = `testuser-${uniqueId}@example.com`;
+
+  // Get CSRF token from NextAuth (using page.request to share cookies)
+  const csrfRes = await page.request.get(`${BASE_URL}/api/auth/csrf`);
+  const csrfData = await csrfRes.json();
+  const csrfToken = csrfData.csrfToken;
+
+  // Authenticate via NextAuth test-credentials provider (no username = new user)
+  // Using page.request ensures the session cookie is set on the page context
+  await page.request.post(`${BASE_URL}/api/auth/callback/test-credentials`, {
+    form: {
+      csrfToken,
+      email,
+    },
+  });
+
+  // Navigate to create-profile to hydrate the session
+  await page.goto('/create-profile');
+
+  return email;
+}
+
+// =============================================================================
+// Read-only tests - share new-user.json auth state, safe to run in parallel
+// =============================================================================
+
+test.describe('Create Profile Flow - New User', () => {
   test.use({
     storageState: path.join(__dirname, '../.auth/new-user.json'),
   });
@@ -291,163 +329,150 @@ test.describe('Create Profile Flow - New User', () => {
       expect(src).toContain('blob:');
     });
   });
+});
 
-  test.describe('Form Submission', () => {
-    // Reset new user's username before each submission test
-    // This ensures a clean state since these tests modify the user's profile
-    test.beforeEach(async ({ request }) => {
-      // Call test API to reset the new user's username to null
-      await request.post('http://localhost:3000/api/test/auth/create-session', {
-        data: {
-          email: 'newuser@example.com',
-          username: null,
-        },
-      });
+// =============================================================================
+// Submission tests - create unique user per test for parallel safety
+// =============================================================================
+
+test.describe('Create Profile Flow - Form Submission', () => {
+  // Clear storage state to start with no session - each test authenticates its own unique user
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('should submit profile successfully without avatar', async ({
+    page,
+  }) => {
+    // Create and authenticate a unique user for this test
+    await createAndAuthenticateUser(page);
+
+    await expect(page.getByTestId('username-input')).toBeVisible({
+      timeout: 15000,
     });
 
-    test('should submit profile successfully without avatar', async ({
-      page,
-    }) => {
-      await page.goto('/create-profile');
+    // Type unique valid username
+    const uniqueUsername = `noav${Date.now().toString().slice(-6)}`;
+    await page.getByTestId('username-input').fill(uniqueUsername);
 
-      await expect(page.getByTestId('username-input')).toBeVisible({
-        timeout: 15000,
-      });
-
-      // Type unique valid username
-      const uniqueUsername = `noav${Date.now().toString().slice(-6)}`;
-      await page.getByTestId('username-input').fill(uniqueUsername);
-
-      // Wait for availability check
-      await expect(
-        page.getByTestId('username-available-indicator')
-      ).toBeVisible({ timeout: 5000 });
-
-      // Submit the form
-      await page.getByTestId('submit-button').click();
-
-      // Should redirect to dashboard after successful submission
-      await page.waitForURL('**/dashboard', { timeout: 15000 });
-      expect(page.url()).toContain('/dashboard');
+    // Wait for availability check
+    await expect(page.getByTestId('username-available-indicator')).toBeVisible({
+      timeout: 5000,
     });
 
-    test('should submit profile successfully with avatar', async ({ page }) => {
-      await page.goto('/create-profile');
+    // Submit the form
+    await page.getByTestId('submit-button').click();
 
-      await expect(page.getByTestId('username-input')).toBeVisible({
-        timeout: 15000,
-      });
+    // Should redirect to dashboard after successful submission
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    expect(page.url()).toContain('/dashboard');
+  });
 
-      // Upload avatar first
-      const fileInput = page.getByTestId('avatar-file-input');
-      const testAvatarPath = path.join(
-        __dirname,
-        'mocks/fixtures/test-avatar.jpg'
-      );
-      await fileInput.setInputFiles(testAvatarPath);
+  test('should submit profile successfully with avatar', async ({ page }) => {
+    await createAndAuthenticateUser(page);
 
-      // Verify avatar preview updated
-      const avatarPreview = page.getByTestId('avatar-preview');
-      const src = await avatarPreview.getAttribute('src');
-      expect(src).toContain('blob:');
-
-      // Type unique valid username
-      const uniqueUsername = `avatar${Date.now().toString().slice(-6)}`;
-      await page.getByTestId('username-input').fill(uniqueUsername);
-
-      // Wait for availability check
-      await expect(
-        page.getByTestId('username-available-indicator')
-      ).toBeVisible({ timeout: 5000 });
-
-      // Submit the form
-      await page.getByTestId('submit-button').click();
-
-      // Should redirect to dashboard after successful submission
-      await page.waitForURL('**/dashboard', { timeout: 15000 });
-      expect(page.url()).toContain('/dashboard');
+    await expect(page.getByTestId('username-input')).toBeVisible({
+      timeout: 15000,
     });
 
-    test('should show loading state during submission', async ({ page }) => {
-      await page.goto('/create-profile');
+    // Upload avatar first
+    const fileInput = page.getByTestId('avatar-file-input');
+    const testAvatarPath = path.join(
+      __dirname,
+      'mocks/fixtures/test-avatar.jpg'
+    );
+    await fileInput.setInputFiles(testAvatarPath);
 
-      await expect(page.getByTestId('username-input')).toBeVisible({
-        timeout: 15000,
-      });
+    // Verify avatar preview updated
+    const avatarPreview = page.getByTestId('avatar-preview');
+    const src = await avatarPreview.getAttribute('src');
+    expect(src).toContain('blob:');
 
-      // Type unique valid username
-      const uniqueUsername = `load${Date.now().toString().slice(-6)}`;
-      await page.getByTestId('username-input').fill(uniqueUsername);
+    // Type unique valid username
+    const uniqueUsername = `avatar${Date.now().toString().slice(-6)}`;
+    await page.getByTestId('username-input').fill(uniqueUsername);
 
-      // Wait for availability check
-      await expect(
-        page.getByTestId('username-available-indicator')
-      ).toBeVisible({ timeout: 5000 });
+    // Wait for availability check
+    await expect(page.getByTestId('username-available-indicator')).toBeVisible({
+      timeout: 5000,
+    });
 
-      // Click submit and check for loading state
-      await page.getByTestId('submit-button').click();
+    // Submit the form
+    await page.getByTestId('submit-button').click();
 
-      // Button should show "Creating Profile..." text during submission
-      // This might be very brief, so we use a short timeout
-      await expect(page.getByText('Creating Profile...')).toBeVisible({
-        timeout: 2000,
-      });
+    // Should redirect to dashboard after successful submission
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    expect(page.url()).toContain('/dashboard');
+  });
+
+  test('should show loading state during submission', async ({ page }) => {
+    await createAndAuthenticateUser(page);
+
+    await expect(page.getByTestId('username-input')).toBeVisible({
+      timeout: 15000,
+    });
+
+    // Type unique valid username
+    const uniqueUsername = `load${Date.now().toString().slice(-6)}`;
+    await page.getByTestId('username-input').fill(uniqueUsername);
+
+    // Wait for availability check
+    await expect(page.getByTestId('username-available-indicator')).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Click submit and check for loading state
+    await page.getByTestId('submit-button').click();
+
+    // Button should show "Creating Profile..." text during submission
+    // This might be very brief, so we use a short timeout
+    await expect(page.getByText('Creating Profile...')).toBeVisible({
+      timeout: 2000,
     });
   });
 
-  test.describe('Avatar in Navigation After Profile Creation', () => {
-    // Reset new user's username before this test
-    test.beforeEach(async ({ request }) => {
-      await request.post('http://localhost:3000/api/test/auth/create-session', {
-        data: {
-          email: 'newuser@example.com',
-          username: null,
-        },
-      });
+  test('should display user avatar in navigation after profile creation', async ({
+    page,
+  }) => {
+    await createAndAuthenticateUser(page);
+
+    await expect(page.getByTestId('username-input')).toBeVisible({
+      timeout: 15000,
     });
 
-    test('should display user avatar in navigation after profile creation', async ({
-      page,
-    }) => {
-      await page.goto('/create-profile');
+    // Upload avatar
+    const fileInput = page.getByTestId('avatar-file-input');
+    const testAvatarPath = path.join(
+      __dirname,
+      'mocks/fixtures/test-avatar.jpg'
+    );
+    await fileInput.setInputFiles(testAvatarPath);
 
-      await expect(page.getByTestId('username-input')).toBeVisible({
-        timeout: 15000,
-      });
+    // Type unique valid username
+    const uniqueUsername = `nav${Date.now().toString().slice(-6)}`;
+    await page.getByTestId('username-input').fill(uniqueUsername);
 
-      // Upload avatar
-      const fileInput = page.getByTestId('avatar-file-input');
-      const testAvatarPath = path.join(
-        __dirname,
-        'mocks/fixtures/test-avatar.jpg'
-      );
-      await fileInput.setInputFiles(testAvatarPath);
+    // Wait for availability check
+    await expect(page.getByTestId('username-available-indicator')).toBeVisible({
+      timeout: 5000,
+    });
 
-      // Type unique valid username
-      const uniqueUsername = `nav${Date.now().toString().slice(-6)}`;
-      await page.getByTestId('username-input').fill(uniqueUsername);
+    // Submit the form
+    await page.getByTestId('submit-button').click();
 
-      // Wait for availability check
-      await expect(
-        page.getByTestId('username-available-indicator')
-      ).toBeVisible({ timeout: 5000 });
+    // Wait for redirect to dashboard
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
 
-      // Submit the form
-      await page.getByTestId('submit-button').click();
-
-      // Wait for redirect to dashboard
-      await page.waitForURL('**/dashboard', { timeout: 15000 });
-
-      // Check that the user avatar is visible in navigation
-      // The nav-user-avatar-image testid was added to user-dropdown.tsx
-      await expect(page.getByTestId('nav-user-avatar-image')).toBeVisible({
-        timeout: 5000,
-      });
+    // Check that the user avatar is visible in navigation
+    // The nav-user-avatar-image testid was added to user-dropdown.tsx
+    await expect(page.getByTestId('nav-user-avatar-image')).toBeVisible({
+      timeout: 5000,
     });
   });
 });
 
-// Use default auth state (existing user with username) for redirect tests
+// =============================================================================
+// Existing user tests - uses default auth state (user.json)
+// =============================================================================
+
 test.describe('Create Profile Flow - Existing User', () => {
   // Uses default storageState from playwright.config.ts (user.json)
 
