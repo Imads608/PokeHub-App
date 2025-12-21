@@ -112,6 +112,72 @@ describe('UsersService', () => {
     });
   });
 
+  describe('updateUserProfile', () => {
+    const userId = 'user-123';
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should update profile with username only and return data without avatar URL', async () => {
+      const profileData = { username: 'newusername' };
+      mockDbService.updateUserProfile.mockResolvedValue(undefined);
+
+      const result = await service.updateUserProfile(userId, profileData);
+
+      expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
+        username: 'newusername',
+        avatarFilename: undefined,
+      });
+      expect(result).toEqual({ username: 'newusername' });
+    });
+
+    it('should update profile with avatar and return data with full avatar URL', async () => {
+      const profileData = { username: 'newusername', avatar: 'myavatar.png' };
+      mockDbService.updateUserProfile.mockResolvedValue(undefined);
+
+      const result = await service.updateUserProfile(userId, profileData);
+
+      expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
+        username: 'newusername',
+        avatarFilename: 'avatar.png',
+      });
+      expect(result).toEqual({
+        username: 'newusername',
+        avatar:
+          'https://pokehubtest.blob.core.windows.net/avatars/user-123/avatar.png',
+      });
+    });
+
+    it('should handle avatar with jpg extension', async () => {
+      const profileData = { username: 'testuser', avatar: 'photo.jpg' };
+      mockDbService.updateUserProfile.mockResolvedValue(undefined);
+
+      const result = await service.updateUserProfile(userId, profileData);
+
+      expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
+        username: 'testuser',
+        avatarFilename: 'avatar.jpg',
+      });
+      expect(result.avatar).toBe(
+        'https://pokehubtest.blob.core.windows.net/avatars/user-123/avatar.jpg'
+      );
+    });
+
+    it('should handle avatar with jpeg extension', async () => {
+      const profileData = { username: 'testuser', avatar: 'image.jpeg' };
+      mockDbService.updateUserProfile.mockResolvedValue(undefined);
+
+      const result = await service.updateUserProfile(userId, profileData);
+
+      expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
+        username: 'testuser',
+        avatarFilename: 'avatar.jpeg',
+      });
+      expect(result.avatar).toContain('avatar.jpeg');
+    });
+  });
+
   describe('createUser', () => {
     it('should return a new user with a null avatarUrl', async () => {
       const newUserEmail = 'new@test.com';

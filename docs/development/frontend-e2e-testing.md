@@ -42,8 +42,10 @@ Frontend Playwright E2E tests are now **fully functional** using an MSW (Mock Se
 
 **Current Test Results:**
 
-- ✅ **Frontend Playwright E2E Tests: 44/44 passing (100%)**
-- ✅ Backend API E2E Tests: 43 tests passing
+- ✅ **Frontend Playwright E2E Tests: 63/63 passing (100%)**
+  - Team Editor: 44 tests
+  - Create Profile: 19 tests
+- ✅ Backend API E2E Tests: 70 tests passing
 - ✅ Backend Unit Tests: 64 passing
 - ✅ Frontend Unit Tests: 283+ passing
 - ✅ Backend Integration Tests: 87 passing
@@ -58,8 +60,10 @@ We use an Express-based proxy server that:
 
 1. Runs on port 9876 during E2E tests
 2. Mocks `/api/teams/*` endpoints with test data
-3. Forwards all other requests (auth, etc.) to the real backend (port 3000)
-4. Works for BOTH client-side fetch AND Next.js Server Components (SSR)
+3. Mocks `/api/users/:userId/profile` for avatar upload testing
+4. Mocks `/mock-azure-upload` for simulating Azure blob storage
+5. Forwards all other requests (auth, etc.) to the real backend (port 3000)
+6. Works for BOTH client-side fetch AND Next.js Server Components (SSR)
 
 ### Architecture Diagram
 
@@ -74,6 +78,10 @@ We use an Express-based proxy server that:
 │  MSW Proxy Server (port 9876)                                   │
 │         │                                                        │
 │         ├─→ /api/teams/*  ──→ Mocked responses (test data)     │
+│         │                                                        │
+│         ├─→ /api/users/*/profile ──→ Mocked profile updates    │
+│         │                                                        │
+│         ├─→ /mock-azure-upload ──→ Mocked blob storage         │
 │         │                                                        │
 │         └─→ /api/auth/*   ──→ Real Backend (port 3000)         │
 │             /api/test/*        (authentication)                 │
@@ -279,6 +287,93 @@ export const getTestCredentialsProvider = () => {
 
 ---
 
+## Parallel Test Execution Strategy
+
+### The Challenge
+
+Create-profile tests present a unique challenge: submission tests modify user state (setting username), which could cause conflicts if multiple tests share the same user. However, we want tests to run in parallel for speed.
+
+### The Solution: Hybrid Auth Approach
+
+We use two different authentication strategies based on test type:
+
+#### 1. Read-Only Tests → Shared Auth State
+
+Tests that only read data (validation, rendering, availability checks) share a pre-created auth state:
+
+```typescript
+test.describe('Create Profile Flow - New User', () => {
+  test.use({
+    storageState: path.join(__dirname, '../.auth/new-user.json'),
+  });
+
+  // These tests are safe to run in parallel because they don't modify state
+  test('should show error for username too short', async ({ page }) => {
+    await page.goto('/create-profile');
+    await page.getByTestId('username-input').fill('ab');
+    await expect(page.getByTestId('username-error')).toBeVisible();
+  });
+});
+```
+
+#### 2. Submission Tests → Unique User Per Test
+
+Tests that submit the form create their own unique user:
+
+```typescript
+test.describe('Create Profile Flow - Form Submission', () => {
+  // Clear storage state - each test authenticates its own user
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('should submit profile successfully', async ({ page }) => {
+    // Create unique user for this test
+    await createAndAuthenticateUser(page);
+    // ... test submission
+  });
+});
+```
+
+### The `createAndAuthenticateUser` Helper
+
+This helper creates a unique user and authenticates via NextAuth:
+
+```typescript
+async function createAndAuthenticateUser(page: Page): Promise<string> {
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const email = `testuser-${uniqueId}@example.com`;
+
+  // Get CSRF token (using page.request to share cookies)
+  const csrfRes = await page.request.get(`${BASE_URL}/api/auth/csrf`);
+  const { csrfToken } = await csrfRes.json();
+
+  // Authenticate via NextAuth test-credentials provider
+  await page.request.post(`${BASE_URL}/api/auth/callback/test-credentials`, {
+    form: { csrfToken, email },
+  });
+
+  // Navigate to create-profile to hydrate the session
+  await page.goto('/create-profile');
+  return email;
+}
+```
+
+**Key insight:** Using `page.request` (not the standalone `request` fixture) ensures cookies are shared with the page context automatically.
+
+### Benefits of This Approach
+
+1. **Full parallel execution** - No serial mode needed
+2. **Test isolation** - Submission tests don't interfere with each other
+3. **Resource efficiency** - Read-only tests share auth state
+4. **Realistic flow** - Each submission test exercises the full auth → profile creation flow
+
+### Trade-offs
+
+- **Test users accumulate** - Unique users are created but not deleted (no teardown)
+- **Slightly slower submission tests** - Each creates its own user via API call
+- **Database cleanup** - Periodic manual cleanup may be needed for long-running test environments
+
+---
+
 ## Files & Components
 
 ### MSW Proxy Server
@@ -287,6 +382,8 @@ export const getTestCredentialsProvider = () => {
 
 - Express server on port 9876
 - Mocks team CRUD endpoints
+- Mocks profile update endpoint (`POST /api/users/:userId/profile`)
+- Mocks Azure blob upload (`/mock-azure-upload`) with CORS support
 - Forwards auth/test endpoints to real backend
 - Health check for Playwright startup verification
 
@@ -295,6 +392,11 @@ export const getTestCredentialsProvider = () => {
 - Mock team data definition
 - Exported for test file imports
 - Contains `mockTeam` constant used by tests
+
+**`apps/pokehub-app-e2e/src/mocks/fixtures/test-avatar.jpg`**
+
+- Test image file for avatar upload tests
+- Valid JPEG format required by upload validation
 
 **`apps/pokehub-app-e2e/src/mocks/server.ts`**
 
@@ -309,7 +411,9 @@ export const getTestCredentialsProvider = () => {
 - Waits for backend health (30 retries, 2s intervals)
 - Waits for frontend readiness
 - Authenticates via test-credentials provider
-- Saves auth state to `.auth/user.json`
+- Creates two auth states:
+  - `.auth/user.json` - Existing user with username (for team tests)
+  - `.auth/new-user.json` - New user without username (for create-profile tests)
 
 **`apps/pokehub-app-e2e/playwright.config.ts`**
 
@@ -323,6 +427,14 @@ export const getTestCredentialsProvider = () => {
 - E2E test cases for team builder
 - Tests both client-side and server-side flows
 - Uses real auth + mocked team data
+
+**`apps/pokehub-app-e2e/src/create-profile.spec.ts`**
+
+- E2E test cases for profile creation flow
+- Uses parallel-safe approach with two auth strategies:
+  - Read-only tests share `new-user.json` auth state
+  - Submission tests create unique users via `createAndAuthenticateUser()` helper
+- Tests route guards, validation, availability checks, avatar upload, and form submission
 
 ### Backend Support
 
@@ -350,11 +462,16 @@ export const getTestCredentialsProvider = () => {
 cd apps/pokehub-app-e2e
 npx playwright test
 
-# Run specific test
+# Run specific test file
 npx playwright test team-editor.spec.ts
+npx playwright test create-profile.spec.ts
 
 # Run with specific filter
 npx playwright test -g "should load existing team"
+npx playwright test -g "should submit profile"
+
+# Run with verbose server logs (shows backend/frontend/proxy output)
+npx nx e2e:verbose pokehub-app-e2e
 
 # Run in headed mode (see browser)
 npx playwright test --headed
@@ -365,6 +482,39 @@ npx playwright test --debug
 # Run only chromium
 npx playwright test --project=chromium
 ```
+
+### Verbose Mode for Debugging
+
+The `e2e:verbose` target enables Playwright's webserver debug logging, which shows output from all three servers (backend, proxy, frontend):
+
+```bash
+# Run with verbose server logs
+npx nx e2e:verbose pokehub-app-e2e
+
+# Pass additional arguments (e.g., run specific test)
+npx nx e2e:verbose pokehub-app-e2e -- --grep "should submit profile"
+```
+
+**Configuration (`apps/pokehub-app-e2e/project.json`):**
+
+```json
+{
+  "e2e:verbose": {
+    "executor": "nx:run-commands",
+    "options": {
+      "command": "DEBUG=pw:webserver nx e2e pokehub-app-e2e {args}",
+      "forwardAllArgs": true
+    }
+  }
+}
+```
+
+This is useful for debugging:
+
+- Server startup issues
+- Proxy request forwarding
+- Authentication flow problems
+- API response errors
 
 ### What Happens
 
@@ -395,9 +545,58 @@ npx playwright test --project=chromium
 
 ## Current Test Coverage
 
-**✅ 44/44 Chrome Tests Passing (100%)**
+**✅ 63/63 Chrome Tests Passing (100%)**
 
 ### Test Suites
+
+#### Create Profile - New User Tests (15 tests)
+
+The create-profile tests use a **parallel-safe approach** with two auth strategies:
+
+1. **Read-only tests** use shared `new-user.json` auth state (user without username)
+2. **Submission tests** create unique users per test via `createAndAuthenticateUser()` helper
+
+##### Route Guards (2 tests)
+
+- ✅ Redirect new user from dashboard to create-profile
+- ✅ Allow new user to access create-profile directly
+
+##### Form Rendering (1 test)
+
+- ✅ Display all form elements (title, avatar upload, username input, submit button)
+
+##### Username Validation (3 tests)
+
+- ✅ Show error for username too short (< 3 chars)
+- ✅ Show error for invalid characters
+- ✅ Clear error when username becomes valid
+
+##### Username Availability (2 tests)
+
+- ✅ Show available indicator (green check) for available username
+- ✅ Show taken indicator (red X) for existing username
+
+##### Submit Button State (3 tests)
+
+- ✅ Disable submit button when username is invalid
+- ✅ Disable submit button when username is taken
+- ✅ Enable submit button when username is valid and available
+
+##### Avatar Upload (1 test)
+
+- ✅ Update avatar preview when file is selected (blob URL)
+
+##### Form Submission (4 tests) - Unique User Per Test
+
+- ✅ Submit profile successfully without avatar
+- ✅ Submit profile successfully with avatar
+- ✅ Show loading state during submission ("Creating Profile...")
+- ✅ Display user avatar in navigation after profile creation
+
+#### Create Profile - Existing User Tests (2 tests)
+
+- ✅ Redirect existing user away from create-profile
+- ✅ Allow existing user to access dashboard directly
 
 #### Team Editor - Authenticated Access (7 tests)
 
@@ -851,7 +1050,7 @@ jobs:
 
 ---
 
-**Last Updated:** December 12, 2025  
+**Last Updated:** December 20, 2025  
 **Status:** ✅ Working - MSW Proxy Implementation Complete  
 **Test Infrastructure:** Complete and functional  
-**Current Coverage:** 2+ passing E2E tests (client + server-side mocking verified)
+**Current Coverage:** 63 passing E2E tests (team editor + create profile)

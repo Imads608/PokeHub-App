@@ -1,5 +1,6 @@
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import path from 'path';
 
 const app = express();
 const port = 9876; // MSW proxy port
@@ -7,12 +8,12 @@ const REAL_BACKEND_URL =
   process.env.REAL_BACKEND_URL || 'http://localhost:3000';
 
 // Health check endpoint for Playwright
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', proxy: 'msw' });
 });
 
 // Log ALL incoming requests for debugging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   console.error(`[MSW Proxy] ${req.method} ${req.url}`);
   next();
 });
@@ -21,7 +22,10 @@ app.use((req, res, next) => {
 app.use('/api', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-traceId');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, x-traceId'
+  );
 
   // Handle OPTIONS preflight requests
   if (req.method === 'OPTIONS') {
@@ -74,7 +78,7 @@ app.get('/api/teams/:id', (req, res) => {
 });
 
 // GET /api/teams
-app.get('/api/teams', (req, res) => {
+app.get('/api/teams', (_req, res) => {
   console.error('[MSW Mock] GET /api/teams');
   return res.json([mockTeam]);
 });
@@ -118,6 +122,80 @@ app.delete('/api/teams/:id', (req, res) => {
   return res.status(404).json({ message: 'Team not found' });
 });
 
+// =============================================================================
+// User Profile Mocks (for create-profile E2E tests)
+// =============================================================================
+
+/**
+ * Mock user profile update endpoint
+ * Returns mock avatar URL pointing to the proxy server instead of real Azure URL
+ */
+app.post('/api/users/:userId/profile', express.json(), (req, res) => {
+  const { userId } = req.params;
+  const { username, avatar } = req.body;
+  console.log(
+    `[MSW Mock] POST /api/users/${userId}/profile - username: ${username}, avatar: ${avatar}`
+  );
+
+  // If avatar was provided, return mock URL pointing to our proxy
+  const response: { username: string; avatar?: string } = { username };
+  if (avatar) {
+    const fileExt = avatar.split('.').pop() || 'jpg';
+    response.avatar = `http://localhost:${port}/mock-avatars/${userId}/avatar.${fileExt}`;
+  }
+
+  return res.json(response);
+});
+
+// =============================================================================
+// Avatar Upload Mocks (for create-profile E2E tests)
+// =============================================================================
+
+/**
+ * Mock Azure Blob Storage upload endpoint
+ * The Next.js /api/generate-upload-url route returns this URL when E2E_TESTING=true
+ * Accepts any PUT request and returns 201 Created
+ */
+// Handle OPTIONS preflight for mock-azure-upload
+app.options('/mock-azure-upload', (_req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'PUT, OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, x-ms-blob-type, x-ms-version'
+  );
+  return res.status(204).send();
+});
+
+app.put('/mock-azure-upload', (_req, res) => {
+  console.log('[MSW Mock] PUT /mock-azure-upload - Avatar upload accepted');
+  res.header('Access-Control-Allow-Origin', '*');
+  return res.status(201).send();
+});
+
+/**
+ * Serve static test avatar images
+ * The blobUrl returned by /api/generate-upload-url points here
+ * Returns a placeholder image for any avatar request
+ */
+app.get('/mock-avatars/:userId/:filename', (_req, res) => {
+  console.log('[MSW Mock] GET /mock-avatars - Serving test avatar');
+  // Serve the test avatar fixture
+  const fixturePath = path.join(__dirname, 'fixtures', 'test-avatar.jpg');
+  res.sendFile(fixturePath, (err) => {
+    if (err) {
+      console.error('[MSW Mock] Error serving avatar fixture:', err);
+      // Return a 1x1 transparent PNG as fallback
+      const transparentPng = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      );
+      res.setHeader('Content-Type', 'image/png');
+      res.send(transparentPng);
+    }
+  });
+});
+
 // Forward ALL other requests to the real backend (auth, etc.)
 // IMPORTANT: Don't parse body before this - let proxy handle raw stream
 app.use(
@@ -133,6 +211,7 @@ const server = app.listen(port, () => {
   console.log(`🔄 MSW Proxy Server listening on http://localhost:${port}`);
   console.log(`📡 Forwarding non-mocked requests to ${REAL_BACKEND_URL}`);
   console.log(`✅ Mocking /api/teams/* endpoints`);
+  console.log(`✅ Mocking /mock-azure-upload and /mock-avatars/* endpoints`);
 });
 
 // Graceful shutdown

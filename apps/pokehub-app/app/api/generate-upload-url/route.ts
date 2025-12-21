@@ -15,6 +15,15 @@ const CONTAINER_NAME = 'avatars';
 
 const logger = getLogger('GenerateUploadUrl');
 
+/**
+ * E2E Testing Support
+ *
+ * When E2E_TESTING=true, returns mock URLs instead of real Azure Blob Storage URLs.
+ * The mock upload URL points to the MSW proxy server which accepts the upload.
+ * The mock blob URL points to a static test avatar served by the proxy.
+ */
+const MSW_PROXY_URL = 'http://localhost:9876';
+
 function getAzureClients() {
   const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || 'pokehub';
   const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
@@ -37,18 +46,21 @@ function getAzureClients() {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const { sharedKeyCredential, blobServiceClient } = getAzureClients();
-    logger.info(`Generating upload url: ${blobServiceClient.url} `);
+  const isE2ETesting = process.env.E2E_TESTING === 'true';
 
+  try {
+    // Check auth first (applies to both E2E and production)
     const session = await auth();
     if (!session?.accessToken || !session?.user) {
       logger.error('Unauthorized access');
-      return NextResponse.json<FetchApiError>({
-        message: 'Unauthorized',
-        status: 401,
-        name: 'FetchApiError',
-      });
+      return NextResponse.json<FetchApiError>(
+        {
+          message: 'Unauthorized',
+          status: 401,
+          name: 'FetchApiError',
+        },
+        { status: 401 }
+      );
     }
 
     const { fileName, fileType } = await req.json();
@@ -57,22 +69,44 @@ export async function POST(req: NextRequest) {
     logger.info('Successfully parsed request body. Validating file name...');
     if (!isValidAvatarFileName(fileName)) {
       logger.error('Invalid fileName');
-      return NextResponse.json<FetchApiError>({
-        message: 'Invalid fileName',
-        status: 400,
-        name: 'FetchApiError',
-      });
+      return NextResponse.json<FetchApiError>(
+        {
+          message: 'Invalid fileName',
+          status: 400,
+          name: 'FetchApiError',
+        },
+        { status: 400 }
+      );
     }
     if (!fileName || !fileType) {
       logger.error('fileName or fileType is missing');
-      return NextResponse.json<FetchApiError>({
-        message: 'fileName and fileType are required',
-        status: 400,
-        name: 'FetchApiError',
-      });
+      return NextResponse.json<FetchApiError>(
+        {
+          message: 'fileName and fileType are required',
+          status: 400,
+          name: 'FetchApiError',
+        },
+        { status: 400 }
+      );
     }
 
-    logger.info('Proceessing file upload request');
+    const userId = session.user.id;
+
+    // E2E Testing: Return mock URLs pointing to MSW proxy server
+    if (isE2ETesting) {
+      logger.info('E2E Testing mode: returning mock upload URLs');
+      const res: BlobStorageResponse = {
+        uploadUrl: `${MSW_PROXY_URL}/mock-azure-upload`,
+        blobUrl: `${MSW_PROXY_URL}/mock-avatars/${userId}/avatar${fileExtension}`,
+      };
+      return NextResponse.json(res);
+    }
+
+    // Production: Use real Azure Blob Storage
+    const { sharedKeyCredential, blobServiceClient } = getAzureClients();
+    logger.info(`Generating upload url: ${blobServiceClient.url} `);
+
+    logger.info('Processing file upload request');
 
     const containerClient =
       blobServiceClient.getContainerClient(CONTAINER_NAME);
@@ -80,7 +114,6 @@ export async function POST(req: NextRequest) {
 
     logger.info('Container client created or already exists');
 
-    const userId = session.user.id;
     const blobName = `${userId}/avatar${fileExtension}`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -107,10 +140,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(res);
   } catch (error) {
     logger.error({ error }, 'Error generating SAS URL');
-    return NextResponse.json<FetchApiError>({
-      message: 'Failed to generate upload URL',
-      status: 500,
-      name: 'FetchApiError',
-    });
+    return NextResponse.json<FetchApiError>(
+      {
+        message: 'Failed to generate upload URL',
+        status: 500,
+        name: 'FetchApiError',
+      },
+      { status: 500 }
+    );
   }
 }

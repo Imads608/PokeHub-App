@@ -6,7 +6,7 @@ export const USERS_DB_SERVICE = 'USERS_DB_SERVICE';
 export interface IUsersDBService {
   updateUserProfile(
     userId: string,
-    data: Omit<IUpdateUserProfile, 'avatar'> & { avatarFilename: string }
+    data: Omit<IUpdateUserProfile, 'avatar'> & { avatarFilename?: string }
   ): Promise<User>;
 
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -17,4 +17,3 @@ export interface IUsersDBService {
 
   getUserByUsername(username: string): Promise<User | undefined>;
 }
-

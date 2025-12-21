@@ -730,16 +730,68 @@ describe('Component with validation context', () => {
 
 ### 1. ESM Module Compatibility (Next-Auth)
 
-**Problem:** Jest couldn't handle Next-auth ESM modules natively.
+**Problem:** Jest fails with `SyntaxError: Cannot use import statement outside a module` when testing code that imports from `next-auth/react` or similar ESM-only packages.
+
+```
+SyntaxError: Cannot use import statement outside a module
+
+/node_modules/next-auth/react.js:13
+import { jsx as _jsx } from "react/jsx-runtime";
+^^^^^^
+```
+
+**Why This Happens:**
+
+Jest uses **CommonJS** by default (Node.js module system with `require()`/`module.exports`), while `next-auth` and some modern packages ship **ESM-only** (ECMAScript Modules with `import`/`export`).
+
+| Your App Code | node_modules (most) | node_modules (next-auth) |
+|---------------|---------------------|--------------------------|
+| ESM syntax | Pre-compiled CJS | ESM-only |
+| ✅ Babel transforms to CJS | ✅ Already CJS | ❌ Jest skips, fails |
+
+**Key insight:** Jest transforms your app code via Babel (converting ESM → CJS), but skips `node_modules/` for performance. Most packages ship CommonJS builds, but `next-auth` doesn't — it's ESM-only.
 
 **Solution:**
 
-Updated `jest.config.ts` with transformIgnorePatterns:
+Add `transformIgnorePatterns` to tell Jest to transform these specific ESM packages:
 
 ```typescript
-transformIgnorePatterns: [
-  '/node_modules/(?!(next-auth|@auth/core|jose|oauth4webapi|@panva|preact)/)',
-];
+// jest.config.ts
+export default {
+  // ... other config
+  transformIgnorePatterns: [
+    '/node_modules/(?!(next-auth|@auth/core|jose|oauth4webapi|@panva|preact)/)',
+  ],
+};
+```
+
+This regex means: "Ignore (don't transform) everything in node_modules **except** these packages — transform those with Babel so they work."
+
+**Packages that require this:**
+- `next-auth` - Auth library (ESM-only)
+- `@auth/core` - Auth.js core (ESM-only)
+- `jose` - JWT library used by next-auth (ESM-only)
+- `oauth4webapi` - OAuth library (ESM-only)
+- `@panva/*` - Related auth utilities (ESM-only)
+- `preact` - Used by some dependencies (ESM-only)
+
+**Which jest.config.ts files need this:**
+- `apps/pokehub-app/jest.config.ts` - Frontend app
+- `packages/frontend/pokehub-nav-components/jest.config.ts`
+- `packages/frontend/pokehub-team-builder/jest.config.ts`
+- Any package that imports from auth-related code
+
+**Alternative approach (mocking):**
+
+If you don't need the actual auth functionality in tests, you can mock the module entirely:
+
+```typescript
+jest.mock('next-auth/react', () => ({
+  useSession: jest.fn(() => ({
+    data: null,
+    status: 'unauthenticated',
+  })),
+}));
 ```
 
 Used type-only imports in `global-next-types/src/lib/next-auth.d.ts`

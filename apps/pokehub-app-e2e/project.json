@@ -11,6 +11,13 @@
         "config": "apps/pokehub-app-e2e/playwright.config.ts"
       }
     },
+    "e2e:verbose": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "DEBUG=pw:webserver nx e2e pokehub-app-e2e {args}",
+        "forwardAllArgs": true
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint"
     }

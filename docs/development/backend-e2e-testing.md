@@ -25,10 +25,12 @@
 
 **Current Test Results:**
 
-- ✅ **Backend API E2E Tests: 43/43 passing (100%)**
+- ✅ **Backend API E2E Tests: 70/70 passing (100%)**
+  - Teams API: 43 tests
+  - Users API: 27 tests
 - ✅ Backend Unit Tests: 64 passing
 - ✅ Backend Integration Tests: 87 passing
-- ✅ Frontend Playwright E2E Tests: 44 passing
+- ✅ Frontend Playwright E2E Tests: 63 passing
 - ✅ Frontend Unit Tests: 283+ passing
 
 ---
@@ -307,7 +309,9 @@ afterAll(async () => {
 
 ### Comprehensive API Validation
 
-The E2E tests validate **43 test cases** covering:
+The E2E tests validate **70 test cases** covering:
+
+### Teams API (43 tests)
 
 #### 1. CRUD Operations
 
@@ -355,6 +359,48 @@ The E2E tests validate **43 test cases** covering:
 - ✅ Nested object structures (Pokemon array)
 - ✅ Optional fields (nickname, item, etc.)
 
+### Users API (27 tests)
+
+#### 1. HEAD /users/:id - Availability Checks (7 tests)
+
+- ✅ Return 404 for non-existent user ID
+- ✅ Return 200 for existing user ID
+- ✅ Return 200 for existing email
+- ✅ Return 404 for non-existent email
+- ✅ Return 404 for non-existent username
+- ✅ Return 403 without auth token
+- ✅ Return 403 with invalid auth token
+
+#### 2. POST /users/:userId/profile - Profile Updates (14 tests)
+
+- ✅ Update profile with valid username
+- ✅ Update profile with username and avatar filename
+- ✅ Return 403 without auth token
+- ✅ Return 403 with invalid auth token
+- ✅ Return 400 when username too short (< 3 chars)
+- ✅ Return 400 when username too long (> 20 chars)
+- ✅ Accept username with special characters (backend only validates length)
+- ✅ Return 400 when username is missing
+- ✅ Return 400 with invalid avatar filename
+- ✅ Accept valid avatar extensions (png, jpg, jpeg, gif)
+- ✅ Allow username with underscores
+- ✅ Allow username with numbers
+- ✅ Handle concurrent profile updates gracefully
+
+#### 3. Username Uniqueness (2 tests)
+
+- ✅ Check if username is taken after profile update (returns 200)
+- ✅ Return 404 for available username
+
+#### 4. Edge Cases and Security (4 tests)
+
+- ✅ Handle very long request gracefully (extra fields ignored)
+- ✅ Handle SQL injection attempts safely (stored as literal string)
+- ✅ Reject XSS attempts due to length validation
+- ✅ Reject path traversal attempts in avatar filename
+
+**Key Finding:** Backend only validates username length (3-20 characters), not character set. Character validation (letters, numbers, underscores only) is enforced on the frontend.
+
 ---
 
 ## Files & Components
@@ -363,7 +409,7 @@ The E2E tests validate **43 test cases** covering:
 
 **`apps/pokehub-api-e2e/src/pokehub-api/teams.spec.ts`**
 
-Main E2E test suite with 43 test cases organized in describe blocks:
+Teams API E2E test suite with 43 test cases organized in describe blocks:
 
 - POST /api/teams (4 tests)
 - GET /api/teams (3 tests)
@@ -372,6 +418,15 @@ Main E2E test suite with 43 test cases organized in describe blocks:
 - DELETE /api/teams/:id (5 tests)
 - Complex Validation Scenarios (10 tests)
 - Authorization & User Isolation (10 tests)
+
+**`apps/pokehub-api-e2e/src/pokehub-api/users.spec.ts`**
+
+Users API E2E test suite with 27 test cases organized in describe blocks:
+
+- HEAD /users/:id - availability checks (7 tests)
+- POST /users/:userId/profile - profile updates (14 tests)
+- Username uniqueness (2 tests)
+- Edge cases and security (4 tests)
 
 ### Configuration Files
 
@@ -881,7 +936,7 @@ jobs:
 
 ---
 
-**Last Updated:** December 13, 2025  
-**Status:** ✅ Fully Functional - All 43 Tests Passing  
-**Test Coverage:** Complete API validation with real database  
+**Last Updated:** December 20, 2025  
+**Status:** ✅ Fully Functional - All 70 Tests Passing  
+**Test Coverage:** Complete API validation with real database (Teams + Users)  
 **Execution:** Parallel execution with proper test isolation

@@ -31,7 +31,7 @@ import { z } from 'zod';
 
 const CreateTestSessionDtoSchema = z.object({
   email: z.string().email().optional(),
-  username: z.string().optional(),
+  username: z.string().nullable().optional(),
   userId: z.string().uuid().optional(),
 });
 
@@ -83,22 +83,25 @@ export class TestAuthController {
     const validatedDto = CreateTestSessionDtoSchema.parse(dto);
 
     const email = validatedDto.email || 'test@example.com';
-    const username = validatedDto.username || 'testuser';
+    // Keep username as undefined/null if not provided (for create-profile flow testing)
+    const username = validatedDto.username;
 
     // Check if user exists
     let user = await this.usersDbService.getUserByEmail(email);
 
     if (!user) {
-      // Create test user
+      // Create new test user (username will be null initially)
       user = await this.usersDbService.createUser(email, 'GOOGLE');
+    }
 
-      // Update username if provided
-      if (username && username !== user.username) {
-        user = await this.usersDbService.updateUserProfile(user.id, {
-          username,
-          avatarFilename: '',
-        });
-      }
+    // Always sync username to match request for test consistency
+    // This allows tests to reset user state between runs
+    const targetUsername = username ?? null;
+    if (user.username !== targetUsername) {
+      user = await this.usersDbService.updateUserProfile(user.id, {
+        username: targetUsername as string, // DB allows null despite type
+        avatarFilename: user.avatarFilename || '',
+      });
     }
 
     // Generate both access and refresh tokens (OAuth-compatible)
