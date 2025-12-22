@@ -18,6 +18,7 @@ This guide provides copy-paste-able code snippets for common patterns used throu
 8. [Authentication Patterns](#authentication-patterns)
 9. [Pokemon-Specific Patterns](#pokemon-specific-patterns)
 10. [Validation & Change Tracking Patterns](#validation--change-tracking-patterns)
+11. [UI Component Patterns](#ui-component-patterns)
 
 ---
 
@@ -1397,6 +1398,75 @@ export const GenerationSelector = () => {
   );
 };
 ```
+
+---
+
+## UI Component Patterns
+
+### Horizontal ScrollArea
+
+For horizontal scrolling lists (e.g., filter badges, image carousels), use shadcn/ui's ScrollArea with a horizontal ScrollBar.
+
+```tsx
+import { ScrollArea, ScrollBar } from '@pokehub/frontend/shared-ui-components';
+
+// Horizontal scrollable list
+<ScrollArea className="w-full whitespace-nowrap">
+  <div className="flex w-max gap-2 p-1">
+    {items.map((item) => (
+      <Badge key={item.id} className="shrink-0">
+        {item.name}
+      </Badge>
+    ))}
+  </div>
+  <ScrollBar orientation="horizontal" />
+</ScrollArea>
+```
+
+**Key Requirements**:
+- `whitespace-nowrap` on ScrollArea - prevents content wrapping
+- `w-max` on inner container - allows content to extend beyond viewport
+- `shrink-0` on items - prevents items from shrinking
+- `<ScrollBar orientation="horizontal" />` - enables horizontal scrollbar
+
+### Mobile-Responsive Filter Toggle
+
+Show/hide filters on mobile to maximize content space.
+
+```tsx
+import { Filter } from 'lucide-react';
+import { useState } from 'react';
+
+const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+// Filter toggle button (visible only on mobile)
+<Button
+  variant={isMobileFilterOpen ? 'secondary' : 'outline'}
+  size="icon"
+  className="lg:hidden"
+  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+>
+  <Filter className="h-4 w-4" />
+</Button>
+
+// Desktop filters (hidden on mobile)
+<div className="hidden flex-wrap gap-2 lg:flex">
+  {/* Filter content */}
+</div>
+
+// Mobile filters (collapsible)
+{isMobileFilterOpen && (
+  <div className="lg:hidden">
+    {/* Mobile filter content with horizontal scroll */}
+  </div>
+)}
+```
+
+**Responsive Breakpoints**:
+| Class | Behavior |
+|-------|----------|
+| `lg:hidden` | Visible on mobile, hidden on desktop (≥1024px) |
+| `hidden lg:flex` | Hidden on mobile, visible on desktop |
 
 ---
 

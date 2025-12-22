@@ -1229,6 +1229,128 @@ jest.mock('../context/team-editor.context', () => ({
 - Clean one-at-a-time Pokemon addition flow
 - Progressive disclosure of team composition
 
+## Mobile Responsiveness ✅
+
+### Pokemon Selector Mobile Optimization
+
+The Pokemon Selector dialog is optimized for mobile screens to maximize the visible Pokemon results while still providing access to type filters.
+
+**Problem Solved**: On mobile, the type filter badges (18 types) and type tabs would wrap across multiple rows, consuming most of the viewport and leaving minimal space for Pokemon results.
+
+**Solution**: Collapsible filter system with horizontal scrolling.
+
+#### Mobile Layout
+
+**Default State (Filters Collapsed)**:
+```
+┌─────────────────────────┐
+│ [Search...........] [⚙] │  ← Filter toggle button
+├─────────────────────────┤
+│ [Pkmn] [Pkmn]           │
+│ [Pkmn] [Pkmn]           │
+│ [Pkmn] [Pkmn]           │  ← Maximum space for results
+│ [Pkmn] [Pkmn]           │
+│ [Pkmn] [Pkmn]           │
+└─────────────────────────┘
+```
+
+**Filters Expanded**:
+```
+┌─────────────────────────┐
+│ [Search...........] [⚙] │
+│ ←[Fire][Water][Grass]→  │  ← Horizontal scroll
+├─────────────────────────┤
+│ [Pkmn] [Pkmn]           │
+│ [Pkmn] [Pkmn]           │
+│ [Pkmn] [Pkmn]           │
+└─────────────────────────┘
+```
+
+#### Implementation Details
+
+**File**: `packages/frontend/pokehub-team-builder/src/lib/team-editor/pokemon-selector/pokemon-selector.tsx`
+
+**Key Changes**:
+
+1. **Mobile Filter Toggle State**:
+```typescript
+const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+```
+
+2. **Filter Toggle Button** (visible only on mobile):
+```tsx
+<Button
+  variant={isMobileFilterOpen ? 'secondary' : 'outline'}
+  size="icon"
+  className="lg:hidden"
+  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+>
+  <Filter className="h-4 w-4" />
+</Button>
+```
+
+3. **Desktop Type Badges** (hidden on mobile):
+```tsx
+<div className="hidden flex-wrap gap-2 lg:flex">
+  {/* Type badges */}
+</div>
+```
+
+4. **Mobile Type Badges** (collapsible, horizontal scroll):
+```tsx
+{isMobileFilterOpen && (
+  <div className="lg:hidden">
+    <ScrollArea className="w-full whitespace-nowrap">
+      <div className="flex w-max gap-2 p-1">
+        {/* Type badges with shrink-0 */}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  </div>
+)}
+```
+
+5. **Hide Tabs on Mobile**:
+```tsx
+<TabsList className="mb-4 hidden h-auto flex-wrap lg:flex">
+```
+
+6. **Flexible Height for Results**:
+```tsx
+<ScrollArea className="min-h-0 flex-1 lg:h-[calc(70vh-220px)]">
+```
+
+#### Horizontal ScrollArea Pattern
+
+For horizontal scrolling with shadcn/ui ScrollArea, you must:
+
+1. Import `ScrollBar` alongside `ScrollArea`:
+```typescript
+import { ScrollArea, ScrollBar } from '@pokehub/frontend/shared-ui-components';
+```
+
+2. Add `ScrollBar` with horizontal orientation inside the ScrollArea:
+```tsx
+<ScrollArea className="w-full whitespace-nowrap">
+  <div className="flex w-max gap-2">
+    {/* Items with shrink-0 */}
+  </div>
+  <ScrollBar orientation="horizontal" />
+</ScrollArea>
+```
+
+3. Key classes:
+   - `whitespace-nowrap` on ScrollArea - prevents content wrapping
+   - `w-max` on inner container - allows content to extend beyond viewport
+   - `shrink-0` on items - prevents items from shrinking
+
+#### Responsive Breakpoints
+
+| Breakpoint | Behavior |
+|------------|----------|
+| `< lg` (mobile) | Filter toggle visible, badges collapsed, tabs hidden |
+| `≥ lg` (desktop) | Full filter badges visible, tabs visible, no toggle |
+
 ## Performance Optimizations ⚡
 
 ### Overview
@@ -1814,7 +1936,17 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 
 ## Changelog
 
-### 2025-11-28 (Latest Updates)
+### 2025-12-21 (Latest Updates)
+- ✅ **Mobile Responsiveness: Pokemon Selector Optimization**
+  - Added collapsible filter system for mobile screens
+  - Filter toggle button appears on mobile (< lg breakpoint)
+  - Type badges hidden by default, expand into horizontal scrollable row
+  - Type tabs hidden on mobile to maximize Pokemon results space
+  - Implemented horizontal ScrollArea with `ScrollBar orientation="horizontal"`
+  - Flexible height system for results area (`min-h-0 flex-1`)
+  - Desktop layout unchanged (full filter badges and tabs visible)
+
+### 2025-11-28
 - ✅ **Performance Optimizations**
   - Implemented lazy loading for dialog components (PokemonSelector, PokemonEditor, TeamAnalysisDialog)
   - Added lazy loading for validation components (FormatRulesDisplay, TeamValidationSummary)

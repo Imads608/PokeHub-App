@@ -130,3 +130,24 @@ PokeHub is a Next.js Pokemon application built with an Nx monorepo architecture.
 - `tailwind.config.js` - Global Tailwind configuration
 - `drizzle.config.pg.ts` - Database configuration
 - Individual `project.json` files define per-project build targets
+
+## Documentation
+
+### Documentation Location
+- **Always check `docs/` directory** for existing documentation before making changes
+- Documentation includes architecture, patterns, feature docs, and deployment guides
+
+### Key Documentation Files
+- `docs/ARCHITECTURE.md` - High-level system architecture overview
+- `docs/backend-system.md` - Backend architecture and APIs
+- `docs/code-style-and-patterns.md` - Coding conventions
+- `docs/data-fetching-patterns.md` - TanStack Query patterns
+- `docs/common-patterns-and-recipes.md` - Code snippets and recipes
+- `docs/building-and-optimization.md` - Build and bundle optimization
+- `docs/features/` - Feature-specific documentation (authentication, pokedex, team-builder)
+- `docs/deployment/` - Deployment guides
+
+### Implementation Plans
+- **Create new plans in `docs/plans/`** directory
+- Plans should document the problem, solution approach, and implementation steps
+- Reference plans when implementing features for context
