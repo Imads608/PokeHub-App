@@ -9,6 +9,7 @@ import {
   Button,
   Input,
   ScrollArea,
+  ScrollBar,
   Tabs,
   TabsContent,
   TabsList,
@@ -19,7 +20,7 @@ import {
   useDebouncedSearch,
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
-import { Search, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface PokemonSelectorProps {
@@ -45,6 +46,7 @@ export const PokemonSelector = ({
   );
   const [selectedTypes, setSelectedTypes] = useState<TypeName[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { itemsToShow, handleScroll, resetItems } = useInfiniteScroll({});
 
   // Filter out banned and illegal Pokemon
@@ -86,31 +88,43 @@ export const PokemonSelector = ({
   }, [debouncedSearchTerm, selectedTypes, activeTab]);
 
   return (
-    <div className="flex h-[70vh] flex-col">
+    <div className="flex h-[70vh] flex-col overflow-hidden lg:h-[70vh]">
       {/* Search and filters */}
       <div className="mb-4 flex flex-col gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            data-testid="pokemon-search-input"
-            placeholder="Search by name or number..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-          {searchTerm && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 rounded-full"
-              onClick={() => setSearchTerm('')}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              data-testid="pokemon-search-input"
+              placeholder="Search by name or number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 rounded-full"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {/* Mobile filter toggle */}
+          <Button
+            variant={isMobileFilterOpen ? 'secondary' : 'outline'}
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Desktop type badges - hidden on mobile */}
+        <div className="hidden flex-wrap gap-2 lg:flex">
           {Object.keys(typeColors).map(
             (type: string) =>
               type !== 'Stellar' &&
@@ -141,11 +155,52 @@ export const PokemonSelector = ({
             </Button>
           )}
         </div>
+
+        {/* Mobile type badges - collapsible horizontal scroll */}
+        {isMobileFilterOpen && (
+          <div className="lg:hidden">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex w-max gap-2 p-1">
+                {Object.keys(typeColors).map(
+                  (type: string) =>
+                    type !== 'Stellar' &&
+                    type !== '???' && (
+                      <Badge
+                        key={type}
+                        className={`shrink-0 cursor-pointer capitalize ${
+                          selectedTypes.includes(type as TypeName) ||
+                          activeTab === type
+                            ? typeColors[type as TypeName]
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
+                        onClick={() => handleTypeToggle(type as TypeName)}
+                      >
+                        {type}
+                      </Badge>
+                    )
+                )}
+                {(searchTerm ||
+                  selectedTypes.length > 0 ||
+                  activeTab !== 'all') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="shrink-0"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+        )}
       </div>
 
-      {/* Tabs for type filtering */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-        <TabsList className="mb-4 flex h-auto flex-wrap">
+      {/* Tabs for type filtering - hidden on mobile */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
+        <TabsList className="mb-4 hidden h-auto flex-wrap lg:flex">
           <TabsTrigger value="all">All</TabsTrigger>
           {Object.keys(typeColors).map(
             (type) =>
@@ -158,7 +213,7 @@ export const PokemonSelector = ({
           )}
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-0 flex-1">
+        <TabsContent value={activeTab} className="mt-0 flex min-h-0 flex-1 flex-col">
           {/* Results count */}
           {data && data.length > 0 && (
             <div className="mb-2">
@@ -170,7 +225,7 @@ export const PokemonSelector = ({
           )}
 
           <ScrollArea
-            className="h-[calc(70vh-220px)]"
+            className="min-h-0 flex-1 lg:h-[calc(70vh-220px)]"
             onScrollCapture={handleScroll}
           >
             <div className="grid grid-cols-2 gap-2 pr-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
