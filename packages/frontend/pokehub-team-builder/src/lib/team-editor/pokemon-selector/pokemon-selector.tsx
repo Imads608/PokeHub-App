@@ -21,7 +21,43 @@ import {
   useInfiniteScroll,
 } from '@pokehub/frontend/shared-utils';
 import { Filter, Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+
+interface TypeBadgesProps {
+  className?: string;
+  selectedTypes: TypeName[];
+  activeTab: string;
+  onTypeToggle: (type: TypeName) => void;
+}
+
+const TypeBadges = memo(function TypeBadges({
+  className,
+  selectedTypes,
+  activeTab,
+  onTypeToggle,
+}: TypeBadgesProps) {
+  return (
+    <>
+      {Object.keys(typeColors).map(
+        (type: string) =>
+          type !== 'Stellar' &&
+          type !== '???' && (
+            <Badge
+              key={type}
+              className={`cursor-pointer capitalize ${
+                selectedTypes.includes(type as TypeName) || activeTab === type
+                  ? typeColors[type as TypeName]
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              } ${className || ''}`}
+              onClick={() => onTypeToggle(type as TypeName)}
+            >
+              {type}
+            </Badge>
+          )
+      )}
+    </>
+  );
+});
 
 export interface PokemonSelectorProps {
   generation: GenerationNum;
@@ -69,11 +105,11 @@ export const PokemonSelector = ({
   // Combined loading state
   const isDataLoading = isLoading || isBansLoading;
 
-  const handleTypeToggle = (type: TypeName) => {
+  const handleTypeToggle = useCallback((type: TypeName) => {
     setSelectedTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
-  };
+  }, []);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -88,7 +124,7 @@ export const PokemonSelector = ({
   }, [debouncedSearchTerm, selectedTypes, activeTab]);
 
   return (
-    <div className="flex h-[70vh] flex-col overflow-hidden lg:h-[70vh]">
+    <div className="flex h-[70vh] flex-col overflow-hidden">
       {/* Search and filters */}
       <div className="mb-4 flex flex-col gap-4">
         <div className="flex gap-2">
@@ -118,6 +154,10 @@ export const PokemonSelector = ({
             size="icon"
             className="lg:hidden"
             onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+            aria-label={
+              isMobileFilterOpen ? 'Hide type filters' : 'Show type filters'
+            }
+            aria-expanded={isMobileFilterOpen}
           >
             <Filter className="h-4 w-4" />
           </Button>
@@ -125,24 +165,11 @@ export const PokemonSelector = ({
 
         {/* Desktop type badges - hidden on mobile */}
         <div className="hidden flex-wrap gap-2 lg:flex">
-          {Object.keys(typeColors).map(
-            (type: string) =>
-              type !== 'Stellar' &&
-              type !== '???' && (
-                <Badge
-                  key={type}
-                  className={`cursor-pointer capitalize ${
-                    selectedTypes.includes(type as TypeName) ||
-                    activeTab === type
-                      ? typeColors[type as TypeName]
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                  onClick={() => handleTypeToggle(type as TypeName)}
-                >
-                  {type}
-                </Badge>
-              )
-          )}
+          <TypeBadges
+            selectedTypes={selectedTypes}
+            activeTab={activeTab}
+            onTypeToggle={handleTypeToggle}
+          />
 
           {(searchTerm || selectedTypes.length > 0 || activeTab !== 'all') && (
             <Button
@@ -161,24 +188,12 @@ export const PokemonSelector = ({
           <div className="lg:hidden">
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex w-max gap-2 p-1">
-                {Object.keys(typeColors).map(
-                  (type: string) =>
-                    type !== 'Stellar' &&
-                    type !== '???' && (
-                      <Badge
-                        key={type}
-                        className={`shrink-0 cursor-pointer capitalize ${
-                          selectedTypes.includes(type as TypeName) ||
-                          activeTab === type
-                            ? typeColors[type as TypeName]
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        }`}
-                        onClick={() => handleTypeToggle(type as TypeName)}
-                      >
-                        {type}
-                      </Badge>
-                    )
-                )}
+                <TypeBadges
+                  className="shrink-0"
+                  selectedTypes={selectedTypes}
+                  activeTab={activeTab}
+                  onTypeToggle={handleTypeToggle}
+                />
                 {(searchTerm ||
                   selectedTypes.length > 0 ||
                   activeTab !== 'all') && (
@@ -199,7 +214,11 @@ export const PokemonSelector = ({
       </div>
 
       {/* Tabs for type filtering - hidden on mobile */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 flex-1 flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <TabsList className="mb-4 hidden h-auto flex-wrap lg:flex">
           <TabsTrigger value="all">All</TabsTrigger>
           {Object.keys(typeColors).map(
@@ -213,7 +232,10 @@ export const PokemonSelector = ({
           )}
         </TabsList>
 
-        <TabsContent value={activeTab} className="mt-0 flex min-h-0 flex-1 flex-col">
+        <TabsContent
+          value={activeTab}
+          className="mt-0 flex min-h-0 flex-1 flex-col"
+        >
           {/* Results count */}
           {data && data.length > 0 && (
             <div className="mb-2">
