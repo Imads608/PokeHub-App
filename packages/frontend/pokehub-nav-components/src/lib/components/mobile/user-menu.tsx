@@ -1,5 +1,5 @@
 import { Button } from '@pokehub/frontend/shared-ui-components';
-import { ChevronLeft, Settings, User, Users } from 'lucide-react';
+import { ChevronLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 export interface UserMenuProps {
@@ -25,33 +25,6 @@ export const UserMenu = ({
         >
           <ChevronLeft className="mr-3 h-4 w-4" />
         </Button>
-        <Link href="/profile">
-          <Button
-            variant="ghost"
-            className="w-full justify-start rounded-lg text-foreground hover:bg-muted"
-          >
-            <User className="mr-3 h-4 w-4" />
-            View Profile
-          </Button>
-        </Link>
-        <Link href="/edit-profile">
-          <Button
-            variant="ghost"
-            className="w-full justify-start rounded-lg text-foreground hover:bg-muted"
-          >
-            <User className="mr-3 h-4 w-4" />
-            Edit Profile
-          </Button>
-        </Link>
-        <Link href="/my-teams">
-          <Button
-            variant="ghost"
-            className="w-full justify-start rounded-lg text-foreground hover:bg-muted"
-          >
-            <Users className="mr-3 h-4 w-4" />
-            My Teams
-          </Button>
-        </Link>
         <Link href="/settings">
           <Button
             variant="ghost"

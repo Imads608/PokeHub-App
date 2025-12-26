@@ -20,21 +20,26 @@ import {
   CardTitle,
 } from '@pokehub/frontend/shared-ui-components';
 import { User, Upload, ChevronRight, Check, X, Loader2 } from 'lucide-react';
-import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
-// Validation schema
-
 export function CreateProfileContainer() {
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    avatarPreviewUrl,
+    avatarError,
+    handleFileSelect: handleAvatarChange,
+    createProfile,
+    isPending,
+    isSuccess,
+  } = useCreateProfile();
 
   const {
     register,
     handleSubmit,
     watch,
-    setValue,
-    formState: { errors, isSubmitting, isValid, isSubmitSuccessful },
+    formState: { errors, isValid },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: 'onChange',
@@ -45,7 +50,6 @@ export function CreateProfileContainer() {
   });
 
   const watchedUsername = watch('username');
-  const watchedAvatar = watch('avatar');
 
   const [checkUsername, setCheckUsername] = useState<string>(watchedUsername);
 
@@ -54,8 +58,6 @@ export function CreateProfileContainer() {
     status,
     isLoading,
   } = useCheckUsername(checkUsername);
-
-  const { mutateAsync } = useCreateProfile(avatarFile);
 
   // Debounced username check
   useEffect(() => {
@@ -68,17 +70,8 @@ export function CreateProfileContainer() {
     return () => clearTimeout(timer);
   }, [watchedUsername, errors.username]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      const imageUrl = URL.createObjectURL(file);
-      setValue('avatar', imageUrl);
-    }
-  };
-
   const onSubmit = async (data: ProfileFormData) => {
-    await mutateAsync(data);
+    await createProfile(data);
   };
 
   const getUsernameInputStatus = () => {
@@ -146,7 +139,7 @@ export function CreateProfileContainer() {
                 <div className="flex flex-col items-center space-y-4">
                   <Avatar className="h-24 w-24 border-2 border-primary">
                     <AvatarImage
-                      src={watchedAvatar || '/placeholder.svg'}
+                      src={avatarPreviewUrl || '/placeholder.svg'}
                       alt="Avatar"
                       data-testid="avatar-preview"
                     />
@@ -155,13 +148,14 @@ export function CreateProfileContainer() {
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center gap-2">
                     <Label htmlFor="avatar-upload" className="cursor-pointer">
                       <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                         <Upload className="h-4 w-4" />
                         Upload Avatar
                       </div>
-                      <input
+                      <Input
+                        ref={fileInputRef}
                         id="avatar-upload"
                         type="file"
                         accept=".png,.jpg,.jpeg,.gif"
@@ -170,6 +164,9 @@ export function CreateProfileContainer() {
                         data-testid="avatar-file-input"
                       />
                     </Label>
+                    {avatarError && (
+                      <p className="text-xs text-destructive">{avatarError}</p>
+                    )}
                   </div>
                 </div>
 
@@ -227,10 +224,10 @@ export function CreateProfileContainer() {
                 className="w-full gap-2"
                 size="lg"
                 onClick={handleSubmit(onSubmit)}
-                disabled={isSubmitting || !isFormReady || isSubmitSuccessful}
+                disabled={isPending || !isFormReady || isSuccess}
                 data-testid="submit-button"
               >
-                {isSubmitting ? (
+                {isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Creating Profile...

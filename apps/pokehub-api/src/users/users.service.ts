@@ -7,6 +7,7 @@ import {
   User,
   USERS_DB_SERVICE,
 } from '@pokehub/backend/pokehub-users-db';
+import { ServiceError } from '@pokehub/backend/shared-exceptions';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import {
   IUpdateUserProfile,
@@ -31,10 +32,37 @@ export class UsersService implements IUsersService {
       `${this.updateUserProfile.name}: Updating user profile for user ${userId}`
     );
 
+    // Get current user to check existing username
+    const currentUser = await this.usersDbService.getUser(userId);
+    if (!currentUser) {
+      throw new ServiceError('BadRequest', 'User not found');
+    }
+
+    // If user already has a username and they're trying to change it, reject
+    if (currentUser.username && data.username) {
+      throw new ServiceError(
+        'BadRequest',
+        'Username cannot be changed once set'
+      );
+    }
+
+    // If user doesn't have a username and they're not providing one, reject
+    if (!currentUser.username && !data.username) {
+      throw new ServiceError(
+        'BadRequest',
+        'Username is required for users without a username'
+      );
+    }
+
+    // If user has username and no update data provided, return empty (no-op)
+    if (currentUser.username && !data.username && !data.avatar) {
+      return {};
+    }
+
     const fileExt = data.avatar?.split('.')[1];
     await this.usersDbService.updateUserProfile(userId, {
       username: data.username,
-      avatarFilename: data.avatar ? `avatar.${fileExt}` : undefined, // Assuming data.avatar holds the filename
+      avatarFilename: data.avatar ? `avatar.${fileExt}` : undefined,
     });
 
     if (data.avatar) {
@@ -109,5 +137,16 @@ export class UsersService implements IUsersService {
   getAvatarUrl(userId: string, avatarFileName: string): string {
     const azureConfig = this.configService.get('azure', { infer: true });
     return `https://${azureConfig.storageAccount.name}.blob.core.windows.net/${azureConfig.storageAccount.avatarContainerName}/${userId}/${avatarFileName}`;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    this.logger.log(`${this.deleteUser.name}: Deleting user ${userId}`);
+
+    // Teams will be deleted automatically via DB cascade
+    await this.usersDbService.deleteUser(userId);
+
+    this.logger.log(
+      `${this.deleteUser.name}: User ${userId} deleted successfully`
+    );
   }
 }

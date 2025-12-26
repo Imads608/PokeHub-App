@@ -1,16 +1,14 @@
 import { IUpdateUserProfile } from '@pokehub/shared/shared-user-models';
 import { IsOptional, IsString, Length, Matches } from 'class-validator';
 
-// export class UpdateUserProfileDTO implements IUpdateUserProfile {
-//   @IsString() username: string;
-//
-//   @IsString() avatar: string;
-// }
-
 export class UpdateUserProfileDTO implements IUpdateUserProfile {
+  @IsOptional()
   @IsString()
   @Length(3, 20)
-  username!: string;
+  @Matches(/^[a-zA-Z0-9_]+$/, {
+    message: 'Username can only contain letters, numbers, and underscores',
+  })
+  username?: string;
 
   @IsOptional()
   @IsString()

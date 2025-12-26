@@ -16,4 +16,6 @@ export interface IUsersDBService {
   getUser(id: string): Promise<User | undefined>;
 
   getUserByUsername(username: string): Promise<User | undefined>;
+
+  deleteUser(userId: string): Promise<void>;
 }
