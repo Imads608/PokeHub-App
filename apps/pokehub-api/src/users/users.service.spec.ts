@@ -14,6 +14,7 @@ describe('UsersService', () => {
     getUserByUsername: jest.fn(),
     createUser: jest.fn(),
     updateUserProfile: jest.fn(),
+    deleteUser: jest.fn(),
   };
 
   const mockLogger = {
@@ -115,16 +116,38 @@ describe('UsersService', () => {
   describe('updateUserProfile', () => {
     const userId = 'user-123';
 
+    // User without username (new user creating profile for first time)
+    const mockUserWithoutUsername: User = {
+      id: userId,
+      email: 'test@test.com',
+      username: null,
+      accountRole: 'USER',
+      accountType: 'GOOGLE',
+      avatarFilename: null,
+    };
+
+    // User with existing username (returning user updating avatar)
+    const mockUserWithUsername: User = {
+      id: userId,
+      email: 'test@test.com',
+      username: 'existinguser',
+      accountRole: 'USER',
+      accountType: 'GOOGLE',
+      avatarFilename: 'old-avatar.png',
+    };
+
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
     it('should update profile with username only and return data without avatar URL', async () => {
       const profileData = { username: 'newusername' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithoutUsername);
       mockDbService.updateUserProfile.mockResolvedValue(undefined);
 
       const result = await service.updateUserProfile(userId, profileData);
 
+      expect(mockDbService.getUser).toHaveBeenCalledWith(userId);
       expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
         username: 'newusername',
         avatarFilename: undefined,
@@ -134,6 +157,7 @@ describe('UsersService', () => {
 
     it('should update profile with avatar and return data with full avatar URL', async () => {
       const profileData = { username: 'newusername', avatar: 'myavatar.png' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithoutUsername);
       mockDbService.updateUserProfile.mockResolvedValue(undefined);
 
       const result = await service.updateUserProfile(userId, profileData);
@@ -151,6 +175,7 @@ describe('UsersService', () => {
 
     it('should handle avatar with jpg extension', async () => {
       const profileData = { username: 'testuser', avatar: 'photo.jpg' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithoutUsername);
       mockDbService.updateUserProfile.mockResolvedValue(undefined);
 
       const result = await service.updateUserProfile(userId, profileData);
@@ -166,6 +191,7 @@ describe('UsersService', () => {
 
     it('should handle avatar with jpeg extension', async () => {
       const profileData = { username: 'testuser', avatar: 'image.jpeg' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithoutUsername);
       mockDbService.updateUserProfile.mockResolvedValue(undefined);
 
       const result = await service.updateUserProfile(userId, profileData);
@@ -175,6 +201,49 @@ describe('UsersService', () => {
         avatarFilename: 'avatar.jpeg',
       });
       expect(result.avatar).toContain('avatar.jpeg');
+    });
+
+    it('should update avatar only for user with existing username', async () => {
+      const profileData = { avatar: 'new-photo.png' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithUsername);
+      mockDbService.updateUserProfile.mockResolvedValue(undefined);
+
+      const result = await service.updateUserProfile(userId, profileData);
+
+      expect(mockDbService.updateUserProfile).toHaveBeenCalledWith(userId, {
+        username: undefined,
+        avatarFilename: 'avatar.png',
+      });
+      expect(result.avatar).toBe(
+        'https://pokehubtest.blob.core.windows.net/avatars/user-123/avatar.png'
+      );
+    });
+
+    it('should throw error when trying to change existing username', async () => {
+      const profileData = { username: 'newusername' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithUsername);
+
+      await expect(
+        service.updateUserProfile(userId, profileData)
+      ).rejects.toThrow('Username cannot be changed once set');
+    });
+
+    it('should throw error when user without username tries to update avatar only', async () => {
+      const profileData = { avatar: 'new-photo.png' };
+      mockDbService.getUser.mockResolvedValue(mockUserWithoutUsername);
+
+      await expect(
+        service.updateUserProfile(userId, profileData)
+      ).rejects.toThrow('Username is required for users without a username');
+    });
+
+    it('should throw error when user is not found', async () => {
+      const profileData = { username: 'testuser' };
+      mockDbService.getUser.mockResolvedValue(null);
+
+      await expect(
+        service.updateUserProfile(userId, profileData)
+      ).rejects.toThrow('User not found');
     });
   });
 

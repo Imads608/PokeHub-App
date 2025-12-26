@@ -21,12 +21,14 @@ Landing Page → Google Sign In → Profile Creation (if new) → Dashboard
 ### Authentication Routes
 
 **Frontend Routes**:
+
 - `/login` - Login page with Google OAuth button
 - `/create-profile` - Profile creation for new users (username + avatar)
 - `/api/auth/[...nextauth]` - NextAuth.js API route
 - `/api/generate-upload-url` - Azure SAS URL generation for avatar uploads
 
 **Backend Routes**:
+
 - `GET /auth/oauth-login` - Google OAuth login/signup endpoint
 - `GET /auth/access-token` - Refresh access token endpoint
 - `GET /auth/load-user` - Load user data endpoint
@@ -86,6 +88,7 @@ Backend (Authentication):
 **Provider**: Google OAuth (only authentication method)
 
 **Key Features**:
+
 - Custom JWT callback for token management
 - Session callback for attaching user data
 - Automatic token refresh mechanism
@@ -94,13 +97,14 @@ Backend (Authentication):
 **JWT Callback Flow**:
 
 1. **Initial Sign-In** (account present):
+
    ```typescript
    if (account) {
      // Call backend with Google ID token
      const response = await fetch('/api/auth/oauth-login', {
-       headers: { Authorization: `Bearer ${account.id_token}` }
+       headers: { Authorization: `Bearer ${account.id_token}` },
      });
-
+   
      // Store backend tokens in JWT
      token.accessToken = response.accessToken;
      token.refreshToken = response.refreshToken;
@@ -110,13 +114,14 @@ Backend (Authentication):
    ```
 
 2. **Token Refresh** (expired):
+
    ```typescript
    if (Date.now() >= token.expiresAt) {
      // Refresh access token
      const response = await fetch('/api/auth/access-token', {
-       headers: { Authorization: `Bearer ${token.refreshToken}` }
+       headers: { Authorization: `Bearer ${token.refreshToken}` },
      });
-
+   
      token.accessToken = response.accessToken;
      token.expiresAt = Date.now() + response.expiresIn * 1000;
    }
@@ -130,6 +135,7 @@ Backend (Authentication):
    ```
 
 **Session Callback**:
+
 ```typescript
 async session({ session, token }) {
   session.accessToken = token.accessToken;
@@ -140,6 +146,7 @@ async session({ session, token }) {
 ```
 
 **Type Extensions**: `packages/frontend/global-next-types/src/lib/next-auth.d.ts`
+
 ```typescript
 interface Session {
   error?: 'RefreshTokenError';
@@ -161,6 +168,7 @@ interface JWT {
 **Login Page**: `apps/pokehub-app/app/login/page.tsx`
 
 **Server-Side Check**:
+
 - Calls `handleServerAuth()` to check existing session
 - Redirects authenticated users to dashboard
 - Redirects users without username to `/create-profile`
@@ -168,16 +176,15 @@ interface JWT {
 **Login Form**: `packages/frontend/pokehub-auth-forms/src/lib/login/login.form.tsx`
 
 **Features**:
+
 - Material Design Google branding
 - Single "Sign in with Google" button
 - Uses NextAuth `signIn('google')` function
 
 **Implementation**:
+
 ```tsx
-<Button
-  onClick={() => signIn('google')}
-  className="w-full"
->
+<Button onClick={() => signIn('google')} className="w-full">
   <GoogleIcon />
   Sign in with Google
 </Button>
@@ -186,6 +193,7 @@ interface JWT {
 ### 3. Session Management
 
 **Custom Hook**: `packages/frontend/shared-auth/src/lib/useAuthSession.tsx`
+
 ```typescript
 export const useAuthSession = (): TypedSessionReturn => {
   const session = useSession();
@@ -198,38 +206,41 @@ export const useAuthSession = (): TypedSessionReturn => {
 ```
 
 **Usage**:
+
 - Get current session: `const { data: session, status } = useAuthSession()`
 - Update session: `await update({ user: newUserData })`
 
 **Session Provider**: `packages/frontend/shared-app-bootstrapper/src/lib/app-bootstrapper.tsx`
+
 - Wraps entire app in NextAuth `<SessionProvider>`
 - Enables session access throughout component tree
 
 **Auth Context Provider**: `packages/frontend/shared-auth-provider/src/lib/auth.provider.tsx`
 
 **Provides**:
+
 - `isAuthenticated`: Boolean indicating auth status
 - `isEmailVerified`: Email verification status
 - `loading`: Loading state
 - `accountRole`: User role (ADMIN | USER)
 
 **Implementation**:
+
 ```tsx
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const { data: session, status } = useAuthSession();
 
-  const value = useMemo(() => ({
-    isAuthenticated: !!session?.user,
-    isEmailVerified: true, // Always true for Google OAuth
-    loading: status === 'loading',
-    accountRole: session?.user?.accountRole,
-  }), [session, status]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      isAuthenticated: !!session?.user,
+      isEmailVerified: true, // Always true for Google OAuth
+      loading: status === 'loading',
+      accountRole: session?.user?.accountRole,
+    }),
+    [session, status]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 ```
 
@@ -240,6 +251,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 **Location**: `packages/frontend/shared-app-router/src/lib/client-route-guard.tsx`
 
 **Features**:
+
 - Role-based access control (ADMIN, USER)
 - Public route management with `isAuthAccessible` flag
 - Protected route enforcement
@@ -248,12 +260,14 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 - Query parameter preservation (`?from=` for post-login redirects)
 
 **Logic**:
+
 1. **Unauthenticated user on private route** → Redirect to `/login?from=<current-path>`
 2. **Authenticated user without username** → Redirect to `/create-profile`
 3. **Authenticated user on public route with `isAuthAccessible: false`** → Redirect to `/dashboard`
 4. **User without required role** → Redirect to `/dashboard`
 
 **Implementation**:
+
 ```tsx
 export const ClientRouteGuard = ({ children }: PropsWithChildren) => {
   const { isAuthenticated, accountRole } = useAuthContext();
@@ -277,12 +291,14 @@ export const ClientRouteGuard = ({ children }: PropsWithChildren) => {
 **Location**: `packages/frontend/shared-app-router/src/lib/server-route-guard.ts`
 
 **Features**:
+
 - Pre-render authentication checks
 - Validates route access before page load
 - Enforces username requirement for private routes
 - Server-side redirects
 
 **Usage**:
+
 ```typescript
 export default async function Page() {
   await handleServerAuth();
@@ -295,28 +311,30 @@ export default async function Page() {
 **Location**: `apps/pokehub-app/router.ts`
 
 **Public Routes**:
+
 ```typescript
 publicRoutes: [
-  { route: '/', isAuthAccessible: false },      // Landing page
+  { route: '/', isAuthAccessible: false }, // Landing page
   { route: '/login', isAuthAccessible: false }, // Login page
   { route: '/pokedex', isAuthAccessible: true }, // Pokédex (public but auth can access)
-]
+];
 ```
 
 **Privileged Routes**:
+
 ```typescript
 privilegedRoutes: [
   {
     route: '/dashboard',
     rolesAllowed: ['ADMIN', 'USER'],
-    allowSubRoutes: true
+    allowSubRoutes: true,
   },
   {
     route: '/create-profile',
     rolesAllowed: ['USER'],
-    allowSubRoutes: false
+    allowSubRoutes: false,
   },
-]
+];
 ```
 
 ### 5. API Client with Token Retry
@@ -324,8 +342,9 @@ privilegedRoutes: [
 **Location**: `packages/frontend/pokehub-data-provider/src/lib/pokehub-api-client.ts`
 
 **Auto-Retry on 401**:
+
 ```typescript
-export const withAuthRetry = async <Data>(
+export const withAuthRetry = async <Data,>(
   accessToken: string,
   request: (accessToken: string) => Promise<FetchResponse<Data>>
 ): Promise<FetchResponse<Data>> => {
@@ -349,11 +368,11 @@ export const withAuthRetry = async <Data>(
 ```
 
 **Usage**:
+
 ```typescript
-const response = await withAuthRetry(
-  accessToken,
-  (token) => apiClient.users.updateProfile(userId, data, {
-    headers: { Authorization: `Bearer ${token}` }
+const response = await withAuthRetry(accessToken, (token) =>
+  apiClient.users.updateProfile(userId, data, {
+    headers: { Authorization: `Bearer ${token}` },
   })
 );
 ```
@@ -365,6 +384,7 @@ const response = await withAuthRetry(
 **JWT Service**: `packages/backend/shared-auth-utils/src/lib/jwt.service.ts`
 
 **Configuration**:
+
 ```typescript
 secrets: {
   ACCESS_TOKEN: {
@@ -381,6 +401,7 @@ secrets: {
 **Key Methods**:
 
 1. **Generate Tokens**:
+
    ```typescript
    generateAccessAndRefreshTokens(user: UserJwtData): Tokens {
      return {
@@ -388,7 +409,7 @@ secrets: {
        refreshToken: this.generateToken(user, 'REFRESH_TOKEN'),
      };
    }
-
+   
    generateToken(user: UserJwtData, tokenType: TokenType): string {
      const secret = this.secrets[tokenType];
      return jwt.sign(
@@ -415,10 +436,11 @@ secrets: {
    ```
 
 **JWT Payload** (`UserJwtData`):
+
 ```typescript
 {
-  id: string;          // User ID
-  email: string;       // User email
+  id: string; // User ID
+  email: string; // User email
   accountRole: 'ADMIN' | 'USER';
 }
 ```
@@ -432,6 +454,7 @@ secrets: {
 **Purpose**: Validates Google ID token from OAuth flow
 
 **Implementation**:
+
 ```typescript
 @Injectable()
 export class GoogleOAuthGuard implements CanActivate {
@@ -468,13 +491,11 @@ export class GoogleOAuthGuard implements CanActivate {
 **Purpose**: Validates JWT access/refresh tokens
 
 **Implementation**:
+
 ```typescript
 @Injectable()
 export class TokenAuthGuard implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-    private reflector: Reflector
-  ) {}
+  constructor(private jwtService: JwtService, private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Get token type from decorator metadata
@@ -506,6 +527,7 @@ export class TokenAuthGuard implements CanActivate {
 **Purpose**: Role-based access control
 
 **Implementation**:
+
 ```typescript
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -528,18 +550,20 @@ export class RolesGuard implements CanActivate {
 #### Custom Decorators
 
 **Token Type Decorator**: `packages/backend/shared-auth-utils/src/lib/token-auth.decorator.ts`
+
 ```typescript
 export const TokenAuth = (tokenType: TokenType) =>
   SetMetadata(TOKEN_AUTH_KEY, tokenType);
 ```
 
 **Roles Decorator**: `packages/backend/shared-auth-utils/src/lib/roles.decorator.ts`
+
 ```typescript
-export const Roles = (role: UserAccountRole) =>
-  SetMetadata(ROLES_KEY, role);
+export const Roles = (role: UserAccountRole) => SetMetadata(ROLES_KEY, role);
 ```
 
 **User Decorator**: `packages/backend/shared-auth-utils/src/lib/user.decorator.ts`
+
 ```typescript
 export const User = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -550,6 +574,7 @@ export const User = createParamDecorator(
 ```
 
 **Usage Example**:
+
 ```typescript
 @Get('access-token')
 @UseGuards(TokenAuthGuard)
@@ -572,6 +597,7 @@ async refreshAccessToken(@User() user: UserJwtData) {
 **Purpose**: Create or login user via Google OAuth
 
 **Flow**:
+
 ```typescript
 @Get('oauth-login')
 @UseGuards(GoogleOAuthGuard)
@@ -581,6 +607,7 @@ async oauthLogin(@User() user: { email: string }): Promise<OAuthLoginResponse> {
 ```
 
 **Response**:
+
 ```typescript
 {
   accessToken: string;
@@ -606,6 +633,7 @@ async oauthLogin(@User() user: { email: string }): Promise<OAuthLoginResponse> {
 **Purpose**: Generate new access token
 
 **Flow**:
+
 ```typescript
 @Get('access-token')
 @UseGuards(TokenAuthGuard)
@@ -616,6 +644,7 @@ async refreshAccessToken(@User() user: UserJwtData): Promise<AccessToken> {
 ```
 
 **Response**:
+
 ```typescript
 {
   accessToken: string;
@@ -632,6 +661,7 @@ async refreshAccessToken(@User() user: UserJwtData): Promise<AccessToken> {
 **Purpose**: Load user profile data
 
 **Flow**:
+
 ```typescript
 @Get('load-user')
 @UseGuards(TokenAuthGuard)
@@ -648,11 +678,12 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
 **Key Methods**:
 
 1. **Create or Login User**:
+
    ```typescript
    async createOrLoginUser(email: string): Promise<OAuthLoginResponse> {
      // Check if user exists
      let user = await this.usersDbService.findUserByEmail(email);
-
+   
      // Create new user if not found
      if (!user) {
        user = await this.usersDbService.createUser({
@@ -661,7 +692,7 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
          accountRole: 'USER',
        });
      }
-
+   
      // Generate tokens
      const { accessToken, refreshToken } =
        this.jwtService.generateAccessAndRefreshTokens({
@@ -669,7 +700,7 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
          email: user.email,
          accountRole: user.accountRole,
        });
-
+   
      return {
        accessToken,
        refreshToken,
@@ -680,10 +711,11 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
    ```
 
 2. **Refresh Access Token**:
+
    ```typescript
    async refreshAccessToken(user: UserJwtData): Promise<AccessToken> {
      const accessToken = this.jwtService.generateToken(user, 'ACCESS_TOKEN');
-
+   
      return {
        accessToken,
        expiresIn: 3600,
@@ -698,6 +730,7 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
 **Page**: `apps/pokehub-app/app/create-profile/profile.tsx`
 
 **Features**:
+
 - Username input with real-time validation
 - Username availability checking (debounced 500ms)
 - Avatar file upload with preview
@@ -705,6 +738,7 @@ async loadUser(@User() user: UserJwtData): Promise<UserCore> {
 - Visual feedback for username status
 
 **Validation Schema**: `apps/pokehub-app/app/create-profile/profile.models.ts`
+
 ```typescript
 export const profileSchema = z.object({
   username: z
@@ -720,6 +754,7 @@ export const profileSchema = z.object({
 ```
 
 **Component Structure**:
+
 ```tsx
 <Form>
   {/* Username Input */}
@@ -729,10 +764,13 @@ export const profileSchema = z.object({
       <FormItem>
         <FormLabel>Username</FormLabel>
         <FormControl>
-          <Input {...field} onChange={(e) => {
-            field.onChange(e);
-            debouncedCheckUsername(e.target.value);
-          }} />
+          <Input
+            {...field}
+            onChange={(e) => {
+              field.onChange(e);
+              debouncedCheckUsername(e.target.value);
+            }}
+          />
         </FormControl>
         {isCheckingUsername && <span>Checking...</span>}
         {usernameAvailable && <span>✓ Available</span>}
@@ -772,19 +810,23 @@ export const profileSchema = z.object({
 **Hook**: `apps/pokehub-app/app/create-profile/useCheckUsername.ts`
 
 **Implementation**:
+
 ```typescript
 export const useCheckUsername = (username: string) => {
   return useQuery({
-    queryKey: ['users', username, {
-      queryType: 'availability',
-      dataType: 'username'
-    }],
+    queryKey: [
+      'users',
+      username,
+      {
+        queryType: 'availability',
+        dataType: 'username',
+      },
+    ],
     queryFn: async () => {
       // Makes HEAD request to check existence
-      const response = await fetch(
-        `/api/users/${username}?dataType=username`,
-        { method: 'HEAD' }
-      );
+      const response = await fetch(`/api/users/${username}?dataType=username`, {
+        method: 'HEAD',
+      });
 
       // 404 = available, 200 = taken
       return response.status === 404;
@@ -797,6 +839,7 @@ export const useCheckUsername = (username: string) => {
 ```
 
 **Backend Endpoint**: `apps/pokehub-api/src/users/users.controller.ts`
+
 ```typescript
 @Head(':id')
 @UseGuards(TokenAuthGuard)
@@ -818,13 +861,15 @@ async checkUserExists(
 ```
 
 **Debounced Usage**:
+
 ```typescript
 const [debouncedUsername, setDebouncedUsername] = useState('');
 
 const debouncedCheckUsername = useMemo(
-  () => debounce((value: string) => {
-    setDebouncedUsername(value);
-  }, 500),
+  () =>
+    debounce((value: string) => {
+      setDebouncedUsername(value);
+    }, 500),
   []
 );
 
@@ -842,10 +887,11 @@ const { data: isAvailable, isLoading } = useCheckUsername(debouncedUsername);
 **Location**: `apps/pokehub-app/app/api/generate-upload-url/route.ts`
 
 **Request**:
+
 ```typescript
-POST /api/generate-upload-url
+POST / api / generate - upload - url;
 Headers: {
-  Cookie: 'next-auth.session-token=...'
+  Cookie: 'next-auth.session-token=...';
 }
 Body: {
   fileName: string;
@@ -854,6 +900,7 @@ Body: {
 ```
 
 **Implementation**:
+
 ```typescript
 export async function POST(request: NextRequest) {
   // Validate session
@@ -877,13 +924,16 @@ export async function POST(request: NextRequest) {
   const blobClient = containerClient.getBlobClient(blobName);
 
   // Generate SAS token (1 hour expiry, write permissions)
-  const sasToken = generateBlobSASQueryParameters({
-    containerName: 'avatars',
-    blobName,
-    permissions: BlobSASPermissions.parse('w'), // Write only
-    startsOn: new Date(),
-    expiresOn: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-  }, sharedKeyCredential).toString();
+  const sasToken = generateBlobSASQueryParameters(
+    {
+      containerName: 'avatars',
+      blobName,
+      permissions: BlobSASPermissions.parse('w'), // Write only
+      startsOn: new Date(),
+      expiresOn: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+    },
+    sharedKeyCredential
+  ).toString();
 
   return NextResponse.json({
     uploadUrl: `${blobClient.url}?${sasToken}`,
@@ -893,16 +943,18 @@ export async function POST(request: NextRequest) {
 ```
 
 **Response**:
+
 ```typescript
 {
   uploadUrl: string; // URL with SAS token for upload
-  blobUrl: string;   // Final URL without SAS
+  blobUrl: string; // Final URL without SAS
 }
 ```
 
 #### Step 2: Upload to Azure
 
 **Frontend Implementation**:
+
 ```typescript
 // Generate upload URL
 const { uploadUrl } = await fetch('/api/generate-upload-url', {
@@ -911,7 +963,7 @@ const { uploadUrl } = await fetch('/api/generate-upload-url', {
     fileName: avatarFile.name,
     fileType: avatarFile.type,
   }),
-}).then(res => res.json());
+}).then((res) => res.json());
 
 // Upload file directly to Azure
 await fetch(uploadUrl, {
@@ -929,6 +981,7 @@ await fetch(uploadUrl, {
 **Hook**: `apps/pokehub-app/app/create-profile/useCreateProfile.tsx`
 
 **Implementation**:
+
 ```typescript
 export const useCreateProfile = () => {
   const { update } = useAuthSession();
@@ -936,10 +989,10 @@ export const useCreateProfile = () => {
   return useMutation({
     mutationFn: async ({
       username,
-      avatarFile
+      avatarFile,
     }: {
       username: string;
-      avatarFile?: File
+      avatarFile?: File;
     }) => {
       let avatarFileName: string | undefined;
 
@@ -955,10 +1008,10 @@ export const useCreateProfile = () => {
       }
 
       // Save profile to backend
-      const response = await apiClient.users.updateProfile(
-        session.user.id,
-        { username, avatar: avatarFileName }
-      );
+      const response = await apiClient.users.updateProfile(session.user.id, {
+        username,
+        avatar: avatarFileName,
+      });
 
       // Update NextAuth session
       await update({
@@ -976,6 +1029,7 @@ export const useCreateProfile = () => {
 **Endpoint**: `POST /users/:userId/profile`
 
 **Controller**: `apps/pokehub-api/src/users/users.controller.ts`
+
 ```typescript
 @Post(':userId/profile')
 @UseGuards(TokenAuthGuard)
@@ -995,6 +1049,7 @@ async updateUserProfile(
 ```
 
 **Service**: `apps/pokehub-api/src/users/users.service.ts`
+
 ```typescript
 async updateUserProfile(
   userId: string,
@@ -1029,6 +1084,7 @@ private getAvatarUrl(userId: string, avatarFilename: string): string {
 ```
 
 **Database Service**: `packages/backend/pokehub-users-db/src/lib/users-db.service.ts`
+
 ```typescript
 async updateUserProfile(
   userId: string,
@@ -1066,6 +1122,7 @@ export const accountTypeEnum = pgEnum('accountType', ['GOOGLE']);
 ```
 
 **Fields**:
+
 - `id` - UUID primary key (auto-generated)
 - `username` - Unique username (nullable, set during profile creation)
 - `email` - Unique email from OAuth (not null)
@@ -1074,6 +1131,7 @@ export const accountTypeEnum = pgEnum('accountType', ['GOOGLE']);
 - `avatarFilename` - Avatar filename stored in Azure (e.g., "avatar.png")
 
 **Avatar URL Construction**:
+
 ```
 https://{storageAccount}.blob.core.windows.net/avatars/{userId}/{avatarFilename}
 ```
@@ -1225,6 +1283,7 @@ https://{storageAccount}.blob.core.windows.net/avatars/{userId}/{avatarFilename}
 ### Environment Variables
 
 **Frontend** (`.env.local`):
+
 ```bash
 # NextAuth
 NEXTAUTH_URL=http://localhost:4200
@@ -1244,6 +1303,7 @@ AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;...
 ```
 
 **Backend** (`.env`):
+
 ```bash
 # JWT Secrets
 ACCESS_TOKEN=your-access-token-secret
@@ -1266,11 +1326,13 @@ AZURE_STORAGE_CONTAINER=avatars
 ### Azure Configuration
 
 **Storage Account**:
+
 - Name: From `AZURE_STORAGE_ACCOUNT_NAME` env var
 - Container: `avatars` (must be created manually)
 - Access Level: Private (access via SAS tokens only)
 
 **Blob Structure**:
+
 ```
 avatars/
 ├── {userId-1}/
@@ -1286,6 +1348,7 @@ avatars/
 ### NPM Packages
 
 **Frontend**:
+
 - `next-auth` - NextAuth.js v5 for authentication
 - `@azure/storage-blob` - Azure Blob Storage SDK
 - `@tanstack/react-query` - Data fetching and caching
@@ -1294,6 +1357,7 @@ avatars/
 - `next` - Next.js framework
 
 **Backend**:
+
 - `@nestjs/passport` - Passport.js integration
 - `passport` - Authentication middleware
 - `jsonwebtoken` - JWT generation/validation
@@ -1304,6 +1368,7 @@ avatars/
 ### Internal Packages
 
 **Frontend**:
+
 - `@pokehub/frontend/shared-auth` - NextAuth configuration
 - `@pokehub/frontend/shared-auth-provider` - Auth context provider
 - `@pokehub/frontend/pokehub-auth-forms` - Login form components
@@ -1312,11 +1377,13 @@ avatars/
 - `@pokehub/frontend/global-next-types` - TypeScript type extensions
 
 **Backend**:
+
 - `@pokehub/backend/shared-auth-utils` - JWT service, guards, decorators
 - `@pokehub/backend/pokehub-users-db` - User database operations
 - `@pokehub/backend/pokehub-postgres` - Database connection
 
 **Shared**:
+
 - `@pokehub/shared/shared-auth-models` - Auth request/response types
 - `@pokehub/shared/shared-user-models` - User data models
 
@@ -1404,7 +1471,7 @@ packages/shared/
 6. **Username Cannot Be Changed**: Once set, username is immutable
 7. **No Avatar Deletion**: Old avatars not automatically cleaned up when replaced
 8. **No Multi-Factor Authentication**: MFA not implemented
-9. **No Account Deletion**: No self-service account deletion feature
+9. **Account Deletion**: Self-service account deletion available via Settings page (see [Settings Page](./settings-page.md))
 10. **Token Storage**: Tokens stored in NextAuth session (not in localStorage for XSS protection)
 
 ## Future Enhancements
@@ -1412,17 +1479,20 @@ packages/shared/
 ### Planned Features
 
 1. **Additional OAuth Providers**:
+
    - GitHub OAuth
    - Discord OAuth
    - Twitter/X OAuth
 
 2. **Enhanced Profile Management**:
+
    - Username change (with validation/cooldown)
    - Email change with verification
-   - Account deletion flow
+   - ~~Account deletion flow~~ ✅ Implemented (see [Settings Page](./settings-page.md))
    - Profile privacy settings
 
 3. **Avatar Improvements**:
+
    - Avatar cropping tool
    - Default avatar generator (identicons)
    - Avatar size limits (client + server validation)
@@ -1430,6 +1500,7 @@ packages/shared/
    - Avatar compression before upload
 
 4. **Security Enhancements**:
+
    - Multi-factor authentication (TOTP/SMS)
    - Login history tracking
    - Active session management
@@ -1437,12 +1508,14 @@ packages/shared/
    - Device fingerprinting
 
 5. **User Preferences**:
+
    - Theme preferences (dark/light mode)
    - Notification settings
    - Privacy settings
    - Language preferences
 
 6. **Admin Features**:
+
    - User management dashboard
    - Role assignment UI
    - User activity logs

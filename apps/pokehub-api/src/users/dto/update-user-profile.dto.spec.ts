@@ -1,8 +1,10 @@
-import { validate } from 'class-validator';
 import { UpdateUserProfileDTO } from './update-user-profile.dto';
+import { validate } from 'class-validator';
 
 describe('UpdateUserProfileDTO', () => {
-  const createDTO = (data: Partial<UpdateUserProfileDTO>): UpdateUserProfileDTO => {
+  const createDTO = (
+    data: Partial<UpdateUserProfileDTO>
+  ): UpdateUserProfileDTO => {
     const dto = new UpdateUserProfileDTO();
     Object.assign(dto, data);
     return dto;
@@ -50,11 +52,16 @@ describe('UpdateUserProfileDTO', () => {
       expect(errors[0].property).toBe('username');
     });
 
-    it('should fail when username is missing', async () => {
+    it('should pass when username is missing (optional field)', async () => {
       const dto = createDTO({});
       const errors = await validate(dto);
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].property).toBe('username');
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with avatar only (no username)', async () => {
+      const dto = createDTO({ avatar: 'photo.png' });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -90,7 +97,10 @@ describe('UpdateUserProfileDTO', () => {
     });
 
     it('should pass with underscores, dots, and hyphens in filename', async () => {
-      const dto = createDTO({ username: 'testuser', avatar: 'my_avatar-v2.0.png' });
+      const dto = createDTO({
+        username: 'testuser',
+        avatar: 'my_avatar-v2.0.png',
+      });
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
     });
