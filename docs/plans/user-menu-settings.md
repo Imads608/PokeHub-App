@@ -250,6 +250,29 @@ Extract avatar upload functionality from `create-profile` into a reusable compon
 
 ## API Changes
 
+### Update Profile Endpoint (Modified)
+
+```
+POST /users/:userId/profile
+```
+
+**Changes Made:**
+
+- `username` is now optional in the request body
+- Validation logic added:
+  - If user already has a username and tries to change it → `400 Bad Request`
+  - If user doesn't have a username and doesn't provide one → `400 Bad Request`
+  - Avatar-only updates are allowed for users who already have a username
+
+**Request Body:**
+
+```typescript
+{
+  username?: string;  // Optional - only for first-time setup
+  avatar?: string;    // Optional - filename of uploaded avatar
+}
+```
+
 ### Delete Account Endpoint
 
 ```

@@ -44,6 +44,7 @@ describe('UsersController', () => {
       getUserCore: jest.fn(),
       createUser: jest.fn(),
       getAvatarUrl: jest.fn(),
+      deleteUser: jest.fn(),
     };
 
     mockJwtService = {
@@ -190,14 +191,42 @@ describe('UsersController', () => {
       expect(mockUsersService.updateUserProfile).not.toHaveBeenCalled();
     });
 
-    it('should return 400 when username is missing', async () => {
-      await request(app.getHttpServer())
+    it('should pass empty request to service (service validates)', async () => {
+      // Service returns empty object for no-op updates (user with existing username)
+      mockUsersService.updateUserProfile.mockResolvedValue({});
+
+      const response = await request(app.getHttpServer())
         .post(`/${testUserId}/profile`)
         .set('Authorization', `Bearer ${validAccessToken}`)
         .send({})
-        .expect(HttpStatus.BAD_REQUEST);
+        .expect(HttpStatus.CREATED);
 
-      expect(mockUsersService.updateUserProfile).not.toHaveBeenCalled();
+      expect(response.body).toEqual({});
+      expect(mockUsersService.updateUserProfile).toHaveBeenCalledWith(
+        testUserId,
+        {}
+      );
+    });
+
+    it('should update profile with avatar only', async () => {
+      const avatarOnly = { avatar: 'myavatar.png' };
+      const responseData: IUpdateUserProfile = {
+        avatar:
+          'https://storage.blob.core.windows.net/avatars/user-123/avatar.png',
+      };
+      mockUsersService.updateUserProfile.mockResolvedValue(responseData);
+
+      const response = await request(app.getHttpServer())
+        .post(`/${testUserId}/profile`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .send(avatarOnly)
+        .expect(HttpStatus.CREATED);
+
+      expect(response.body).toEqual(responseData);
+      expect(mockUsersService.updateUserProfile).toHaveBeenCalledWith(
+        testUserId,
+        avatarOnly
+      );
     });
 
     it('should accept valid avatar extensions (png, jpg, jpeg, gif)', async () => {
