@@ -448,4 +448,115 @@ describe('UsersController (e2e)', () => {
         .expect(HttpStatus.BAD_REQUEST);
     });
   });
+
+  describe('DELETE /users/:userId (deleteUser)', () => {
+    it('should delete own account successfully', async () => {
+      // Create a fresh user specifically for deletion
+      const { user, token } = await createFreshUser('e2e_delete_self');
+
+      // Delete the user
+      await request(app.getHttpServer())
+        .delete(`/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(HttpStatus.NO_CONTENT);
+
+      // Remove from cleanup list since user is already deleted
+      const index = createdUserIds.indexOf(user.id);
+      if (index > -1) {
+        createdUserIds.splice(index, 1);
+      }
+
+      // Verify user is deleted by checking email availability
+      await request(app.getHttpServer())
+        .head(`/users/${user.email}?dataType=email`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 403 when trying to delete another user', async () => {
+      // Create a user to attempt deletion on
+      const { user: targetUser } = await createFreshUser('e2e_delete_target');
+
+      // Try to delete using a different user's token
+      await request(app.getHttpServer())
+        .delete(`/users/${targetUser.id}`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      // Verify target user still exists
+      await request(app.getHttpServer())
+        .head(`/users/${targetUser.id}?dataType=id`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.OK);
+    });
+
+    it('should return 403 without auth token', async () => {
+      const { user } = await createFreshUser('e2e_delete_no_auth');
+
+      await request(app.getHttpServer())
+        .delete(`/users/${user.id}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      // Verify user still exists
+      await request(app.getHttpServer())
+        .head(`/users/${user.id}?dataType=id`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.OK);
+    });
+
+    it('should return 403 with invalid auth token', async () => {
+      const { user } = await createFreshUser('e2e_delete_invalid_token');
+
+      await request(app.getHttpServer())
+        .delete(`/users/${user.id}`)
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(HttpStatus.FORBIDDEN);
+
+      // Verify user still exists
+      await request(app.getHttpServer())
+        .head(`/users/${user.id}?dataType=id`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.OK);
+    });
+
+    it('should return 403 when trying to delete non-existent user (auth check first)', async () => {
+      // When a user tries to delete a non-existent user ID,
+      // the auth check (userId !== user.id) fails first, returning 403
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      await request(app.getHttpServer())
+        .delete(`/users/${nonExistentId}`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('should verify deleted user cannot be found by email', async () => {
+      // Create and immediately delete a user
+      const { user, token } = await createFreshUser('e2e_verify_deleted');
+
+      // Delete the user
+      await request(app.getHttpServer())
+        .delete(`/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(HttpStatus.NO_CONTENT);
+
+      // Remove from cleanup list
+      const index = createdUserIds.indexOf(user.id);
+      if (index > -1) {
+        createdUserIds.splice(index, 1);
+      }
+
+      // Verify user cannot be found by email
+      await request(app.getHttpServer())
+        .head(`/users/${user.email}?dataType=email`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+
+      // Verify user cannot be found by ID
+      await request(app.getHttpServer())
+        .head(`/users/${user.id}?dataType=id`)
+        .set('Authorization', `Bearer ${userWithUsernameToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+  });
 });

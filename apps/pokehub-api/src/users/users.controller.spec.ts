@@ -339,4 +339,55 @@ describe('UsersController', () => {
       );
     });
   });
+
+  describe('DELETE /:userId (deleteUser)', () => {
+    beforeEach(() => {
+      mockJwtService.validateToken.mockResolvedValue(mockUser);
+    });
+
+    it('should delete user successfully (204)', async () => {
+      mockUsersService.deleteUser.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .expect(HttpStatus.NO_CONTENT);
+
+      expect(mockUsersService.deleteUser).toHaveBeenCalledWith(testUserId);
+    });
+
+    it('should return 403 when deleting another user', async () => {
+      const otherUserId = 'other-user-456';
+
+      await request(app.getHttpServer())
+        .delete(`/${otherUserId}`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 without auth token', async () => {
+      mockJwtService.validateToken.mockRejectedValue(new Error('Unauthorized'));
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 with invalid auth token', async () => {
+      mockJwtService.validateToken.mockRejectedValue(
+        new Error('Invalid token')
+      );
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
+    });
+  });
 });
