@@ -47,6 +47,7 @@ export class UsersController {
   @TokenAuth('ACCESS_TOKEN')
   async updateUserProfile(
     @Param('userId') userId: string,
+    @User() user: UserJwtData,
     @Body() data: UpdateUserProfileDTO
   ) {
     this.logger.log(
@@ -54,6 +55,12 @@ export class UsersController {
         data
       )}`
     );
+
+    // Users can only delete their own account
+    if (user.id !== userId) {
+      throw new ForbiddenException('You can only delete your own account');
+    }
+
     return this.usersService.updateUserProfile(userId, data);
   }
 
