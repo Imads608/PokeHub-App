@@ -286,4 +286,28 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('deleteUser', () => {
+    const userId = 'user-to-delete-123';
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call usersDbService.deleteUser with userId', async () => {
+      mockDbService.deleteUser.mockResolvedValue(undefined);
+
+      await service.deleteUser(userId);
+
+      expect(mockDbService.deleteUser).toHaveBeenCalledWith(userId);
+    });
+
+    it('should log deletion request', async () => {
+      mockDbService.deleteUser.mockResolvedValue(undefined);
+
+      await service.deleteUser(userId);
+
+      expect(mockLogger.log).toHaveBeenCalled();
+    });
+  });
 });
