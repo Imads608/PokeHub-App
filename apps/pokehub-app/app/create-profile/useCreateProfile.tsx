@@ -3,6 +3,7 @@
 import type { ProfileFormData } from './profile.models';
 import { useUpdateUserProfile } from '@pokehub/frontend/pokehub-data-provider';
 import { useAvatarUpload } from '@pokehub/frontend/pokehub-ui-components';
+import { toast } from 'sonner';
 
 export const useCreateProfile = () => {
   const {
@@ -12,7 +13,11 @@ export const useCreateProfile = () => {
     handleFileSelect,
     uploadAvatar,
     clearSelection,
-  } = useAvatarUpload();
+  } = useAvatarUpload({
+    onError: () => {
+      toast.error('Failed to upload avatar');
+    },
+  });
 
   const {
     mutateAsync: updateProfile,
@@ -30,7 +35,8 @@ export const useCreateProfile = () => {
     if (avatarFile) {
       const result = await uploadAvatar();
       if (!result) {
-        throw new Error('Failed to upload avatar');
+        // Error already handled by onError callback (toast shown)
+        return;
       }
       avatarFileName = result.fileName;
     }
