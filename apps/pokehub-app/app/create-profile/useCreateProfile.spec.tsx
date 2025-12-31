@@ -1,36 +1,47 @@
 import { useCreateProfile } from './useCreateProfile';
-import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
-import { useAuthSession } from '@pokehub/frontend/shared-auth';
-import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
-import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 
-// Mock dependencies
-jest.mock('@pokehub/frontend/shared-auth', () => ({
-  useAuthSession: jest.fn(),
-}));
-
+// Mock useUpdateUserProfile
+const mockMutateAsync = jest.fn();
 jest.mock('@pokehub/frontend/pokehub-data-provider', () => ({
-  withAuthRetry: jest.fn(),
+  useUpdateUserProfile: jest.fn(() => ({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
+    isSuccess: false,
+  })),
 }));
 
-jest.mock('@pokehub/frontend/shared-data-provider', () => ({
-  getFetchClient: jest.fn(),
-  FetchApiError: class FetchApiError extends Error {
-    status: number;
-    constructor(message: string, status: number) {
-      super(message);
-      this.status = status;
-    }
-  },
+// Mock useAvatarUpload - capture onError callback
+const mockUploadAvatar = jest.fn();
+const mockHandleFileSelect = jest.fn();
+const mockClearSelection = jest.fn();
+let capturedOnError: ((error: Error) => void) | undefined;
+
+const mockAvatarState = {
+  selectedFile: null as File | null,
+  previewUrl: null as string | null,
+  error: null as string | null,
+};
+
+jest.mock('@pokehub/frontend/pokehub-ui-components', () => ({
+  useAvatarUpload: jest.fn((options?: { onError?: (error: Error) => void }) => {
+    // Capture the onError callback
+    capturedOnError = options?.onError;
+    return {
+      selectedFile: mockAvatarState.selectedFile,
+      previewUrl: mockAvatarState.previewUrl,
+      error: mockAvatarState.error,
+      handleFileSelect: mockHandleFileSelect,
+      uploadAvatar: mockUploadAvatar,
+      clearSelection: mockClearSelection,
+    };
+  }),
 }));
 
-jest.mock('@pokehub/frontend/shared-utils', () => ({
-  isValidAvatarFileName: jest.fn(),
-}));
-
+// Mock sonner toast
 jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
@@ -38,17 +49,8 @@ jest.mock('sonner', () => ({
   },
 }));
 
-const mockUseAuthSession = useAuthSession as jest.Mock;
-const mockWithAuthRetry = withAuthRetry as jest.Mock;
-const mockGetFetchClient = getFetchClient as jest.Mock;
-const mockIsValidAvatarFileName = isValidAvatarFileName as jest.Mock;
-
 describe('useCreateProfile', () => {
   let queryClient: QueryClient;
-  const mockAccessToken = 'mock-access-token';
-  const mockUserId = 'user-123';
-  const mockUpdate = jest.fn();
-  const mockFetchThrowsError = jest.fn();
 
   const createMockFile = (name: string, type = 'image/png'): File => {
     return new File(['mock-content'], name, { type });
@@ -68,378 +70,293 @@ describe('useCreateProfile', () => {
 
     jest.clearAllMocks();
 
-    // Default mock: authenticated session with access token and user
-    mockUseAuthSession.mockReturnValue({
-      data: {
-        accessToken: mockAccessToken,
-        user: { id: mockUserId, email: 'test@test.com' },
-      },
-      update: mockUpdate,
+    // Reset avatar state
+    mockAvatarState.selectedFile = null;
+    mockAvatarState.previewUrl = null;
+    mockAvatarState.error = null;
+
+    // Reset capturedOnError
+    capturedOnError = undefined;
+
+    // Reset useAvatarUpload mock to default implementation
+    const { useAvatarUpload } = jest.requireMock(
+      '@pokehub/frontend/pokehub-ui-components'
+    );
+    useAvatarUpload.mockImplementation(
+      (options?: { onError?: (error: Error) => void }) => {
+        capturedOnError = options?.onError;
+        return {
+          selectedFile: mockAvatarState.selectedFile,
+          previewUrl: mockAvatarState.previewUrl,
+          error: mockAvatarState.error,
+          handleFileSelect: mockHandleFileSelect,
+          uploadAvatar: mockUploadAvatar,
+          clearSelection: mockClearSelection,
+        };
+      }
+    );
+
+    // Default mock: profile update succeeds
+    mockMutateAsync.mockResolvedValue({
+      username: 'testuser',
+      avatar: null,
     });
 
-    // Default mock: getFetchClient returns fetch client with fetchThrowsError
-    mockGetFetchClient.mockReturnValue({
-      fetchThrowsError: mockFetchThrowsError,
-    });
-
-    // Default mock: withAuthRetry passes through to the callback
-    mockWithAuthRetry.mockImplementation(async (token, callback) => {
-      return callback(token);
-    });
-
-    // Default mock: isValidAvatarFileName returns true
-    mockIsValidAvatarFileName.mockReturnValue(true);
-
-    // Default mock: successful profile update response
-    mockFetchThrowsError.mockResolvedValue({
-      json: jest.fn().mockResolvedValue({ username: 'testuser', avatar: null }),
-    });
-
-    // Default mock: global fetch for Azure upload
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-    });
+    // Default mock: avatar upload succeeds (returns null when no file selected)
+    mockUploadAvatar.mockResolvedValue(null);
   });
 
   afterEach(() => {
     queryClient.clear();
   });
 
+  describe('hook return values', () => {
+    it('should return all expected properties', () => {
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
+
+      expect(result.current).toHaveProperty('avatarFile');
+      expect(result.current).toHaveProperty('avatarPreviewUrl');
+      expect(result.current).toHaveProperty('avatarError');
+      expect(result.current).toHaveProperty('handleFileSelect');
+      expect(result.current).toHaveProperty('createProfile');
+      expect(result.current).toHaveProperty('isPending');
+      expect(result.current).toHaveProperty('isSuccess');
+    });
+
+    it('should return values from useAvatarUpload', () => {
+      const mockFile = createMockFile('avatar.png');
+      mockAvatarState.selectedFile = mockFile;
+      mockAvatarState.previewUrl = 'blob:http://localhost/preview';
+      mockAvatarState.error = null;
+
+      // Re-mock useAvatarUpload with updated state
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockReturnValue({
+        selectedFile: mockFile,
+        previewUrl: 'blob:http://localhost/preview',
+        error: null,
+        handleFileSelect: mockHandleFileSelect,
+        uploadAvatar: mockUploadAvatar,
+        clearSelection: mockClearSelection,
+      });
+
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
+
+      expect(result.current.avatarFile).toBe(mockFile);
+      expect(result.current.avatarPreviewUrl).toBe(
+        'blob:http://localhost/preview'
+      );
+      expect(result.current.avatarError).toBeNull();
+      expect(result.current.handleFileSelect).toBe(mockHandleFileSelect);
+    });
+  });
+
   describe('profile creation without avatar', () => {
     it('should create profile with username only', async () => {
-      mockFetchThrowsError.mockResolvedValue({
-        json: jest
-          .fn()
-          .mockResolvedValue({ username: 'newuser', avatar: null }),
-      });
-
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        await result.current.mutateAsync({ username: 'newuser' });
+        await result.current.createProfile({ username: 'newuser' });
       });
 
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(mockWithAuthRetry).toHaveBeenCalledWith(
-        mockAccessToken,
-        expect.any(Function)
-      );
-    });
-
-    it('should call API with correct profile data', async () => {
-      mockFetchThrowsError.mockResolvedValue({
-        json: jest.fn().mockResolvedValue({ username: 'myusername' }),
-      });
-
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
-
-      await act(async () => {
-        await result.current.mutateAsync({ username: 'myusername' });
-      });
-
-      // Verify the callback passed to withAuthRetry
-      const withAuthRetryCallback = mockWithAuthRetry.mock.calls[0][1];
-      await withAuthRetryCallback(mockAccessToken);
-
-      expect(mockGetFetchClient).toHaveBeenCalledWith('API');
-      expect(mockFetchThrowsError).toHaveBeenCalledWith(
-        `/users/${mockUserId}/profile`,
-        expect.objectContaining({
-          method: 'POST',
-          headers: { Authorization: `Bearer ${mockAccessToken}` },
-          body: JSON.stringify({ username: 'myusername' }),
-        })
-      );
-    });
-
-    it('should update session after successful profile creation', async () => {
-      mockFetchThrowsError.mockResolvedValue({
-        json: jest
-          .fn()
-          .mockResolvedValue({ username: 'newuser', avatar: null }),
-      });
-
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
-
-      await act(async () => {
-        await result.current.mutateAsync({ username: 'newuser' });
-      });
-
-      await waitFor(() => {
-        expect(mockUpdate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            user: expect.objectContaining({
-              username: 'newuser',
-              avatarUrl: null,
-            }),
-          })
-        );
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        username: 'newuser',
+        avatarFileName: undefined,
       });
     });
 
-    it('should show success toast on successful profile creation', async () => {
-      const { toast } = await import('sonner');
-      mockFetchThrowsError.mockResolvedValue({
-        json: jest.fn().mockResolvedValue({ username: 'newuser' }),
-      });
+    it('should not call uploadAvatar when no file is selected', async () => {
+      mockUploadAvatar.mockResolvedValue(null);
 
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        await result.current.mutateAsync({ username: 'newuser' });
+        await result.current.createProfile({ username: 'newuser' });
       });
 
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          'Profile was updated successfully'
-        );
+      // uploadAvatar should not be called when no file is selected
+      expect(mockUploadAvatar).not.toHaveBeenCalled();
+    });
+
+    it('should call clearSelection after successful profile creation', async () => {
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
+
+      await act(async () => {
+        await result.current.createProfile({ username: 'newuser' });
       });
+
+      expect(mockClearSelection).toHaveBeenCalled();
     });
   });
 
   describe('profile creation with avatar', () => {
-    it('should validate avatar filename before upload', async () => {
-      mockIsValidAvatarFileName.mockReturnValue(false);
+    it('should upload avatar before creating profile', async () => {
+      const mockFile = createMockFile('avatar.png');
 
-      const avatarFile = createMockFile('invalid@file.exe');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
+      // Set up avatar upload to return success
+      mockUploadAvatar.mockResolvedValue({
+        avatarUrl: 'https://azure.blob.storage/avatars/user-123/avatar.png',
+        fileName: 'avatar.png',
       });
 
-      await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected to throw
-        }
-      });
-
-      await waitFor(() => {
-        expect(result.current.isError).toBe(true);
-      });
-
-      expect(mockIsValidAvatarFileName).toHaveBeenCalledWith(
-        'invalid@file.exe'
+      // Re-mock useAvatarUpload with file selected
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
       );
-    });
-
-    it('should get upload URL from Next.js API', async () => {
-      mockFetchThrowsError
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            uploadUrl: 'https://azure.blob.storage/upload?sas=token',
-          }),
-        })
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            username: 'testuser',
-            avatar: 'https://azure.blob.storage/avatar.png',
-          }),
-        });
-
-      const avatarFile = createMockFile('avatar.png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
+      useAvatarUpload.mockReturnValue({
+        selectedFile: mockFile,
+        previewUrl: 'blob:http://localhost/preview',
+        error: null,
+        handleFileSelect: mockHandleFileSelect,
+        uploadAvatar: mockUploadAvatar,
+        clearSelection: mockClearSelection,
       });
+
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
+        await result.current.createProfile({ username: 'testuser' });
       });
 
-      expect(mockGetFetchClient).toHaveBeenCalledWith('NEXT_API');
-      expect(mockFetchThrowsError).toHaveBeenCalledWith(
-        '/api/generate-upload-url',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({
-            fileName: 'avatar.png',
-            fileType: 'image/png',
-          }),
-        })
-      );
-    });
+      // Verify avatar upload was called first
+      expect(mockUploadAvatar).toHaveBeenCalled();
 
-    it('should upload file to Azure Blob Storage', async () => {
-      const uploadUrl = 'https://azure.blob.storage/upload?sas=token';
-      mockFetchThrowsError
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({ uploadUrl }),
-        })
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            username: 'testuser',
-            avatar: 'https://azure.blob.storage/avatar.png',
-          }),
-        });
-
-      const avatarFile = createMockFile('avatar.png', 'image/png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
-      });
-
-      await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
-      });
-
-      expect(global.fetch).toHaveBeenCalledWith(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': 'image/png',
-        },
-        body: avatarFile,
+      // Verify profile was created with avatar filename
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        username: 'testuser',
+        avatarFileName: 'avatar.png',
       });
     });
 
     it('should include avatar filename in profile data', async () => {
-      mockFetchThrowsError
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            uploadUrl: 'https://azure.blob.storage/upload',
-          }),
-        })
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            username: 'testuser',
-            avatar: 'https://azure.blob.storage/avatar.png',
-          }),
-        });
+      const mockFile = createMockFile('myavatar.png');
 
-      const avatarFile = createMockFile('myavatar.png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
+      mockUploadAvatar.mockResolvedValue({
+        avatarUrl: 'https://azure.blob.storage/avatars/user-123/myavatar.png',
+        fileName: 'myavatar.png',
       });
+
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockReturnValue({
+        selectedFile: mockFile,
+        previewUrl: 'blob:http://localhost/preview',
+        error: null,
+        handleFileSelect: mockHandleFileSelect,
+        uploadAvatar: mockUploadAvatar,
+        clearSelection: mockClearSelection,
+      });
+
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
+        await result.current.createProfile({ username: 'testuser' });
       });
 
-      // Verify the profile API call includes avatar filename
-      const withAuthRetryCallback = mockWithAuthRetry.mock.calls[0][1];
-      await withAuthRetryCallback(mockAccessToken);
-
-      expect(mockFetchThrowsError).toHaveBeenCalledWith(
-        `/users/${mockUserId}/profile`,
-        expect.objectContaining({
-          body: JSON.stringify({
-            username: 'testuser',
-            avatar: 'myavatar.png',
-          }),
-        })
-      );
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        username: 'testuser',
+        avatarFileName: 'myavatar.png',
+      });
     });
 
-    it('should update session with avatar URL after successful upload', async () => {
-      const avatarUrl = 'https://azure.blob.storage/user-123/avatar.png';
-      mockFetchThrowsError
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            uploadUrl: 'https://azure.blob.storage/upload',
-          }),
-        })
-        .mockResolvedValueOnce({
-          json: jest.fn().mockResolvedValue({
-            username: 'testuser',
-            avatar: avatarUrl,
-          }),
-        });
+    it('should call clearSelection after successful profile creation with avatar', async () => {
+      const mockFile = createMockFile('avatar.png');
 
-      const avatarFile = createMockFile('avatar.png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
+      mockUploadAvatar.mockResolvedValue({
+        avatarUrl: 'https://azure.blob.storage/avatars/user-123/avatar.png',
+        fileName: 'avatar.png',
       });
+
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockReturnValue({
+        selectedFile: mockFile,
+        previewUrl: 'blob:http://localhost/preview',
+        error: null,
+        handleFileSelect: mockHandleFileSelect,
+        uploadAvatar: mockUploadAvatar,
+        clearSelection: mockClearSelection,
+      });
+
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
+        await result.current.createProfile({ username: 'testuser' });
       });
 
-      await waitFor(() => {
-        expect(mockUpdate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            user: expect.objectContaining({
-              username: 'testuser',
-              avatarUrl: avatarUrl,
-            }),
-          })
-        );
-      });
+      expect(mockClearSelection).toHaveBeenCalled();
     });
   });
 
   describe('error handling', () => {
-    it('should show error toast when avatar filename is invalid', async () => {
-      const { toast } = await import('sonner');
-      mockIsValidAvatarFileName.mockReturnValue(false);
+    it('should return early when avatar upload fails', async () => {
+      const mockFile = createMockFile('avatar.png');
 
-      const avatarFile = createMockFile('bad.exe');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
-      });
+      // Avatar upload returns null (failure)
+      mockUploadAvatar.mockResolvedValue(null);
 
-      await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockImplementation(
+        (options?: { onError?: (error: Error) => void }) => {
+          capturedOnError = options?.onError;
+          return {
+            selectedFile: mockFile,
+            previewUrl: 'blob:http://localhost/preview',
+            error: null,
+            handleFileSelect: mockHandleFileSelect,
+            uploadAvatar: mockUploadAvatar,
+            clearSelection: mockClearSelection,
+          };
         }
-      });
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Invalid avatar filename');
-      });
-    });
-
-    it('should show error toast when upload URL request fails', async () => {
-      const { toast } = await import('sonner');
-      mockFetchThrowsError.mockRejectedValueOnce(
-        new Error('Failed to get upload URL')
       );
 
-      const avatarFile = createMockFile('avatar.png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
-      });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected
-        }
+        await result.current.createProfile({ username: 'testuser' });
       });
 
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Failed to get upload URL');
-      });
+      // Profile update should not be called since we returned early
+      expect(mockMutateAsync).not.toHaveBeenCalled();
     });
 
-    it('should show error toast when Azure upload fails', async () => {
-      const { toast } = await import('sonner');
-      mockFetchThrowsError.mockResolvedValueOnce({
-        json: jest.fn().mockResolvedValue({
-          uploadUrl: 'https://azure.blob.storage/upload',
-        }),
+    it('should show error toast when avatar upload fails', async () => {
+      const mockFile = createMockFile('avatar.png');
+
+      // Mock uploadAvatar to call onError callback and return null
+      mockUploadAvatar.mockImplementation(async () => {
+        // Simulate the real useAvatarUpload behavior - call onError when upload fails
+        capturedOnError?.(new Error('Failed to upload avatar'));
+        return null;
       });
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      });
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockImplementation(
+        (options?: { onError?: (error: Error) => void }) => {
+          capturedOnError = options?.onError;
+          return {
+            selectedFile: mockFile,
+            previewUrl: 'blob:http://localhost/preview',
+            error: null,
+            handleFileSelect: mockHandleFileSelect,
+            uploadAvatar: mockUploadAvatar,
+            clearSelection: mockClearSelection,
+          };
+        }
+      );
 
-      const avatarFile = createMockFile('avatar.png');
-      const { result } = renderHook(() => useCreateProfile(avatarFile), {
-        wrapper,
-      });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected
-        }
+        await result.current.createProfile({ username: 'testuser' });
       });
 
       await waitFor(() => {
@@ -447,79 +364,67 @@ describe('useCreateProfile', () => {
       });
     });
 
-    it('should show error toast when profile API fails', async () => {
-      const { toast } = await import('sonner');
-      mockFetchThrowsError.mockRejectedValueOnce(
-        new Error('Profile update failed')
+    it('should not call clearSelection when avatar upload fails', async () => {
+      const mockFile = createMockFile('avatar.png');
+
+      mockUploadAvatar.mockResolvedValue(null);
+
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockImplementation(
+        (options?: { onError?: (error: Error) => void }) => {
+          capturedOnError = options?.onError;
+          return {
+            selectedFile: mockFile,
+            previewUrl: 'blob:http://localhost/preview',
+            error: null,
+            handleFileSelect: mockHandleFileSelect,
+            uploadAvatar: mockUploadAvatar,
+            clearSelection: mockClearSelection,
+          };
+        }
       );
 
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
       await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected
-        }
+        await result.current.createProfile({ username: 'testuser' });
       });
 
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Profile update failed');
-      });
-    });
-
-    it('should show default error message when error has no message', async () => {
-      const { toast } = await import('sonner');
-      mockFetchThrowsError.mockRejectedValueOnce({});
-
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
-
-      await act(async () => {
-        try {
-          await result.current.mutateAsync({ username: 'testuser' });
-        } catch {
-          // Expected
-        }
-      });
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          'Uh oh. Something went wrong :('
-        );
-      });
+      expect(mockClearSelection).not.toHaveBeenCalled();
     });
   });
 
-  describe('authentication handling', () => {
-    it('should not call API when not authenticated', async () => {
-      mockUseAuthSession.mockReturnValue({
-        data: null,
-        update: mockUpdate,
+  describe('mutation state', () => {
+    it('should return isPending from useUpdateUserProfile', () => {
+      const { useUpdateUserProfile } = jest.requireMock(
+        '@pokehub/frontend/pokehub-data-provider'
+      );
+      useUpdateUserProfile.mockReturnValue({
+        mutateAsync: mockMutateAsync,
+        isPending: true,
+        isSuccess: false,
       });
 
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
-      await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
-      });
-
-      expect(mockWithAuthRetry).not.toHaveBeenCalled();
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(result.current.isPending).toBe(true);
     });
 
-    it('should not call API when access token is missing', async () => {
-      mockUseAuthSession.mockReturnValue({
-        data: { user: { id: mockUserId } },
-        update: mockUpdate,
+    it('should return isSuccess from useUpdateUserProfile', () => {
+      const { useUpdateUserProfile } = jest.requireMock(
+        '@pokehub/frontend/pokehub-data-provider'
+      );
+      useUpdateUserProfile.mockReturnValue({
+        mutateAsync: mockMutateAsync,
+        isPending: false,
+        isSuccess: true,
       });
 
-      const { result } = renderHook(() => useCreateProfile(null), { wrapper });
+      const { result } = renderHook(() => useCreateProfile(), { wrapper });
 
-      await act(async () => {
-        await result.current.mutateAsync({ username: 'testuser' });
-      });
-
-      expect(mockWithAuthRetry).not.toHaveBeenCalled();
+      expect(result.current.isSuccess).toBe(true);
     });
   });
 });
