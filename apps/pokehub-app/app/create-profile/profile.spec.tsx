@@ -33,7 +33,8 @@ const mockUseCreateProfile = useCreateProfile as jest.Mock;
 
 describe('CreateProfileContainer', () => {
   let queryClient: QueryClient;
-  const mockMutateAsync = jest.fn();
+  const mockCreateProfile = jest.fn();
+  const mockHandleFileSelect = jest.fn();
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -58,8 +59,13 @@ describe('CreateProfileContainer', () => {
     });
 
     mockUseCreateProfile.mockReturnValue({
-      mutateAsync: mockMutateAsync,
+      avatarFile: null,
+      avatarPreviewUrl: null,
+      avatarError: null,
+      handleFileSelect: mockHandleFileSelect,
+      createProfile: mockCreateProfile,
       isPending: false,
+      isSuccess: false,
     });
   });
 
@@ -260,14 +266,14 @@ describe('CreateProfileContainer', () => {
       });
     });
 
-    it('should call mutateAsync when form is submitted', async () => {
+    it('should call createProfile when form is submitted', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       mockUseCheckUsername.mockReturnValue({
         error: { status: 404 },
         status: 'error',
         isLoading: false,
       });
-      mockMutateAsync.mockResolvedValue({});
+      mockCreateProfile.mockResolvedValue({});
 
       renderComponent();
 
@@ -290,7 +296,7 @@ describe('CreateProfileContainer', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect(mockCreateProfile).toHaveBeenCalledWith(
           expect.objectContaining({
             username: 'newusername',
           })

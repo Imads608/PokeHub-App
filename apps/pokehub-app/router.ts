@@ -35,6 +35,11 @@ export const PokeHubRouter: AppRouter = {
       rolesAllowed: ['USER'],
       allowSubRoutes: true,
     },
+    {
+      route: '/settings',
+      rolesAllowed: ['ADMIN', 'USER'],
+      allowSubRoutes: false,
+    },
   ],
   redirectOnLogin: {
     ADMIN: '/dashboard',

@@ -41,4 +41,11 @@ export interface IUsersService {
     email: string,
     accountType: User['accountType']
   ): Promise<UserCore>;
+
+  /**
+   * Deletes a user and all associated data (teams cascade via DB).
+   * @param userId The ID of the user to delete.
+   * @returns A promise that resolves when the user has been deleted.
+   */
+  deleteUser(userId: string): Promise<void>;
 }
