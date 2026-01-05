@@ -2,10 +2,10 @@ import type {
   UserCore,
   OAuthLoginResponse,
 } from '@pokehub/shared/shared-user-models';
-// Use type-only imports to avoid executing ESM modules at runtime
-// This allows Jest to skip transforming next-auth's ESM code
-import type {} from 'next-auth';
-import type {} from 'next-auth/jwt';
+// Import the JWT type to ensure TypeScript connects our augmentation
+import type { JWT as _JWT } from 'next-auth/jwt';
+
+// Module augmentation for next-auth types
 
 declare module 'next-auth' {
   interface Session {

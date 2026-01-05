@@ -1,5 +1,4 @@
 import { getTestCredentialsProvider } from './test-provider';
-import '@pokehub/frontend/global-next-types';
 import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { getLogger } from '@pokehub/frontend/shared-logger/server';
 import type {

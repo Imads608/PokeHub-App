@@ -25,6 +25,7 @@
     "**/*.jsx",
     "../../apps/pokehub-app/.next/types/**/*.ts",
     "../../dist/apps/pokehub-app/.next/types/**/*.ts",
+    "../../packages/frontend/global-next-types/src/**/*.d.ts",
     "next-env.d.ts",
     "new-types.d.ts",
     ".next/types/**/*.ts"

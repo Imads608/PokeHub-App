@@ -1,4 +1,5 @@
-import '@pokehub/frontend/global-next-types';
+'use client';
+
 import {
   Avatar,
   AvatarFallback,
