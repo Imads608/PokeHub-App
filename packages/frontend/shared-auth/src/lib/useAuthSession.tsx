@@ -1,4 +1,9 @@
-import '@pokehub/frontend/global-next-types';
+'use client';
+
+// NOTE: Type augmentations for Session are in @pokehub/frontend/global-next-types
+// but we can't import that module here as it causes Turbopack to trace into
+// next-auth's server code. The Session type from next-auth will still work,
+// and TypeScript will pick up the augmented types from the tsconfig includes.
 import type { Session } from 'next-auth';
 import { useSession } from 'next-auth/react';
 

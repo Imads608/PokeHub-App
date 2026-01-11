@@ -1,12 +1,6 @@
 import { requestContext } from '@pokehub/frontend/shared-logger/server';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// export { auth as middleware } from '@pokehub/frontend/shared-auth/server';
-//
-// export const config = {
-//   matcher: ['/((?!api|_next/static|_next/image|image|favicon.ico).*)'],
-// };
-
 export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
 
@@ -26,3 +20,16 @@ export function middleware(request: NextRequest) {
     return response;
   });
 }
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images/ (public folder assets)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|images/).*)',
+  ],
+};

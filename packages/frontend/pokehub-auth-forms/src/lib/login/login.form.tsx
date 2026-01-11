@@ -1,5 +1,4 @@
 import { LoginSubmit } from './submit-form';
-import '@pokehub/frontend/global-next-types';
 import Image from 'next/image';
 
 export const LoginForm = () => {

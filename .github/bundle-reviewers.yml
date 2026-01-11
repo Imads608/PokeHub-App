@@ -1,0 +1,5 @@
+# Users authorized to approve bundle size increases
+# These users can comment "/approve-bundle-size <reason>" to bypass the check
+approvers:
+  - Imads608
+  # Add other authorized usernames here

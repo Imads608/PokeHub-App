@@ -10,7 +10,10 @@ const StatoscopeWebpackPlugin = require('@statoscope/webpack-plugin').default;
 const nextConfig = {
   nx: {},
   images: {
-    domains: ['play.pokemonshowdown.com', 'raw.githubusercontent.com'], // Add the external domain here
+    remotePatterns: [
+      { protocol: 'https', hostname: 'play.pokemonshowdown.com' },
+      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
+    ],
   },
   output: 'standalone',
   webpack: (config, { isServer }) => {
@@ -18,14 +21,16 @@ const nextConfig = {
     if (process.env.ANALYZE === 'true') {
       config.plugins.push(
         new StatoscopeWebpackPlugin({
-          saveReportTo: `./statoscope-report-${isServer ? 'server' : 'client'}.html`,
-          saveStatsTo: `./statoscope-stats-${isServer ? 'server' : 'client'}.json`,
+          saveReportTo: `./statoscope-report-${
+            isServer ? 'server' : 'client'
+          }.html`,
+          saveStatsTo: `./statoscope-stats-${
+            isServer ? 'server' : 'client'
+          }.json`,
           open: 'file',
-          // Optional: customize the report
           normalizeStats: true,
-          // Additional options:
-          // - `watchMode: false` - disable watch mode
-          // - `compressor: 'gzip'` - show gzipped sizes (default)
+          // Collect gzipped sizes for accurate First Load JS validation
+          compressor: 'gzip',
         })
       );
     }

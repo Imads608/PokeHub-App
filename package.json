@@ -50,7 +50,7 @@
     "google-auth-library": "^9.15.1",
     "lucide-react": "^0.485.0",
     "nest-winston": "^1.10.2",
-    "next": "14.2.33",
+    "next": "^16.1.1",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.6",
     "openapi3-ts": "^4.4.0",
@@ -85,7 +85,7 @@
     "@nx/jest": "22.0.2",
     "@nx/js": "22.0.2",
     "@nx/nest": "22.0.2",
-    "@nx/next": "22.0.2",
+    "@nx/next": "^22.3.3",
     "@nx/node": "22.0.2",
     "@nx/playwright": "22.0.2",
     "@nx/plugin": "22.0.2",
@@ -95,6 +95,8 @@
     "@nx/workspace": "22.0.2",
     "@playwright/test": "^1.36.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@statoscope/cli": "^5.29.0",
+    "@statoscope/stats-validator-plugin-webpack": "^5.29.0",
     "@statoscope/webpack-plugin": "^5.29.0",
     "@swc-node/register": "1.9.2",
     "@swc/cli": "0.6.0",
@@ -117,7 +119,7 @@
     "@typescript-eslint/parser": "^7.16.0",
     "autoprefixer": "10.4.13",
     "babel-jest": "30.0.5",
-    "drizzle-kit": "^0.30.5",
+    "drizzle-kit": "^0.31.8",
     "eslint": "8.57.0",
     "eslint-config-next": "15.5.6",
     "eslint-config-prettier": "10.1.8",
@@ -157,7 +159,8 @@
   "overrides": {
     "@radix-ui/react-dismissable-layer": "^1.1.11",
     "@radix-ui/react-focus-scope": "^1.1.7",
-    "nodemailer": "^6.10.1"
+    "nodemailer": "^6.10.1",
+    "minimist": "^1.2.8"
   },
   "nx": {}
 }

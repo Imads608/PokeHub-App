@@ -2,6 +2,36 @@
 
 This guide covers how to build and run the PokeHub application in production mode.
 
+## Table of Contents
+
+- [Production Deployment](#production-deployment)
+  - [Frontend (pokehub-app)](#frontend-pokehub-app)
+  - [Backend (pokehub-api)](#backend-pokehub-api)
+  - [Build All Projects](#build-all-projects)
+- [Development vs Production](#development-vs-production)
+- [Environment Configuration](#environment-configuration)
+- [Production Checklist](#production-checklist)
+- [Production Optimizations](#production-optimizations)
+- [Bundle Analysis](#bundle-analysis)
+  - [Setup](#setup)
+  - [Running the Analyzer](#running-the-analyzer)
+  - [Understanding the Output](#understanding-the-output)
+  - [Optimization Tips](#optimization-tips)
+  - [Target Bundle Sizes](#target-bundle-sizes)
+  - [Understanding First Load JS](#understanding-first-load-js)
+  - [What Determines First Load JS?](#what-determines-first-load-js)
+  - [SSR vs Server Components (Important Distinction)](#ssr-vs-server-components-important-distinction)
+  - [Analyzing First Load JS with Bundle Analyzer](#analyzing-first-load-js-with-bundle-analyzer)
+  - [How to Reduce First Load JS](#how-to-reduce-first-load-js)
+  - [Decision Tree: Will This Add to First Load JS?](#decision-tree-will-this-add-to-first-load-js)
+  - [How App Router Handles Layout Client Components (Case Study: @pkmn/dex)](#how-app-router-handles-layout-client-components-case-study-pkmndex)
+- [Deployment Platforms](#deployment-platforms)
+  - [Docker (Recommended)](#docker-recommended)
+  - [Vercel (Frontend)](#vercel-frontend)
+  - [VPS/Cloud Providers](#vpscloud-providers)
+- [Monitoring](#monitoring)
+- [Troubleshooting](#troubleshooting)
+
 ## Production Deployment
 
 ### Frontend (pokehub-app)
@@ -15,6 +45,7 @@ nx build pokehub-app
 ```
 
 This command:
+
 - Creates an optimized production build in `dist/apps/pokehub-app`
 - Minifies JavaScript and CSS
 - Removes debug symbols and source maps
@@ -31,6 +62,7 @@ npx next start
 ```
 
 **Important:** Using `next start` ensures that the application serves **minified chunks without debug symbols**. This is different from development mode (`nx serve pokehub-app`), which serves unminified code with source maps for debugging. In production mode:
+
 - All JavaScript bundles are minified and optimized
 - Debug symbols and source maps are removed
 - Code is obfuscated and compressed
@@ -39,11 +71,13 @@ npx next start
 The application will start on port 3000 by default.
 
 **Custom Port:**
+
 ```bash
 npx next start -p 4200
 ```
 
 Or set via environment variable:
+
 ```bash
 PORT=4200 npx next start
 ```
@@ -74,14 +108,14 @@ nx run-many -t build
 
 ## Development vs Production
 
-| Aspect | Development (`nx serve`) | Production (`next start`) |
-|--------|-------------------------|---------------------------|
-| Bundle Size | Larger (unminified) | Smaller (minified) |
-| Debug Symbols | Included | Removed |
-| Source Maps | Generated | Not included |
-| Code | Readable | Obfuscated/minified |
-| Performance | Slower (hot reload enabled) | Optimized |
-| Purpose | Debugging & development | End users |
+| Aspect        | Development (`nx serve`)    | Production (`next start`) |
+| ------------- | --------------------------- | ------------------------- |
+| Bundle Size   | Larger (unminified)         | Smaller (minified)        |
+| Debug Symbols | Included                    | Removed                   |
+| Source Maps   | Generated                   | Not included              |
+| Code          | Readable                    | Obfuscated/minified       |
+| Performance   | Slower (hot reload enabled) | Optimized                 |
+| Purpose       | Debugging & development     | End users                 |
 
 ## Environment Configuration
 
@@ -90,6 +124,7 @@ nx run-many -t build
 Before running in production, ensure these environment variables are configured:
 
 **Frontend (.env.production or .env):**
+
 - `NEXTAUTH_URL` - Your production domain URL
 - `NEXTAUTH_SECRET` - Secret for NextAuth.js session encryption
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
@@ -97,6 +132,7 @@ Before running in production, ensure these environment variables are configured:
 - `NEXT_PUBLIC_API_URL` - Backend API URL
 
 **Backend (.env):**
+
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - Secret for JWT token signing
 - `AZURE_STORAGE_CONNECTION_STRING` - Azure Blob Storage connection
@@ -161,11 +197,13 @@ ANALYZE=true nx build pokehub-app
 ```
 
 This will:
+
 1. Build the production bundle
 2. Generate interactive HTML reports
 3. Automatically open the reports in your browser
 
 The analyzer creates two reports:
+
 - **Client-side bundle** (`client.html`) - JavaScript sent to the browser
 - **Server-side bundle** (`server.html`) - Code running on the server
 
@@ -188,6 +226,7 @@ Use the analyzer to:
 4. **Monitor bundle size**: Track changes over time
 
 **Example findings:**
+
 - If a large library appears in multiple chunks, consider moving it to a shared chunk
 - If a rarely-used feature adds significant size, lazy-load it with `dynamic()` imports
 - If the initial bundle is too large, implement route-based code splitting
@@ -195,6 +234,7 @@ Use the analyzer to:
 ### Target Bundle Sizes
 
 Aim for:
+
 - **First Load JS**: < 200 KB (ideal), < 300 KB (acceptable)
 - **Individual routes**: < 100 KB
 - **Shared chunks**: Optimize for caching (stable naming)
@@ -240,23 +280,29 @@ Code is included in First Load JS based on whether it runs on the **client** or 
 #### ✅ Included (Adds to First Load JS):
 
 1. **Client Components** - Any component with `'use client'`:
-   ```typescript
-   'use client'
-   import { useState } from 'react'
-   import { Button } from '@/components/ui'  // ← Included
 
+   ```typescript
+   'use client';
+   
+   import { Button } from '@/components/ui';
+   import { useState } from 'react';
+   
+   // ← Included
+   
    export default function LoginForm() {
      // All this JavaScript goes to the client bundle
    }
    ```
 
 2. **Client Component Dependencies** - Everything imported by client components:
+
    - Icon libraries (lucide-react, react-icons)
    - Form libraries (react-hook-form, zod)
    - Animation libraries (framer-motion)
    - UI components marked with `'use client'`
 
 3. **Layout Client Components** - Layouts that wrap your routes:
+
    ```
    app/
      layout.tsx          ← If 'use client', affects ALL routes
@@ -274,17 +320,21 @@ Code is included in First Load JS based on whether it runs on the **client** or 
 #### ❌ NOT Included (Server-Side Only):
 
 1. **Server Components** - Default Next.js components (no `'use client'`):
+
    ```typescript
    // No 'use client' directive = Server Component
-   import { db } from '@/lib/db'           // ← NOT in client bundle
-
+   import { db } from '@/lib/db';
+   
+   // ← NOT in client bundle
+   
    export default async function LoginPage() {
-     const data = await db.query()        // ← Runs on server only
-     return <LoginForm initialData={data} />
+     const data = await db.query(); // ← Runs on server only
+     return <LoginForm initialData={data} />;
    }
    ```
 
 2. **Server-Only Imports**:
+
    - Database clients (Prisma, Drizzle)
    - Server-side utilities (bcrypt, jsonwebtoken)
    - Node.js modules (fs, path, crypto)
@@ -293,32 +343,34 @@ Code is included in First Load JS based on whether it runs on the **client** or 
 3. **Dynamic Imports with `ssr: false`**:
    ```typescript
    const HeavyComponent = dynamic(() => import('./Heavy'), {
-     ssr: false,  // ← Loaded on-demand, not in First Load JS
-   })
+     ssr: false, // ← Loaded on-demand, not in First Load JS
+   });
    ```
 
 ### SSR vs Server Components (Important Distinction)
 
 **Client Components are still SSR'd by default**, but they add to First Load JS:
 
-| | Server Component | Client Component |
-|---|---|---|
-| Rendered on server? | Yes ✓ | Yes ✓ (SSR) |
-| JavaScript sent to client? | **No** | **Yes** |
-| Adds to First Load JS? | **No** | **Yes** |
-| Can use hooks/state? | No | Yes |
-| Interactive? | No | Yes (after hydration) |
+|                            | Server Component | Client Component      |
+| -------------------------- | ---------------- | --------------------- |
+| Rendered on server?        | Yes ✓            | Yes ✓ (SSR)           |
+| JavaScript sent to client? | **No**           | **Yes**               |
+| Adds to First Load JS?     | **No**           | **Yes**               |
+| Can use hooks/state?       | No               | Yes                   |
+| Interactive?               | No               | Yes (after hydration) |
 
 **Example:**
+
 ```typescript
-'use client'  // ← Client Component
+'use client'; // ← Client Component
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState('');
   // ...
 }
 ```
 
 This component:
+
 - **IS** Server-Side Rendered (HTML generated on server)
 - **DOES** add to First Load JS (JavaScript sent for hydration)
 - User sees HTML fast, then JavaScript downloads to make it interactive
@@ -331,17 +383,20 @@ When using the bundle analyzer, you may notice discrepancies between the build o
 **Bundle analyzer shows ~600 kB** → This is **parsed** (uncompressed) size
 
 To match the numbers:
+
 1. Look for the **gzipped size** in the bundle analyzer tooltip/sidebar
 2. The gzipped size should match the "First Load JS" from build output
 3. Parsed size is typically 3-4x larger than gzipped
 
 **When filtering by a route** (e.g., filter by `app/login/page`):
+
 - The Bundle Analyzer displays the **complete First Load JS** for that route
 - You'll see the route-specific chunks **PLUS** all shared framework chunks
 - This total (gzipped) = First Load JS for that route
 - This is why filtering by `/login` shows more than just the 9 kB route-specific code
 
 **Example workflow:**
+
 1. Run `ANALYZE=true nx build pokehub-app`
 2. In the analyzer, filter by `app/login/page`
 3. All chunks shown = what loads for `/login` route
@@ -350,58 +405,63 @@ To match the numbers:
 ### How to Reduce First Load JS
 
 1. **Keep pages as Server Components** when possible:
+
    ```typescript
    // ✅ Good: Server Component (default)
    export default async function Page() {
-     const data = await fetchData()
-     return <ClientForm data={data} />
+     const data = await fetchData();
+     return <ClientForm data={data} />;
    }
    ```
 
 2. **Push `'use client'` down the component tree**:
+
    ```typescript
    // ❌ Bad: Entire page is client component
-   'use client'
+   'use client';
    export default function Page() {
      return (
        <div>
-         <StaticHeader />        {/* Doesn't need client */}
-         <InteractiveForm />     {/* Needs client */}
+         <StaticHeader /> {/* Doesn't need client */}
+         <InteractiveForm /> {/* Needs client */}
        </div>
-     )
+     );
    }
-
+   
    // ✅ Good: Only interactive parts are client
-   export default function Page() {  // Server Component
+   export default function Page() {
+     // Server Component
      return (
        <div>
-         <StaticHeader />              {/* Server Component */}
-         <InteractiveForm />           {/* Client Component */}
+         <StaticHeader /> {/* Server Component */}
+         <InteractiveForm /> {/* Client Component */}
        </div>
-     )
+     );
    }
    ```
 
 3. **Import only what you need** from libraries:
+
    ```typescript
    // ❌ Bad: Imports entire library
-   import * as Icons from 'lucide-react'
-
+   import * as Icons from 'lucide-react';
    // ✅ Good: Import specific icons
-   import { Home, User, Settings } from 'lucide-react'
+   import { Home, User, Settings } from 'lucide-react';
    ```
 
 4. **Use dynamic imports** for heavy components:
-   ```typescript
-   import dynamic from 'next/dynamic'
 
+   ```typescript
+   import dynamic from 'next/dynamic';
+   
    const HeavyChart = dynamic(() => import('./HeavyChart'), {
      loading: () => <Spinner />,
-     ssr: false  // Optional: skip SSR if not needed
-   })
+     ssr: false, // Optional: skip SSR if not needed
+   });
    ```
 
 5. **Check for duplicate dependencies**:
+
    - Use bundle analyzer to spot libraries bundled multiple times
    - Ensure consistent versions across packages
 
@@ -432,7 +492,10 @@ Is it a dependency/import?
 #### Real Example from PokeHub
 
 **Setup:**
+
 ```typescript
+import { Dex } from '@pkmn/dex';
+
 // app/layout.tsx (Server Component)
 export default function RootLayout({ children }) {
   return (
@@ -445,12 +508,12 @@ export default function RootLayout({ children }) {
 }
 
 // app/(components)/bootstrapper.tsx (Client Component)
-'use client';
-import { Dex } from '@pkmn/dex';  // 322 KB gzipped!
+('use client');
+// 322 KB gzipped!
 
 export const AppBootstrapper = ({ children }) => {
   useEffect(() => {
-    window.Dex = Dex;  // Assign to global
+    window.Dex = Dex; // Assign to global
   }, []);
 
   return <SharedAppBootstrapper>{children}</SharedAppBootstrapper>;
@@ -458,36 +521,41 @@ export const AppBootstrapper = ({ children }) => {
 ```
 
 **What You Might Expect:**
+
 - AppBootstrapper wraps all routes
 - AppBootstrapper imports Dex (322 KB)
 - All routes should include Dex in First Load JS ❌
 
 **What Actually Happens:**
 
-| Route | Imports Dex Directly? | Dex in First Load JS? | Why? |
-|-------|----------------------|----------------------|------|
-| `/login` | ❌ No | ❌ No | Tree-shaken - route doesn't need it |
-| `/pokedex/[id]` | ✅ Yes | ✅ Yes | Route imports it, so included |
-| `/team-builder` | ❌ No | ❌ No | Tree-shaken - route doesn't need it |
+| Route           | Imports Dex Directly? | Dex in First Load JS? | Why?                                |
+| --------------- | --------------------- | --------------------- | ----------------------------------- |
+| `/login`        | ❌ No                 | ❌ No                 | Tree-shaken - route doesn't need it |
+| `/pokedex/[id]` | ✅ Yes                | ✅ Yes                | Route imports it, so included       |
+| `/team-builder` | ❌ No                 | ❌ No                 | Tree-shaken - route doesn't need it |
 
 #### How This Works
 
 **Next.js analyzes each route independently:**
 
 1. **Route dependency graph analysis**
+
    - What does this route import?
    - What dependencies are actually used?
    - Which layout client components have dependencies this route needs?
 
 2. **Per-route tree-shaking**
+
    ```typescript
    // For /login route
-   import { Dex } from '@pkmn/dex';  // Imported in AppBootstrapper
-
+   import { Dex } from '@pkmn/dex';
+   
+   // Imported in AppBootstrapper
+   
    useEffect(() => {
-     window.Dex = Dex;  // Used, but login doesn't reference Dex
+     window.Dex = Dex; // Used, but login doesn't reference Dex
    }, []);
-
+   
    // Next.js: "Login doesn't import Dex anywhere, tree-shake it out"
    // Result: Dex NOT in login's bundle
    ```
@@ -500,6 +568,7 @@ export const AppBootstrapper = ({ children }) => {
 #### Verification Steps
 
 **Test 1: Check if dependency loads**
+
 ```typescript
 // Remove window.Dex assignment in AppBootstrapper
 useEffect(() => {
@@ -508,40 +577,46 @@ useEffect(() => {
 ```
 
 **Result:**
+
 - Navigate to `/login` → Dex chunk does NOT load ✅
 - Navigate to `/pokedex/[id]` → Dex chunk DOES load (route imports it) ✅
 
 **Test 2: Check bundle analyzer**
+
 ```bash
 ANALYZE=true nx build pokehub-app
 ```
 
 Filter by `app/login/page`:
+
 - ❌ No `@pkmn/dex` in the bundle
 - ✅ First Load JS: ~189 KB (without 322 KB Dex)
 
 Filter by `app/pokedex/[id]/page`:
+
 - ✅ `@pkmn/dex` appears in chunks
 - ✅ First Load JS: ~511 KB (includes 322 KB Dex)
 
 #### Key Differences from Pages Router
 
-| Pages Router (`pages/_app.js`) | App Router (`app/layout.tsx`) |
-|--------------------------------|------------------------------|
-| All imports shared across all pages | Per-route tree-shaking |
+| Pages Router (`pages/_app.js`)             | App Router (`app/layout.tsx`)                             |
+| ------------------------------------------ | --------------------------------------------------------- |
+| All imports shared across all pages        | Per-route tree-shaking                                    |
 | Heavy library in `_app` → all pages get it | Heavy library in layout → only routes that need it get it |
-| No tree-shaking across pages | Aggressive per-route optimization |
-| Shared bundle strategy | Granular code splitting |
+| No tree-shaking across pages               | Aggressive per-route optimization                         |
+| Shared bundle strategy                     | Granular code splitting                                   |
 
 #### Script Tag Attributes Don't Determine First Load JS
 
 **Common misconception:**
+
 ```html
 <!-- This has async, so it's not in First Load JS? WRONG! -->
 <script src="/_next/static/chunks/framework.js" async=""></script>
 ```
 
 **Reality:**
+
 - Script loading attributes (`async`, `defer`) don't determine First Load JS
 - First Load JS is calculated from the **dependency graph**
 - Both critical and non-critical chunks may use `async`
@@ -550,20 +625,21 @@ Filter by `app/pokedex/[id]/page`:
 #### Implications for Optimization
 
 **Best Practice: Import where needed**
+
 ```typescript
 // ❌ Bad: Force global loading in layout
 'use client';
 import { Dex } from '@pkmn/dex';
 
 useEffect(() => {
-  console.log(Dex.species.all().length);  // Forces Dex for all routes
+  console.log(Dex.species.all().length); // Forces Dex for all routes
   window.Dex = Dex;
 }, []);
 
 // ✅ Good: Import in routes that need it
 // app/pokedex/[id]/page.tsx
-'use client';
-import { Dex } from '@pkmn/dex';  // Only loaded for this route
+('use client');
+import { Dex } from '@pkmn/dex'; // Only loaded for this route
 
 export default function PokemonPage() {
   const species = Dex.species.get('pikachu');
@@ -572,6 +648,7 @@ export default function PokemonPage() {
 ```
 
 **Benefits of per-route imports:**
+
 - ✅ Automatic tree-shaking for routes that don't need it
 - ✅ TypeScript type safety
 - ✅ Explicit dependencies (easier to track)
@@ -579,11 +656,13 @@ export default function PokemonPage() {
 - ✅ No need for global `window` objects
 
 **When to use layout-level imports:**
+
 - Truly shared utilities needed by ALL routes
 - Small dependencies (< 10 KB)
 - Critical for app initialization
 
 **When to use route-level imports:**
+
 - Heavy libraries (like @pkmn/dex at 322 KB)
 - Feature-specific dependencies
 - Only needed by subset of routes
@@ -591,6 +670,7 @@ export default function PokemonPage() {
 #### Summary
 
 The App Router's per-route optimization means:
+
 1. **Layout client component imports are NOT automatically in all routes**
 2. **Each route gets its own optimized bundle**
 3. **Heavy dependencies are only included where needed**
@@ -631,6 +711,7 @@ pm2 start dist/apps/pokehub-api/main.js --name pokehub-api
 ## Monitoring
 
 In production, monitor:
+
 - Application logs
 - Database connection pool
 - API response times
@@ -642,6 +723,7 @@ In production, monitor:
 ### Port Already in Use
 
 If port 3000 is already in use:
+
 ```bash
 npx next start -p 3001
 ```
@@ -649,6 +731,7 @@ npx next start -p 3001
 ### Missing Dependencies
 
 If you encounter module errors, ensure node_modules is installed:
+
 ```bash
 npm install
 ```

@@ -269,6 +269,217 @@ jobs:
 
       - name: Build affected projects
         run: npx nx affected -t build --parallel=2 --configuration=production
+        env:
+          ANALYZE: 'true'
+
+      # Upload stats as artifact (main branch only - kept for 90 days for PR comparisons)
+      - name: Upload bundle stats (main)
+        if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats-main
+          path: apps/pokehub-app/statoscope-stats-client.json
+          overwrite: true
+          retention-days: 90
+
+      # Upload stats as artifact (PRs - for debugging/analysis)
+      - name: Upload bundle stats (PR)
+        if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats-pr-${{ github.event.pull_request.number }}
+          path: apps/pokehub-app/statoscope-stats-client.json
+          retention-days: 7
+
+      # Download main branch stats (PRs only)
+      - name: Download main branch stats
+        if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
+        continue-on-error: true
+        run: |
+          gh run download \
+            --repo ${{ github.repository }} \
+            --branch main \
+            --name bundle-stats-main \
+            --dir ./main-stats || echo "No main branch stats found"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Validate bundle size
+      - name: Validate bundle size
+        if: needs.setup.outputs.has-app-changes == 'true'
+        id: validate
+        continue-on-error: true
+        run: |
+          VALIDATION_FAILED="false"
+
+          if [ -f ./main-stats/statoscope-stats-client.json ]; then
+            echo "Comparing against main branch..."
+            if ! OUTPUT=$(npx @statoscope/cli validate \
+              --input apps/pokehub-app/statoscope-stats-client.json \
+              --reference ./main-stats/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+          else
+            echo "No main branch reference, validating absolute limits only..."
+            if ! OUTPUT=$(npx @statoscope/cli validate \
+              --input apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+          fi
+
+          echo "$OUTPUT"
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "failed=$VALIDATION_FAILED" >> $GITHUB_OUTPUT
+
+      # Check for existing approval comment
+      - name: Check for bundle size approval
+        if: steps.validate.outputs.failed == 'true' && github.event_name == 'pull_request'
+        id: check-approval
+        run: |
+          # Load approved users from config
+          APPROVED_USERS=$(yq '.approvers | join(",")' .github/bundle-reviewers.yml)
+          echo "Approved users: $APPROVED_USERS"
+
+          # Get the timestamp of the latest commit on this PR
+          LAST_COMMIT_DATE=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json commits \
+            --jq '.commits[-1].committedDate')
+          echo "Last commit date: $LAST_COMMIT_DATE"
+
+          # Check for approval comment from authorized user made AFTER the last commit
+          APPROVAL_FOUND="false"
+
+          COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json comments \
+            --jq ".comments[] | select(.body | startswith(\"/approve-bundle-size\")) | select(.createdAt > \"$LAST_COMMIT_DATE\") | \"\(.author.login)|\(.body)\"")
+
+          if [ -n "$COMMENTS" ]; then
+            while IFS= read -r line; do
+              APPROVER=$(echo "$line" | cut -d'|' -f1)
+              BODY=$(echo "$line" | cut -d'|' -f2-)
+              
+              if echo ",$APPROVED_USERS," | grep -qi ",$APPROVER,"; then
+                REASON=$(echo "$BODY" | sed 's|/approve-bundle-size||' | xargs)
+                echo "✅ Bundle size approved by: $APPROVER"
+                echo "Reason: $REASON"
+                APPROVAL_FOUND="true"
+                break
+              fi
+            done <<< "$COMMENTS"
+          fi
+
+          if [ "$APPROVAL_FOUND" = "false" ]; then
+            echo "No valid approval found after last commit"
+          fi
+
+          echo "approved=$APPROVAL_FOUND" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Post approval instructions if validation failed and no approval found
+      - name: Post approval instructions
+        if: steps.validate.outputs.failed == 'true' && steps.check-approval.outputs.approved != 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          VALIDATION_OUTPUT: ${{ steps.validate.outputs.output }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Load approved users from config using simple parsing
+            let approvedUsers = [];
+            try {
+              const content = fs.readFileSync('.github/bundle-reviewers.yml', 'utf8');
+              const matches = content.match(/^\s*-\s+(\S+)/gm);
+              if (matches) {
+                approvedUsers = matches.map(m => m.replace(/^\s*-\s+/, '').trim()).filter(u => !u.startsWith('#'));
+              }
+            } catch (e) {
+              console.log('Could not load bundle-reviewers.yml:', e);
+              approvedUsers = ['Imads608']; // fallback
+            }
+
+            const validationOutput = process.env.VALIDATION_OUTPUT || 'No output available';
+            const reviewerList = approvedUsers.map(u => '@' + u).join(', ');
+
+            const body = [
+              '## ⚠️ Bundle Size Validation Failed',
+              '',
+              'The bundle size has increased beyond the allowed threshold.',
+              '',
+              '<details>',
+              '<summary>Validation Output</summary>',
+              '',
+              '```',
+              validationOutput,
+              '```',
+              '',
+              '</details>',
+              '',
+              '### To approve this increase',
+              '',
+              'An authorized reviewer must comment:',
+              '```',
+              '/approve-bundle-size <reason>',
+              '```',
+              '',
+              `**Authorized reviewers:** ${reviewerList}`,
+              '',
+              'After approval, the CI workflow will automatically re-run.',
+              '',
+              '> **Note:** Approvals are invalidated when new commits are pushed. You will need to re-approve after pushing changes.'
+            ].join('\n');
+
+            // Check if we already posted this comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.data.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('Bundle Size Validation Failed')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      # Fail if validation failed and not approved
+      - name: Fail if bundle size not approved
+        if: steps.validate.outputs.failed == 'true' && steps.check-approval.outputs.approved != 'true'
+        run: |
+          echo "❌ Bundle size validation failed and no approval found."
+          echo "An authorized reviewer must comment '/approve-bundle-size <reason>' to approve."
+          exit 1
+
+      # Upload bundle analysis reports for viewing
+      - name: Upload bundle analysis reports
+        if: needs.setup.outputs.has-app-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis-${{ github.run_number }}
+          path: |
+            apps/pokehub-app/statoscope-report-client.html
+            apps/pokehub-app/statoscope-report-server.html
+            dist/apps/pokehub-app/.next/analyze/*.html
+          retention-days: 7
 
   e2e:
     name: E2E Tests

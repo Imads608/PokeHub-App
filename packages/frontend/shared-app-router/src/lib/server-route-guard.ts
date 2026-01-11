@@ -14,7 +14,9 @@ const logger = getLogger('ServerRouteGuard');
 export const handleServerAuth = async (routerInfo: AppRouter) => {
   const session = await auth();
 
-  const currentRoute = headers().get('x-path') || '/';
+  const headersRes = await headers();
+
+  const currentRoute = headersRes.get('x-path') || '/';
   logger.info(
     `${
       handleServerAuth.name
