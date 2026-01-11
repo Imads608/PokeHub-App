@@ -343,12 +343,18 @@ jobs:
           APPROVED_USERS=$(yq '.approvers | join(",")' .github/bundle-reviewers.yml)
           echo "Approved users: $APPROVED_USERS"
 
-          # Check for approval comment from authorized user
+          # Get the timestamp of the latest commit on this PR
+          LAST_COMMIT_DATE=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json commits \
+            --jq '.commits[-1].committedDate')
+          echo "Last commit date: $LAST_COMMIT_DATE"
+
+          # Check for approval comment from authorized user made AFTER the last commit
           APPROVAL_FOUND="false"
 
           COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} \
             --json comments \
-            --jq '.comments[] | select(.body | startswith("/approve-bundle-size")) | "\(.author.login)|\(.body)"')
+            --jq ".comments[] | select(.body | startswith(\"/approve-bundle-size\")) | select(.createdAt > \"$LAST_COMMIT_DATE\") | \"\(.author.login)|\(.body)\"")
 
           if [ -n "$COMMENTS" ]; then
             while IFS= read -r line; do
@@ -363,6 +369,10 @@ jobs:
                 break
               fi
             done <<< "$COMMENTS"
+          fi
+
+          if [ "$APPROVAL_FOUND" = "false" ]; then
+            echo "No valid approval found after last commit"
           fi
 
           echo "approved=$APPROVAL_FOUND" >> $GITHUB_OUTPUT
@@ -418,7 +428,9 @@ jobs:
               '',
               `**Authorized reviewers:** ${reviewerList}`,
               '',
-              'After approval, the CI workflow will automatically re-run.'
+              'After approval, the CI workflow will automatically re-run.',
+              '',
+              '> **Note:** Approvals are invalidated when new commits are pushed. You will need to re-approve after pushing changes.'
             ].join('\n');
 
             // Check if we already posted this comment
