@@ -28,11 +28,9 @@ const nextConfig = {
             isServer ? 'server' : 'client'
           }.json`,
           open: 'file',
-          // Optional: customize the report
           normalizeStats: true,
-          // Additional options:
-          // - `watchMode: false` - disable watch mode
-          // - `compressor: 'gzip'` - show gzipped sizes (default)
+          // Collect gzipped sizes for accurate First Load JS validation
+          compressor: 'gzip',
         })
       );
     }

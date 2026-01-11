@@ -57,3 +57,7 @@ pokehub.code-workspace
 tags
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Bundle analysis
+**/statoscope-report-*.html
+**/statoscope-stats-*.json

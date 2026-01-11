@@ -1,0 +1,113 @@
+name: Bundle Size Approval
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  handle-approval:
+    # Only run on PR comments that start with /approve-bundle-size
+    if: |
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/approve-bundle-size')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup yq
+        uses: mikefarah/yq@v4
+
+      - name: Verify approver is authorized
+        id: verify
+        run: |
+          # Load approved users from config
+          APPROVED_USERS=$(yq '.approvers | join(",")' .github/bundle-reviewers.yml)
+          COMMENTER="${{ github.event.comment.user.login }}"
+
+          echo "Commenter: $COMMENTER"
+          echo "Approved users: $APPROVED_USERS"
+
+          if echo ",$APPROVED_USERS," | grep -qi ",$COMMENTER,"; then
+            echo "✅ Valid approval from: $COMMENTER"
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ $COMMENTER is not authorized to approve bundle size increases"
+            echo "valid=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add reaction and trigger re-run
+        if: steps.verify.outputs.valid == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add rocket reaction to approval comment
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+            // Get the PR details
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Find the most recent CI workflow run for this PR
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: pr.data.head.sha,
+            });
+
+            // Find the CI workflow run (look for failed or completed)
+            const ciRun = runs.data.workflow_runs.find(r => 
+              r.name === 'Continuous Integration' && (r.conclusion === 'failure' || r.status === 'completed')
+            );
+
+            if (ciRun) {
+              console.log(`Re-running workflow: ${ciRun.id}`);
+              await github.rest.actions.reRunWorkflow({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: ciRun.id
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `🔄 Bundle size increase approved by @${context.payload.comment.user.login}. Re-running CI workflow...`
+              });
+            } else {
+              console.log('No failed CI run found to re-run');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `✅ Bundle size increase approved by @${context.payload.comment.user.login}. Please re-run the CI workflow manually.`
+              });
+            }
+
+      - name: Reject unauthorized approval
+        if: steps.verify.outputs.valid != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add confused reaction to unauthorized comment
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'confused'
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ @${{ github.event.comment.user.login }} is not authorized to approve bundle size increases. See \`.github/bundle-reviewers.yml\` for the list of authorized reviewers.`
+            });

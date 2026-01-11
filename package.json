@@ -95,6 +95,8 @@
     "@nx/workspace": "22.0.2",
     "@playwright/test": "^1.36.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@statoscope/cli": "^5.29.0",
+    "@statoscope/stats-validator-plugin-webpack": "^5.29.0",
     "@statoscope/webpack-plugin": "^5.29.0",
     "@swc-node/register": "1.9.2",
     "@swc/cli": "0.6.0",
