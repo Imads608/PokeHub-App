@@ -3,7 +3,7 @@ import type {
   OAuthLoginResponse,
 } from '@pokehub/shared/shared-user-models';
 // Import the JWT type to ensure TypeScript connects our augmentation
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 import type { JWT as _JWT } from 'next-auth/jwt';
 
 // Module augmentation for next-auth types
