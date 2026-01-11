@@ -272,8 +272,8 @@ jobs:
         env:
           ANALYZE: 'true'
 
-      # Upload stats as artifact (main branch only)
-      - name: Upload bundle stats
+      # Upload stats as artifact (main branch only - kept for 90 days for PR comparisons)
+      - name: Upload bundle stats (main)
         if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -281,6 +281,15 @@ jobs:
           path: apps/pokehub-app/statoscope-stats-client.json
           overwrite: true
           retention-days: 90
+
+      # Upload stats as artifact (PRs - for debugging/analysis)
+      - name: Upload bundle stats (PR)
+        if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats-pr-${{ github.event.pull_request.number }}
+          path: apps/pokehub-app/statoscope-stats-client.json
+          retention-days: 7
 
       # Download main branch stats (PRs only)
       - name: Download main branch stats
@@ -301,15 +310,21 @@ jobs:
         id: validate
         continue-on-error: true
         run: |
+          VALIDATION_FAILED="false"
+
           if [ -f ./main-stats/statoscope-stats-client.json ]; then
             echo "Comparing against main branch..."
-            OUTPUT=$(npx @statoscope/cli validate \
+            if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json \
-              --reference ./main-stats/statoscope-stats-client.json 2>&1) || true
+              --reference ./main-stats/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
           else
             echo "No main branch reference, validating absolute limits only..."
-            OUTPUT=$(npx @statoscope/cli validate \
-              --input apps/pokehub-app/statoscope-stats-client.json 2>&1) || true
+            if ! OUTPUT=$(npx @statoscope/cli validate \
+              --input apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
           fi
 
           echo "$OUTPUT"
@@ -317,11 +332,7 @@ jobs:
           echo "$OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          if echo "$OUTPUT" | grep -q "error"; then
-            echo "failed=true" >> $GITHUB_OUTPUT
-          else
-            echo "failed=false" >> $GITHUB_OUTPUT
-          fi
+          echo "failed=$VALIDATION_FAILED" >> $GITHUB_OUTPUT
 
       # Check for existing approval comment
       - name: Check for bundle size approval
