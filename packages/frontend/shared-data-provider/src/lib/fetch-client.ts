@@ -18,6 +18,9 @@ export interface FetchError {
 export class FetchApiError extends Error {
   constructor(message: string, public status: number) {
     super(message);
+    this.name = 'FetchApiError';
+    // Maintain proper prototype chain
+    Object.setPrototypeOf(this, FetchApiError.prototype);
   }
 }
 
@@ -106,15 +109,15 @@ export const getFetchClient = (key: AppFetchClientKeys): FetchClient => {
 };
 
 const tryParseJSONError = async (res: Response): Promise<FetchApiError> => {
-  let jsonRes: unknown;
+  let message = 'An Error occurred';
   try {
-    jsonRes = await res.json();
+    const jsonRes = await res.json();
+    if (jsonRes && typeof jsonRes.message === 'string') {
+      message = jsonRes.message;
+    }
   } catch {
-    jsonRes = {
-      message: 'An Error occurred',
-      status: res.status,
-    } as FetchApiError;
+    // Couldn't parse JSON, use default message
   }
 
-  return jsonRes as FetchApiError;
+  return new FetchApiError(message, res.status);
 };

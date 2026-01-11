@@ -141,12 +141,10 @@ test.describe('Team Editor - Team Editing Flow', () => {
     // Navigate to non-existent team
     await page.goto('/team-builder/00000000-0000-0000-0000-000000000000');
 
-    // Should show 404 page or error
-    // Note: Next.js 404 handling might show different content
-    // Check that we're NOT on the team builder (team didn't load)
-    await expect(
-      page.getByText(/not found|Team not found|Error|404/i)
-    ).toBeVisible({ timeout: 5000 });
+    // Should show the actual Next.js 404 page with a 404 heading
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should allow editing team name', async ({ page }) => {
