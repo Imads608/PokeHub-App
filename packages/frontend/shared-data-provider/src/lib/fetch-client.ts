@@ -18,6 +18,9 @@ export interface FetchError {
 export class FetchApiError extends Error {
   constructor(message: string, public status: number) {
     super(message);
+    this.name = 'FetchApiError';
+    // Maintain proper prototype chain
+    Object.setPrototypeOf(this, FetchApiError.prototype);
   }
 }
 
