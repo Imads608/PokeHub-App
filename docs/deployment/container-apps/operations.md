@@ -3,6 +3,7 @@
 This guide covers common day-to-day operations for managing the PokeHub Container Apps deployment.
 
 ## Table of Contents
+
 - [Building and Deploying Updates](#building-and-deploying-updates)
 - [Viewing Logs](#viewing-logs)
 - [Updating Resources](#updating-resources)
@@ -72,6 +73,7 @@ This adds a timestamp environment variable to trigger a new revision.
 ```bash
 # Stream logs from backend
 az containerapp logs show \
+ --format text \
   --name pokehub-api \
   --resource-group pokehub_group \
   --follow

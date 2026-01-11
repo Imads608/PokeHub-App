@@ -23,7 +23,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "next dev apps/pokehub-app -p 4200 | pino-pretty"
+        "command": "next dev apps/pokehub-app -p 4200 --webpack | pino-pretty"
       },
       "configurations": {
         "development": {

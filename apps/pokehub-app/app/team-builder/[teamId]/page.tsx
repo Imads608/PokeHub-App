@@ -47,10 +47,12 @@ export default async function TeamEditPage({
       logger.info('Successfully fetched team data for teamId: ' + teamId);
     } catch (error) {
       // Only show 404 for "not found" errors, rethrow others
+      logger.error(error, 'Error fetching team data for teamId: ' + teamId);
       if (error instanceof FetchApiError && error.status === 404) {
         logger.warn('Team not found for teamId: ' + teamId);
         notFound();
       }
+      logger.warn('Throwing error for request');
       // Rethrow other errors (500, 401, etc.) to show error page
       throw error;
     }
