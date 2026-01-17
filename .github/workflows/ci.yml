@@ -303,11 +303,25 @@ jobs:
         if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
         continue-on-error: true
         run: |
-          gh run download \
+          # Find the most recent successful CI run on main
+          RUN_ID=$(gh run list \
             --repo ${{ github.repository }} \
             --branch main \
-            --name bundle-stats-main \
-            --dir ./main-stats || echo "No main branch stats found"
+            --workflow "Continuous Integration" \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+
+          if [ -n "$RUN_ID" ]; then
+            echo "Downloading bundle stats from run $RUN_ID"
+            gh run download "$RUN_ID" \
+              --repo ${{ github.repository }} \
+              --name bundle-stats-main \
+              --dir ./main-stats || echo "No bundle-stats-main artifact found in run $RUN_ID"
+          else
+            echo "No successful CI run found on main branch"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
