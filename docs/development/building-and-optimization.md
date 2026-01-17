@@ -82,6 +82,39 @@ Or set via environment variable:
 PORT=4200 npx next start
 ```
 
+#### 3. Running the Standalone Build Locally
+
+Next.js outputs a standalone build that includes only the necessary dependencies. This is useful for testing production builds locally before containerized deployments.
+
+**Step 1: Build with environment variables**
+
+```bash
+NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:3000/api npx nx build pokehub-app --configuration=production
+```
+
+**Step 2: Navigate to the standalone directory**
+
+```bash
+cd dist/apps/pokehub-app/.next/standalone
+```
+
+**Step 3: Copy static assets**
+
+The standalone build doesn't include static files by default. Copy them manually:
+
+```bash
+cp -r ../static ./dist/apps/pokehub-app/.next/static
+cp -r ../../../../apps/pokehub-app/public ./apps/pokehub-app/public
+```
+
+**Step 4: Start the server**
+
+```bash
+PORT=4200 node apps/pokehub-app/server.js
+```
+
+The application will be available at `http://localhost:4200`.
+
 ### Backend (pokehub-api)
 
 #### 1. Build the API
