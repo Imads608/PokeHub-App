@@ -272,9 +272,16 @@ jobs:
         env:
           ANALYZE: 'true'
 
+      # Always build pokehub-app on main to ensure bundle stats are available for PR comparisons
+      - name: Build pokehub-app for bundle stats (main)
+        if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes != 'true'
+        run: npx nx build pokehub-app --configuration=production
+        env:
+          ANALYZE: 'true'
+
       # Upload stats as artifact (main branch only - kept for 90 days for PR comparisons)
       - name: Upload bundle stats (main)
-        if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes == 'true'
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats-main
