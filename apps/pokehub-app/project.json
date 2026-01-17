@@ -71,6 +71,13 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
+    "analyze": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ANALYZE=true nx build pokehub-app --configuration=production",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "typecheck-spec": {
       "executor": "nx:run-commands",
       "options": {

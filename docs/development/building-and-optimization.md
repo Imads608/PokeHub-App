@@ -223,7 +223,13 @@ module.exports = withBundleAnalyzer({
 
 ### Running the Analyzer
 
-Build the application with bundle analysis enabled:
+Run the bundle analyzer using the dedicated Nx target:
+
+```bash
+nx analyze pokehub-app
+```
+
+Or manually with the environment variable:
 
 ```bash
 ANALYZE=true nx build pokehub-app
@@ -233,12 +239,21 @@ This will:
 
 1. Build the production bundle
 2. Generate interactive HTML reports
-3. Automatically open the reports in your browser
+3. Automatically open the reports in your browser (disabled in CI)
 
-The analyzer creates two reports:
+The build generates reports from two analyzers:
 
-- **Client-side bundle** (`client.html`) - JavaScript sent to the browser
-- **Server-side bundle** (`server.html`) - Code running on the server
+**Webpack Bundle Analyzer** (visual treemap):
+- `dist/apps/pokehub-app/.next/analyze/client.html` - Client-side JavaScript
+- `dist/apps/pokehub-app/.next/analyze/nodejs.html` - Server-side code
+- `dist/apps/pokehub-app/.next/analyze/edge.html` - Edge runtime code
+
+**Statoscope** (detailed stats and validation):
+- `apps/pokehub-app/statoscope-report-client.html` - Client bundle analysis
+- `apps/pokehub-app/statoscope-report-server.html` - Server bundle analysis
+- `apps/pokehub-app/statoscope-stats-client.json` - Stats for CI comparison
+
+Statoscope is used in CI to validate bundle size changes between PRs and main branch.
 
 ### Understanding the Output
 
