@@ -272,23 +272,38 @@ jobs:
         env:
           ANALYZE: 'true'
 
-      # Upload stats as artifact (main branch only - kept for 90 days for PR comparisons)
+      # Always build pokehub-app on main to ensure bundle stats are available for PR comparisons
+      - name: Build pokehub-app for bundle stats (main)
+        if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes != 'true'
+        run: npx nx build pokehub-app --configuration=production
+        env:
+          ANALYZE: 'true'
+
+      # Upload stats and reports as artifact (main branch only - kept for 90 days for PR comparisons)
       - name: Upload bundle stats (main)
-        if: github.ref == 'refs/heads/main' && needs.setup.outputs.has-app-changes == 'true'
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats-main
-          path: apps/pokehub-app/statoscope-stats-client.json
+          path: |
+            apps/pokehub-app/statoscope-stats-client.json
+            apps/pokehub-app/statoscope-report-client.html
+            apps/pokehub-app/statoscope-report-server.html
+            dist/apps/pokehub-app/.next/analyze/*.html
           overwrite: true
           retention-days: 90
 
-      # Upload stats as artifact (PRs - for debugging/analysis)
+      # Upload stats and reports as artifact (PRs - for debugging/analysis)
       - name: Upload bundle stats (PR)
         if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats-pr-${{ github.event.pull_request.number }}
-          path: apps/pokehub-app/statoscope-stats-client.json
+          path: |
+            apps/pokehub-app/statoscope-stats-client.json
+            apps/pokehub-app/statoscope-report-client.html
+            apps/pokehub-app/statoscope-report-server.html
+            dist/apps/pokehub-app/.next/analyze/*.html
           retention-days: 7
 
       # Download main branch stats (PRs only)
@@ -296,11 +311,25 @@ jobs:
         if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
         continue-on-error: true
         run: |
-          gh run download \
+          # Find the most recent successful CI run on main
+          RUN_ID=$(gh run list \
             --repo ${{ github.repository }} \
             --branch main \
-            --name bundle-stats-main \
-            --dir ./main-stats || echo "No main branch stats found"
+            --workflow "Continuous Integration" \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+
+          if [ -n "$RUN_ID" ]; then
+            echo "Downloading bundle stats from run $RUN_ID"
+            gh run download "$RUN_ID" \
+              --repo ${{ github.repository }} \
+              --name bundle-stats-main \
+              --dir ./main-stats || echo "No bundle-stats-main artifact found in run $RUN_ID"
+          else
+            echo "No successful CI run found on main branch"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -311,9 +340,31 @@ jobs:
         continue-on-error: true
         run: |
           VALIDATION_FAILED="false"
+          SIZE_CHANGE="unknown"
 
           if [ -f ./main-stats/statoscope-stats-client.json ]; then
             echo "Comparing against main branch..."
+
+            # Get bundle sizes to determine if it's an increase or decrease
+            PR_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' apps/pokehub-app/statoscope-stats-client.json)
+            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' ./main-stats/statoscope-stats-client.json)
+
+            echo "PR bundle size: $PR_SIZE bytes"
+            echo "Main bundle size: $MAIN_SIZE bytes"
+
+            if [ "$PR_SIZE" -gt "$MAIN_SIZE" ]; then
+              SIZE_CHANGE="increased"
+              DIFF=$((PR_SIZE - MAIN_SIZE))
+              echo "📈 Bundle size INCREASED by $((DIFF / 1024)) KB"
+            elif [ "$PR_SIZE" -lt "$MAIN_SIZE" ]; then
+              SIZE_CHANGE="decreased"
+              DIFF=$((MAIN_SIZE - PR_SIZE))
+              echo "📉 Bundle size DECREASED by $((DIFF / 1024)) KB"
+            else
+              SIZE_CHANGE="unchanged"
+              echo "Bundle size unchanged"
+            fi
+
             if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json \
               --reference ./main-stats/statoscope-stats-client.json 2>&1); then
@@ -333,6 +384,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "failed=$VALIDATION_FAILED" >> $GITHUB_OUTPUT
+          echo "size_change=$SIZE_CHANGE" >> $GITHUB_OUTPUT
 
       # Check for existing approval comment
       - name: Check for bundle size approval
@@ -385,6 +437,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           VALIDATION_OUTPUT: ${{ steps.validate.outputs.output }}
+          SIZE_CHANGE: ${{ steps.validate.outputs.size_change }}
         with:
           script: |
             const fs = require('fs');
@@ -403,12 +456,27 @@ jobs:
             }
 
             const validationOutput = process.env.VALIDATION_OUTPUT || 'No output available';
+            const sizeChange = process.env.SIZE_CHANGE || 'unknown';
             const reviewerList = approvedUsers.map(u => '@' + u).join(', ');
 
+            // Determine the appropriate message based on size change direction
+            let changeDescription;
+            let emoji;
+            if (sizeChange === 'decreased') {
+              changeDescription = 'The bundle size has **decreased** beyond the review threshold.';
+              emoji = '📉';
+            } else if (sizeChange === 'increased') {
+              changeDescription = 'The bundle size has **increased** beyond the allowed threshold.';
+              emoji = '📈';
+            } else {
+              changeDescription = 'The bundle size has changed beyond the allowed threshold.';
+              emoji = '⚠️';
+            }
+
             const body = [
-              '## ⚠️ Bundle Size Validation Failed',
+              `## ${emoji} Bundle Size Validation Failed`,
               '',
-              'The bundle size has increased beyond the allowed threshold.',
+              changeDescription,
               '',
               '<details>',
               '<summary>Validation Output</summary>',
@@ -419,7 +487,7 @@ jobs:
               '',
               '</details>',
               '',
-              '### To approve this increase',
+              '### To approve this change',
               '',
               'An authorized reviewer must comment:',
               '```',
@@ -468,18 +536,6 @@ jobs:
           echo "❌ Bundle size validation failed and no approval found."
           echo "An authorized reviewer must comment '/approve-bundle-size <reason>' to approve."
           exit 1
-
-      # Upload bundle analysis reports for viewing
-      - name: Upload bundle analysis reports
-        if: needs.setup.outputs.has-app-changes == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bundle-analysis-${{ github.run_number }}
-          path: |
-            apps/pokehub-app/statoscope-report-client.html
-            apps/pokehub-app/statoscope-report-server.html
-            dist/apps/pokehub-app/.next/analyze/*.html
-          retention-days: 7
 
   e2e:
     name: E2E Tests

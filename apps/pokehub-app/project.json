@@ -18,7 +18,6 @@
           "outputPath": "apps/pokehub-app"
         },
         "production": {
-          "experimentalBuildMode": "compile",
           "webpack": true
         }
       }
@@ -26,7 +25,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "next dev apps/pokehub-app -p 4200 | pino-pretty"
+        "command": "next dev apps/pokehub-app -p 4200 --webpack | pino-pretty"
       },
       "configurations": {
         "development": {
@@ -58,7 +57,6 @@
           "outputPath": "apps/pokehub-app"
         },
         "production": {
-          "experimentalBuildMode": "compile",
           "webpack": true
         }
       }
@@ -72,6 +70,13 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint"
+    },
+    "analyze": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ANALYZE=true nx build pokehub-app --configuration=production",
+        "cwd": "{workspaceRoot}"
+      }
     },
     "typecheck-spec": {
       "executor": "nx:run-commands",

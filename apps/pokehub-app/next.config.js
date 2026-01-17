@@ -27,7 +27,7 @@ const nextConfig = {
           saveStatsTo: `./statoscope-stats-${
             isServer ? 'server' : 'client'
           }.json`,
-          open: 'file',
+          open: process.env.CI ? false : 'file',
           normalizeStats: true,
           // Collect gzipped sizes for accurate First Load JS validation
           compressor: 'gzip',
@@ -40,6 +40,7 @@ const nextConfig = {
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
+  openAnalyzer: !process.env.CI,
 });
 
 const plugins = [
