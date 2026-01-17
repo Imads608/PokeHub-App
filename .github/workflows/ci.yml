@@ -340,9 +340,31 @@ jobs:
         continue-on-error: true
         run: |
           VALIDATION_FAILED="false"
+          SIZE_CHANGE="unknown"
 
           if [ -f ./main-stats/statoscope-stats-client.json ]; then
             echo "Comparing against main branch..."
+
+            # Get bundle sizes to determine if it's an increase or decrease
+            PR_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' apps/pokehub-app/statoscope-stats-client.json)
+            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' ./main-stats/statoscope-stats-client.json)
+
+            echo "PR bundle size: $PR_SIZE bytes"
+            echo "Main bundle size: $MAIN_SIZE bytes"
+
+            if [ "$PR_SIZE" -gt "$MAIN_SIZE" ]; then
+              SIZE_CHANGE="increased"
+              DIFF=$((PR_SIZE - MAIN_SIZE))
+              echo "📈 Bundle size INCREASED by $((DIFF / 1024)) KB"
+            elif [ "$PR_SIZE" -lt "$MAIN_SIZE" ]; then
+              SIZE_CHANGE="decreased"
+              DIFF=$((MAIN_SIZE - PR_SIZE))
+              echo "📉 Bundle size DECREASED by $((DIFF / 1024)) KB"
+            else
+              SIZE_CHANGE="unchanged"
+              echo "Bundle size unchanged"
+            fi
+
             if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json \
               --reference ./main-stats/statoscope-stats-client.json 2>&1); then
@@ -362,6 +384,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "failed=$VALIDATION_FAILED" >> $GITHUB_OUTPUT
+          echo "size_change=$SIZE_CHANGE" >> $GITHUB_OUTPUT
 
       # Check for existing approval comment
       - name: Check for bundle size approval
@@ -414,6 +437,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           VALIDATION_OUTPUT: ${{ steps.validate.outputs.output }}
+          SIZE_CHANGE: ${{ steps.validate.outputs.size_change }}
         with:
           script: |
             const fs = require('fs');
@@ -432,12 +456,27 @@ jobs:
             }
 
             const validationOutput = process.env.VALIDATION_OUTPUT || 'No output available';
+            const sizeChange = process.env.SIZE_CHANGE || 'unknown';
             const reviewerList = approvedUsers.map(u => '@' + u).join(', ');
 
+            // Determine the appropriate message based on size change direction
+            let changeDescription;
+            let emoji;
+            if (sizeChange === 'decreased') {
+              changeDescription = 'The bundle size has **decreased** beyond the review threshold.';
+              emoji = '📉';
+            } else if (sizeChange === 'increased') {
+              changeDescription = 'The bundle size has **increased** beyond the allowed threshold.';
+              emoji = '📈';
+            } else {
+              changeDescription = 'The bundle size has changed beyond the allowed threshold.';
+              emoji = '⚠️';
+            }
+
             const body = [
-              '## ⚠️ Bundle Size Validation Failed',
+              `## ${emoji} Bundle Size Validation Failed`,
               '',
-              'The bundle size has increased beyond the allowed threshold.',
+              changeDescription,
               '',
               '<details>',
               '<summary>Validation Output</summary>',
@@ -448,7 +487,7 @@ jobs:
               '',
               '</details>',
               '',
-              '### To approve this increase',
+              '### To approve this change',
               '',
               'An authorized reviewer must comment:',
               '```',
