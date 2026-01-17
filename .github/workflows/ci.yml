@@ -279,23 +279,31 @@ jobs:
         env:
           ANALYZE: 'true'
 
-      # Upload stats as artifact (main branch only - kept for 90 days for PR comparisons)
+      # Upload stats and reports as artifact (main branch only - kept for 90 days for PR comparisons)
       - name: Upload bundle stats (main)
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats-main
-          path: apps/pokehub-app/statoscope-stats-client.json
+          path: |
+            apps/pokehub-app/statoscope-stats-client.json
+            apps/pokehub-app/statoscope-report-client.html
+            apps/pokehub-app/statoscope-report-server.html
+            dist/apps/pokehub-app/.next/analyze/*.html
           overwrite: true
           retention-days: 90
 
-      # Upload stats as artifact (PRs - for debugging/analysis)
+      # Upload stats and reports as artifact (PRs - for debugging/analysis)
       - name: Upload bundle stats (PR)
         if: github.event_name == 'pull_request' && needs.setup.outputs.has-app-changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-stats-pr-${{ github.event.pull_request.number }}
-          path: apps/pokehub-app/statoscope-stats-client.json
+          path: |
+            apps/pokehub-app/statoscope-stats-client.json
+            apps/pokehub-app/statoscope-report-client.html
+            apps/pokehub-app/statoscope-report-server.html
+            dist/apps/pokehub-app/.next/analyze/*.html
           retention-days: 7
 
       # Download main branch stats (PRs only)
@@ -489,18 +497,6 @@ jobs:
           echo "❌ Bundle size validation failed and no approval found."
           echo "An authorized reviewer must comment '/approve-bundle-size <reason>' to approve."
           exit 1
-
-      # Upload bundle analysis reports for viewing
-      - name: Upload bundle analysis reports
-        if: needs.setup.outputs.has-app-changes == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bundle-analysis-${{ github.run_number }}
-          path: |
-            apps/pokehub-app/statoscope-report-client.html
-            apps/pokehub-app/statoscope-report-server.html
-            dist/apps/pokehub-app/.next/analyze/*.html
-          retention-days: 7
 
   e2e:
     name: E2E Tests
