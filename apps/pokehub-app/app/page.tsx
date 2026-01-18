@@ -96,11 +96,11 @@ export default function Page() {
             <div className="flex flex-col justify-center space-y-6">
               <div>
                 <h1 className="text-balance text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-                  Begin Your Pokemon Journey
+                  Begin Your Pokémon Journey
                 </h1>
                 <p className="mt-4 text-balance text-lg text-white/80 md:text-xl">
-                  Explore the vast world of Pokemon, discover new species, and
-                  become the ultimate Pokemon Trainer.
+                  Explore the vast world of Pokémon, discover new species, and
+                  become the ultimate Pokémon Trainer.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4">
