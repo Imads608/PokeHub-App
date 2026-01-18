@@ -8,3 +8,5 @@ export {
   getCoverageGaps,
   getAllTypes,
 } from './lib/type-effectiveness';
+export { FEATURED_POKEMON } from './lib/featured-pokemon';
+export type { FeaturedPokemon } from './lib/featured-pokemon';
