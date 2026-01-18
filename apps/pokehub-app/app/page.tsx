@@ -121,10 +121,9 @@ export default function Page() {
             <div className="flex items-center justify-center">
               <Image
                 src="/images/battle-artwork.png"
-                alt="PokeHub Logo"
+                alt="PokeHub Battle Artwork"
                 width={640}
                 height={640}
-                unoptimized
                 className="drop-shadow-2xl"
                 priority
               />
