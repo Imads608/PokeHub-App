@@ -342,12 +342,12 @@ jobs:
           VALIDATION_FAILED="false"
           SIZE_CHANGE="unknown"
 
-          if [ -f ./main-stats/statoscope-stats-client.json ]; then
+          if [ -f ./main-stats/apps/pokehub-app/statoscope-stats-client.json ]; then
             echo "Comparing against main branch..."
 
             # Get bundle sizes to determine if it's an increase or decrease
             PR_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' apps/pokehub-app/statoscope-stats-client.json)
-            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' ./main-stats/statoscope-stats-client.json)
+            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' ./main-stats/apps/pokehub-app/statoscope-stats-client.json)
 
             echo "PR bundle size: $PR_SIZE bytes"
             echo "Main bundle size: $MAIN_SIZE bytes"
@@ -367,7 +367,7 @@ jobs:
 
             if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json \
-              --reference ./main-stats/statoscope-stats-client.json 2>&1); then
+              --reference ./main-stats/apps/pokehub-app/statoscope-stats-client.json 2>&1); then
               VALIDATION_FAILED="true"
             fi
           else
