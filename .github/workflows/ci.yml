@@ -346,11 +346,14 @@ jobs:
             echo "Comparing against main branch..."
 
             # Get bundle sizes to determine if it's an increase or decrease
-            PR_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' apps/pokehub-app/statoscope-stats-client.json)
-            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .sizes.compressor] | add' ./main-stats/apps/pokehub-app/statoscope-stats-client.json)
+            # Note: This is the total uncompressed size of all initial chunks across all pages (for trend indication only)
+            # Statoscope validation uses compressed per-entry sizes for actual pass/fail decisions
+            PR_SIZE=$(jq '[.chunks[] | select(.initial == true) | .size] | add' apps/pokehub-app/statoscope-stats-client.json)
+            MAIN_SIZE=$(jq '[.chunks[] | select(.initial == true) | .size] | add' ./main-stats/apps/pokehub-app/statoscope-stats-client.json)
 
-            echo "PR bundle size: $PR_SIZE bytes"
-            echo "Main bundle size: $MAIN_SIZE bytes"
+            echo "Total initial chunks size (uncompressed, all pages):"
+            echo "  PR: $((PR_SIZE / 1024)) KB ($PR_SIZE bytes)"
+            echo "  Main: $((MAIN_SIZE / 1024)) KB ($MAIN_SIZE bytes)"
 
             if [ "$PR_SIZE" -gt "$MAIN_SIZE" ]; then
               SIZE_CHANGE="increased"
