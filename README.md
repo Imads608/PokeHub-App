@@ -1,5 +1,9 @@
 # PokeHub
 
+<p align="center">
+  <img src="apps/pokehub-app/public/images/logo.svg" alt="PokeHub Logo" width="300" />
+</p>
+
 **A modern, full-stack Pokemon Showdown clone built with cutting-edge web technologies**
 
 PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive Pokemon battling and team building experiences with a sleek, modern interface. Built from the ground up using enterprise-grade technologies in an Nx monorepo architecture, this project showcases best practices in full-stack TypeScript development.
@@ -92,7 +96,7 @@ Start both together:
 nx serve pokehub-app pokehub-api
 ```
 
-Navigate to http://localhost:4200/ to see the app in action!
+Navigate to <http://localhost:4200/> to see the app in action!
 
 ## 🧪 Testing
 
@@ -177,7 +181,11 @@ Contributions are welcome! This project is actively under development. Please fe
 
 ## 📝 License
 
-This project is for educational and demonstration purposes. Pokemon and related assets are property of Nintendo, Game Freak, and The Pokemon Company.
+The source code is licensed under the [MIT License](LICENSE).
+
+**Assets** (including but not limited to logos, images, and graphics in `apps/pokehub-app/public/images/`) are proprietary and may not be used, modified, or distributed for commercial purposes without explicit permission.
+
+Pokemon and related assets are property of Nintendo, Game Freak, and The Pokemon Company.
 
 ---
 
