@@ -43,8 +43,8 @@ export function AppNav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
-          <div className="relative h-10 w-10  rounded-full shadow-md">
-            <LogoIcon assetPath={'/images/logo.svg'} />
+          <div className="relative h-16 w-16">
+            <LogoIcon assetPath={'/images/logo.svg'} size={64} />
           </div>
           <span className="text-xl font-bold tracking-tight">
             <span className="text-primary">Poké</span>
