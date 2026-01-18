@@ -181,7 +181,11 @@ Contributions are welcome! This project is actively under development. Please fe
 
 ## 📝 License
 
-This project is for educational and demonstration purposes. Pokemon and related assets are property of Nintendo, Game Freak, and The Pokemon Company.
+The source code is licensed under the [MIT License](LICENSE).
+
+**Assets** (including but not limited to logos, images, and graphics in `apps/pokehub-app/public/images/`) are proprietary and may not be used, modified, or distributed for commercial purposes without explicit permission.
+
+Pokemon and related assets are property of Nintendo, Game Freak, and The Pokemon Company.
 
 ---
 
