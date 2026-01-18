@@ -119,16 +119,15 @@ export default function Page() {
               </div>
             </div>
             <div className="flex items-center justify-center">
-              <div className="relative h-80 w-80 md:h-96 md:w-96">
-                <Image
-                  src="/images/battle-artwork.svg"
-                  alt="PokeHub Logo"
-                  fill
-                  className="object-contain drop-shadow-2xl"
-                  sizes="384px"
-                  priority
-                />
-              </div>
+              <Image
+                src="/images/battle-artwork.png"
+                alt="PokeHub Logo"
+                width={640}
+                height={640}
+                unoptimized
+                className="drop-shadow-2xl"
+                priority
+              />
             </div>
           </div>
         </div>
