@@ -188,6 +188,7 @@ export function SettingsContainer() {
                           onClick={handleSaveAvatar}
                           disabled={isSaving}
                           className="gap-2"
+                          data-testid="avatar-save-button"
                         >
                           {isSaving ? (
                             <>
@@ -203,6 +204,7 @@ export function SettingsContainer() {
                           size="sm"
                           onClick={clearSelection}
                           disabled={isSaving}
+                          data-testid="avatar-cancel-button"
                         >
                           Cancel
                         </Button>
@@ -244,6 +246,7 @@ export function SettingsContainer() {
                 <Button
                   variant="destructive"
                   onClick={() => setIsDeleteDialogOpen(true)}
+                  data-testid="delete-account-button"
                 >
                   Delete Account
                 </Button>
@@ -280,6 +283,7 @@ export function SettingsContainer() {
               variant="ghost"
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isDeleting}
+              data-testid="dialog-cancel-button"
             >
               Cancel
             </Button>
@@ -287,6 +291,7 @@ export function SettingsContainer() {
               variant="destructive"
               onClick={handleDeleteAccount}
               disabled={isDeleting}
+              data-testid="dialog-confirm-delete-button"
             >
               {isDeleting ? (
                 <>

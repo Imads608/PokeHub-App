@@ -9,4 +9,5 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory:
     '../../../coverage/packages/frontend/pokehub-ui-components',
+  setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
 };
