@@ -714,23 +714,64 @@ Uses existing dependencies from the authentication feature:
 - ✅ Validates avatar-only updates
 - ✅ Enforces username constraints when provided
 
+**Avatar Upload Hook Tests** (`packages/frontend/pokehub-ui-components/src/lib/avatar-upload/use-avatar-upload.spec.tsx`):
+
+- ✅ Initializes with default state
+- ✅ Creates preview URL for valid files
+- ✅ Rejects invalid file types
+- ✅ Handles upload flow (SAS URL → blob upload → return result)
+- ✅ Clears selection and revokes URLs
+
+**Avatar Upload Component Tests** (`packages/frontend/pokehub-ui-components/src/lib/avatar-upload/avatar-upload.spec.tsx`):
+
+- ✅ Renders avatar with current URL or fallback
+- ✅ Supports size variants (sm, md, lg)
+- ✅ Shows upload button and loading states
+- ✅ Handles file selection and errors
+
+**Settings Component Tests** (`apps/pokehub-app/app/settings/settings.spec.tsx`):
+
+- ✅ Displays profile section with avatar and username
+- ✅ Shows account info with OAuth badge
+- ✅ Avatar upload preview and save/cancel buttons
+- ✅ Danger zone with delete confirmation modal
+
 ### E2E Tests
 
-**Users E2E Tests** (`apps/pokehub-api-e2e/src/pokehub-api/users.spec.ts`):
+**Backend E2E Tests** (`apps/pokehub-api-e2e/src/pokehub-api/users.spec.ts`):
 
 - ✅ First time setup with username and avatar
 - ✅ Avatar-only updates for existing users
 - ✅ Rejects username change attempts
 - ✅ Account deletion
 
+**Frontend E2E Tests** (`apps/pokehub-app-e2e/src/settings.spec.ts`):
+
+- ✅ Page rendering with all sections (profile, account, avatar, danger zone)
+- ✅ Avatar upload with file preview
+- ✅ Avatar save and cancel functionality
+- ✅ Delete account modal open/close
+- ✅ Delete account and redirect to login
+- ✅ Navigation to settings from user menu (desktop and mobile)
+
 ### Test Commands
 
 ```bash
-# Run unit tests
-nx test pokehub-api --testPathPattern="users"
+# Backend unit tests
+npx nx test pokehub-api --testPathPattern="users"
 
-# Run e2e tests
-nx e2e pokehub-api-e2e --testPathPattern="users.spec"
+# Backend E2E tests
+npx nx e2e pokehub-api-e2e --testFile=users.spec.ts
+
+# Frontend component/hook tests
+npx nx test frontend-pokehub-ui-components --testFile=avatar-upload
+npx nx test pokehub-app --testPathPattern="settings"
+
+# Frontend E2E tests
+npx nx e2e pokehub-app-e2e -- --grep "Settings"
+
+# Frontend E2E tests with verbose output
+npx nx e2e:verbose pokehub-app-e2e -- --grep "Settings"
 ```
 
 ---

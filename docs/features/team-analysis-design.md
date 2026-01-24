@@ -1,5 +1,33 @@
 # Team Analysis Feature - Design Documentation
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Design Decision History](#design-decision-history)
+- [Design Options Considered](#design-options-considered)
+  - [Option A: Comprehensive Analysis (Chosen)](#option-a-comprehensive-analysis--chosen)
+  - [Option B: Defensive Focus (Not Chosen)](#option-b-defensive-focus-not-chosen)
+  - [Option C: Simple Overview (Not Chosen)](#option-c-simple-overview-not-chosen)
+- [Visual Design Specification](#visual-design-specification)
+- [Alternative Visual Styles (Not Chosen)](#alternative-visual-styles-not-chosen)
+- [Feature Components](#feature-components)
+  - [Defensive Coverage Tab](#defensive-coverage-tab)
+  - [Offensive Coverage Tab](#offensive-coverage-tab)
+  - [Summary Tab](#summary-tab)
+- [Technical Architecture](#technical-architecture)
+  - [Lazy Loading Strategy](#lazy-loading-strategy)
+  - [Utility Functions](#utility-functions)
+- [File Structure](#file-structure)
+- [Future Enhancement Ideas](#future-enhancement-ideas)
+- [Design Rationale](#design-rationale)
+- [Success Metrics](#success-metrics)
+- [Accessibility Considerations](#accessibility-considerations)
+- [Related Documentation](#related-documentation)
+- [Implementation Status](#implementation-status)
+- [Changelog](#changelog)
+
+---
+
 ## Overview
 
 The Team Analysis feature provides comprehensive insights into a Pokemon team's strengths, weaknesses, and type coverage. It helps users identify defensive vulnerabilities and offensive gaps in their team composition.
@@ -7,6 +35,7 @@ The Team Analysis feature provides comprehensive insights into a Pokemon team's 
 ## Design Decision History
 
 ### Date: 2025-01-15
+
 **Decision:** Implement Option A (Comprehensive Analysis)
 **Decided By:** Team decision based on competitive team building needs
 
@@ -17,27 +46,32 @@ The Team Analysis feature provides comprehensive insights into a Pokemon team's 
 ### Option A: Comprehensive Analysis ✅ **CHOSEN**
 
 **Scope:**
+
 - ✅ Defensive Coverage Tab: Critical weaknesses, shared weaknesses, resistances, immunities
 - ✅ Offensive Coverage Tab: Move type coverage, super-effective hits, coverage gaps
 - ✅ Summary Tab: Quick overview with top threats and recommendations
 
 **Visual Style:**
+
 - Type badges with counts (e.g., "Rock ×4")
 - Severity indicators (🔴 Critical, 🟡 Warning, 🟢 Good)
 - Grouped sections for easy scanning
 - Three-tab layout for organized information
 
 **Pros:**
+
 - Complete feature set covering all competitive team building needs
 - Most useful for serious players
 - Organized information hierarchy prevents overwhelming users
 - Scalable for future enhancements
 
 **Cons:**
+
 - More complex implementation (~4-6 hours)
 - Larger bundle size (mitigated with lazy loading)
 
 **Implementation Details:**
+
 - Lazy loaded like PokemonSelector/Editor
 - Webpack prefetch + hover prefetch for instant loading
 - Reuses existing type effectiveness utilities where possible
@@ -47,20 +81,24 @@ The Team Analysis feature provides comprehensive insights into a Pokemon team's 
 ### Option B: Defensive Focus (NOT CHOSEN)
 
 **Scope:**
+
 - ✅ Defensive Coverage Only: Weaknesses, resistances, immunities (detailed)
 - ❌ Offensive coverage (could be added later)
 - ✅ Basic recommendations
 
 **Visual Style:**
+
 - Type badges with counts
 - Single tab/view, no need for tabs
 
 **Pros:**
+
 - Faster to implement (~2-3 hours)
 - Covers most casual use cases
 - Simpler UI
 
 **Cons:**
+
 - Missing offensive coverage analysis (critical for competitive play)
 - Would likely need to add offensive coverage later anyway
 - Less comprehensive insights
@@ -73,6 +111,7 @@ Offensive coverage is essential for competitive team building. Players need to k
 ### Option C: Simple Overview (NOT CHOSEN)
 
 **Scope:**
+
 - ✅ Team weaknesses (critical + shared)
 - ✅ Team resistances
 - ✅ Current move types on team (no detailed coverage)
@@ -80,15 +119,18 @@ Offensive coverage is essential for competitive team building. Players need to k
 - ❌ Detailed offensive analysis
 
 **Visual Style:**
+
 - Simple badge lists
 - Very compact single card/dialog
 
 **Pros:**
+
 - Quickest implementation (~1-2 hours)
 - Good starting point for MVP
 - Minimal bundle size
 
 **Cons:**
+
 - Very limited insights
 - Would definitely need expansion later
 - Doesn't meet competitive player needs
@@ -127,12 +169,14 @@ Too basic for the target audience. Competitive Pokemon team building requires de
 ```
 
 **Badge Design:**
+
 - Reuse existing `typeColors` from `shared-utils`
 - Format: `[Type Name ×count]`
 - Color: Type-specific background color
 - Border: Severity-based (red for critical, yellow for warnings)
 
 **Severity Levels:**
+
 - 🔴 **Critical**: All 6 Pokemon affected (or 5+ for teams with fewer Pokemon)
 - 🟡 **Warning**: 3-4 Pokemon affected
 - 🟢 **Good**: Strong resistance (4+ Pokemon resist)
@@ -144,6 +188,7 @@ Too basic for the target audience. Competitive Pokemon team building requires de
 ### Heatmap Grid Style
 
 **Example:**
+
 ```
           🔥 💧 🌿 ⚡ 🧊 ✊ 🧪 ⛰️ ...
 Pikachu   ✓  ✗  ✓  —  ✓  ✓  ✓  ✗  ...
@@ -154,11 +199,13 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
 **Legend:** ✓ = Resists, ✗ = Weak (✗✗ = 4x weak), — = Immune
 
 **Pros:**
+
 - Very visual and intuitive
 - Shows individual Pokemon matchups
 - Good for analyzing specific threats
 
 **Cons:**
+
 - Takes a lot of screen space
 - Hard to read on mobile
 - Overwhelming with all 18 types
@@ -171,6 +218,7 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
 ### List with Icons Style
 
 **Example:**
+
 ```
 🔴 Critical Weaknesses
   • Rock (4 Pokemon)
@@ -182,11 +230,13 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
 ```
 
 **Pros:**
+
 - Very clear categorization
 - Easy to scan
 - Good text hierarchy
 
 **Cons:**
+
 - Takes more vertical space than badges
 - Doesn't leverage Pokemon type colors
 - Less compact
@@ -200,16 +250,20 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
 ### Defensive Coverage Tab
 
 **Displays:**
+
 1. **Critical Weaknesses** (All/most Pokemon weak)
+
    - Types that hit 5+ Pokemon on team
    - Red alert badge style
    - Warning message if any critical weaknesses exist
 
 2. **Shared Weaknesses** (Multiple Pokemon weak)
+
    - Types that hit 3-4 Pokemon
    - Yellow warning badge style
 
 3. **Team Resistances**
+
    - Types that 3+ Pokemon resist
    - Green badge style
    - Shows count of Pokemon resisting
@@ -226,23 +280,28 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
 ### Offensive Coverage Tab
 
 **Displays:**
+
 1. **Available Move Types**
+
    - All move types present on team
    - Split by Physical/Special/Status
    - Shows count of moves per type
 
 2. **Super Effective Coverage** (`superEffectiveCoverage`)
+
    - Types the team can hit for super-effective damage (2× or 4×)
    - Green badges for covered types
    - Example: Fire moves hit Grass, Ice, Bug, Steel super-effectively
 
 3. **Coverage Gaps** (`coverageGaps`)
+
    - Types with no super-effective coverage (neutral, resisted, OR immune)
    - Inverse of super-effective coverage (all 18 types minus SE coverage)
    - Includes both resistant types AND neutral types
    - Yellow badges to indicate missing coverage
 
 4. **Types You Cannot Hit** (`cannotHit`)
+
    - Types immune to ALL your move types (0× damage)
    - Uses intersection logic: only shows types that every move cannot hit
    - Red badges with warning indicator
@@ -254,6 +313,7 @@ Blastoise ✗  ✓  ✗  ✗  ✓  ✓  ✓  ✓  ...
    - Badge with reduced opacity to indicate resistance
 
 **Relationship:**
+
 ```
 All 18 Types
 ├─ superEffectiveCoverage    ✅ Your strengths
@@ -270,10 +330,12 @@ All 18 Types
 ### Summary Tab
 
 **Displays:**
+
 1. **Overall Team Rating** (0-100%)
    Weighted composite score based on three metrics:
 
    **Formula:**
+
    ```
    Overall Score =
      (Type Diversity × 30%) +
@@ -282,11 +344,14 @@ All 18 Types
    ```
 
    **Components:**
+
    - **Type Diversity (30% weight):** `uniqueMoveTypes / 18`
+
      - Measures move type variety
      - Prevents predictability and limited options
 
    - **Defensive Balance (40% weight):** `totalResistances / totalWeaknesses` (capped at 1.0)
+
      - Ratio of resistances to weaknesses
      - **Highest weight** - most critical for team survival
      - 1.0 = perfectly balanced (equal resistances and weaknesses)
@@ -296,21 +361,25 @@ All 18 Types
      - Important for hitting threats
 
    **Example:**
+
    - 10 unique move types → Type Diversity = 10/18 = 55.6%
    - 35 resistances, 25 weaknesses → Defensive Balance = 1.4 → 100% (capped)
    - Hits 13 types SE → Offensive Balance = 13/18 = 72.2%
    - **Overall = (55.6% × 0.3) + (100% × 0.4) + (72.2% × 0.3) = 78.4%**
 
 2. **Quick Stats Cards**
+
    - Type diversity percentage with progress bar
    - Defensive balance percentage with progress bar
    - Offensive balance percentage with progress bar
 
 3. **Top Threats**
+
    - 3 most dangerous types for your team
    - Based on critical/shared weaknesses (most common across team)
 
 4. **Top Advantages**
+
    - 3 types you dominate against
    - **Scoring:** `(Pokemon that resist this type) + (Moves that hit this type SE)`
    - Example: If 4 Pokemon resist Fire and you have 3 Fire-type moves → Fire scores 7
@@ -330,6 +399,7 @@ All 18 Types
 ### Lazy Loading Strategy
 
 **Implementation Pattern:**
+
 ```tsx
 // In team-editor.tsx
 const TeamAnalysisDialog = lazy(() =>
@@ -337,7 +407,7 @@ const TeamAnalysisDialog = lazy(() =>
     /* webpackPrefetch: true */
     /* webpackChunkName: "team-analysis" */
     './team-analysis'
-  ).then(mod => ({ default: mod.TeamAnalysisDialog }))
+  ).then((mod) => ({ default: mod.TeamAnalysisDialog }))
 );
 
 // Prefetch function
@@ -347,6 +417,7 @@ const prefetchTeamAnalysis = useCallback(() => {
 ```
 
 **Benefits:**
+
 - Reduces initial Team Builder bundle size
 - Prefetched during idle time
 - Hover prefetch for instant loading
@@ -357,8 +428,10 @@ const prefetchTeamAnalysis = useCallback(() => {
 ### Utility Functions
 
 #### `calculateTeamDefensiveCoverage()`
+
 **Input:** Array of Pokemon with their types
 **Output:**
+
 ```typescript
 {
   teamWeaknesses: { type: TypeName, count: number }[],
@@ -370,8 +443,10 @@ const prefetchTeamAnalysis = useCallback(() => {
 ```
 
 #### `calculateTeamOffensiveCoverage()`
+
 **Input:** Array of moves from all team Pokemon
 **Output:**
+
 ```typescript
 {
   moveTypes: { type: TypeName, count: number, category: string }[],
@@ -411,26 +486,31 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ### Phase 2 Enhancements (Not Currently Planned)
 
 1. **Meta Analysis**
+
    - Compare team against common threats in selected tier
    - Show win rates against popular Pokemon
    - Requires tier usage data
 
 2. **Team Comparison**
+
    - Compare two teams side-by-side
    - Highlight differences in coverage
    - Good for A/B testing team changes
 
 3. **Export Analysis**
+
    - Export as image for sharing
    - Export as PDF report
    - Copy to clipboard as text
 
 4. **Historical Tracking**
+
    - Track team changes over time
    - Show coverage improvements/regressions
    - Requires backend storage
 
 5. **Interactive Heatmap**
+
    - Click a type to see which Pokemon are affected
    - Highlight suggested changes
    - Toggle between defensive/offensive view
@@ -447,6 +527,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ### Why Tabs Instead of Single View?
 
 **Tabs Chosen Because:**
+
 - Separates concerns (defensive vs offensive vs summary)
 - Prevents information overload
 - Allows focused analysis
@@ -458,6 +539,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ### Why Badge Style?
 
 **Badge Style Chosen Because:**
+
 - Compact and scannable
 - Reuses existing type color system
 - Familiar to Pokemon players
@@ -469,6 +551,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ### Why Lazy Loading?
 
 **Lazy Loading Chosen Because:**
+
 - Team Analysis is not needed on initial page load
 - Only ~30-40% of users might use it per session
 - Keeps initial Team Builder fast
@@ -480,12 +563,14 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ## Success Metrics
 
 **How We'll Measure Success:**
+
 1. Feature usage rate (% of team edits that trigger analysis)
 2. Time spent in analysis dialog (engagement indicator)
 3. User feedback on usefulness
 4. Impact on team quality (harder to measure)
 
 **Expected Usage:**
+
 - Casual users: 10-20% usage rate
 - Competitive users: 60-80% usage rate
 - Power users: 90%+ usage rate
@@ -514,6 +599,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 ### Completed ✅
 
 **Core Utilities:**
+
 - [x] Design documentation created
 - [x] Offensive type effectiveness utilities added to `type-effectiveness.ts`
   - `getOffensiveTypeEffectiveness()` - Derived from defensive data
@@ -527,6 +613,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
 - [x] Proper TypeScript types using `MoveCategory` from `@pkmn/dex`
 
 **UI Components:**
+
 - [x] Team Analysis Dialog component (lazy loaded)
   - Main dialog with tabs structure
   - Suspense boundary with loading state
@@ -552,6 +639,7 @@ packages/frontend/pokehub-team-builder/src/lib/team-editor/
   - Actionable recommendations
 
 **Integration:**
+
 - [x] Wire up Team Analysis button
   - State management in `team-editor.tsx`
   - Callback passed to `team-configuration-section.tsx`
