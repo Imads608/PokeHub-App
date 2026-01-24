@@ -44,6 +44,7 @@ describe('UsersController', () => {
       getUserCore: jest.fn(),
       createUser: jest.fn(),
       getAvatarUrl: jest.fn(),
+      deleteUser: jest.fn(),
     };
 
     mockJwtService = {
@@ -190,14 +191,42 @@ describe('UsersController', () => {
       expect(mockUsersService.updateUserProfile).not.toHaveBeenCalled();
     });
 
-    it('should return 400 when username is missing', async () => {
-      await request(app.getHttpServer())
+    it('should pass empty request to service (service validates)', async () => {
+      // Service returns empty object for no-op updates (user with existing username)
+      mockUsersService.updateUserProfile.mockResolvedValue({});
+
+      const response = await request(app.getHttpServer())
         .post(`/${testUserId}/profile`)
         .set('Authorization', `Bearer ${validAccessToken}`)
         .send({})
-        .expect(HttpStatus.BAD_REQUEST);
+        .expect(HttpStatus.CREATED);
 
-      expect(mockUsersService.updateUserProfile).not.toHaveBeenCalled();
+      expect(response.body).toEqual({});
+      expect(mockUsersService.updateUserProfile).toHaveBeenCalledWith(
+        testUserId,
+        {}
+      );
+    });
+
+    it('should update profile with avatar only', async () => {
+      const avatarOnly = { avatar: 'myavatar.png' };
+      const responseData: IUpdateUserProfile = {
+        avatar:
+          'https://storage.blob.core.windows.net/avatars/user-123/avatar.png',
+      };
+      mockUsersService.updateUserProfile.mockResolvedValue(responseData);
+
+      const response = await request(app.getHttpServer())
+        .post(`/${testUserId}/profile`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .send(avatarOnly)
+        .expect(HttpStatus.CREATED);
+
+      expect(response.body).toEqual(responseData);
+      expect(mockUsersService.updateUserProfile).toHaveBeenCalledWith(
+        testUserId,
+        avatarOnly
+      );
     });
 
     it('should accept valid avatar extensions (png, jpg, jpeg, gif)', async () => {
@@ -308,6 +337,57 @@ describe('UsersController', () => {
         'user-abc',
         'id'
       );
+    });
+  });
+
+  describe('DELETE /:userId (deleteUser)', () => {
+    beforeEach(() => {
+      mockJwtService.validateToken.mockResolvedValue(mockUser);
+    });
+
+    it('should delete user successfully (204)', async () => {
+      mockUsersService.deleteUser.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .expect(HttpStatus.NO_CONTENT);
+
+      expect(mockUsersService.deleteUser).toHaveBeenCalledWith(testUserId);
+    });
+
+    it('should return 403 when deleting another user', async () => {
+      const otherUserId = 'other-user-456';
+
+      await request(app.getHttpServer())
+        .delete(`/${otherUserId}`)
+        .set('Authorization', `Bearer ${validAccessToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 without auth token', async () => {
+      mockJwtService.validateToken.mockRejectedValue(new Error('Unauthorized'));
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 with invalid auth token', async () => {
+      mockJwtService.validateToken.mockRejectedValue(
+        new Error('Invalid token')
+      );
+
+      await request(app.getHttpServer())
+        .delete(`/${testUserId}`)
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(HttpStatus.FORBIDDEN);
+
+      expect(mockUsersService.deleteUser).not.toHaveBeenCalled();
     });
   });
 });

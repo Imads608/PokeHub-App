@@ -42,9 +42,10 @@ Frontend Playwright E2E tests are now **fully functional** using an MSW (Mock Se
 
 **Current Test Results:**
 
-- ✅ **Frontend Playwright E2E Tests: 63/63 passing (100%)**
+- ✅ **Frontend Playwright E2E Tests: 81/81 passing (100%)**
   - Team Editor: 44 tests
   - Create Profile: 19 tests
+  - Settings: 18 tests
 - ✅ Backend API E2E Tests: 70 tests passing
 - ✅ Backend Unit Tests: 64 passing
 - ✅ Frontend Unit Tests: 283+ passing
@@ -457,31 +458,54 @@ async function createAndAuthenticateUser(page: Page): Promise<string> {
 
 ### Running Tests
 
+All E2E tests should be run through Nx for consistency with the monorepo workflow:
+
 ```bash
-# Run all E2E tests
-cd apps/pokehub-app-e2e
-npx playwright test
+# Run all E2E tests (recommended)
+npx nx e2e pokehub-app-e2e
+
+# Run only Chromium (like CI)
+npx nx e2e pokehub-app-e2e -- --project=chromium
 
 # Run specific test file
-npx playwright test team-editor.spec.ts
-npx playwright test create-profile.spec.ts
+npx nx e2e pokehub-app-e2e -- --grep "team-editor"
+npx nx e2e pokehub-app-e2e -- --grep "create-profile"
+npx nx e2e pokehub-app-e2e -- --grep "Settings"
 
-# Run with specific filter
-npx playwright test -g "should load existing team"
-npx playwright test -g "should submit profile"
+# Run with specific test name filter
+npx nx e2e pokehub-app-e2e -- --grep "should load existing team"
+npx nx e2e pokehub-app-e2e -- --grep "should submit profile"
 
 # Run with verbose server logs (shows backend/frontend/proxy output)
 npx nx e2e:verbose pokehub-app-e2e
 
+# Pass additional arguments with verbose mode
+npx nx e2e:verbose pokehub-app-e2e -- --grep "should submit profile"
+
+# Run with UI mode for debugging
+npx nx e2e pokehub-app-e2e -- --ui
+
 # Run in headed mode (see browser)
-npx playwright test --headed
+npx nx e2e pokehub-app-e2e -- --headed
 
 # Run with debug mode
-npx playwright test --debug
-
-# Run only chromium
-npx playwright test --project=chromium
+npx nx e2e pokehub-app-e2e -- --debug
 ```
+
+**Note:** Use `--` before Playwright-specific flags to pass them through Nx to Playwright.
+
+#### Alternative: Running Playwright Directly
+
+If you need to run Playwright directly (e.g., for advanced debugging), you can do so from the e2e project directory:
+
+```bash
+cd apps/pokehub-app-e2e
+npx playwright test
+npx playwright test --project=chromium
+npx playwright test -g "should load existing team"
+```
+
+However, **using `npx nx e2e` is recommended** as it ensures consistent environment setup and integrates with Nx caching.
 
 ### Verbose Mode for Debugging
 
@@ -493,6 +517,9 @@ npx nx e2e:verbose pokehub-app-e2e
 
 # Pass additional arguments (e.g., run specific test)
 npx nx e2e:verbose pokehub-app-e2e -- --grep "should submit profile"
+
+# Combine with other Playwright options
+npx nx e2e:verbose pokehub-app-e2e -- --project=chromium --headed
 ```
 
 **Configuration (`apps/pokehub-app-e2e/project.json`):**
@@ -545,7 +572,7 @@ This is useful for debugging:
 
 ## Current Test Coverage
 
-**✅ 63/63 Chrome Tests Passing (100%)**
+**✅ 81/81 Chrome Tests Passing (100%)**
 
 ### Test Suites
 
@@ -682,6 +709,43 @@ The create-profile tests use a **parallel-safe approach** with two auth strategi
 
 - ✅ Show export button
 - ✅ Show import button
+
+#### Settings Page Tests (18 tests)
+
+The settings tests use a **parallel-safe approach** with two auth strategies:
+
+1. **Read-only tests** use shared `user.json` auth state (user with username)
+2. **Write tests** (avatar save, account deletion) create unique users per test via `browser.newContext()` + `createAuthenticatedUserWithProfile()` helper
+
+##### Page Rendering (5 tests)
+
+- ✅ Render settings heading and profile section
+- ✅ Display avatar in profile section
+- ✅ Display username in profile section
+- ✅ Display email in account section
+- ✅ Display danger zone with delete button
+
+##### Avatar Upload (5 tests)
+
+- ✅ Open file picker when clicking Change Avatar
+- ✅ Show preview when file is selected
+- ✅ Show Save and Cancel buttons when preview exists
+- ✅ Clear preview when clicking Cancel
+- ✅ Save avatar successfully
+
+##### Delete Account Modal (4 tests)
+
+- ✅ Open confirmation modal when clicking Delete Account
+- ✅ Close modal when clicking Cancel
+- ✅ Show warning text in modal
+- ✅ Delete account and redirect to login
+
+##### Navigation (4 tests)
+
+- ✅ Navigate to settings from desktop user menu
+- ✅ Navigate to settings from mobile menu
+- ✅ Show settings link in mobile user submenu
+- ✅ Redirect unauthenticated users to login
 
 ### Key Improvements Made
 
@@ -1050,7 +1114,7 @@ jobs:
 
 ---
 
-**Last Updated:** December 20, 2025  
+**Last Updated:** January 24, 2026  
 **Status:** ✅ Working - MSW Proxy Implementation Complete  
 **Test Infrastructure:** Complete and functional  
-**Current Coverage:** 63 passing E2E tests (team editor + create profile)
+**Current Coverage:** 81 passing E2E tests (team editor + create profile + settings)

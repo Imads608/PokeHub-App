@@ -1,5 +1,70 @@
 # Team Builder Feature Documentation
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Team Viewer](#team-viewer)
+  - [Features](#features)
+  - [Component Structure](#component-structure)
+  - [State Management](#state-management)
+  - [Data Fetching](#data-fetching)
+  - [Client-Side Filtering](#client-side-filtering)
+  - [Team Actions](#team-actions)
+  - [UI Components](#ui-components)
+  - [Empty States](#empty-states)
+  - [Test IDs](#test-ids)
+- [Team Editor](#team-editor)
+- [Architecture](#architecture)
+  - [Component Structure](#component-structure-1)
+  - [State Management](#state-management-1)
+  - [Data Flow](#data-flow)
+- [Implemented Features](#implemented-features)
+  - [1. Basic Tab](#1-basic-tab-)
+  - [2. Moves Tab](#2-moves-tab-)
+  - [3. EVs Tab](#3-evs-tab-)
+  - [4. IVs Tab](#4-ivs-tab-)
+- [Cancel Functionality](#cancel-functionality-)
+- [Validation & Change Tracking](#validation--change-tracking-)
+  - [Team Validation System](#team-validation-system)
+  - [Change Tracking](#change-tracking)
+  - [UI Integration](#ui-integration)
+  - [Generation Protection](#generation-protection)
+- [Team Building UX Evolution](#team-building-ux-evolution-)
+- [Pokemon Showdown Integration](#pokemon-showdown-integration-)
+  - [Architecture](#architecture-1)
+  - [Validation Flow](#validation-flow)
+  - [Format Rules Display Component](#format-rules-display-component)
+  - [Proactive Filtering](#proactive-filtering)
+  - [Dual Validation System](#dual-validation-system)
+  - [Enhanced Validation UI](#enhanced-validation-ui)
+  - [Performance Optimizations](#performance-optimizations)
+  - [Single Source of Truth for Validation](#single-source-of-truth-for-validation)
+  - [Type Improvements](#type-improvements)
+  - [Files Modified](#files-modified)
+  - [Testing](#testing)
+  - [User Experience Impact](#user-experience-impact)
+- [Mobile Responsiveness](#mobile-responsiveness-)
+- [Performance Optimizations](#performance-optimizations-)
+  - [1. Lazy Loading & Code Splitting](#1-lazy-loading--code-splitting)
+  - [2. Tree Shaking Optimization](#2-tree-shaking-optimization)
+  - [Benefits](#benefits)
+  - [Performance Metrics](#performance-metrics)
+- [Team Analysis](#team-analysis-)
+- [Shared Components](#shared-components)
+  - [SearchableSelect](#searchableselect)
+  - [Skeleton Component](#skeleton-component)
+- [Generation Handling](#generation-handling)
+- [Data Models](#data-models)
+- [TODO / Incomplete](#todo--incomplete)
+- [Design Patterns](#design-patterns)
+- [Testing Considerations](#testing-considerations)
+- [Future Enhancements](#future-enhancements)
+- [Dependencies](#dependencies)
+- [File Locations](#file-locations)
+- [Changelog](#changelog)
+
+---
+
 ## Overview
 
 The Team Builder feature allows users to create and customize competitive Pokemon teams. It provides an intuitive interface for configuring Pokemon stats, moves, abilities, items, and other battle-relevant attributes.
@@ -44,7 +109,7 @@ team-viewer/
 
 ```typescript
 interface TeamViewerFiltersState {
-  searchTerm: string;                    // Team name search
+  searchTerm: string; // Team name search
   selectedGeneration: GenerationNum | 'all';
   selectedFormat: string | 'all';
   sortBy: 'created' | 'updated' | 'name';
@@ -54,6 +119,7 @@ interface TeamViewerFiltersState {
 ```
 
 **Key Methods**:
+
 - `setSearchTerm(term)` - Update search filter
 - `setSelectedGeneration(gen)` - Filter by generation
 - `setSelectedFormat(format)` - Filter by format
@@ -75,9 +141,8 @@ export function useUserTeams() {
   return useQuery({
     queryKey: teamsKeys.all,
     queryFn: async () => {
-      return withAuthRetryWithoutResponse(
-        session!.accessToken,
-        (token) => getUserTeams(token)
+      return withAuthRetryWithoutResponse(session!.accessToken, (token) =>
+        getUserTeams(token)
       );
     },
     enabled: !!session?.accessToken,
@@ -130,7 +195,9 @@ export function useFilteredTeams(teams: TeamResponseDTO[]) {
 
     // Generation filter
     if (selectedGeneration !== 'all') {
-      filtered = filtered.filter((team) => team.generation === selectedGeneration);
+      filtered = filtered.filter(
+        (team) => team.generation === selectedGeneration
+      );
     }
 
     // Format filter
@@ -146,17 +213,26 @@ export function useFilteredTeams(teams: TeamResponseDTO[]) {
           comparison = a.name.localeCompare(b.name);
           break;
         case 'created':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          comparison =
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'updated':
-          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          comparison =
+            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
     return filtered;
-  }, [teams, searchTerm, selectedGeneration, selectedFormat, sortBy, sortOrder]);
+  }, [
+    teams,
+    searchTerm,
+    selectedGeneration,
+    selectedFormat,
+    sortBy,
+    sortOrder,
+  ]);
 }
 ```
 
@@ -222,6 +298,7 @@ const handleDelete = async (teamId: string) => {
 ### Empty States
 
 **No Teams**:
+
 ```tsx
 <Card>
   <h3>No teams yet</h3>
@@ -233,6 +310,7 @@ const handleDelete = async (teamId: string) => {
 ```
 
 **No Filtered Results**:
+
 ```tsx
 <Card>
   <h3>No teams found</h3>
@@ -306,16 +384,19 @@ team-editor/
 ### State Management
 
 **Context**: `TeamEditorContext` provides centralized state management for:
+
 - Team metadata (name, format, generation)
 - Active Pokemon being edited
 - Pokemon in team (dynamic array, up to 6)
 
 **Validation Context**: `TeamValidationContext` provides validation state:
+
 - Validation results and errors
 - Team-level and Pokemon-level error retrieval
 - Validation ready state
 
 **Key Methods**:
+
 - `setActivePokemon(pokemon)` - Set the Pokemon being edited
 - `setLevel(level)` - Update Pokemon level
 - `setAbility(ability)` - Update Pokemon ability
@@ -341,6 +422,7 @@ team-editor/
 **Purpose**: Configure fundamental Pokemon attributes
 
 **Fields**:
+
 - **Nickname**: Text input (optional, max 12 characters, defaults to species name)
 - **Level**: Slider + input (1-100)
 - **Ability**: Select dropdown with description
@@ -356,6 +438,7 @@ team-editor/
   - Auto-scroll to selected nature
 
 **Key Features**:
+
 - All selects use consistent `SearchableSelect` component
 - Item dropdown width: 400px
 - Ability select width: 400px
@@ -366,6 +449,7 @@ team-editor/
 **Purpose**: Select up to 4 moves from Pokemon's learnset
 
 **Features**:
+
 - **4 move slots** in 2-column grid
 - **Searchable dropdown** for each slot
 - **Generation-aware learnset** - Uses `usePokemonLearnset` and `usePokemonMovesFromLearnset`
@@ -385,6 +469,7 @@ team-editor/
 - **Dropdown width**: 550px (wider to accommodate move details)
 
 **Technical Details**:
+
 - Uses `SearchableSelect` component
 - Type colors from `@pokehub/frontend/shared-utils`
 - Loading state tracked via `isLoading` prop
@@ -397,6 +482,7 @@ team-editor/
 **Purpose**: Distribute Effort Values across stats
 
 **Features**:
+
 - **Progress bar** showing total EVs (0/510)
 - **Per-stat controls**:
   - Slider (0-252, step of 4)
@@ -413,6 +499,7 @@ team-editor/
   - Gen 2+: HP, Attack, Defense, Sp. Attack, Sp. Defense, Speed
 
 **Technical Details**:
+
 - Uses `getStats(generation)` to determine available stats
 - Uses `getStatName(statId, generation)` for display names
 - Filters stats where name starts with `[`
@@ -423,6 +510,7 @@ team-editor/
 **Purpose**: Configure Individual Values (genetic stats)
 
 **Features**:
+
 - **Per-stat controls**:
   - Slider (0-31, step of 1)
   - Number input for precise values
@@ -434,6 +522,7 @@ team-editor/
 - **Single state update**: Preset buttons update all IVs in one operation to avoid race conditions
 
 **Technical Details**:
+
 - Validation: 0-31 range per stat
 - Preset buttons use `setValue` to update all stats atomically
 - No total limit (unlike EVs)
@@ -447,17 +536,21 @@ The Pokemon Editor includes smart cancel functionality that discards unsaved cha
 ### Implementation
 
 **State Management**:
+
 - `pokemonSnapshot` - Stores a deep copy of the Pokemon before editing begins
 - Snapshot captured in `onPokemonSelected` when editor opens
 - Includes all properties: species, ability, item, nature, moves, EVs, IVs
 
 **Change Detection**:
+
 - Uses `arePokemonEqual` from `useTeamChanges` hook
 - Deep comparison of all Pokemon properties
 - Only shows warning when actual changes exist
 
 **User Experience**:
+
 1. **No changes made**:
+
    - User clicks Cancel or X button → Dialog closes immediately
    - No warning shown (seamless experience)
 
@@ -468,11 +561,13 @@ The Pokemon Editor includes smart cancel functionality that discards unsaved cha
    - **Cancel** → Dialog stays open, changes preserved
 
 **Dialog Behavior**:
+
 - Both Cancel button and X (close) button use same `onCancelEdit` logic
 - `handleDialogOpenChange` intercepts dialog close events
 - Consistent behavior across all close mechanisms
 
 **Code Flow**:
+
 ```typescript
 // 1. Save snapshot when editor opens
 onPokemonSelected(pokemon) → setPokemonSnapshot(deepCopy(pokemon))
@@ -490,21 +585,24 @@ onPokemonSelected(pokemon) → setPokemonSnapshot(deepCopy(pokemon))
 ### Technical Details
 
 **Deep Copy Implementation**:
+
 ```typescript
 setPokemonSnapshot({
   ...pokemonInTeam,
-  moves: [...pokemonInTeam.moves],      // Clone moves array
-  evs: { ...pokemonInTeam.evs },         // Clone EVs object
-  ivs: { ...pokemonInTeam.ivs },         // Clone IVs object
+  moves: [...pokemonInTeam.moves], // Clone moves array
+  evs: { ...pokemonInTeam.evs }, // Clone EVs object
+  ivs: { ...pokemonInTeam.ivs }, // Clone IVs object
 });
 ```
 
 **Files Modified**:
+
 - `pokemon-editor.tsx` - Added `onCancel` prop and wired Cancel button
 - `team-editor.tsx` - Added snapshot state, change detection, handlers
 - `useTeamChanges.ts` - Exported `arePokemonEqual` for reuse
 
 **Reused Logic**:
+
 - `arePokemonEqual(p1, p2)` - Deep comparison utility
   - Compares all basic properties (species, ability, item, nature, gender, level, name)
   - Compares moves array (order matters)
@@ -518,11 +616,13 @@ setPokemonSnapshot({
 **Purpose**: Ensure teams meet format requirements before saving
 
 **Implementation**:
+
 - **Zod Schemas** (`pokemon-team.validation.ts`):
   - `pokemonInTeamSchema` - Validates individual Pokemon
   - `pokemonTeamSchema` - Validates entire team
 
 **Validation Rules**:
+
 - **Required Fields**: Species, ability, nature must be non-empty
 - **Team Name**: Required (min 1 character, max 50 characters)
 - **Nickname**: Optional (max 12 characters, matching official Pokemon games Gen 6+)
@@ -532,6 +632,7 @@ setPokemonSnapshot({
 - **Level**: Must be 1-100
 
 **Validation Functions**:
+
 ```typescript
 validateTeam(team): ValidationResult
 validatePokemon(pokemon, slotIndex): ValidationResult
@@ -547,11 +648,13 @@ hasAtLeastOneMove(moves): boolean
 **Hook**: `useTeamChanges(currentTeamState)`
 
 **Features**:
+
 - Deep comparison of team state vs. saved state
 - Tracks all Pokemon properties (moves, EVs, IVs, etc.)
 - Provides change list for debugging
 
 **Returns**:
+
 ```typescript
 {
   hasChanges: boolean           // True if team differs from saved state
@@ -565,6 +668,7 @@ hasAtLeastOneMove(moves): boolean
 ### UI Integration
 
 **1. Save Button** (`team-configuration-section.tsx`)
+
 - Disabled when:
   - No changes detected
   - Validation errors exist
@@ -574,18 +678,21 @@ hasAtLeastOneMove(moves): boolean
 - Validates before allowing save attempt
 
 **2. Validation Summary Component**
+
 - Displays all validation errors above Save button
 - Groups errors by Pokemon slot (e.g., "Slot 1 (Pikachu)")
 - Shows team-level errors separately
 - Only visible when validation fails
 
 **3. Pokemon Card Indicators**
+
 - **Red border** when Pokemon has validation errors
 - **AlertCircle icon** next to Pokemon name
 - **Tooltip** shows all errors on hover
 - Provides immediate visual feedback
 
 **4. Inline Tab Validation**
+
 - Moves tab shows alert when no moves selected
 - Errors appear contextually where they occur
 
@@ -594,6 +701,7 @@ hasAtLeastOneMove(moves): boolean
 **Purpose**: Prevent accidental team loss when switching generations
 
 **Features**:
+
 - **Generation Lock**: Cannot change generation when team has Pokemon
 - **Confirmation Dialog**: Warns user that team will be cleared
   - Explains why clearing is necessary (moves/abilities vary by generation)
@@ -603,6 +711,7 @@ hasAtLeastOneMove(moves): boolean
 - **Free Changes**: Generation can be changed freely when team is empty
 
 **Context Methods**:
+
 - `clearTeam()` - Resets all 6 Pokemon slots to undefined
 - `hasAnyPokemon()` - Returns true if any slot has a Pokemon
 
@@ -611,12 +720,14 @@ hasAtLeastOneMove(moves): boolean
 ### UI Architecture Change: Sequential Pokemon Addition
 
 **Previous Design** (6 Slots Approach):
+
 - 6 empty slots displayed upfront
 - Users could click any slot to add a Pokemon
 - All slots visible regardless of whether they contained Pokemon
 - Parallel editing workflow
 
 **Current Design** (One-at-a-Time Approach):
+
 - Pokemon added sequentially through Pokemon Selector
 - Only shows Pokemon cards that have been added to the team
 - Cleaner, less overwhelming interface
@@ -625,6 +736,7 @@ hasAtLeastOneMove(moves): boolean
 **Implementation Details**:
 
 **1. Pokemon Addition Flow**:
+
 ```
 1. User clicks "Add Pokemon" button
    ↓
@@ -644,23 +756,27 @@ hasAtLeastOneMove(moves): boolean
 ```
 
 **2. Team Display**:
+
 - **Dynamic Grid**: Only shows cards for added Pokemon
 - **Empty State**: When team is empty, shows "Add Pokemon" button
 - **6 Pokemon Maximum**: Button disabled when team is full
 - **Visual Feedback**: Cards appear with smooth transitions
 
 **3. Pokemon Editing**:
+
 - **Click Pokemon Card**: Opens Pokemon Editor with existing Pokemon data
 - **Edit Mode**: All tabs populated with current values
 - **Save Changes**: Updates Pokemon in current slot
 - **Cancel**: Discards changes and restores original Pokemon
 
 **4. Pokemon Management**:
+
 - **Remove Pokemon**: X button on Pokemon card removes from team
 - **Slot Preservation**: Removed Pokemon leaves empty slot
 - **Re-add**: Can add new Pokemon to empty slot
 
 **Benefits of New Approach**:
+
 - **Reduced Cognitive Load**: Users focus on one Pokemon at a time
 - **Cleaner Interface**: No empty slot clutter
 - **Better Mobile Experience**: Less scrolling, more focused
@@ -668,35 +784,39 @@ hasAtLeastOneMove(moves): boolean
 - **Validation Clarity**: Easier to see which Pokemon need attention
 
 **Context State Management**:
+
 ```typescript
 // Team pokemon array (dynamic array, up to 6)
-const [pokemonTeam, setPokemonTeam] = useState<PokemonInTeam[]>([])
+const [pokemonTeam, setPokemonTeam] = useState<PokemonInTeam[]>([]);
 
 // Active pokemon being edited
-const [activePokemon, setActivePokemon] = useState<PokemonInTeam | undefined>(undefined)
+const [activePokemon, setActivePokemon] = useState<PokemonInTeam | undefined>(
+  undefined
+);
 
 // Add Pokemon to team
 const addActivePokemonToTeam = () => {
-  if (!activePokemon) return
-  if (pokemonTeam.length >= 6) return // Max 6 Pokemon
+  if (!activePokemon) return;
+  if (pokemonTeam.length >= 6) return; // Max 6 Pokemon
 
-  setPokemonTeam([...pokemonTeam, activePokemon])
-}
+  setPokemonTeam([...pokemonTeam, activePokemon]);
+};
 
 // Update Pokemon at specific index
 const updatePokemonInTeam = (index: number, pokemon: PokemonInTeam) => {
-  const newTeam = [...pokemonTeam]
-  newTeam[index] = pokemon
-  setPokemonTeam(newTeam)
-}
+  const newTeam = [...pokemonTeam];
+  newTeam[index] = pokemon;
+  setPokemonTeam(newTeam);
+};
 
 // Remove Pokemon from team
 const removePokemonFromTeam = (index: number) => {
-  setPokemonTeam(pokemonTeam.filter((_, i) => i !== index))
-}
+  setPokemonTeam(pokemonTeam.filter((_, i) => i !== index));
+};
 ```
 
 **UI Components**:
+
 - `team-editor.tsx` - Main container with dynamic Pokemon grid
 - `pokemon-card.tsx` - Individual Pokemon display card
 - `pokemon-selector.tsx` - Species selection dialog
@@ -709,6 +829,7 @@ const removePokemonFromTeam = (index: number) => {
 The Team Builder now integrates with **Pokemon Showdown**, the most popular competitive Pokemon battle simulator. This integration provides format-specific validation, rule enforcement, and ban lists to ensure teams comply with official competitive formats.
 
 **Pokemon Showdown** defines:
+
 - Battle formats (OU, UU, Ubers, VGC, etc.)
 - Tier-based bans (Pokemon, moves, abilities, items)
 - Clauses (Species Clause, Sleep Clause, etc.)
@@ -719,6 +840,7 @@ The Team Builder now integrates with **Pokemon Showdown**, the most popular comp
 **Key Components**:
 
 1. **Format Selector** (`packages/frontend/pokehub-team-builder/src/lib/team-editor/team-configuration/format-selector.tsx`)
+
    - Unified format selection using searchable Combobox
    - Fetches formats from Pokemon Showdown API via `useFormats` hook
    - Groups formats by category (Singles, Doubles, VGC, etc.)
@@ -730,12 +852,14 @@ The Team Builder now integrates with **Pokemon Showdown**, the most popular comp
    - Showdown format ID computed as `gen${generation}${formatId}` (e.g., `gen9ou`)
 
 2. **Team Validator** (`packages/shared/pokemon-showdown-validation/src/lib/validator.ts`)
+
    - Validates teams against format rules
    - Checks banned Pokemon, moves, abilities, items
    - Returns detailed error messages
    - Uses `@pkmn/sim` under the hood
 
 3. **Format Rules** (`packages/shared/pokemon-showdown-validation/src/lib/format-rules.ts`)
+
    - Retrieves format-specific restrictions
    - Parses ban lists from format data
    - Provides structured rule information
@@ -751,11 +875,11 @@ The Team Builder now integrates with **Pokemon Showdown**, the most popular comp
 
 ```typescript
 // 1. User configures team metadata
-generation.setValue(9)
-format.setValue('ou') // Format ID from Pokemon Showdown (e.g., 'ou', 'vgc2024rege', 'nationaldex')
+generation.setValue(9);
+format.setValue('ou'); // Format ID from Pokemon Showdown (e.g., 'ou', 'vgc2024rege', 'nationaldex')
 
 // 2. Context automatically computes Showdown format ID
-const showdownFormatId = `gen${generation}${format}`
+const showdownFormatId = `gen${generation}${format}`;
 // Result: 'gen9ou'
 
 // 3. Validation context validates team in real-time
@@ -764,12 +888,12 @@ const validationResult = validateTeam({
   generation: generation.value,
   format: format.value,
   pokemon: teamPokemon.value,
-})
+});
 
 // 4. Components access validation from validation context
-const validation = useTeamValidationContext()
-const isValid = validation.isTeamValid
-const errors = validation.getPokemonErrors(index)
+const validation = useTeamValidationContext();
+const isValid = validation.isTeamValid;
+const errors = validation.getPokemonErrors(index);
 ```
 
 ### Format Rules Display Component
@@ -779,6 +903,7 @@ const errors = validation.getPokemonErrors(index)
 **Purpose**: Shows users what Pokemon, moves, abilities, and items are banned in the selected format
 
 **Features**:
+
 - **Dynamic Rule Loading**: Fetches rules based on `showdownFormatId`
 - **Categorized Bans**: Separate sections for Pokemon, moves, abilities, items
 - **Visual Design**: Card-based layout with Shield icon
@@ -786,14 +911,13 @@ const errors = validation.getPokemonErrors(index)
 - **Comprehensive Display**: Shows format name and complete ban lists
 
 **UI Elements**:
+
 ```tsx
-<FormatRulesDisplay
-  showdownFormatId="gen9ou"
-  generation={9}
-/>
+<FormatRulesDisplay showdownFormatId="gen9ou" generation={9} />
 ```
 
 Displays:
+
 ```
 Format Rules
 OU (Gen 9)
@@ -819,30 +943,36 @@ OU (Gen 9)
 The integration includes **proactive filtering** to prevent users from selecting banned options:
 
 **1. Pokemon Selector** (`pokemon-selector.tsx`)
+
 - Fetches format bans using `useFormatBans` hook
 - Filters banned Pokemon from search results
 - Users cannot add banned Pokemon to their team
 
 **2. Moves Tab** (`moves-tab.tsx`)
+
 - Filters banned moves from move selection dropdown
 - Only shows legal moves for the format
 - Prevents selection of restricted moves
 
 **3. Basic Tab** (`basic-tab.tsx`)
+
 - Filters banned abilities from ability dropdown
 - Filters banned items from item selection
 - Prevents selection of restricted options
 
 **Implementation**:
+
 ```typescript
 // Hook for fetching format bans
 const { bannedPokemon, bannedMoves, bannedAbilities, bannedItems } =
-  useFormatBans(showdownFormatId, generation)
+  useFormatBans(showdownFormatId, generation);
 
 // Filter options
-const legalMoves = moves.filter(move => !bannedMoves.includes(move.name))
-const legalAbilities = abilities.filter(ab => !bannedAbilities.includes(ab.name))
-const legalItems = items.filter(item => !bannedItems.includes(item.name))
+const legalMoves = moves.filter((move) => !bannedMoves.includes(move.name));
+const legalAbilities = abilities.filter(
+  (ab) => !bannedAbilities.includes(ab.name)
+);
+const legalItems = items.filter((item) => !bannedItems.includes(item.name));
 ```
 
 ### Dual Validation System
@@ -852,6 +982,7 @@ const legalItems = items.filter(item => !bannedItems.includes(item.name))
 The Team Builder uses **two complementary validation systems**:
 
 **1. Zod Validation** (Configuration/Structure)
+
 - **Package**: `@pokehub/shared/pokemon-types`
 - **Purpose**: Validates Pokemon configuration and data integrity
 - **Scope**: Pokemon-level errors (assigned to specific Pokemon slots)
@@ -862,6 +993,7 @@ The Team Builder uses **two complementary validation systems**:
   - Data type validation
 
 **2. Pokemon Showdown Validation** (Format Rules)
+
 - **Package**: `@pokehub/shared/pokemon-showdown-validation`
 - **Purpose**: Validates against competitive format rules
 - **Scope**: Team-level errors (unless Showdown provides explicit `(pokemon X)` slot markers)
@@ -872,6 +1004,7 @@ The Team Builder uses **two complementary validation systems**:
   - Banned moves/abilities/items
 
 **Error Assignment Strategy**:
+
 - **Zod errors**: Always assigned to specific Pokemon slots (pokemonSlot set)
 - **Showdown errors**: Only assigned to Pokemon when explicit slot markers exist
   - With marker: `"(pokemon 1) Pikachu's ability..."` → Assigned to slot 0
@@ -879,6 +1012,7 @@ The Team Builder uses **two complementary validation systems**:
 - **Rationale**: Prevents incorrect error assignment with duplicate Pokemon (e.g., 2 Groudons)
 
 **Validation Flow**:
+
 ```typescript
 // 1. Run both validators
 const zodResult = validateTeam({ ... })           // Zod validation
@@ -897,6 +1031,7 @@ const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
 ```
 
 **Benefits**:
+
 - **Comprehensive**: Catches both configuration issues and format violations
 - **Clear separation**: Users understand which errors are format-specific vs configuration
 - **Accurate**: Slot assignment only when reliable (prevents duplicate Pokemon bugs)
@@ -907,6 +1042,7 @@ const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
 **Purpose**: Provide clear, actionable feedback on team validation status
 
 **Previous Implementation**:
+
 - Simple error list
 - Always visible (even when valid)
 - No visual hierarchy
@@ -916,6 +1052,7 @@ const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
 **New Implementation** (`team-validation-summary.tsx`):
 
 **1. Success State** ✅
+
 ```tsx
 // Green alert when team is valid
 <Alert variant="default" className="border-green-200 bg-green-50">
@@ -928,9 +1065,11 @@ const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
 ```
 
 **2. Collapsible Error Display** 🔽
+
 - **Expandable/Collapsible**: Users can hide error details
 - **Persistent Summary**: Error count always visible
 - **Smooth Transitions**: Chevron rotates when toggled
+
 ```tsx
 <Collapsible open={isOpen} onOpenChange={setIsOpen}>
   <Alert variant="destructive">
@@ -943,19 +1082,19 @@ const pokemonErrors = errors.filter(e => e.pokemonSlot === index)
         <ChevronDown className={isOpen ? 'rotate-180' : ''} />
       </CollapsibleTrigger>
     </div>
-    <CollapsibleContent>
-      {/* Error details */}
-    </CollapsibleContent>
+    <CollapsibleContent>{/* Error details */}</CollapsibleContent>
   </Alert>
 </Collapsible>
 ```
 
 **3. Error Count Badges** 🔢
+
 - Shows total error count in red badge
 - Per-Pokemon error counts in individual badges
 - Quickly see where problems exist
 
 **4. Visual Hierarchy** 📊
+
 - Team-level errors shown first (format issues, team composition)
 - Pokemon-level errors grouped by slot
 - Each Pokemon shows: "Slot X (PokemonName) - Y errors"
@@ -980,6 +1119,7 @@ Charizard [1 error]:
 ```
 
 **Label Improvements**:
+
 - **"Format Rule Violations"** (formerly "Team Issues") - Clearly indicates these are format-specific rules from Pokemon Showdown
 - **Pokemon names** - Configuration errors specific to that Pokemon from Zod validation
 - This distinction helps users understand:
@@ -987,10 +1127,11 @@ Charizard [1 error]:
   - Pokemon errors are about configuration/data validity
 
 **Type Safety**:
+
 ```typescript
 export interface TeamValidationSummaryProps {
-  validationResult: TeamValidationState  // From context, not generic ValidationResult
-  pokemonNames: string[]
+  validationResult: TeamValidationState; // From context, not generic ValidationResult
+  pokemonNames: string[];
 }
 ```
 
@@ -1001,6 +1142,7 @@ export interface TeamValidationSummaryProps {
 **Solution**: Lazy loading with React.lazy() and Suspense
 
 **1. Lazy Loaded Components**:
+
 ```typescript
 // Lazy load heavy validation components
 const FormatRulesDisplay = lazy(() =>
@@ -1019,6 +1161,7 @@ const TeamValidationSummary = lazy(() =>
 **2. Loading Fallbacks**:
 
 **Validation Summary Fallback**:
+
 ```tsx
 <Alert className="border-blue-200 bg-blue-50">
   <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
@@ -1030,6 +1173,7 @@ const TeamValidationSummary = lazy(() =>
 ```
 
 **Format Rules Fallback**:
+
 ```tsx
 <Card>
   <CardHeader>
@@ -1048,6 +1192,7 @@ const TeamValidationSummary = lazy(() =>
 ```
 
 **3. Suspense Boundaries**:
+
 ```tsx
 <Suspense fallback={<ValidationSummaryFallback />}>
   <TeamValidationSummary
@@ -1065,6 +1210,7 @@ const TeamValidationSummary = lazy(() =>
 ```
 
 **Benefits**:
+
 - Initial bundle size reduced
 - Validation components only loaded when needed
 - User sees meaningful loading states
@@ -1075,6 +1221,7 @@ const TeamValidationSummary = lazy(() =>
 **Problem**: Multiple components were independently computing validation (duplicate work)
 
 **Previous Implementation**:
+
 ```typescript
 // ❌ team-configuration-section.tsx
 const validationResult = useMemo(() => {
@@ -1091,6 +1238,7 @@ const validationResult = useMemo(() => {
 ```
 
 **New Implementation** (Context-based):
+
 ```typescript
 // ✅ team-validation.provider.tsx (SINGLE COMPUTATION)
 const validation = useMemo(() => {
@@ -1099,7 +1247,7 @@ const validation = useMemo(() => {
     generation: generation.value,
     format: format.value,
     pokemon: teamPokemon.value,
-  })
+  });
 
   return {
     state,
@@ -1107,16 +1255,17 @@ const validation = useMemo(() => {
     getPokemonErrors: (index: number) => getPokemonSlotErrors(state, index),
     isTeamValid: state.isValid,
     isReady: true,
-  }
-}, [teamName.value, generation.value, format.value, teamPokemon.value])
+  };
+}, [teamName.value, generation.value, format.value, teamPokemon.value]);
 
 // ✅ All components use validation context
-const validation = useTeamValidationContext()
-const isValid = validation.isTeamValid
-const errors = validation.getPokemonErrors(index)
+const validation = useTeamValidationContext();
+const isValid = validation.isTeamValid;
+const errors = validation.getPokemonErrors(index);
 ```
 
 **Benefits**:
+
 - Performance: Validation computed once, not multiple times
 - Consistency: All components see same validation state
 - Maintainability: Single place to update validation logic
@@ -1125,38 +1274,42 @@ const errors = validation.getPokemonErrors(index)
 ### Type Improvements
 
 **Previous Types**:
+
 ```typescript
 // ❌ Generic, not context-aware
 interface TeamValidationSummaryProps {
-  validationResult: ValidationResult  // Generic type
-  pokemonNames: string[]
+  validationResult: ValidationResult; // Generic type
+  pokemonNames: string[];
 }
 ```
 
 **New Types**:
+
 ```typescript
 // ✅ Context-specific, properly typed
-import type { TeamValidationState } from '../context/team-editor.context.model'
+import type { TeamValidationState } from '../context/team-editor.context.model';
 
 interface TeamValidationSummaryProps {
-  validationResult: TeamValidationState  // Context type
-  pokemonNames: string[]
+  validationResult: TeamValidationState; // Context type
+  pokemonNames: string[];
 }
 ```
 
 **Context Validation Type**:
+
 ```typescript
 interface TeamValidationState {
-  isValid: boolean
-  errors: Array<{ field: string; message: string }>
-  showdownFormatId: string
-  timestamp: number
+  isValid: boolean;
+  errors: Array<{ field: string; message: string }>;
+  showdownFormatId: string;
+  timestamp: number;
 }
 ```
 
 ### Files Modified
 
 **New Files**:
+
 - `packages/frontend/pokehub-team-builder/src/lib/hooks/useFormatBans.ts` - Hook for fetching format bans
 - `packages/frontend/pokehub-team-builder/src/lib/team-editor/format-rules-display.tsx` - Format rules UI component
 - `packages/shared/pokemon-showdown-validation/src/lib/format-mapping.ts` - Format ID mapping
@@ -1164,6 +1317,7 @@ interface TeamValidationState {
 - `packages/shared/pokemon-showdown-validation/src/lib/validator.ts` - Team validation logic
 
 **Updated Files**:
+
 - `team-editor.context.tsx` - Added centralized validation state
 - `team-configuration-section.tsx` - Removed duplicate validation, added lazy loading
 - `team-validation-summary.tsx` - Complete rewrite with enhanced UI
@@ -1176,40 +1330,43 @@ interface TeamValidationState {
 ### Testing
 
 **Test Updates**:
+
 - All 212 tests passing ✅
 - Mock context validation instead of mocking validateTeam
 - Use mutable mock state with getters for dynamic values
 - Updated prop types to match new interfaces
 
 **Example Test Mock**:
+
 ```typescript
 const mockValidationState = {
   isValid: true,
   errors: [],
   showdownFormatId: 'gen9ou',
   timestamp: Date.now(),
-}
+};
 
 jest.mock('../context/team-editor.context', () => ({
   useTeamEditorContext: () => ({
     validation: {
       get state() {
-        return mockValidationState
+        return mockValidationState;
       },
       getTeamErrors: jest.fn(() => []),
       getPokemonErrors: jest.fn(() => []),
       get isTeamValid() {
-        return mockValidationState.isValid
+        return mockValidationState.isValid;
       },
       showdownFormatId: 'gen9ou',
     },
   }),
-}))
+}));
 ```
 
 ### User Experience Impact
 
 **Before**:
+
 - No format-specific validation
 - Could add banned Pokemon/moves/items
 - Errors discovered only when trying to battle
@@ -1219,6 +1376,7 @@ jest.mock('../context/team-editor.context', () => ({
 - Overwhelming for new users
 
 **After**:
+
 - Proactive filtering prevents illegal selections
 - Real-time validation against format rules
 - Clear success/error states
@@ -1242,6 +1400,7 @@ The Pokemon Selector dialog is optimized for mobile screens to maximize the visi
 #### Mobile Layout
 
 **Default State (Filters Collapsed)**:
+
 ```
 ┌─────────────────────────┐
 │ [Search...........] [⚙] │  ← Filter toggle button
@@ -1255,6 +1414,7 @@ The Pokemon Selector dialog is optimized for mobile screens to maximize the visi
 ```
 
 **Filters Expanded**:
+
 ```
 ┌─────────────────────────┐
 │ [Search...........] [⚙] │
@@ -1273,11 +1433,13 @@ The Pokemon Selector dialog is optimized for mobile screens to maximize the visi
 **Key Changes**:
 
 1. **Mobile Filter Toggle State**:
+
 ```typescript
 const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 ```
 
 2. **Filter Toggle Button** (visible only on mobile):
+
 ```tsx
 <Button
   variant={isMobileFilterOpen ? 'secondary' : 'outline'}
@@ -1290,32 +1452,36 @@ const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 ```
 
 3. **Desktop Type Badges** (hidden on mobile):
+
 ```tsx
-<div className="hidden flex-wrap gap-2 lg:flex">
-  {/* Type badges */}
-</div>
+<div className="hidden flex-wrap gap-2 lg:flex">{/* Type badges */}</div>
 ```
 
 4. **Mobile Type Badges** (collapsible, horizontal scroll):
+
 ```tsx
-{isMobileFilterOpen && (
-  <div className="lg:hidden">
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex w-max gap-2 p-1">
-        {/* Type badges with shrink-0 */}
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
-  </div>
-)}
+{
+  isMobileFilterOpen && (
+    <div className="lg:hidden">
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex w-max gap-2 p-1">
+          {/* Type badges with shrink-0 */}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
+  );
+}
 ```
 
 5. **Hide Tabs on Mobile**:
+
 ```tsx
 <TabsList className="mb-4 hidden h-auto flex-wrap lg:flex">
 ```
 
 6. **Flexible Height for Results**:
+
 ```tsx
 <ScrollArea className="min-h-0 flex-1 lg:h-[calc(70vh-220px)]">
 ```
@@ -1325,16 +1491,16 @@ const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 For horizontal scrolling with shadcn/ui ScrollArea, you must:
 
 1. Import `ScrollBar` alongside `ScrollArea`:
+
 ```typescript
 import { ScrollArea, ScrollBar } from '@pokehub/frontend/shared-ui-components';
 ```
 
 2. Add `ScrollBar` with horizontal orientation inside the ScrollArea:
+
 ```tsx
 <ScrollArea className="w-full whitespace-nowrap">
-  <div className="flex w-max gap-2">
-    {/* Items with shrink-0 */}
-  </div>
+  <div className="flex w-max gap-2">{/* Items with shrink-0 */}</div>
   <ScrollBar orientation="horizontal" />
 </ScrollArea>
 ```
@@ -1346,10 +1512,10 @@ import { ScrollArea, ScrollBar } from '@pokehub/frontend/shared-ui-components';
 
 #### Responsive Breakpoints
 
-| Breakpoint | Behavior |
-|------------|----------|
-| `< lg` (mobile) | Filter toggle visible, badges collapsed, tabs hidden |
-| `≥ lg` (desktop) | Full filter badges visible, tabs visible, no toggle |
+| Breakpoint       | Behavior                                             |
+| ---------------- | ---------------------------------------------------- |
+| `< lg` (mobile)  | Filter toggle visible, badges collapsed, tabs hidden |
+| `≥ lg` (desktop) | Full filter badges visible, tabs visible, no toggle  |
 
 ## Performance Optimizations ⚡
 
@@ -1364,17 +1530,20 @@ The Team Builder implements multiple optimization strategies to reduce First Loa
 #### Component Loading Strategy
 
 **Tier 1: Critical Path (Loaded Immediately)**
+
 - `TeamConfigurationSection` - Team metadata configuration
 - `PokemonCard` - Display existing Pokemon
 - `EmptySlot` - "Add Pokemon" button
 - Essential UI components and context providers
 
 **Tier 2: On-Demand Dialogs (Lazy Loaded)**
+
 - `PokemonSelector` - Pokemon species selection (loads when user clicks "Add Pokemon")
 - `PokemonEditor` - Pokemon configuration tabs (loads when editing/adding Pokemon)
 - `TeamAnalysisDialog` - Team type coverage analysis (loads when user clicks "Analyze Team")
 
 **Tier 3: Validation Components (Lazy Loaded)**
+
 - `FormatRulesDisplay` - Format ban lists (loads within configuration section)
 - `TeamValidationSummary` - Validation error display (loads within configuration section)
 
@@ -1417,6 +1586,7 @@ const LazyTeamAnalysisDialog = lazy(() =>
 ```
 
 **Webpack Magic Comments**:
+
 - `webpackPrefetch: true` - Browser prefetches during idle time (no performance penalty)
 - `webpackChunkName` - Named chunks for better debugging and cache control
 - Related components grouped (e.g., `pokemon-selection` includes selector and editor)
@@ -1424,7 +1594,9 @@ const LazyTeamAnalysisDialog = lazy(() =>
 **Suspense Boundaries**:
 
 ```tsx
-{/* Pokemon Selector Dialog with loading fallback */}
+{
+  /* Pokemon Selector Dialog with loading fallback */
+}
 <Dialog open={isPokemonSelectorOpen}>
   <DialogContent>
     <Suspense
@@ -1438,12 +1610,14 @@ const LazyTeamAnalysisDialog = lazy(() =>
       <LazyPokemonSelector {...props} />
     </Suspense>
   </DialogContent>
-</Dialog>
+</Dialog>;
 
-{/* Team Analysis - Silent loading (dialog not visible until opened) */}
+{
+  /* Team Analysis - Silent loading (dialog not visible until opened) */
+}
 <Suspense fallback={null}>
   <LazyTeamAnalysisDialog {...props} />
-</Suspense>
+</Suspense>;
 ```
 
 **Validation Components** (`team-configuration-section.tsx`):
@@ -1468,7 +1642,7 @@ const LazyTeamValidationSummary = lazy(() =>
 // Skeleton loading states provide visual feedback
 <Suspense fallback={<ValidationSummaryFallback />}>
   <LazyTeamValidationSummary {...props} />
-</Suspense>
+</Suspense>;
 ```
 
 ### 2. Tree Shaking Optimization
@@ -1491,12 +1665,14 @@ const LazyTeamValidationSummary = lazy(() =>
 ```
 
 **What `sideEffects: false` Does**:
+
 - Tells webpack/bundlers that all modules in this package are "pure"
 - Unused exports can be safely removed (tree shaken)
 - Bundler can perform more aggressive dead code elimination
 - Only imports that are actually used are included in final bundle
 
 **Impact**:
+
 - Routes using only basic dex data (types, abilities, items) don't include `@pkmn/sim`
 - Pokemon Showdown validation code only loaded on Team Builder route
 - Significant reduction in First Load JS for non-Team Builder routes
@@ -1506,8 +1682,11 @@ const LazyTeamValidationSummary = lazy(() =>
 
 ```typescript
 // Before: Both imports would include @pkmn/sim in bundle
-import { getTypes } from '@pokehub/frontend/dex-data-provider'; // Simple data
-import { validateTeam } from '@pokehub/frontend/dex-data-provider'; // Uses @pkmn/sim
+import { getTypes } from '@pokehub/frontend/dex-data-provider';
+// Simple data
+import { validateTeam } from '@pokehub/frontend/dex-data-provider';
+
+// Uses @pkmn/sim
 
 // After: With sideEffects: false
 // - Routes importing only getTypes don't get @pkmn/sim
@@ -1518,6 +1697,7 @@ import { validateTeam } from '@pokehub/frontend/dex-data-provider'; // Uses @pkm
 ### Benefits
 
 **Lazy Loading Benefits**:
+
 1. **Reduced Initial Bundle**: Dialogs only loaded when user opens them
 2. **Faster Time to Interactive**: Critical path remains small and fast
 3. **Better Caching**: Named chunks cached separately, unchanged chunks reused
@@ -1525,6 +1705,7 @@ import { validateTeam } from '@pokehub/frontend/dex-data-provider'; // Uses @pkm
 5. **Graceful Loading**: Skeleton screens prevent layout shifts
 
 **Tree Shaking Benefits**:
+
 1. **Smaller Bundles Application-Wide**: Other routes don't include unused Team Builder dependencies
 2. **Better Code Splitting**: Clear boundaries between simple data and complex simulation
 3. **Improved Build Performance**: Less code to process and bundle
@@ -1533,12 +1714,14 @@ import { validateTeam } from '@pokehub/frontend/dex-data-provider'; // Uses @pkm
 ### Performance Metrics
 
 **First Load JS Reduction**:
+
 - Main bundle: Smaller by excluding dialog components
 - Team Builder route: Only loads Team Builder-specific chunks
 - Other routes: No longer include `@pkmn/sim` dependencies
 - Named chunks: Enable efficient caching strategies
 
 **User Experience Impact**:
+
 - Page loads faster (smaller initial JS)
 - Interactions feel snappy (components prefetched during idle)
 - No jarring content shifts (skeleton loading states)
@@ -1555,6 +1738,7 @@ The Team Analysis feature provides comprehensive insights into your team's type 
 **Component**: `team-analysis-dialog.tsx`
 
 **Features**:
+
 - **Lazy Loaded**: Component loads on-demand for better performance
 - **Tab-based Interface**: Organized into three analysis views
 - **Real-time Analysis**: Updates as team composition changes
@@ -1562,17 +1746,20 @@ The Team Analysis feature provides comprehensive insights into your team's type 
 ### Analysis Tabs
 
 **1. Team Summary Tab**
+
 - Overview of team composition
 - Quick stats and metrics
 - Pokemon count and diversity indicators
 
 **2. Defensive Coverage Tab**
+
 - Shows how your team handles different attacking types
 - Identifies type weaknesses and resistances
 - Highlights Pokemon vulnerable to specific types
 - Color-coded threat levels
 
 **3. Offensive Coverage Tab**
+
 - Analyzes your team's attacking type coverage
 - Shows which types you can hit effectively
 - Identifies coverage gaps
@@ -1581,6 +1768,7 @@ The Team Analysis feature provides comprehensive insights into your team's type 
 ### Technical Details
 
 **Files**:
+
 - `team-analysis-dialog.tsx` - Main dialog container with tabs
 - `team-summary-tab.tsx` - Team overview and stats
 - `defensive-coverage-tab.tsx` - Defensive type matchup analysis
@@ -1588,6 +1776,7 @@ The Team Analysis feature provides comprehensive insights into your team's type 
 - `team-type-coverage.ts` - Type coverage calculation utilities
 
 **Opening the Analysis**:
+
 ```tsx
 // From team-configuration-section.tsx
 <Button onClick={() => setIsTeamAnalysisOpen(true)}>
@@ -1600,6 +1789,7 @@ disabled={!teamPokemon.hasAnyPokemon()}
 ```
 
 **Type Coverage Utilities**:
+
 - Calculates type effectiveness for all Pokemon in team
 - Considers dual types and type interactions
 - Provides aggregated team-wide coverage metrics
@@ -1611,6 +1801,7 @@ disabled={!teamPokemon.hasAnyPokemon()}
 **Purpose**: Reusable searchable dropdown with consistent UX
 
 **Features**:
+
 - Debounced search
 - Infinite scroll
 - Auto-scroll to selected item (on open)
@@ -1623,30 +1814,33 @@ disabled={!teamPokemon.hasAnyPokemon()}
   - Optional "None/Clear" button
 
 **Props**:
+
 ```typescript
 interface SearchableSelectProps<T> {
-  id: string
-  label: string
-  placeholder: string
-  value: string | undefined
-  items: T[]
-  onValueChange: (value: string) => void
-  onClear?: () => void
-  renderTriggerContent?: (item: T | undefined) => ReactNode
-  renderItemContent?: (item: T, isSelected: boolean) => ReactNode
-  filterItems?: (items: T[], searchTerm: string) => T[]
-  dropdownWidth?: string  // default: "w-[400px]"
-  isLoading?: boolean
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string | undefined;
+  items: T[];
+  onValueChange: (value: string) => void;
+  onClear?: () => void;
+  renderTriggerContent?: (item: T | undefined) => ReactNode;
+  renderItemContent?: (item: T, isSelected: boolean) => ReactNode;
+  filterItems?: (items: T[], searchTerm: string) => T[];
+  dropdownWidth?: string; // default: "w-[400px]"
+  isLoading?: boolean;
 }
 ```
 
 **Auto-scroll Implementation**:
+
 - Uses callback ref pattern
 - Scrolls only once per popover open (`hasScrolledRef`)
 - Smooth scroll behavior with `block: 'center'`
 - Works with infinite scroll pagination
 
 **Loading State**:
+
 - Shows 8 skeleton items when `isLoading={true}`
 - Skeleton matches actual item layout
 - Pulse animation via Tailwind
@@ -1658,6 +1852,7 @@ interface SearchableSelectProps<T> {
 **Location**: `packages/frontend/shared-ui-components/src/lib/skeleton/skeleton.tsx`
 
 **Usage**:
+
 ```tsx
 <Skeleton className="h-4 w-3/4" />
 ```
@@ -1667,20 +1862,24 @@ interface SearchableSelectProps<T> {
 The Team Builder is fully generation-aware:
 
 **Stats**:
+
 - Gen 1: HP, Attack, Defense, Speed, Special
 - Gen 2+: HP, Attack, Defense, Sp. Attack, Sp. Defense, Speed
 
 **Implementation**:
+
 - `getStats(generation)` returns available stat IDs
 - `getStatName(statId, generation)` returns display name
 - Stats that don't exist return names in brackets: "[Special Defense]"
 - Filter out stats where `name.startsWith('[')`
 
 **Moves**:
+
 - Uses `usePokemonLearnset(speciesId, { generation })`
 - Only shows moves learnable in that generation
 
 **Items/Abilities**:
+
 - `getItems(generation)` and `getAbility(ability, generation)` filter by generation
 
 ## Data Models
@@ -1689,29 +1888,29 @@ The Team Builder is fully generation-aware:
 
 ```typescript
 interface PokemonInTeam extends PokemonSet {
-  species: SpeciesName
-  item: ItemName
-  ability: AbilityName
-  nature: NatureName
-  gender: GenderName
-  moves: MoveName[]  // Array of 4 moves (can be empty strings)
-  level: number      // 1-100
+  species: SpeciesName;
+  item: ItemName;
+  ability: AbilityName;
+  nature: NatureName;
+  gender: GenderName;
+  moves: MoveName[]; // Array of 4 moves (can be empty strings)
+  level: number; // 1-100
   evs: {
-    hp: number
-    atk: number
-    def: number
-    spa: number
-    spd: number
-    spe: number
-  }
+    hp: number;
+    atk: number;
+    def: number;
+    spa: number;
+    spd: number;
+    spe: number;
+  };
   ivs: {
-    hp: number
-    atk: number
-    def: number
-    spa: number
-    spd: number
-    spe: number
-  }
+    hp: number;
+    atk: number;
+    def: number;
+    spa: number;
+    spd: number;
+    spe: number;
+  };
 }
 ```
 
@@ -1720,31 +1919,37 @@ interface PokemonInTeam extends PokemonSet {
 ### Missing Functionality
 
 1. **Persistence**
+
    - Save button implemented with validation checks
    - Need to implement actual save to backend API
    - No local storage fallback
    - Teams lost on page refresh
 
 2. **Gender Selection**
+
    - Not implemented in any tab
    - Should be in Basic tab
    - Need to filter by species.gender options
 
 3. **Shiny Toggle**
+
    - Not implemented
    - Potential addition to Basic tab
 
 4. **Tera Type** (Gen 9+)
+
    - Not implemented
    - Should be generation-conditional
    - Only show for Gen 9+
 
 5. **Form Selection**
+
    - Some Pokemon have multiple forms (Rotom, Wormadam, etc.)
    - Not currently handled
    - May need to be in Pokemon selector or Basic tab
 
 6. **Team Export/Import**
+
    - ✅ Pokemon can be removed from team
    - Need to implement Pokemon Showdown import/export
    - Need to implement team reordering (drag and drop)
@@ -1767,6 +1972,7 @@ interface PokemonInTeam extends PokemonSet {
 ### Known Issues
 
 1. **EV Distribution Edge Cases**
+
    - When changing generation, EVs in non-existent stats remain
    - Should reset or redistribute EVs when generation changes
 
@@ -1777,6 +1983,7 @@ interface PokemonInTeam extends PokemonSet {
 ## Design Patterns
 
 ### Context Pattern
+
 - Single source of truth for team state
 - Exposes setter methods for controlled updates
 - Uses callbacks for performance
@@ -1786,16 +1993,19 @@ interface PokemonInTeam extends PokemonSet {
   - `addActivePokemonToTeam(slot)` - Add current Pokemon to team
 
 ### Component Composition
+
 - Tabs are independent components
 - Shared SearchableSelect reduces duplication
 - Each tab receives minimal props (just `pokemon` and/or `species`)
 
 ### Generation Safety
+
 - All data fetching is generation-aware
 - UI adapts to generation (stat list, move pool, etc.)
 - Filters out non-existent options
 
 ### State Updates
+
 - Individual updates use specific setters (setEV, setIV, etc.)
 - Bulk updates use setValue (preset buttons)
 - Validation happens in context layer
@@ -1805,21 +2015,25 @@ interface PokemonInTeam extends PokemonSet {
 ### What to Test
 
 1. **EV Distribution**
+
    - Cannot exceed 510 total
    - Cannot exceed 252 per stat
    - Properly caps values
 
 2. **IV Range**
+
    - Cannot be negative
    - Cannot exceed 31
    - Preset buttons work correctly
 
 3. **Generation Switching**
+
    - Stats list updates correctly
    - Move pool updates
    - No crashes on stat access
 
 4. **Search & Filter**
+
    - Debounced search works
    - Results filtered correctly
    - Empty states handled
@@ -1834,24 +2048,29 @@ interface PokemonInTeam extends PokemonSet {
 ### Potential Features
 
 1. **Import from Showdown**
+
    - Parse Pokemon Showdown export format
    - Auto-populate team
 
 2. **Team Suggestions**
+
    - Suggest Pokemon based on team composition
    - Type coverage analysis
    - Role balance (offensive/defensive)
 
 3. **Damage Calculator Integration**
+
    - Quick damage calcs from team builder
    - See how your Pokemon fare against common threats
 
 4. **Sets Database**
+
    - Load popular competitive sets
    - Save custom sets
    - Share sets with community
 
 5. **Sprite Preview**
+
    - Show Pokemon sprite
    - Show shiny variant
    - Animate on hover
@@ -1937,6 +2156,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 ## Changelog
 
 ### 2025-12-21 (Latest Updates)
+
 - ✅ **Mobile Responsiveness: Pokemon Selector Optimization**
   - Added collapsible filter system for mobile screens
   - Filter toggle button appears on mobile (< lg breakpoint)
@@ -1947,6 +2167,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
   - Desktop layout unchanged (full filter badges and tabs visible)
 
 ### 2025-11-28
+
 - ✅ **Performance Optimizations**
   - Implemented lazy loading for dialog components (PokemonSelector, PokemonEditor, TeamAnalysisDialog)
   - Added lazy loading for validation components (FormatRulesDisplay, TeamValidationSummary)
@@ -1984,6 +2205,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
   - Corrected context usage examples
 
 ### 2025-11-23
+
 - ✅ **Fixed validation error parsing for duplicate Pokemon**
   - Updated `parseValidationProblems` to only use explicit `(pokemon X)` slot markers from Showdown
   - Removed species name matching that incorrectly assigned errors with duplicate Pokemon (e.g., 2 Groudons)
@@ -2000,6 +2222,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
   - All 41 pokemon-showdown-validation tests passing
 
 ### 2025-11-23 (Initial Showdown Integration)
+
 - ✅ Integrated Pokemon Showdown validation system
 - ✅ Added format mapping utilities (PokeHub → Showdown format IDs)
 - ✅ Implemented team validator with format-specific rules
@@ -2019,6 +2242,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 - ✅ All 212 tests passing with updated mocks
 
 ### 2025-11-16
+
 - ✅ Implemented Cancel functionality with smart change detection
 - ✅ Added Pokemon snapshot state for restoring on cancel
 - ✅ Exported `arePokemonEqual` from `useTeamChanges` for reuse
@@ -2027,6 +2251,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 - ✅ Added deep copy logic for Pokemon snapshot
 
 ### 2025-11-14
+
 - ✅ Implemented comprehensive team validation system with Zod schemas
 - ✅ Added change tracking hook for detecting unsaved changes
 - ✅ Created validation summary component with error grouping
@@ -2039,6 +2264,7 @@ packages/frontend/shared-ui-components/src/lib/skeleton/
 - ✅ Added toast notifications for user feedback
 
 ### 2025-11-14
+
 - ✅ Created Basic Tab with ability, item, nature selection
 - ✅ Implemented SearchableSelect shared component
 - ✅ Added auto-scroll to selected item feature

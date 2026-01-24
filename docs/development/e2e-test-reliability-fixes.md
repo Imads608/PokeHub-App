@@ -412,16 +412,33 @@ Based on these fixes, follow these patterns for reliable E2E tests:
 
 ### Run E2E Tests Locally
 
+All E2E tests should be run through Nx for consistency:
+
 ```bash
-# Run all tests
+# Run all tests (recommended)
 npx nx e2e pokehub-app-e2e
 
 # Run only Chromium (like CI)
 npx nx e2e pokehub-app-e2e -- --project=chromium
 
+# Run specific test file by grep pattern
+npx nx e2e pokehub-app-e2e -- --grep "team-editor"
+npx nx e2e pokehub-app-e2e -- --grep "Settings"
+
 # Run with UI mode for debugging
 npx nx e2e pokehub-app-e2e -- --ui
+
+# Run in headed mode (see browser)
+npx nx e2e pokehub-app-e2e -- --headed
+
+# Run with verbose server logs
+npx nx e2e:verbose pokehub-app-e2e
+
+# Combine options
+npx nx e2e:verbose pokehub-app-e2e -- --grep "Settings" --headed
 ```
+
+**Note:** Use `--` before Playwright-specific flags to pass them through Nx.
 
 ### View Test Reports
 
@@ -446,6 +463,7 @@ The e2e tests use an Express-based MSW proxy server (`/apps/pokehub-app-e2e/src/
 **Root Cause:** Browsers send CORS preflight (OPTIONS) requests before "non-simple" requests like POST, PUT, DELETE with custom headers (e.g., `Authorization`, `x-traceId`). The MSW proxy wasn't handling OPTIONS requests, causing the preflight to fail and blocking the actual mutation.
 
 **Symptoms:**
+
 - `[MSW Proxy] OPTIONS /api/teams/...` appears in logs before POST/DELETE
 - Mutations fail with no network error visible
 - TanStack Query devtools shows "1 error" but no toast appears
@@ -458,7 +476,10 @@ The e2e tests use an Express-based MSW proxy server (`/apps/pokehub-app-e2e/src/
 app.use('/api', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-traceId');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, x-traceId'
+  );
 
   // Handle OPTIONS preflight requests
   if (req.method === 'OPTIONS') {
@@ -479,6 +500,7 @@ app.use('/api', (req, res, next) => {
 **Root Cause:** The proxy's GET handler only knew about the static mock team. When POST created a new team with a new ID, the subsequent GET request for that ID returned 404.
 
 **Symptoms:**
+
 - POST `/api/teams` succeeds and returns new team with new ID
 - Navigation to `/team-builder/{newId}` triggers GET `/api/teams/{newId}`
 - GET returns 404, page shows error
@@ -496,7 +518,7 @@ const createdTeams: Map<string, typeof mockTeam> = new Map();
 app.post('/api/teams', express.json(), (req, res) => {
   const newId = '550e8400-e29b-41d4-a716-446655440002';
   const newTeam = { ...mockTeam, ...req.body, id: newId };
-  createdTeams.set(newId, newTeam);  // Store for later retrieval
+  createdTeams.set(newId, newTeam); // Store for later retrieval
   return res.status(201).json(newTeam);
 });
 
@@ -521,6 +543,7 @@ app.get('/api/teams/:id', (req, res) => {
 **Issue:** GET requests worked but POST/DELETE mutations failed even with CORS headers.
 
 **Root Cause:** Next.js uses different environment variables for server-side and client-side code:
+
 - `API_URL` - Available to server-side code (SSR)
 - `NEXT_PUBLIC_POKEHUB_API_URL` - Inlined into client-side bundle
 
@@ -554,6 +577,7 @@ app.use((req, res, next) => {
 ```
 
 **What to look for:**
+
 - `OPTIONS` before `POST`/`DELETE` → CORS preflight (ensure it returns 204)
 - Only `GET` requests appearing → Client requests not reaching proxy (check `NEXT_PUBLIC_` env var)
 - No mock log after request log → Handler not matching (check route patterns)

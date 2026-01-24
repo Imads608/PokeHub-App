@@ -3,7 +3,11 @@ import { IUsersService, USERS_SERVICE } from './users.service.interface';
 import {
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Head,
+  HttpCode,
+  HttpStatus,
   Inject,
   NotFoundException,
   Param,
@@ -11,8 +15,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { TokenAuth, TokenAuthGuard } from '@pokehub/backend/shared-auth-utils';
+import {
+  TokenAuth,
+  TokenAuthGuard,
+  User,
+} from '@pokehub/backend/shared-auth-utils';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import type { UserJwtData } from '@pokehub/shared/shared-user-models';
 
 @Controller()
 export class UsersController {
@@ -38,6 +47,7 @@ export class UsersController {
   @TokenAuth('ACCESS_TOKEN')
   async updateUserProfile(
     @Param('userId') userId: string,
+    @User() user: UserJwtData,
     @Body() data: UpdateUserProfileDTO
   ) {
     this.logger.log(
@@ -45,9 +55,12 @@ export class UsersController {
         data
       )}`
     );
-    if (!data.username && !data.avatar) {
-      return;
+
+    // Users can only update their own account
+    if (user.id !== userId) {
+      throw new ForbiddenException('You can only update your own account');
     }
+
     return this.usersService.updateUserProfile(userId, data);
   }
 
@@ -66,5 +79,20 @@ export class UsersController {
       throw new NotFoundException('User not found');
     }
     return userRes;
+  }
+
+  @Delete(':userId')
+  @UseGuards(TokenAuthGuard)
+  @TokenAuth('ACCESS_TOKEN')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUser(@Param('userId') userId: string, @User() user: UserJwtData) {
+    this.logger.log(`Got request to delete user ${userId}`);
+
+    // Users can only delete their own account
+    if (user.id !== userId) {
+      throw new ForbiddenException('You can only delete your own account');
+    }
+
+    await this.usersService.deleteUser(userId);
   }
 }

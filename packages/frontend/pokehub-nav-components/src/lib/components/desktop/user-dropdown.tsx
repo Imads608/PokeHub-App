@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import { LogOutIcon, Settings, User, Users } from 'lucide-react';
+import { LogOutIcon, Settings } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
 export interface UserDropdownProps {
@@ -60,37 +60,16 @@ export const UserDropdown = ({ user }: UserDropdownProps) => {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() => (window.location.href = '/profile')}
+          onClick={() => (window.location.href = '/settings')}
           className="cursor-pointer py-2 font-medium"
         >
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => (window.location.href = '/profile')}
-          className="cursor-pointer py-2 font-medium"
-        >
-          <User className="mr-3 h-4 w-4" />
-          View Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => (window.location.href = '/edit-profile')}
-          className="cursor-pointer py-2 font-medium"
-        >
-          <User className="mr-3 h-4 w-4" />
-          Edit Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => (window.location.href = '/my-teams')}
-          className="cursor-pointer py-2 font-medium"
-        >
-          <Users className="mr-3 h-4 w-4" />
-          My Teams
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut({ redirectTo: '/login' })}
-          className={`cursor-pointer rounded-full py-2 text-sm font-bold text-destructive hover:bg-destructive/10 `}
+          className="cursor-pointer py-2 text-sm font-bold text-destructive hover:bg-destructive/10"
         >
           <LogOutIcon className="mr-2 h-4 w-4" />
           Logout

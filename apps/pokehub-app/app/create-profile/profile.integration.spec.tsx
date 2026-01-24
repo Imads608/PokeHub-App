@@ -38,7 +38,7 @@ jest.mock('@pokehub/frontend/shared-auth', () => ({
   }),
 }));
 
-// Mock API calls
+// Mock API calls for username check
 const mockFetchThrowsError = jest.fn();
 jest.mock('@pokehub/frontend/shared-data-provider', () => ({
   getFetchClient: () => ({
@@ -53,9 +53,40 @@ jest.mock('@pokehub/frontend/shared-data-provider', () => ({
   },
 }));
 
-// Mock withAuthRetry to pass through
+// Mock pokehub-data-provider hooks
+const mockMutateAsync = jest.fn();
 jest.mock('@pokehub/frontend/pokehub-data-provider', () => ({
   withAuthRetry: jest.fn(async (_token, callback) => callback(_token)),
+  useUpdateUserProfile: jest.fn(() => ({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
+    isSuccess: false,
+  })),
+}));
+
+// Mock useAvatarUpload hook
+const mockUploadAvatar = jest.fn();
+const mockHandleFileSelect = jest.fn();
+const mockClearSelection = jest.fn();
+let capturedOnError: ((error: Error) => void) | undefined;
+
+const mockAvatarState = {
+  selectedFile: null as File | null,
+  previewUrl: null as string | null,
+};
+
+jest.mock('@pokehub/frontend/pokehub-ui-components', () => ({
+  useAvatarUpload: jest.fn((options?: { onError?: (error: Error) => void }) => {
+    capturedOnError = options?.onError;
+    return {
+      selectedFile: mockAvatarState.selectedFile,
+      previewUrl: mockAvatarState.previewUrl,
+      error: null,
+      handleFileSelect: mockHandleFileSelect,
+      uploadAvatar: mockUploadAvatar,
+      clearSelection: mockClearSelection,
+    };
+  }),
 }));
 
 // Mock shared-utils
@@ -81,11 +112,42 @@ describe('CreateProfileContainer Integration', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
+    // Reset avatar state
+    mockAvatarState.selectedFile = null;
+    mockAvatarState.previewUrl = null;
+
+    // Reset capturedOnError
+    capturedOnError = undefined;
+
+    // Reset useAvatarUpload mock to default implementation
+    const { useAvatarUpload } = jest.requireMock(
+      '@pokehub/frontend/pokehub-ui-components'
+    );
+    useAvatarUpload.mockImplementation(
+      (options?: { onError?: (error: Error) => void }) => {
+        capturedOnError = options?.onError;
+        return {
+          selectedFile: mockAvatarState.selectedFile,
+          previewUrl: mockAvatarState.previewUrl,
+          error: null,
+          handleFileSelect: mockHandleFileSelect,
+          uploadAvatar: mockUploadAvatar,
+          clearSelection: mockClearSelection,
+        };
+      }
+    );
+
     // Default: username is available (404 means not found = available)
     mockFetchThrowsError.mockRejectedValue({ status: 404 });
 
-    // Mock global fetch for Azure upload
-    global.fetch = jest.fn().mockResolvedValue({ ok: true });
+    // Default: profile update succeeds
+    mockMutateAsync.mockResolvedValue({
+      username: 'newtrainer',
+      avatar: null,
+    });
+
+    // Default: avatar upload succeeds (returns null when no file selected)
+    mockUploadAvatar.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -100,17 +162,6 @@ describe('CreateProfileContainer Integration', () => {
   describe('full form submission flow without avatar', () => {
     it('should complete profile creation successfully', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-
-      // Setup: username check returns 404 (available), profile update succeeds
-      mockFetchThrowsError
-        .mockRejectedValueOnce({ status: 404 }) // Username check - available
-        .mockResolvedValueOnce({
-          // Profile update
-          json: jest.fn().mockResolvedValue({
-            username: 'newtrainer',
-            avatar: null,
-          }),
-        });
 
       renderComponent();
 
@@ -137,15 +188,16 @@ describe('CreateProfileContainer Integration', () => {
       });
       await user.click(submitButton);
 
-      // Verify success toast
+      // Verify mutation was called with correct data
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          'Profile was updated successfully'
-        );
+        expect(mockMutateAsync).toHaveBeenCalledWith({
+          username: 'newtrainer',
+          avatarFileName: undefined,
+        });
       });
 
-      // Verify session update was called
-      expect(mockUpdate).toHaveBeenCalled();
+      // Verify clearSelection was called after successful submission
+      expect(mockClearSelection).toHaveBeenCalled();
     });
   });
 
@@ -183,37 +235,37 @@ describe('CreateProfileContainer Integration', () => {
     it('should complete profile creation with avatar', async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
-      // Mock URL.createObjectURL for avatar preview
-      const mockObjectUrl = 'blob:http://localhost/avatar-preview';
-      global.URL.createObjectURL = jest.fn().mockReturnValue(mockObjectUrl);
-
-      // Setup API responses
-      mockFetchThrowsError
-        .mockRejectedValueOnce({ status: 404 }) // Username check - available
-        .mockResolvedValueOnce({
-          // Generate upload URL
-          json: jest.fn().mockResolvedValue({
-            uploadUrl: 'https://azure.blob.storage/upload?sas=token',
-          }),
-        })
-        .mockResolvedValueOnce({
-          // Profile update
-          json: jest.fn().mockResolvedValue({
-            username: 'newtrainer',
-            avatar: 'https://azure.blob.storage/avatars/user-123/avatar.png',
-          }),
-        });
-
-      renderComponent();
-
-      // Upload avatar file
-      const file = new File(['avatar-content'], 'avatar.png', {
+      // Setup: avatar upload returns success
+      const mockFile = new File(['avatar-content'], 'avatar.png', {
         type: 'image/png',
       });
-      const fileInput = document.getElementById(
-        'avatar-upload'
-      ) as HTMLInputElement;
-      await user.upload(fileInput, file);
+      mockAvatarState.selectedFile = mockFile;
+      mockAvatarState.previewUrl = 'blob:http://localhost/avatar-preview';
+
+      mockUploadAvatar.mockResolvedValue({
+        avatarUrl: 'https://azure.blob.storage/avatars/user-123/avatar.png',
+        fileName: 'avatar.png',
+      });
+
+      mockMutateAsync.mockResolvedValue({
+        username: 'newtrainer',
+        avatar: 'https://azure.blob.storage/avatars/user-123/avatar.png',
+      });
+
+      // Re-mock useAvatarUpload with the file selected
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockReturnValue({
+        selectedFile: mockFile,
+        previewUrl: 'blob:http://localhost/avatar-preview',
+        error: null,
+        handleFileSelect: mockHandleFileSelect,
+        uploadAvatar: mockUploadAvatar,
+        clearSelection: mockClearSelection,
+      });
+
+      renderComponent();
 
       // Type username
       const usernameInput = screen.getByLabelText(/username/i);
@@ -238,33 +290,93 @@ describe('CreateProfileContainer Integration', () => {
       });
       await user.click(submitButton);
 
-      // Verify success toast
+      // Verify avatar upload was called
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          'Profile was updated successfully'
-        );
+        expect(mockUploadAvatar).toHaveBeenCalled();
       });
 
-      // Verify Azure upload was called
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://azure.blob.storage/upload?sas=token',
-        expect.objectContaining({
-          method: 'PUT',
-          headers: {
-            'x-ms-blob-type': 'BlockBlob',
-            'Content-Type': 'image/png',
-          },
-        })
+      // Verify mutation was called with avatar filename
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalledWith({
+          username: 'newtrainer',
+          avatarFileName: 'avatar.png',
+        });
+      });
+
+      // Verify clearSelection was called after successful submission
+      expect(mockClearSelection).toHaveBeenCalled();
+    });
+
+    it('should handle avatar upload failure', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+      // Setup: avatar upload fails
+      const mockFile = new File(['avatar-content'], 'avatar.png', {
+        type: 'image/png',
+      });
+
+      // Mock uploadAvatar to call onError callback and return null
+      mockUploadAvatar.mockImplementation(async () => {
+        // Simulate the real useAvatarUpload behavior - call onError when upload fails
+        capturedOnError?.(new Error('Failed to upload avatar'));
+        return null;
+      });
+
+      // Re-mock useAvatarUpload with the file selected
+      const { useAvatarUpload } = jest.requireMock(
+        '@pokehub/frontend/pokehub-ui-components'
+      );
+      useAvatarUpload.mockImplementation(
+        (options?: { onError?: (error: Error) => void }) => {
+          capturedOnError = options?.onError;
+          return {
+            selectedFile: mockFile,
+            previewUrl: 'blob:http://localhost/avatar-preview',
+            error: null,
+            handleFileSelect: mockHandleFileSelect,
+            uploadAvatar: mockUploadAvatar,
+            clearSelection: mockClearSelection,
+          };
+        }
       );
 
-      // Verify session update with avatar URL
-      expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user: expect.objectContaining({
-            avatarUrl: 'https://azure.blob.storage/avatars/user-123/avatar.png',
-          }),
-        })
-      );
+      renderComponent();
+
+      // Type username
+      const usernameInput = screen.getByLabelText(/username/i);
+      await user.type(usernameInput, 'newtrainer');
+
+      // Wait for debounce
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      // Wait for submit button to be enabled
+      await waitFor(() => {
+        const submitButton = screen.getByRole('button', {
+          name: /create profile/i,
+        });
+        expect(submitButton).not.toBeDisabled();
+      });
+
+      // Submit form
+      const submitButton = screen.getByRole('button', {
+        name: /create profile/i,
+      });
+      await user.click(submitButton);
+
+      // Verify avatar upload was called
+      await waitFor(() => {
+        expect(mockUploadAvatar).toHaveBeenCalled();
+      });
+
+      // Mutation should not be called since avatar upload failed
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+
+      // Verify error toast
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith('Failed to upload avatar');
+      });
     });
   });
 });

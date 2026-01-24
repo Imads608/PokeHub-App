@@ -114,6 +114,23 @@ class UsersDBService implements IUsersDBService {
 
     return res[0];
   }
+
+  async deleteUser(userId: string): Promise<void> {
+    this.logger.log(`${this.deleteUser.name}: Deleting user ${userId}`);
+    const res = await this.dbService
+      .delete(usersTable)
+      .where(eq(usersTable.id, userId))
+      .returning();
+
+    if (res.length === 0) {
+      this.logger.error(
+        `${this.deleteUser.name}: User not found or already deleted`
+      );
+      throw new ServiceError('ServiceError', 'User not found');
+    }
+
+    this.logger.log(`${this.deleteUser.name}: User deleted successfully`);
+  }
 }
 
 export const UsersDBProvider: Provider = {
