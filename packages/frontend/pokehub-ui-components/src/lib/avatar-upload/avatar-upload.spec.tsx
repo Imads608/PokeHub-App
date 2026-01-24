@@ -1,7 +1,6 @@
 import { AvatarUpload } from './avatar-upload';
 import { useAvatarUpload } from './use-avatar-upload';
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 
 // Mock the useAvatarUpload hook
 jest.mock('./use-avatar-upload', () => ({
@@ -10,9 +9,9 @@ jest.mock('./use-avatar-upload', () => ({
 
 // Mock shared-ui-components Avatar to avoid Radix UI complexity
 jest.mock('@pokehub/frontend/shared-ui-components', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require('react');
+  const actual = jest.requireActual('@pokehub/frontend/shared-ui-components');
   return {
+    ...actual,
     Avatar: ({
       children,
       className,
@@ -42,54 +41,6 @@ jest.mock('@pokehub/frontend/shared-ui-components', () => {
       children: React.ReactNode;
       className?: string;
     }) => <span className={className}>{children}</span>,
-    Button: ({
-      children,
-      onClick,
-      disabled,
-      className,
-      'data-testid': testId,
-      type,
-    }: {
-      children: React.ReactNode;
-      onClick?: () => void;
-      disabled?: boolean;
-      className?: string;
-      'data-testid'?: string;
-      type?: string;
-    }) => (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        className={className}
-        data-testid={testId}
-        type={type as 'button' | 'submit' | 'reset' | undefined}
-      >
-        {children}
-      </button>
-    ),
-    Input: React.forwardRef(
-      (
-        props: {
-          type?: string;
-          accept?: string;
-          className?: string;
-          onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-          disabled?: boolean;
-          'data-testid'?: string;
-        },
-        ref: React.Ref<HTMLInputElement>
-      ) => (
-        <input
-          ref={ref}
-          type={props.type}
-          accept={props.accept}
-          className={props.className}
-          onChange={props.onChange}
-          disabled={props.disabled}
-          data-testid={props['data-testid']}
-        />
-      )
-    ),
   };
 });
 

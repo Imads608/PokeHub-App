@@ -296,7 +296,8 @@ describe('useAvatarUpload', () => {
     });
 
     it('should set isUploading state during upload', async () => {
-      let resolveUpload: (value: unknown) => void;
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      let resolveUpload: (value: unknown) => void = () => {};
       const uploadPromise = new Promise((resolve) => {
         resolveUpload = resolve;
       });
@@ -325,7 +326,7 @@ describe('useAvatarUpload', () => {
 
       // Complete upload
       await act(async () => {
-        resolveUpload!({ ok: true, status: 201 });
+        resolveUpload({ ok: true, status: 201 });
         await uploadPromiseResult;
       });
 

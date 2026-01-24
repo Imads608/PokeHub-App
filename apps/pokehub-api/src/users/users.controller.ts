@@ -56,9 +56,9 @@ export class UsersController {
       )}`
     );
 
-    // Users can only delete their own account
+    // Users can only update their own account
     if (user.id !== userId) {
-      throw new ForbiddenException('You can only delete your own account');
+      throw new ForbiddenException('You can only update your own account');
     }
 
     return this.usersService.updateUserProfile(userId, data);

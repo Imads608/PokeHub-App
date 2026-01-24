@@ -6,7 +6,8 @@ import {
 } from '@pokehub/frontend/shared-data-provider';
 import type { BlobStorageResponse } from '@pokehub/frontend/shared-types';
 import { isValidAvatarFileName } from '@pokehub/frontend/shared-utils';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface UseAvatarUploadOptions {
   /** Callback when upload completes successfully */
@@ -41,6 +42,14 @@ export const useAvatarUpload = (
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +126,7 @@ export const useAvatarUpload = (
       const errorMsg =
         err instanceof Error ? err.message : 'Failed to upload avatar';
       setError(errorMsg);
+      toast.error(errorMsg);
       onError?.(err instanceof Error ? err : new Error(errorMsg));
       return null;
     } finally {
