@@ -64,6 +64,7 @@ export function AppNav() {
             className="rounded-full text-foreground hover:bg-muted md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
+            data-testid="mobile-menu-button"
           >
             {isMenuOpen ? (
               <X className="h-6 w-6" />

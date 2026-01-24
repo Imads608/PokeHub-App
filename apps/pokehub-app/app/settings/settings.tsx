@@ -97,7 +97,7 @@ export function SettingsContainer() {
 
         <div className="space-y-6">
           {/* Profile Card */}
-          <Card>
+          <Card data-testid="profile-section">
             <CardHeader>
               <CardTitle>Profile</CardTitle>
               <CardDescription>Your public profile information</CardDescription>
@@ -222,6 +222,7 @@ export function SettingsContainer() {
                   className="hidden"
                   onChange={handleFileSelect}
                   disabled={isSaving}
+                  data-testid="settings-avatar-file-input"
                 />
               </div>
             </CardContent>
