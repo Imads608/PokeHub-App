@@ -27,15 +27,6 @@ export const DesktopNavItems = ({ user, activePath }: DesktopNavProps) => {
         </Link>
         {user ? (
           <>
-            <Link href="/dashboard">
-              <Button
-                variant="ghost"
-                className={`disabled:hover:none rounded-full text-sm font-medium text-foreground hover:bg-muted disabled:pointer-events-none disabled:bg-muted`}
-                disabled={activePath === '/dashboard'}
-              >
-                Dashboard
-              </Button>
-            </Link>
             <Link href="/battle">
               <Button
                 variant="ghost"

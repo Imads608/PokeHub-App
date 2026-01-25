@@ -3,11 +3,13 @@
 A phased approach to building a Pokemon Showdown clone.
 
 ## Current State
+
 - **Pokedex** - Browse Pokemon (functional)
 - **Team Builder** - Create and manage teams (functional)
 - **Battle** - Placeholder/empty
-- **Dashboard** - Empty (to be removed)
-- **User Menu** - Settings, View Profile, Edit Profile, My Teams, Logout
+- **Navigation** - Dashboard removed, user redirects to Team Builder on login (completed)
+- **User Menu** - Profile, My Teams, Settings, Logout (completed)
+- **Settings Page** - Account settings (completed)
 
 ---
 
@@ -16,62 +18,70 @@ A phased approach to building a Pokemon Showdown clone.
 **Goal:** Players can build a team and battle each other in real-time.
 
 ### Navigation Changes
+
 ```
 Before:  Pokedex | Dashboard | Battle | Team Builder
 After:   Pokedex | Battle | Team Builder
 ```
 
 ### User Menu Simplification
+
 ```
 Before:  Settings | View Profile | Edit Profile | My Teams | Logout
 After:   Profile | My Teams | Settings | Logout
 ```
 
 ### Settings Page (Phase 1)
+
 Accessible from User Menu → Settings
 
 **Note:** Theme toggle already exists in navbar.
 
 #### Account Settings
-| Setting | Action |
-|---------|--------|
-| **Username** | Display (read-only or editable) |
-| **Email** | Display (from OAuth) |
-| **Edit Profile** | Link to profile editor |
-| **Change Avatar** | Upload/select avatar |
-| **Delete Account** | With confirmation |
-| **Logout** | Sign out |
+
+| Setting            | Action                          |
+| ------------------ | ------------------------------- |
+| **Username**       | Display (read-only or editable) |
+| **Email**          | Display (from OAuth)            |
+| **Edit Profile**   | Link to profile editor          |
+| **Change Avatar**  | Upload/select avatar            |
+| **Delete Account** | With confirmation               |
+| **Logout**         | Sign out                        |
 
 #### Future Settings (add when relevant)
-| Phase | Settings |
-|-------|----------|
+
+| Phase             | Settings                                           |
+| ----------------- | -------------------------------------------------- |
 | Phase 1 (battles) | Animation speed, turn timer warning, confirm moves |
-| Phase 3 (social) | Notification preferences, privacy settings |
-| Phase 4 (tools) | Default format, show damage calc |
+| Phase 3 (social)  | Notification preferences, privacy settings         |
+| Phase 4 (tools)   | Default format, show damage calc                   |
 
 ### Features
 
 #### 1.1 Battle Page
+
 The central hub for finding and starting battles.
 
-| Component | Description |
-|-----------|-------------|
-| **Format Selector** | Choose battle format (initially just "Random Battle" and "OU") |
-| **Find Battle Button** | Enter matchmaking queue |
-| **Queue Status** | Show "Searching for opponent..." with cancel option |
-| **Quick Team Select** | Choose which team to use (or random for Random Battle) |
+| Component              | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| **Format Selector**    | Choose battle format (initially just "Random Battle" and "OU") |
+| **Find Battle Button** | Enter matchmaking queue                                        |
+| **Queue Status**       | Show "Searching for opponent..." with cancel option            |
+| **Quick Team Select**  | Choose which team to use (or random for Random Battle)         |
 
 #### 1.2 Real-Time Battle System
+
 Leverages `@pkmn/sim` for battle simulation (same engine as Pokemon Showdown).
 
-| Component | Description |
-|-----------|-------------|
-| **@pkmn/sim** | Handles all battle mechanics (damage, moves, abilities, etc.) |
-| **WebSocket Gateway** | NestJS Gateway wrapping @pkmn/sim |
-| **Battle Manager** | Create/manage battle instances, route player actions |
-| **Turn Timer** | 60-90 second turn limit to prevent stalling |
+| Component             | Description                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| **@pkmn/sim**         | Handles all battle mechanics (damage, moves, abilities, etc.) |
+| **WebSocket Gateway** | NestJS Gateway wrapping @pkmn/sim                             |
+| **Battle Manager**    | Create/manage battle instances, route player actions          |
+| **Turn Timer**        | 60-90 second turn limit to prevent stalling                   |
 
 ##### @pkmn/sim Integration
+
 ```typescript
 // Backend battle service using @pkmn/sim
 import { BattleStreams, Teams } from '@pkmn/sim';
@@ -92,7 +102,7 @@ class BattleService {
 
   sendMove(battleId: string, player: 'p1' | 'p2', move: string) {
     const stream = this.battles.get(battleId);
-    stream.write(`>${player} ${move}`);  // e.g., ">p1 move thunderbolt"
+    stream.write(`>${player} ${move}`); // e.g., ">p1 move thunderbolt"
   }
 
   // Stream outputs battle events to parse and send to clients
@@ -100,6 +110,7 @@ class BattleService {
 ```
 
 ##### What @pkmn/sim Handles (we don't build)
+
 - Damage calculation (including crits, type effectiveness)
 - Move effects and secondary effects
 - Ability triggers
@@ -110,6 +121,7 @@ class BattleService {
 - All 900+ moves, 200+ abilities
 
 ##### What We Build
+
 - WebSocket layer to connect clients to sim
 - Battle event parser (sim output → client-friendly JSON)
 - Turn timer enforcement
@@ -119,6 +131,7 @@ class BattleService {
 ##### NestJS WebSocket Architecture
 
 **Flow: How a battle works end-to-end**
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                              BACKEND (NestJS)                           │
@@ -204,19 +217,27 @@ class BattleService {
 ```
 
 **NestJS Gateway Implementation:**
+
 ```typescript
 // apps/pokehub-api/src/battle/battle.gateway.ts
 @WebSocketGateway({ namespace: 'battle' })
 export class BattleGateway {
   constructor(
     private battleManager: BattleManagerService,
-    private matchmaking: MatchmakingService,
+    private matchmaking: MatchmakingService
   ) {}
 
   @SubscribeMessage('queue:join')
-  async handleJoinQueue(client: Socket, data: { format: string; teamId: string }) {
+  async handleJoinQueue(
+    client: Socket,
+    data: { format: string; teamId: string }
+  ) {
     const userId = this.getUserId(client);
-    const match = await this.matchmaking.joinQueue(userId, data.format, data.teamId);
+    const match = await this.matchmaking.joinQueue(
+      userId,
+      data.format,
+      data.teamId
+    );
 
     if (match) {
       // Match found - create battle
@@ -227,16 +248,25 @@ export class BattleGateway {
       this.server.to(match.opponentSocketId).socketsJoin(`battle:${battle.id}`);
 
       // Send initial state to both
-      this.server.to(`battle:${battle.id}`).emit('battle:start', battle.initialState);
+      this.server
+        .to(`battle:${battle.id}`)
+        .emit('battle:start', battle.initialState);
     } else {
       client.emit('queue:waiting');
     }
   }
 
   @SubscribeMessage('battle:move')
-  async handleMove(client: Socket, data: { battleId: string; moveIndex: number }) {
+  async handleMove(
+    client: Socket,
+    data: { battleId: string; moveIndex: number }
+  ) {
     const userId = this.getUserId(client);
-    const events = await this.battleManager.submitMove(data.battleId, userId, data.moveIndex);
+    const events = await this.battleManager.submitMove(
+      data.battleId,
+      userId,
+      data.moveIndex
+    );
 
     // If both players have moved, sim runs and returns events
     if (events) {
@@ -245,19 +275,26 @@ export class BattleGateway {
   }
 
   @SubscribeMessage('battle:switch')
-  async handleSwitch(client: Socket, data: { battleId: string; pokemonIndex: number }) {
+  async handleSwitch(
+    client: Socket,
+    data: { battleId: string; pokemonIndex: number }
+  ) {
     // Similar to handleMove
   }
 
   @SubscribeMessage('battle:forfeit')
   async handleForfeit(client: Socket, data: { battleId: string }) {
-    const result = await this.battleManager.forfeit(data.battleId, this.getUserId(client));
+    const result = await this.battleManager.forfeit(
+      data.battleId,
+      this.getUserId(client)
+    );
     this.server.to(`battle:${data.battleId}`).emit('battle:end', result);
   }
 }
 ```
 
 **Battle Manager Service:**
+
 ```typescript
 // apps/pokehub-api/src/battle/battle-manager.service.ts
 @Injectable()
@@ -270,8 +307,12 @@ export class BattleManagerService {
 
     // Initialize battle in @pkmn/sim
     stream.write(`>start {"formatid":"${match.format}"}`);
-    stream.write(`>player p1 {"name":"${match.p1.username}","team":"${match.p1.team}"}`);
-    stream.write(`>player p2 {"name":"${match.p2.username}","team":"${match.p2.team}"}`);
+    stream.write(
+      `>player p1 {"name":"${match.p1.username}","team":"${match.p1.team}"}`
+    );
+    stream.write(
+      `>player p2 {"name":"${match.p2.username}","team":"${match.p2.team}"}`
+    );
 
     // Listen for sim output
     const battle: ActiveBattle = {
@@ -290,7 +331,11 @@ export class BattleManagerService {
     return { id: battleId, initialState };
   }
 
-  async submitMove(battleId: string, userId: string, moveIndex: number): Promise<BattleEvent[] | null> {
+  async submitMove(
+    battleId: string,
+    userId: string,
+    moveIndex: number
+  ): Promise<BattleEvent[] | null> {
     const battle = this.activeBattles.get(battleId);
     const player = battle.p1.id === userId ? 'p1' : 'p2';
 
@@ -314,7 +359,9 @@ export class BattleManagerService {
     return null; // Waiting for other player
   }
 
-  private async parseStreamOutput(stream: BattleStream): Promise<BattleEvent[]> {
+  private async parseStreamOutput(
+    stream: BattleStream
+  ): Promise<BattleEvent[]> {
     // @pkmn/sim outputs text like:
     // |move|p1a: Pikachu|Thunderbolt|p2a: Charizard
     // |-damage|p2a: Charizard|52/100
@@ -327,6 +374,7 @@ export class BattleManagerService {
 ```
 
 **Key Points:**
+
 - WebSocket handles connection, rooms, and message routing
 - BattleManager wraps @pkmn/sim and manages battle state
 - Both players' moves are collected before sim executes the turn
@@ -336,14 +384,17 @@ export class BattleManagerService {
 ##### Battle State Storage
 
 **Active Battles (in-progress)** → In-memory
+
 ```typescript
 private activeBattles: Map<string, ActiveBattle> = new Map();
 ```
+
 - @pkmn/sim BattleStream objects are JavaScript objects
 - Lives only for duration of battle (typically 5-15 min)
 - If server restarts, active battles are lost (acceptable for MVP)
 
 **Completed Battles** → Database
+
 - Winner, loser, format
 - Battle log (for replays)
 - Timestamps
@@ -355,6 +406,7 @@ private activeBattles: Map<string, ActiveBattle> = new Map();
 | Production | Redis | Survives restarts, horizontal scaling |
 
 For production, serialize battle state to Redis periodically so:
+
 - Server can restart without losing battles
 - Multiple server instances can share battles
 - Load balancer can route players to any server
@@ -362,6 +414,7 @@ For production, serialize battle state to Redis periodically so:
 ##### Multi-Instance Scaling (Production)
 
 **Problem:** With multiple backend instances behind a load balancer:
+
 ```
                     Load Balancer
                          │
@@ -371,6 +424,7 @@ For production, serialize battle state to Redis periodically so:
             │            │            │
         Player 1     Player 2     Player 3
 ```
+
 - Player 1 and Player 2 might connect to different servers
 - Socket.io rooms are per-server (they won't see each other)
 - In-memory battle state isn't shared
@@ -378,6 +432,7 @@ For production, serialize battle state to Redis periodically so:
 **Solution: Redis Adapter + Shared State**
 
 1. **Socket.io Redis Adapter** - Syncs rooms across servers
+
 ```typescript
 // apps/pokehub-api/src/main.ts
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -394,6 +449,7 @@ io.adapter(createAdapter(pubClient, subClient));
 ```
 
 2. **Redis for Battle State** - Share active battles across servers
+
 ```typescript
 // Instead of: private battles = new Map()
 // Use Redis:
@@ -408,6 +464,7 @@ async saveBattle(battle: ActiveBattle): Promise<void> {
 ```
 
 3. **Sticky Sessions (Alternative)** - Simpler but less flexible
+
 ```
 Load Balancer (sticky sessions by battleId)
     │
@@ -415,6 +472,7 @@ Load Balancer (sticky sessions by battleId)
 ```
 
 **Recommendation:**
+
 - **MVP**: Single instance, in-memory (no complexity)
 - **Phase 2+**: Add Redis adapter when scaling becomes needed
 - Socket.io Redis adapter is a drop-in solution (minimal code change)
@@ -424,6 +482,7 @@ Load Balancer (sticky sessions by battleId)
 Chat messages use the same WebSocket connection as battle actions.
 
 **Flow:**
+
 ```
 Player 1 types "gg" → WebSocket: 'battle:chat'
                            │
@@ -440,6 +499,7 @@ Player 1 types "gg" → WebSocket: 'battle:chat'
 ```
 
 **Gateway Handler:**
+
 ```typescript
 @SubscribeMessage('battle:chat')
 handleChat(client: Socket, data: { battleId: string; message: string }) {
@@ -462,6 +522,7 @@ handleChat(client: Socket, data: { battleId: string; message: string }) {
 ```
 
 **Client Handling:**
+
 ```typescript
 // In useBattleSocket hook
 socket.on('battle:chat', (data) => {
@@ -477,6 +538,7 @@ socket.on('battle:chat', (data) => {
 ```
 
 **Features:**
+
 - Real-time delivery via WebSocket room
 - Both players in same room receive all messages
 - Messages optionally saved to battle log (for replay viewing)
@@ -484,24 +546,27 @@ socket.on('battle:chat', (data) => {
 - Simple text only (no formatting for MVP)
 
 **Moderation (Phase 3):**
+
 - Chat filter for inappropriate content
 - Mute opponent option
 - Report button
 
 #### 1.3 Battle UI
+
 The in-battle interface.
 
-| Component | Description |
-|-----------|-------------|
-| **Battle Field** | Show both Pokemon with sprites, HP bars, status icons |
-| **Move Panel** | 4 move buttons with type, PP, and power info |
-| **Switch Panel** | View team, switch Pokemon |
-| **Battle Log** | Scrolling text log of actions ("Pikachu used Thunderbolt!") |
-| **Chat Box** | Simple text chat with opponent |
-| **Timer Display** | Show remaining time for current turn |
-| **Forfeit Button** | Option to surrender |
+| Component          | Description                                                 |
+| ------------------ | ----------------------------------------------------------- |
+| **Battle Field**   | Show both Pokemon with sprites, HP bars, status icons       |
+| **Move Panel**     | 4 move buttons with type, PP, and power info                |
+| **Switch Panel**   | View team, switch Pokemon                                   |
+| **Battle Log**     | Scrolling text log of actions ("Pikachu used Thunderbolt!") |
+| **Chat Box**       | Simple text chat with opponent                              |
+| **Timer Display**  | Show remaining time for current turn                        |
+| **Forfeit Button** | Option to surrender                                         |
 
 ##### Battle UI Layout (Desktop)
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  [Opponent Info]              TURN 5                   [Timer]  │
@@ -547,6 +612,7 @@ The in-battle interface.
 ```
 
 ##### Battle UI Layout (Mobile)
+
 ```
 ┌─────────────────────────┐
 │ OPP: Charizard   0:45   │
@@ -577,6 +643,7 @@ The in-battle interface.
 ```
 
 ##### Component Hierarchy
+
 ```
 BattlePage/
 ├── BattleProvider (context for battle state)
@@ -632,6 +699,7 @@ BattlePage/
 ```
 
 ##### State Management
+
 ```typescript
 // Battle state structure
 interface BattleState {
@@ -651,8 +719,8 @@ interface BattleState {
   opponent: {
     id: string;
     username: string;
-    active: Pokemon;  // Only visible info (HP %, status, boosts)
-    teamPreview: PokemonIcon[];  // Icons of remaining Pokemon
+    active: Pokemon; // Only visible info (HP %, status, boosts)
+    teamPreview: PokemonIcon[]; // Icons of remaining Pokemon
   };
 
   field: {
@@ -680,6 +748,7 @@ type BattleAction =
 ```
 
 ##### WebSocket Events
+
 ```typescript
 // Client → Server
 socket.emit('battle:join', { battleId });
@@ -689,13 +758,20 @@ socket.emit('battle:forfeit', { battleId });
 socket.emit('battle:chat', { battleId, message: 'gg' });
 
 // Server → Client
-socket.on('battle:state', (state) => dispatch({ type: 'SYNC', payload: state }));
+socket.on('battle:state', (state) =>
+  dispatch({ type: 'SYNC', payload: state })
+);
 socket.on('battle:event', (event) => dispatch(event));
-socket.on('battle:timer', (data) => dispatch({ type: 'TIMER_UPDATE', payload: data }));
-socket.on('battle:end', (result) => dispatch({ type: 'BATTLE_END', payload: result }));
+socket.on('battle:timer', (data) =>
+  dispatch({ type: 'TIMER_UPDATE', payload: data })
+);
+socket.on('battle:end', (result) =>
+  dispatch({ type: 'BATTLE_END', payload: result })
+);
 ```
 
 ##### Key Implementation Files
+
 ```
 apps/pokehub-app/app/battle/
 ├── page.tsx                    # Battle lobby/matchmaking
@@ -729,7 +805,9 @@ packages/frontend/pokehub-battle-components/
 ```
 
 ##### Animation Approach (MVP)
+
 **Phase 1: React + CSS/Tailwind** (like Showdown)
+
 - HP Bar: CSS transition (0.5s ease)
 - Status Applied: CSS flash effect
 - Fainting: CSS fade out
@@ -738,6 +816,7 @@ packages/frontend/pokehub-battle-components/
 
 **Phase 6: PixiJS Enhancement** (post-MVP)
 Upgrade battle field to PixiJS canvas for:
+
 - Animated Pokemon sprites (idle breathing from @pkmn)
 - Generic move effects (~15 templates, type-colored):
   - Physical contact (slash/impact)
@@ -751,33 +830,35 @@ Upgrade battle field to PixiJS canvas for:
 This keeps MVP simple while having a clear upgrade path.
 
 #### 1.4 Matchmaking System
+
 Connecting players for battles.
 
-| Component | Description |
-|-----------|-------------|
-| **Queue Manager** | Track players waiting by format |
-| **Match Pairing** | Pair players from same format queue (FIFO initially) |
-| **Room Creation** | Create battle room when match found |
-| **Disconnect Handling** | Handle player disconnects gracefully |
+| Component               | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| **Queue Manager**       | Track players waiting by format                      |
+| **Match Pairing**       | Pair players from same format queue (FIFO initially) |
+| **Room Creation**       | Create battle room when match found                  |
+| **Disconnect Handling** | Handle player disconnects gracefully                 |
 
 #### 1.5 Battle Result
+
 Post-battle screen.
 
-| Component | Description |
-|-----------|-------------|
-| **Result Screen** | Win/Loss display with battle summary |
-| **Rematch Option** | Challenge same opponent again |
-| **Find New Battle** | Return to queue |
-| **Exit to Menu** | Return to Battle page |
+| Component           | Description                          |
+| ------------------- | ------------------------------------ |
+| **Result Screen**   | Win/Loss display with battle summary |
+| **Rematch Option**  | Challenge same opponent again        |
+| **Find New Battle** | Return to queue                      |
+| **Exit to Menu**    | Return to Battle page                |
 
 ### Technical Infrastructure
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Battle Simulator** | @pkmn/sim | All battle mechanics (we don't build this) |
-| **WebSocket Gateway** | NestJS + Socket.io | Connect clients to battle sim |
-| **Battle Manager** | Node.js service | Manage active battles, parse sim output |
-| **Client State** | React Context + useReducer | Manage battle UI state |
+| Component             | Technology                 | Purpose                                    |
+| --------------------- | -------------------------- | ------------------------------------------ |
+| **Battle Simulator**  | @pkmn/sim                  | All battle mechanics (we don't build this) |
+| **WebSocket Gateway** | NestJS + Socket.io         | Connect clients to battle sim              |
+| **Battle Manager**    | Node.js service            | Manage active battles, parse sim output    |
+| **Client State**      | React Context + useReducer | Manage battle UI state                     |
 
 **Note:** Redis may be needed later for scaling (multiple server instances), but MVP can run battles in-memory since @pkmn/sim runs in Node.js.
 
@@ -805,76 +886,84 @@ battles
 ### Features
 
 #### 2.1 Battle Formats
+
 Different rulesets and tiers.
 
-| Format | Description |
-|--------|-------------|
-| **Random Battle** | Random teams, no teambuilding required, great for quick play |
-| **OU (OverUsed)** | Standard competitive tier, most Pokemon allowed |
-| **UU (UnderUsed)** | Pokemon not common in OU |
-| **Ubers** | Legendary/overpowered Pokemon allowed |
-| **LC (Little Cup)** | First-stage Pokemon only, level 5 |
-| **Monotype** | All Pokemon must share a type |
+| Format              | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| **Random Battle**   | Random teams, no teambuilding required, great for quick play |
+| **OU (OverUsed)**   | Standard competitive tier, most Pokemon allowed              |
+| **UU (UnderUsed)**  | Pokemon not common in OU                                     |
+| **Ubers**           | Legendary/overpowered Pokemon allowed                        |
+| **LC (Little Cup)** | First-stage Pokemon only, level 5                            |
+| **Monotype**        | All Pokemon must share a type                                |
 
 Each format requires:
+
 - Ban list (Pokemon, moves, abilities, items)
 - Clauses (Sleep Clause, Species Clause, etc.)
 - Team validation rules
 
 #### 2.2 Ladder/Rating System
+
 ELO-based competitive rankings.
 
-| Component | Description |
-|-----------|-------------|
-| **ELO Rating** | Starting 1000, gain/lose based on match results |
-| **Rating Calculation** | K-factor based on games played (higher K early) |
-| **Separate Ratings** | Each format has its own ladder |
-| **Rating Display** | Show rating in profile, battle UI |
-| **Rank Tiers** | Bronze/Silver/Gold/Platinum/Master based on rating |
+| Component              | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| **ELO Rating**         | Starting 1000, gain/lose based on match results    |
+| **Rating Calculation** | K-factor based on games played (higher K early)    |
+| **Separate Ratings**   | Each format has its own ladder                     |
+| **Rating Display**     | Show rating in profile, battle UI                  |
+| **Rank Tiers**         | Bronze/Silver/Gold/Platinum/Master based on rating |
 
 #### 2.3 Leaderboards
+
 Public rankings.
 
-| Component | Description |
-|-----------|-------------|
-| **Global Leaderboard** | Top 100 players per format |
-| **Personal Rank** | "You are #1,234 in OU" |
-| **Filters** | Filter by format, time period (daily/weekly/all-time) |
-| **Player Profiles** | Click to view player's public profile |
+| Component              | Description                                           |
+| ---------------------- | ----------------------------------------------------- |
+| **Global Leaderboard** | Top 100 players per format                            |
+| **Personal Rank**      | "You are #1,234 in OU"                                |
+| **Filters**            | Filter by format, time period (daily/weekly/all-time) |
+| **Player Profiles**    | Click to view player's public profile                 |
 
 #### 2.4 Battle History
+
 Record of past battles.
 
-| Component | Description |
-|-----------|-------------|
-| **History List** | Paginated list of past battles |
-| **Battle Summary** | Opponent, format, result, date |
-| **Quick Stats** | Win/loss record by format |
-| **Filters** | Filter by format, result, opponent |
+| Component          | Description                        |
+| ------------------ | ---------------------------------- |
+| **History List**   | Paginated list of past battles     |
+| **Battle Summary** | Opponent, format, result, date     |
+| **Quick Stats**    | Win/loss record by format          |
+| **Filters**        | Filter by format, result, opponent |
 
 #### 2.5 Replay System
+
 Save and rewatch battles.
 
-| Component | Description |
-|-----------|-------------|
-| **Auto-Save** | All ladder battles saved automatically |
-| **Replay Viewer** | Step through battle turn by turn |
-| **Playback Controls** | Play, pause, speed up, rewind |
-| **Share Replays** | Public URL to share replay |
-| **Download** | Export replay as file |
+| Component             | Description                            |
+| --------------------- | -------------------------------------- |
+| **Auto-Save**         | All ladder battles saved automatically |
+| **Replay Viewer**     | Step through battle turn by turn       |
+| **Playback Controls** | Play, pause, speed up, rewind          |
+| **Share Replays**     | Public URL to share replay             |
+| **Download**          | Export replay as file                  |
 
 #### 2.6 Player Statistics
+
 Detailed performance metrics.
 
-| Component | Description |
-|-----------|-------------|
-| **Win Rate** | Overall and by format |
-| **Most Used Pokemon** | Top 6 Pokemon by usage |
-| **Most Used Teams** | Top teams by games played |
-| **Win Streaks** | Current and best streak |
-| **Rating History** | Graph of rating over time |
+| Component             | Description               |
+| --------------------- | ------------------------- |
+| **Win Rate**          | Overall and by format     |
+| **Most Used Pokemon** | Top 6 Pokemon by usage    |
+| **Most Used Teams**   | Top teams by games played |
+| **Win Streaks**       | Current and best streak   |
+| **Rating History**    | Graph of rating over time |
 
 ### Battle Page Expansion
+
 ```
 Battle Page:
 ├── Find Match
@@ -892,6 +981,7 @@ Battle Page:
 ```
 
 ### User Menu Addition
+
 - **My Stats** - Quick access to personal statistics page
 
 ### Database Schema Additions
@@ -928,6 +1018,7 @@ replays
 **Goal:** Connect players, enable direct challenges, build community.
 
 ### Navigation Addition
+
 ```
 Before:  Pokedex | Battle | Team Builder
 After:   Pokedex | Lobby | Battle | Team Builder
@@ -936,73 +1027,80 @@ After:   Pokedex | Lobby | Battle | Team Builder
 ### Features
 
 #### 3.1 Lobby/Home Page
+
 Central social hub.
 
-| Component | Description |
-|-----------|-------------|
-| **Online Count** | "1,234 trainers online" |
-| **Global Chat** | General chat room |
-| **Format Rooms** | Chat rooms per format (OU Lobby, Random Lobby) |
-| **Active Battles** | List of ongoing battles to spectate |
-| **Announcements** | News, updates, maintenance notices |
+| Component          | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| **Online Count**   | "1,234 trainers online"                        |
+| **Global Chat**    | General chat room                              |
+| **Format Rooms**   | Chat rooms per format (OU Lobby, Random Lobby) |
+| **Active Battles** | List of ongoing battles to spectate            |
+| **Announcements**  | News, updates, maintenance notices             |
 
 #### 3.2 Friends System
+
 Social connections.
 
-| Component | Description |
-|-----------|-------------|
-| **Friend List** | List of friends with online status |
-| **Add Friend** | Search by username, send request |
-| **Friend Requests** | Accept/decline incoming requests |
-| **Block User** | Block players from messaging/challenging |
-| **Online Status** | Online/Away/In Battle/Offline |
+| Component           | Description                              |
+| ------------------- | ---------------------------------------- |
+| **Friend List**     | List of friends with online status       |
+| **Add Friend**      | Search by username, send request         |
+| **Friend Requests** | Accept/decline incoming requests         |
+| **Block User**      | Block players from messaging/challenging |
+| **Online Status**   | Online/Away/In Battle/Offline            |
 
 #### 3.3 Direct Challenges
+
 Battle friends directly.
 
-| Component | Description |
-|-----------|-------------|
-| **Challenge Button** | On friend's profile or in friend list |
-| **Format Selection** | Choose format for challenge |
-| **Team Selection** | Pick team before sending challenge |
-| **Challenge Notification** | Popup for recipient |
-| **Accept/Decline** | Recipient can accept or decline |
-| **Challenge Expiry** | Auto-decline after 60 seconds |
+| Component                  | Description                           |
+| -------------------------- | ------------------------------------- |
+| **Challenge Button**       | On friend's profile or in friend list |
+| **Format Selection**       | Choose format for challenge           |
+| **Team Selection**         | Pick team before sending challenge    |
+| **Challenge Notification** | Popup for recipient                   |
+| **Accept/Decline**         | Recipient can accept or decline       |
+| **Challenge Expiry**       | Auto-decline after 60 seconds         |
 
 #### 3.4 Spectating
+
 Watch live battles.
 
-| Component | Description |
-|-----------|-------------|
-| **Live Battles List** | Browse ongoing public battles |
-| **Spectate Button** | Join as spectator |
-| **Spectator View** | Read-only battle view, see both sides |
-| **Spectator Chat** | Chat with other spectators (hidden from players) |
-| **Spectator Count** | "5 spectators watching" |
+| Component             | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| **Live Battles List** | Browse ongoing public battles                    |
+| **Spectate Button**   | Join as spectator                                |
+| **Spectator View**    | Read-only battle view, see both sides            |
+| **Spectator Chat**    | Chat with other spectators (hidden from players) |
+| **Spectator Count**   | "5 spectators watching"                          |
 
 #### 3.5 Chat System
+
 Real-time messaging.
 
-| Component | Description |
-|-----------|-------------|
-| **Global Chat** | Public chat in Lobby |
-| **Room Chat** | Format-specific chat rooms |
-| **Private Messages** | Direct messages to friends |
-| **Battle Chat** | In-battle chat with opponent |
-| **Moderation** | Mute, report, chat filters |
+| Component            | Description                  |
+| -------------------- | ---------------------------- |
+| **Global Chat**      | Public chat in Lobby         |
+| **Room Chat**        | Format-specific chat rooms   |
+| **Private Messages** | Direct messages to friends   |
+| **Battle Chat**      | In-battle chat with opponent |
+| **Moderation**       | Mute, report, chat filters   |
 
 #### 3.6 Notifications
+
 Real-time alerts.
 
-| Component | Description |
-|-----------|-------------|
-| **Challenge Received** | Popup + sound when challenged |
-| **Friend Request** | Notification for new requests |
-| **Friend Online** | Optional notification when friend comes online |
-| **Notification Center** | View all notifications in User Menu |
-| **Push Notifications** | Browser push for challenges (optional) |
+| Component               | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| **Challenge Received**  | Popup + sound when challenged                  |
+| **Friend Request**      | Notification for new requests                  |
+| **Friend Online**       | Optional notification when friend comes online |
+| **Notification Center** | View all notifications in User Menu            |
+| **Push Notifications**  | Browser push for challenges (optional)         |
 
 ### Lobby Page Structure
+
 ```
 Lobby:
 ├── Header
@@ -1020,6 +1118,7 @@ Lobby:
 ```
 
 ### User Menu Additions
+
 - **Friends** - Open friends list/management
 - **Messages** - View private messages
 - **Notifications** - Notification center
@@ -1061,63 +1160,69 @@ notifications
 ### Features
 
 #### 4.1 Damage Calculator
+
 Essential competitive tool.
 
-| Component | Description |
-|-----------|-------------|
-| **Pokemon Selector** | Choose attacker and defender |
-| **Move Selector** | Pick move to calculate |
-| **Stat Modifiers** | Set EVs, IVs, nature, boosts |
+| Component            | Description                     |
+| -------------------- | ------------------------------- |
+| **Pokemon Selector** | Choose attacker and defender    |
+| **Move Selector**    | Pick move to calculate          |
+| **Stat Modifiers**   | Set EVs, IVs, nature, boosts    |
 | **Field Conditions** | Weather, terrain, screens, etc. |
-| **Damage Output** | Show damage range and % |
-| **OHKO/2HKO Calc** | Calculate KO thresholds |
-| **Import from Team** | Load Pokemon from saved teams |
+| **Damage Output**    | Show damage range and %         |
+| **OHKO/2HKO Calc**   | Calculate KO thresholds         |
+| **Import from Team** | Load Pokemon from saved teams   |
 
 #### 4.2 Team Validator
+
 Check team legality.
 
-| Component | Description |
-|-----------|-------------|
-| **Format Selector** | Choose format to validate against |
-| **Team Input** | Paste team or select saved team |
-| **Validation Results** | List of errors/warnings |
-| **Auto-Fix Suggestions** | Suggest legal alternatives |
+| Component                | Description                           |
+| ------------------------ | ------------------------------------- |
+| **Format Selector**      | Choose format to validate against     |
+| **Team Input**           | Paste team or select saved team       |
+| **Validation Results**   | List of errors/warnings               |
+| **Auto-Fix Suggestions** | Suggest legal alternatives            |
 | **Real-time Validation** | Validate as you build in Team Builder |
 
 #### 4.3 Import/Export
+
 Showdown format compatibility.
 
-| Component | Description |
-|-----------|-------------|
-| **Import Team** | Paste Showdown format, create team |
-| **Export Team** | Copy team as Showdown format |
-| **Batch Import** | Import multiple teams at once |
-| **Format Detection** | Auto-detect team format |
+| Component            | Description                        |
+| -------------------- | ---------------------------------- |
+| **Import Team**      | Paste Showdown format, create team |
+| **Export Team**      | Copy team as Showdown format       |
+| **Batch Import**     | Import multiple teams at once      |
+| **Format Detection** | Auto-detect team format            |
 
 #### 4.4 Team Sharing
+
 Share teams with others.
 
-| Component | Description |
-|-----------|-------------|
-| **Public Teams** | Mark team as public |
-| **Team Browser** | Browse public teams by format |
-| **Team Link** | Shareable URL for team |
-| **Copy Team** | Clone public team to your collection |
-| **Team Ratings** | Upvote/downvote teams |
+| Component        | Description                          |
+| ---------------- | ------------------------------------ |
+| **Public Teams** | Mark team as public                  |
+| **Team Browser** | Browse public teams by format        |
+| **Team Link**    | Shareable URL for team               |
+| **Copy Team**    | Clone public team to your collection |
+| **Team Ratings** | Upvote/downvote teams                |
 
 #### 4.5 Extended Pokedex
+
 Comprehensive game data.
 
-| Tab | Content |
-|-----|---------|
-| **Pokemon** | Existing Pokedex (stats, types, abilities, moves) |
-| **Moves** | All moves with details, filter by type/category |
-| **Abilities** | All abilities with descriptions and Pokemon list |
-| **Items** | All competitive items with effects |
-| **Natures** | Nature chart with stat effects |
-| **Type Chart** | Interactive type effectiveness chart |
+| Tab            | Content                                           |
+| -------------- | ------------------------------------------------- |
+| **Pokemon**    | Existing Pokedex (stats, types, abilities, moves) |
+| **Moves**      | All moves with details, filter by type/category   |
+| **Abilities**  | All abilities with descriptions and Pokemon list  |
+| **Items**      | All competitive items with effects                |
+| **Natures**    | Nature chart with stat effects                    |
+| **Type Chart** | Interactive type effectiveness chart              |
 
 ### Pokedex Navigation
+
 ```
 Pokedex:
 ├── Pokemon (existing)
@@ -1128,6 +1233,7 @@ Pokedex:
 ```
 
 ### Tools Page (or integrate into Team Builder)
+
 ```
 Tools:
 ├── Damage Calculator
@@ -1144,57 +1250,62 @@ Tools:
 ### Features
 
 #### 5.1 AI Battles
+
 Practice against computer.
 
-| Component | Description |
-|-----------|-------------|
-| **AI Difficulty** | Easy, Medium, Hard, Expert |
-| **AI Behavior** | Different strategies per difficulty |
-| **Practice Mode** | No rating impact |
-| **Custom AI Teams** | AI uses random or set teams |
-| **Move Hints** | Optional hints for beginners |
+| Component           | Description                         |
+| ------------------- | ----------------------------------- |
+| **AI Difficulty**   | Easy, Medium, Hard, Expert          |
+| **AI Behavior**     | Different strategies per difficulty |
+| **Practice Mode**   | No rating impact                    |
+| **Custom AI Teams** | AI uses random or set teams         |
+| **Move Hints**      | Optional hints for beginners        |
 
 #### 5.2 Unranked/Casual
+
 Play without pressure.
 
-| Component | Description |
-|-----------|-------------|
-| **Casual Queue** | Separate from ranked |
-| **No Rating** | Battles don't affect ladder |
-| **Same Formats** | All formats available |
-| **Shorter Timer** | Optional faster turn timer |
+| Component         | Description                 |
+| ----------------- | --------------------------- |
+| **Casual Queue**  | Separate from ranked        |
+| **No Rating**     | Battles don't affect ladder |
+| **Same Formats**  | All formats available       |
+| **Shorter Timer** | Optional faster turn timer  |
 
 #### 5.3 Tournaments
+
 Competitive bracket events.
 
-| Component | Description |
-|-----------|-------------|
+| Component            | Description                         |
+| -------------------- | ----------------------------------- |
 | **Tournament Lobby** | List of upcoming/active tournaments |
-| **Registration** | Sign up for tournaments |
-| **Bracket View** | Visual tournament bracket |
-| **Auto-Matching** | Automatic pairing each round |
-| **Prizes** | Cosmetic rewards for winners |
+| **Registration**     | Sign up for tournaments             |
+| **Bracket View**     | Visual tournament bracket           |
+| **Auto-Matching**    | Automatic pairing each round        |
+| **Prizes**           | Cosmetic rewards for winners        |
 | **Scheduled Events** | Weekly/monthly official tournaments |
 
 #### 5.4 Custom Formats
+
 User-created rulesets.
 
-| Component | Description |
-|-----------|-------------|
-| **Format Creator** | Define custom bans/rules |
-| **Share Formats** | Share custom format with friends |
-| **Custom Lobbies** | Create room with custom format |
-| **Format Templates** | Start from existing format |
+| Component            | Description                      |
+| -------------------- | -------------------------------- |
+| **Format Creator**   | Define custom bans/rules         |
+| **Share Formats**    | Share custom format with friends |
+| **Custom Lobbies**   | Create room with custom format   |
+| **Format Templates** | Start from existing format       |
 
 #### 5.5 Team Preview
+
 Optional pre-battle phase.
 
-| Component | Description |
-|-----------|-------------|
-| **Preview Phase** | See opponent's 6 Pokemon before battle |
-| **Lead Selection** | Choose your lead after seeing team |
-| **Timer** | 90 seconds for team preview |
-| **Optional** | Can be enabled/disabled per format |
+| Component          | Description                            |
+| ------------------ | -------------------------------------- |
+| **Preview Phase**  | See opponent's 6 Pokemon before battle |
+| **Lead Selection** | Choose your lead after seeing team     |
+| **Timer**          | 90 seconds for team preview            |
+| **Optional**       | Can be enabled/disabled per format     |
 
 ---
 
@@ -1205,90 +1316,98 @@ Optional pre-battle phase.
 ### Features
 
 #### 6.1 Achievements
+
 Reward milestones.
 
-| Category | Examples |
-|----------|----------|
-| **Battle** | Win 10/50/100 battles, First win, Win streak |
-| **Ladder** | Reach 1200/1400/1600 rating, Reach top 100 |
-| **Collection** | Create 10 teams, Complete Pokedex |
-| **Social** | Add 5 friends, Spectate 10 battles |
-| **Special** | Win with monotype team, Win in 3 turns |
+| Category       | Examples                                     |
+| -------------- | -------------------------------------------- |
+| **Battle**     | Win 10/50/100 battles, First win, Win streak |
+| **Ladder**     | Reach 1200/1400/1600 rating, Reach top 100   |
+| **Collection** | Create 10 teams, Complete Pokedex            |
+| **Social**     | Add 5 friends, Spectate 10 battles           |
+| **Special**    | Win with monotype team, Win in 3 turns       |
 
 #### 6.2 Trainer Card
+
 Public profile customization.
 
-| Component | Description |
-|-----------|-------------|
-| **Card Design** | Choose background, frame, badges |
-| **Featured Pokemon** | Display favorite Pokemon |
-| **Stats Display** | Show rating, win rate, achievements |
-| **Bio** | Short profile description |
-| **Share Card** | Image export for social media |
+| Component            | Description                         |
+| -------------------- | ----------------------------------- |
+| **Card Design**      | Choose background, frame, badges    |
+| **Featured Pokemon** | Display favorite Pokemon            |
+| **Stats Display**    | Show rating, win rate, achievements |
+| **Bio**              | Short profile description           |
+| **Share Card**       | Image export for social media       |
 
 #### 6.3 Seasonal Ladders
+
 Competitive seasons.
 
-| Component | Description |
-|-----------|-------------|
-| **Season Length** | 1-3 month seasons |
-| **Ladder Reset** | Soft reset at season start |
-| **Season Rewards** | Cosmetics based on final rank |
-| **Season History** | View past season rankings |
-| **Leaderboard Archive** | Historical top 100 |
+| Component               | Description                   |
+| ----------------------- | ----------------------------- |
+| **Season Length**       | 1-3 month seasons             |
+| **Ladder Reset**        | Soft reset at season start    |
+| **Season Rewards**      | Cosmetics based on final rank |
+| **Season History**      | View past season rankings     |
+| **Leaderboard Archive** | Historical top 100            |
 
 #### 6.4 Cosmetics & Rewards
+
 Visual customization.
 
-| Component | Description |
-|-----------|-------------|
-| **Avatar Frames** | Border decorations |
-| **Name Colors** | Username color options |
-| **Battle Themes** | Different battle backgrounds |
-| **Chat Emotes** | Custom emotes |
-| **Achievement Badges** | Display earned badges |
+| Component              | Description                  |
+| ---------------------- | ---------------------------- |
+| **Avatar Frames**      | Border decorations           |
+| **Name Colors**        | Username color options       |
+| **Battle Themes**      | Different battle backgrounds |
+| **Chat Emotes**        | Custom emotes                |
+| **Achievement Badges** | Display earned badges        |
 
 #### 6.5 Mobile Optimization
+
 Improved mobile experience.
 
-| Component | Description |
-|-----------|-------------|
-| **Touch Controls** | Optimized for tap interactions |
-| **Responsive Battle UI** | Battle UI adapts to screen size |
-| **Offline Team Building** | Build teams without connection |
-| **Push Notifications** | Challenge alerts on mobile |
-| **PWA Support** | Install as mobile app |
+| Component                 | Description                     |
+| ------------------------- | ------------------------------- |
+| **Touch Controls**        | Optimized for tap interactions  |
+| **Responsive Battle UI**  | Battle UI adapts to screen size |
+| **Offline Team Building** | Build teams without connection  |
+| **Push Notifications**    | Challenge alerts on mobile      |
+| **PWA Support**           | Install as mobile app           |
 
 ---
 
 ## Summary
 
-| Phase | Focus | Key Deliverable |
-|-------|-------|-----------------|
-| 1 | Core Loop | Working multiplayer battles |
-| 2 | Competitive | Ladder rankings & replays |
-| 3 | Social | Friends, lobby, spectating |
-| 4 | Tools | Damage calc, import/export |
-| 5 | Game Modes | AI, tournaments |
-| 6 | Polish | Achievements, seasons |
+| Phase | Focus       | Key Deliverable             |
+| ----- | ----------- | --------------------------- |
+| 1     | Core Loop   | Working multiplayer battles |
+| 2     | Competitive | Ladder rankings & replays   |
+| 3     | Social      | Friends, lobby, spectating  |
+| 4     | Tools       | Damage calc, import/export  |
+| 5     | Game Modes  | AI, tournaments             |
+| 6     | Polish      | Achievements, seasons       |
 
 ---
 
 ## Immediate Next Steps (Phase 1)
 
 ### Frontend Changes
+
 1. **Remove Dashboard from navbar** - `packages/frontend/pokehub-nav-components/`
 2. **Simplify User Menu** - Combine View/Edit Profile into single "Profile" link
 3. **Create Battle page** - `apps/pokehub-app/app/battle/page.tsx`
 4. **Create Battle UI components** - `packages/frontend/pokehub-battle-components/`
 
 ### Backend Infrastructure
+
 5. **Install @pkmn/sim** - Battle simulation engine
 6. **WebSocket Gateway** - NestJS gateway wrapping @pkmn/sim
 7. **Battle Manager Service** - Create/manage battles, parse sim output
 8. **Matchmaking Service** - Queue players, pair for battles
 
 ### Database
+
 9. **Battles table** - Store battle records
 10. **Migrations** - Drizzle schema updates
 
@@ -1296,11 +1415,11 @@ Improved mobile experience.
 
 ## File Locations (for reference)
 
-| Component | Path |
-|-----------|------|
-| Navbar | `packages/frontend/pokehub-nav-components/src/lib/components/` |
+| Component           | Path                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| Navbar              | `packages/frontend/pokehub-nav-components/src/lib/components/`                          |
 | User Menu (Desktop) | `packages/frontend/pokehub-nav-components/src/lib/components/desktop/user-dropdown.tsx` |
-| User Menu (Mobile) | `packages/frontend/pokehub-nav-components/src/lib/components/mobile/user-menu.tsx` |
-| App Routes | `apps/pokehub-app/app/` |
-| API | `apps/pokehub-api/src/` |
-| Database | `packages/backend/pokehub-postgres/` |
+| User Menu (Mobile)  | `packages/frontend/pokehub-nav-components/src/lib/components/mobile/user-menu.tsx`      |
+| App Routes          | `apps/pokehub-app/app/`                                                                 |
+| API                 | `apps/pokehub-api/src/`                                                                 |
+| Database            | `packages/backend/pokehub-postgres/`                                                    |

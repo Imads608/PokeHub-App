@@ -21,11 +21,6 @@ export const PokeHubRouter: AppRouter = {
   ],
   privilegedRoutes: [
     {
-      route: '/dashboard',
-      rolesAllowed: ['ADMIN', 'USER'],
-      allowSubRoutes: true,
-    },
-    {
       route: '/create-profile',
       rolesAllowed: ['USER'],
       allowSubRoutes: false,
@@ -42,8 +37,8 @@ export const PokeHubRouter: AppRouter = {
     },
   ],
   redirectOnLogin: {
-    ADMIN: '/dashboard',
-    USER: '/dashboard',
+    ADMIN: '/team-builder',
+    USER: '/team-builder',
   },
   createUsernameRoute: '/create-profile',
 };

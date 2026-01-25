@@ -66,11 +66,11 @@ test.describe('Create Profile Flow - New User', () => {
   });
 
   test.describe('Route Guards', () => {
-    test('should redirect new user from dashboard to create-profile', async ({
+    test('should redirect new user from team-builder to create-profile', async ({
       page,
     }) => {
-      // New user (without username) tries to access dashboard
-      await page.goto('/dashboard');
+      // New user (without username) tries to access team-builder
+      await page.goto('/team-builder');
 
       // Should be redirected to create-profile
       await page.waitForURL('**/create-profile', { timeout: 15000 });
@@ -361,9 +361,9 @@ test.describe('Create Profile Flow - Form Submission', () => {
     // Submit the form
     await page.getByTestId('submit-button').click();
 
-    // Should redirect to dashboard after successful submission
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
-    expect(page.url()).toContain('/dashboard');
+    // Should redirect to team-builder after successful submission
+    await page.waitForURL('**/team-builder', { timeout: 15000 });
+    expect(page.url()).toContain('/team-builder');
   });
 
   test('should submit profile successfully with avatar', async ({ page }) => {
@@ -398,9 +398,9 @@ test.describe('Create Profile Flow - Form Submission', () => {
     // Submit the form
     await page.getByTestId('submit-button').click();
 
-    // Should redirect to dashboard after successful submission
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
-    expect(page.url()).toContain('/dashboard');
+    // Should redirect to team-builder after successful submission
+    await page.waitForURL('**/team-builder', { timeout: 15000 });
+    expect(page.url()).toContain('/team-builder');
   });
 
   test('should show loading state during submission', async ({ page }) => {
@@ -458,8 +458,8 @@ test.describe('Create Profile Flow - Form Submission', () => {
     // Submit the form
     await page.getByTestId('submit-button').click();
 
-    // Wait for redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    // Wait for redirect to team-builder
+    await page.waitForURL('**/team-builder', { timeout: 15000 });
 
     // Check that the user avatar is visible in navigation
     // The nav-user-avatar-image testid was added to user-dropdown.tsx
@@ -482,20 +482,20 @@ test.describe('Create Profile Flow - Existing User', () => {
     // Existing user (with username) tries to access create-profile
     await page.goto('/create-profile');
 
-    // Should be redirected away (to dashboard or home)
+    // Should be redirected away (to team-builder or home)
     await page.waitForURL((url) => !url.pathname.includes('/create-profile'), {
       timeout: 15000,
     });
     expect(page.url()).not.toContain('/create-profile');
   });
 
-  test('should allow existing user to access dashboard directly', async ({
+  test('should allow existing user to access team-builder directly', async ({
     page,
   }) => {
-    await page.goto('/dashboard');
+    await page.goto('/team-builder');
 
-    // Should stay on dashboard (not redirected to create-profile)
+    // Should stay on team-builder (not redirected to create-profile)
     await page.waitForLoadState('domcontentloaded');
-    expect(page.url()).toContain('/dashboard');
+    expect(page.url()).toContain('/team-builder');
   });
 });
