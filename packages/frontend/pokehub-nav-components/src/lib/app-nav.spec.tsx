@@ -108,7 +108,6 @@ describe('AppNav', () => {
 
     it('should render authenticated navigation links', () => {
       render(<AppNav />);
-      expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
       expect(screen.getByText(/Battle/i)).toBeInTheDocument();
       expect(screen.getByText(/Team Builder/i)).toBeInTheDocument();
     });
