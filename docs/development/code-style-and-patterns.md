@@ -5,6 +5,7 @@
 This guide documents the coding conventions, patterns, and best practices used throughout the PokeHub codebase. Following these guidelines ensures consistency, maintainability, and ease of collaboration.
 
 **Philosophy**: Write code that is:
+
 - **Consistent**: Follows established patterns
 - **Readable**: Easy to understand at a glance
 - **Type-Safe**: Leverages TypeScript fully
@@ -22,25 +23,26 @@ This guide documents the coding conventions, patterns, and best practices used t
 
 ### File Suffixes
 
-| File Type | Suffix | Example |
-|-----------|--------|---------|
-| React Component | `.tsx` | `pokemon-card.tsx` |
-| TypeScript file | `.ts` | `pokemon-utils.ts` |
-| Hook | `.hook.ts` or `.tsx` | `pokemon-details.hook.ts` |
-| Context | `.context.tsx` | `team-editor.context.tsx` |
-| Provider | `.provider.tsx` | `auth.provider.tsx` |
-| Model/Types | `.models.ts` or `.types.ts` | `profile.models.ts` |
-| Test | `.spec.ts` or `.spec.tsx` | `button.spec.tsx` |
-| API Client | `.api.ts` | `pokemon-dex.api.ts` |
-| Service (Backend) | `.service.ts` | `auth.service.ts` |
-| Controller (Backend) | `.controller.ts` | `users.controller.ts` |
-| Module (Backend) | `.module.ts` | `auth.module.ts` |
-| Guard (Backend) | `.guard.ts` | `token-auth.guard.ts` |
-| Decorator (Backend) | `.decorator.ts` | `user.decorator.ts` |
+| File Type            | Suffix                      | Example                   |
+| -------------------- | --------------------------- | ------------------------- |
+| React Component      | `.tsx`                      | `pokemon-card.tsx`        |
+| TypeScript file      | `.ts`                       | `pokemon-utils.ts`        |
+| Hook                 | `.hook.ts` or `.tsx`        | `pokemon-details.hook.ts` |
+| Context              | `.context.tsx`              | `team-editor.context.tsx` |
+| Provider             | `.provider.tsx`             | `auth.provider.tsx`       |
+| Model/Types          | `.models.ts` or `.types.ts` | `profile.models.ts`       |
+| Test                 | `.spec.ts` or `.spec.tsx`   | `button.spec.tsx`         |
+| API Client           | `.api.ts`                   | `pokemon-dex.api.ts`      |
+| Service (Backend)    | `.service.ts`               | `auth.service.ts`         |
+| Controller (Backend) | `.controller.ts`            | `users.controller.ts`     |
+| Module (Backend)     | `.module.ts`                | `auth.module.ts`          |
+| Guard (Backend)      | `.guard.ts`                 | `token-auth.guard.ts`     |
+| Decorator (Backend)  | `.decorator.ts`             | `user.decorator.ts`       |
 
 ### Examples
 
 **Good**:
+
 ```
 pokemon-details.hook.ts
 team-editor.context.tsx
@@ -50,6 +52,7 @@ pokemon-dex.api.ts
 ```
 
 **Bad**:
+
 ```
 PokemonDetails.hook.ts          // PascalCase
 pokemon_details.hook.ts         // snake_case
@@ -64,6 +67,7 @@ pokemon-details.ts              // Missing .hook suffix
 - **Singular for single purpose**: `context/`, `api/`
 
 **Examples**:
+
 ```
 components/
   pokemon/
@@ -94,23 +98,20 @@ context/
 
 ```typescript
 // 1. React/Next.js
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-
-// 2. External dependencies (alphabetical)
-import { useQuery } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
-import { toast } from 'sonner';
-
+// 4. Relative imports
+import { useTeamEditorContext } from '../../context/team-editor.context';
+import { SearchableSelect } from './searchable-select';
 // 3. @pokehub packages (alphabetical by package name)
 import { getPokemonDetails } from '@pokehub/frontend/dex-data-provider';
 import { PokemonInTeam } from '@pokehub/frontend/pokemon-types';
 import { Button, Input, Label } from '@pokehub/frontend/shared-ui-components';
 import { cn } from '@pokehub/frontend/shared-utils';
-
-// 4. Relative imports
-import { useTeamEditorContext } from '../../context/team-editor.context';
-import { SearchableSelect } from './searchable-select';
+// 2. External dependencies (alphabetical)
+import { useQuery } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 ```
 
 ### Type Imports
@@ -150,7 +151,6 @@ Some packages have server-only exports:
 ```typescript
 // Client-side
 import { useAuthSession } from '@pokehub/frontend/shared-auth';
-
 // Server-side (Next.js server components/API routes)
 import { getServerSession } from '@pokehub/frontend/shared-auth/server';
 ```
@@ -162,11 +162,13 @@ import { getServerSession } from '@pokehub/frontend/shared-auth/server';
 ### Type vs Interface
 
 **Use `interface` for**:
+
 - Component props
 - Object shapes
 - Public APIs
 
 **Use `type` for**:
+
 - Unions
 - Intersections
 - Primitives
@@ -189,27 +191,31 @@ export type PokemonWithStats = Pokemon & { stats: Stats[] };
 
 ### Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Interface | PascalCase | `UserProfile`, `PokemonDetailsOptions` |
-| Type Alias | PascalCase | `UserAccountRole`, `TokenType` |
-| Enum | PascalCase | `AccountRole`, `TokenType` |
-| Variable | camelCase | `userId`, `pokemonDetails` |
-| Constant | UPPER_SNAKE_CASE or camelCase | `MAX_TEAM_SIZE` or `defaultGeneration` |
-| Function | camelCase | `getPokemonDetails`, `usePokemonLearnset` |
-| Component | PascalCase | `BasicTab`, `PokemonCard` |
-| Hook | camelCase starting with `use` | `usePokemonDetails`, `useCreateProfile` |
+| Type       | Convention                    | Example                                   |
+| ---------- | ----------------------------- | ----------------------------------------- |
+| Interface  | PascalCase                    | `UserProfile`, `PokemonDetailsOptions`    |
+| Type Alias | PascalCase                    | `UserAccountRole`, `TokenType`            |
+| Enum       | PascalCase                    | `AccountRole`, `TokenType`                |
+| Variable   | camelCase                     | `userId`, `pokemonDetails`                |
+| Constant   | UPPER_SNAKE_CASE or camelCase | `MAX_TEAM_SIZE` or `defaultGeneration`    |
+| Function   | camelCase                     | `getPokemonDetails`, `usePokemonLearnset` |
+| Component  | PascalCase                    | `BasicTab`, `PokemonCard`                 |
+| Hook       | camelCase starting with `use` | `usePokemonDetails`, `useCreateProfile`   |
 
 ### Explicit Return Types
 
 **Always specify return types** for:
+
 - Public functions
 - Exported functions
 - Complex functions
 
 ```typescript
 // Good
-export const getPokemonDetails = (id: ID, generation?: GenerationNum): Pokemon => {
+export const getPokemonDetails = (
+  id: ID,
+  generation?: GenerationNum
+): Pokemon => {
   // ...
 };
 
@@ -322,9 +328,9 @@ export default PokemonCard;
 **Exception**: Next.js pages MUST use default exports:
 
 ```typescript
-// app/dashboard/page.tsx
-export default async function DashboardPage() {
-  return <DashComponent />;
+// app/pokedex/page.tsx
+export default async function PokedexPage() {
+  return <PokedexComponent />;
 }
 ```
 
@@ -339,7 +345,11 @@ export interface PokemonCardProps {
   className?: string;
 }
 
-export const PokemonCard = ({ pokemon, onClick, className }: PokemonCardProps) => {
+export const PokemonCard = ({
+  pokemon,
+  onClick,
+  className,
+}: PokemonCardProps) => {
   // ...
 };
 ```
@@ -352,10 +362,10 @@ Use optional chaining and nullish coalescing:
 // Good
 export const Component = ({ onSubmit, title }: ComponentProps) => {
   const handleClick = () => {
-    onSubmit?.();  // Optional chaining
+    onSubmit?.(); // Optional chaining
   };
 
-  return <h1>{title ?? 'Default Title'}</h1>;  // Nullish coalescing
+  return <h1>{title ?? 'Default Title'}</h1>; // Nullish coalescing
 };
 
 // Bad
@@ -366,7 +376,7 @@ export const Component = ({ onSubmit, title }: ComponentProps) => {
     }
   };
 
-  return <h1>{title || 'Default Title'}</h1>;  // Wrong for empty strings
+  return <h1>{title || 'Default Title'}</h1>; // Wrong for empty strings
 };
 ```
 
@@ -398,10 +408,14 @@ Prefer composition over prop drilling:
 
 ```typescript
 // Simple condition - use &&
-{isLoading && <Spinner />}
+{
+  isLoading && <Spinner />;
+}
 
 // Binary condition - use ternary
-{isLoading ? <Spinner /> : <Content />}
+{
+  isLoading ? <Spinner /> : <Content />;
+}
 
 // Multiple conditions - use separate variables or early returns
 const renderContent = () => {
@@ -417,6 +431,8 @@ return <div>{renderContent()}</div>;
 ### Client vs Server Components (Next.js)
 
 ```typescript
+import { useState } from 'react';
+
 // Server Component (default in app directory)
 // - No 'use client' directive
 // - Can use async/await
@@ -430,9 +446,7 @@ export default async function Page() {
 // - Has 'use client' directive
 // - Can use hooks (useState, useEffect, etc.)
 // - Can use event handlers
-'use client';
-
-import { useState } from 'react';
+('use client');
 
 export const InteractiveComponent = () => {
   const [count, setCount] = useState(0);
@@ -484,15 +498,15 @@ export const usePokemonDetails = (
 
 ```typescript
 // Good
-usePokemonDetails
-useCreateProfile
-useAuthSession
-useDebouncedSearch
+usePokemonDetails;
+useCreateProfile;
+useAuthSession;
+useDebouncedSearch;
 
 // Bad
-pokemonDetails     // Missing 'use'
-usePokemon         // Too vague
-use_pokemon_data   // snake_case
+pokemonDetails; // Missing 'use'
+usePokemon; // Too vague
+use_pokemon_data; // snake_case
 ```
 
 ### Custom Hook Rules
@@ -545,11 +559,15 @@ interface TeamEditorContextValue {
   setActivePokemon: (pokemon: PokemonInTeam) => void;
 }
 
-const TeamEditorContext = createContext<TeamEditorContextValue | undefined>(undefined);
+const TeamEditorContext = createContext<TeamEditorContextValue | undefined>(
+  undefined
+);
 
 // 2. Create provider
 export const TeamEditorProvider = ({ children }: { children: ReactNode }) => {
-  const [activePokemon, setActivePokemon] = useState<PokemonInTeam | null>(null);
+  const [activePokemon, setActivePokemon] = useState<PokemonInTeam | null>(
+    null
+  );
 
   const value = useMemo(
     () => ({ activePokemon, setActivePokemon }),
@@ -567,7 +585,9 @@ export const TeamEditorProvider = ({ children }: { children: ReactNode }) => {
 export const useTeamEditorContext = () => {
   const context = useContext(TeamEditorContext);
   if (!context) {
-    throw new Error('useTeamEditorContext must be used within TeamEditorProvider');
+    throw new Error(
+      'useTeamEditorContext must be used within TeamEditorProvider'
+    );
   }
   return context;
 };
@@ -624,13 +644,15 @@ Use the `cn()` helper to merge classes conditionally:
 ```typescript
 import { cn } from '@pokehub/frontend/shared-utils';
 
-<div className={cn(
-  'base-class',
-  isActive && 'active-class',
-  className  // Allow prop override
-)}>
+<div
+  className={cn(
+    'base-class',
+    isActive && 'active-class',
+    className // Allow prop override
+  )}
+>
   Content
-</div>
+</div>;
 ```
 
 ### Component Variants (CVA)
@@ -640,27 +662,24 @@ For components with multiple variants, use `class-variance-authority`:
 ```typescript
 import { cva, type VariantProps } from 'class-variance-authority';
 
-const buttonVariants = cva(
-  'base classes here',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground',
-        destructive: 'bg-destructive text-destructive-foreground',
-        outline: 'border border-input bg-background',
-      },
-      size: {
-        default: 'h-10 px-4',
-        sm: 'h-9 px-3',
-        lg: 'h-11 px-8',
-      },
+const buttonVariants = cva('base classes here', {
+  variants: {
+    variant: {
+      default: 'bg-primary text-primary-foreground',
+      destructive: 'bg-destructive text-destructive-foreground',
+      outline: 'border border-input bg-background',
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
+    size: {
+      default: 'h-10 px-4',
+      sm: 'h-9 px-3',
+      lg: 'h-11 px-8',
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+});
 
 export interface ButtonProps extends VariantProps<typeof buttonVariants> {
   // ...
@@ -692,6 +711,7 @@ Use CSS variables defined in globals.css:
 ```
 
 **Available theme variables**:
+
 - `background`, `foreground`
 - `primary`, `primary-foreground`
 - `secondary`, `secondary-foreground`
@@ -809,8 +829,8 @@ const fetchData = async () => {
 // Bad - Promise chains
 const fetchData = () => {
   return fetch('/api/data')
-    .then(response => response.json())
-    .then(data => data);
+    .then((response) => response.json())
+    .then((data) => data);
 };
 ```
 
@@ -839,7 +859,7 @@ const { mutateAsync } = useMutation({
 const handleSubmit = async () => {
   try {
     await mutateAsync(formData);
-    router.push('/dashboard');
+    router.push('/team-builder');
   } catch (error) {
     // Error already handled by onError
   }
@@ -867,7 +887,7 @@ const handleClick = useCallback((id: string) => {
   setSelectedId(id);
 }, []);
 
-<ChildComponent onClick={handleClick} />
+<ChildComponent onClick={handleClick} />;
 ```
 
 ### React.memo for Component Optimization
@@ -882,15 +902,15 @@ export const PokemonCard = React.memo(({ pokemon }: PokemonCardProps) => {
 
 ```typescript
 // Bad - Creates new function on every render
-<Button onClick={() => setCount(count + 1)}>Increment</Button>
+<Button onClick={() => setCount(count + 1)}>Increment</Button>;
 
 // Good - Stable function reference
 const handleIncrement = () => setCount(count + 1);
-<Button onClick={handleIncrement}>Increment</Button>
+<Button onClick={handleIncrement}>Increment</Button>;
 
 // Also good for simple cases
-const handleIncrement = () => setCount(c => c + 1);
-<Button onClick={handleIncrement}>Increment</Button>
+const handleIncrement = () => setCount((c) => c + 1);
+<Button onClick={handleIncrement}>Increment</Button>;
 ```
 
 ---
@@ -900,8 +920,8 @@ const handleIncrement = () => setCount(c => c + 1);
 ### Component Tests
 
 ```typescript
-import { render, screen } from '@testing-library/react';
 import { Button } from './button';
+import { render, screen } from '@testing-library/react';
 
 describe('Button', () => {
   it('renders with text', () => {
@@ -922,8 +942,8 @@ describe('Button', () => {
 ### Hook Tests
 
 ```typescript
-import { renderHook } from '@testing-library/react';
 import { usePokemonDetails } from './pokemon-details.hook';
+import { renderHook } from '@testing-library/react';
 
 describe('usePokemonDetails', () => {
   it('fetches pokemon details', async () => {
@@ -944,12 +964,14 @@ describe('usePokemonDetails', () => {
 ### When to Comment
 
 **DO comment**:
+
 - Complex algorithms
 - Non-obvious business logic
 - Workarounds for bugs
 - Public API functions
 
 **DON'T comment**:
+
 - Obvious code
 - What the code does (code should be self-documenting)
 
@@ -994,11 +1016,13 @@ export const getPokemonDetails = async (
 ### When to Create a New Package
 
 Create a new package when:
+
 - ✅ Code is reusable across multiple apps
 - ✅ Code has a clear, single responsibility
 - ✅ Code could be extracted to npm in the future
 
 Don't create a package when:
+
 - ❌ Code is app-specific
 - ❌ Package would have only 1-2 files
 - ❌ Unclear boundaries
@@ -1008,11 +1032,13 @@ Don't create a package when:
 Pattern: `@pokehub/<scope>/<name>`
 
 **Scopes**:
+
 - `frontend` - React/Next.js packages
 - `backend` - NestJS packages
 - `shared` - Cross-platform packages
 
 **Examples**:
+
 ```
 @pokehub/frontend/shared-ui-components
 @pokehub/frontend/pokehub-dex-components
@@ -1073,18 +1099,18 @@ export const Dashboard = () => {
 ```typescript
 // Bad - Using hooks in server component
 export default async function Page() {
-  const [count, setCount] = useState(0);  // Error!
+  const [count, setCount] = useState(0); // Error!
   return <div>{count}</div>;
 }
 
 // Good - Separate server and client
 export default async function Page() {
-  const data = await fetchData();  // Server
+  const data = await fetchData(); // Server
   return <ClientComponent data={data} />;
 }
 
 // client-component.tsx
-'use client';
+('use client');
 export const ClientComponent = ({ data }) => {
   const [count, setCount] = useState(0);
   return <div>{count}</div>;
@@ -1136,7 +1162,11 @@ export interface MyComponentProps {
   onAction?: () => void;
 }
 
-export const MyComponent = ({ title, children, onAction }: MyComponentProps) => {
+export const MyComponent = ({
+  title,
+  children,
+  onAction,
+}: MyComponentProps) => {
   // Hooks
   const [state, setState] = useState(initialValue);
 
@@ -1194,10 +1224,7 @@ const MyContext = createContext<MyContextValue | undefined>(undefined);
 export const MyProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState('');
 
-  const value = useMemo(
-    () => ({ state, setState }),
-    [state]
-  );
+  const value = useMemo(() => ({ state, setState }), [state]);
 
   return <MyContext.Provider value={value}>{children}</MyContext.Provider>;
 };

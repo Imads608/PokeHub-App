@@ -585,7 +585,7 @@ The create-profile tests use a **parallel-safe approach** with two auth strategi
 
 ##### Route Guards (2 tests)
 
-- ✅ Redirect new user from dashboard to create-profile
+- ✅ Redirect new user from team-builder to create-profile
 - ✅ Allow new user to access create-profile directly
 
 ##### Form Rendering (1 test)
@@ -623,7 +623,7 @@ The create-profile tests use a **parallel-safe approach** with two auth strategi
 #### Create Profile - Existing User Tests (2 tests)
 
 - ✅ Redirect existing user away from create-profile
-- ✅ Allow existing user to access dashboard directly
+- ✅ Allow existing user to access team-builder directly
 
 #### Team Editor - Authenticated Access (7 tests)
 

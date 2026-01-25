@@ -5,6 +5,7 @@
 This guide documents all data fetching patterns used in PokeHub. The application uses **TanStack Query (React Query)** for server state management with a consistent pattern for hooks, API clients, and error handling.
 
 **Key Libraries**:
+
 - `@tanstack/react-query` - Server state management
 - Custom fetch clients - API communication
 - `@pkmn/dex` - Pokemon data library
@@ -30,6 +31,7 @@ This guide documents all data fetching patterns used in PokeHub. The application
 ### Standard Query Hook Structure
 
 **Template**:
+
 ```typescript
 import { useQuery } from '@tanstack/react-query';
 
@@ -40,23 +42,17 @@ export interface UseResourceOptions {
 }
 
 // 2. Export query key helper
-export const getQueryKey = (
-  id: string,
-  options: UseResourceOptions = {}
-) => {
+export const getQueryKey = (id: string, options: UseResourceOptions = {}) => {
   return ['resource-name', id, options];
 };
 
 // 3. Define the hook
-export const useResource = (
-  id: string,
-  options: UseResourceOptions = {}
-) => {
+export const useResource = (id: string, options: UseResourceOptions = {}) => {
   return useQuery({
     queryKey: getQueryKey(id, options),
     queryFn: () => fetchResource(id, options),
     enabled: options.enabled ?? !!id,
-    staleTime: 60 * 1000,  // 1 minute
+    staleTime: 60 * 1000, // 1 minute
   });
 };
 ```
@@ -97,9 +93,10 @@ export const usePokemonDetails = (
 ```
 
 **Usage**:
+
 ```typescript
 const { data, isLoading, error } = usePokemonDetails('pikachu', {
-  generation: 1
+  generation: 1,
 });
 
 if (isLoading) return <Skeleton />;
@@ -116,6 +113,7 @@ return <PokemonCard pokemon={data} />;
 ### Standard Mutation Hook Structure
 
 **Template**:
+
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -145,10 +143,10 @@ export const useCreateResource = () => {
 
 ```typescript
 // apps/pokehub-app/app/create-profile/useCreateProfile.tsx
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 import { getFetchClient } from '@pokehub/frontend/shared-data-provider';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export const useCreateProfile = (avatarFile: File | null) => {
   const { data, update } = useAuthSession();
@@ -156,14 +154,15 @@ export const useCreateProfile = (avatarFile: File | null) => {
   return useMutation({
     mutationFn: async (profile: ProfileFormData) => {
       // 1. Upload avatar to Azure
-      const uploadUrlResponse = await getFetchClient('NEXT_API')
-        .fetchThrowsError('/api/generate-upload-url', {
-          method: 'POST',
-          body: JSON.stringify({
-            fileName: avatarFile.name,
-            fileType: avatarFile.type,
-          }),
-        });
+      const uploadUrlResponse = await getFetchClient(
+        'NEXT_API'
+      ).fetchThrowsError('/api/generate-upload-url', {
+        method: 'POST',
+        body: JSON.stringify({
+          fileName: avatarFile.name,
+          fileType: avatarFile.type,
+        }),
+      });
 
       const { uploadUrl } = await uploadUrlResponse.json();
 
@@ -209,6 +208,7 @@ export const useCreateProfile = (avatarFile: File | null) => {
 ```
 
 **Usage**:
+
 ```typescript
 const mutation = useCreateProfile(avatarFile);
 
@@ -218,7 +218,7 @@ const handleSubmit = (formData: ProfileFormData) => {
 
 <Button disabled={mutation.isPending}>
   {mutation.isPending ? 'Saving...' : 'Save'}
-</Button>
+</Button>;
 ```
 
 ### Optimistic Updates
@@ -234,7 +234,10 @@ export const useUpdatePokemon = () => {
       await queryClient.cancelQueries({ queryKey: ['pokemon', newPokemon.id] });
 
       // Snapshot previous value
-      const previousPokemon = queryClient.getQueryData(['pokemon', newPokemon.id]);
+      const previousPokemon = queryClient.getQueryData([
+        'pokemon',
+        newPokemon.id,
+      ]);
 
       // Optimistically update
       queryClient.setQueryData(['pokemon', newPokemon.id], newPokemon);
@@ -282,6 +285,7 @@ const nextApiClient = getFetchClient('NEXT_API');
 ### fetchApi vs fetchThrowsError
 
 **`fetchApi`** - Returns response (doesn't throw):
+
 ```typescript
 const response = await getFetchClient('API').fetchApi('/users/123');
 
@@ -294,13 +298,13 @@ const data = await response.json();
 ```
 
 **`fetchThrowsError`** - Throws on error (preferred for most cases):
+
 ```typescript
 try {
-  const response = await getFetchClient('API')
-    .fetchThrowsError('/users/123', {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const response = await getFetchClient('API').fetchThrowsError('/users/123', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   const data = await response.json();
 } catch (error) {
@@ -313,36 +317,39 @@ try {
 ### Making Requests
 
 **GET Request**:
+
 ```typescript
-const response = await getFetchClient('API')
-  .fetchThrowsError('/users/123', {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+const response = await getFetchClient('API').fetchThrowsError('/users/123', {
+  method: 'GET',
+  headers: { Authorization: `Bearer ${token}` },
+});
 
 const user = await response.json();
 ```
 
 **POST Request**:
+
 ```typescript
-const response = await getFetchClient('API')
-  .fetchThrowsError('/users', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ username: 'pikachu' }),
-  });
+const response = await getFetchClient('API').fetchThrowsError('/users', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify({ username: 'pikachu' }),
+});
 
 const newUser = await response.json();
 ```
 
 **HEAD Request** (for existence checks):
+
 ```typescript
 try {
-  await getFetchClient('API')
-    .fetchThrowsError(`/users/${username}?dataType=username`, {
+  await getFetchClient('API').fetchThrowsError(
+    `/users/${username}?dataType=username`,
+    {
       method: 'HEAD',
       headers: { Authorization: `Bearer ${token}` },
-    });
+    }
+  );
 
   // User exists (200)
   return true;
@@ -355,6 +362,7 @@ try {
 ### Automatic Features
 
 All fetch clients automatically:
+
 - Add `Content-Type: application/json`
 - Add `x-traceId` header (UUID for request tracking)
 - Handle errors consistently
@@ -368,28 +376,35 @@ All fetch clients automatically:
 Query keys follow a hierarchical structure:
 
 ```typescript
-[resource, identifier, options]
+[resource, identifier, options];
 ```
 
 ### Examples
 
 ```typescript
 // Pokemon details
-['pokedex-search', 'pikachu', { provider: 'PkmnDex', type: 'Core', generation: 1 }]
-
-// Pokemon learnset
-['pokedex-search', 'pikachu', { type: 'Learnset', provider: 'PkmnDex', generation: 1 }]
-
-// User data
-['users', userId, { queryType: 'details' }]
-
-// Username availability
-['users', username, { queryType: 'availability', dataType: 'username' }]
+[
+  'pokedex-search',
+  'pikachu',
+  { provider: 'PkmnDex', type: 'Core', generation: 1 },
+][
+  // Pokemon learnset
+  ('pokedex-search',
+  'pikachu',
+  { type: 'Learnset', provider: 'PkmnDex', generation: 1 })
+][
+  // User data
+  ('users', userId, { queryType: 'details' })
+][
+  // Username availability
+  ('users', username, { queryType: 'availability', dataType: 'username' })
+];
 ```
 
 ### Best Practices
 
 1. **Always export the query key function**:
+
    ```typescript
    export const getQueryKey = (id: string, options = {}) => {
      return ['resource', id, options];
@@ -397,31 +412,33 @@ Query keys follow a hierarchical structure:
    ```
 
 2. **Include all parameters that affect the data**:
+
    ```typescript
    // Good
-   ['pokemon', id, { generation: 1, forme: 'alola' }]
-
-   // Bad - missing generation
-   ['pokemon', id]
+   ['pokemon', id, { generation: 1, forme: 'alola' }][
+     // Bad - missing generation
+     ('pokemon', id)
+   ];
    ```
 
 3. **Use consistent naming**:
+
    ```typescript
    // Good - descriptive
-   ['pokedex-search', id, { type: 'Core' }]
-   ['pokedex-search', id, { type: 'Learnset' }]
-
-   // Bad - unclear
-   ['pokemon', id, 'core']
-   ['pokemon', id, 'learnset']
+   ['pokedex-search', id, { type: 'Core' }][
+     ('pokedex-search', id, { type: 'Learnset' })
+   ][
+     // Bad - unclear
+     ('pokemon', id, 'core')
+   ][('pokemon', id, 'learnset')];
    ```
 
 4. **Group related queries**:
    ```typescript
    // All pokemon queries start with 'pokedex-search'
-   ['pokedex-search', id, { type: 'Core' }]
-   ['pokedex-search', id, { type: 'Learnset' }]
-   ['pokedex-search', id, { type: 'Evolution' }]
+   ['pokedex-search', id, { type: 'Core' }][
+     ('pokedex-search', id, { type: 'Learnset' })
+   ][('pokedex-search', id, { type: 'Evolution' })];
    ```
 
 ---
@@ -431,6 +448,7 @@ Query keys follow a hierarchical structure:
 ### Query Errors
 
 **In Components**:
+
 ```typescript
 const { data, isLoading, error } = usePokemonDetails('pikachu');
 
@@ -447,21 +465,23 @@ if (error) {
 ```
 
 **With Error Boundaries**:
+
 ```typescript
 // Set throwOnError for specific queries
 const { data } = usePokemonDetails('pikachu', {
-  throwOnError: true,  // Will be caught by error boundary
+  throwOnError: true, // Will be caught by error boundary
 });
 
 // In parent component
 <ErrorBoundary fallback={<ErrorPage />}>
   <PokemonDetails />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ### Mutation Errors
 
 **With onError callback**:
+
 ```typescript
 const mutation = useMutation({
   mutationFn: createProfile,
@@ -481,13 +501,14 @@ const mutation = useMutation({
 ```
 
 **Try-catch with mutateAsync**:
+
 ```typescript
 const mutation = useMutation({ mutationFn: createProfile });
 
 const handleSubmit = async (data) => {
   try {
     await mutation.mutateAsync(data);
-    router.push('/dashboard');
+    router.push('/team-builder');
   } catch (error) {
     if (error instanceof FetchApiError) {
       console.error('Error:', error.status);
@@ -524,6 +545,7 @@ try {
 ### Query Loading
 
 **Simple loading**:
+
 ```typescript
 const { data, isLoading } = usePokemonDetails('pikachu');
 
@@ -535,6 +557,7 @@ return <PokemonCard pokemon={data} />;
 ```
 
 **Initial vs Refetch loading**:
+
 ```typescript
 const { data, isLoading, isFetching } = usePokemonDetails('pikachu');
 
@@ -547,13 +570,14 @@ if (isLoading) {
 
 return (
   <div>
-    {isFetching && <Spinner className="absolute top-2 right-2" />}
+    {isFetching && <Spinner className="absolute right-2 top-2" />}
     <PokemonCard pokemon={data} />
   </div>
 );
 ```
 
 **Multiple loading states**:
+
 ```typescript
 const {
   data,
@@ -589,37 +613,45 @@ const mutation = useMutation({ mutationFn: updateProfile });
 ### Skeleton Patterns
 
 **List skeleton**:
+
 ```typescript
-{isLoading ? (
-  <div className="space-y-2">
-    {Array.from({ length: 5 }).map((_, i) => (
-      <Skeleton key={i} className="h-12 w-full" />
-    ))}
-  </div>
-) : (
-  <div>
-    {data.map(item => <Item key={item.id} data={item} />)}
-  </div>
-)}
+{
+  isLoading ? (
+    <div className="space-y-2">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
+    </div>
+  ) : (
+    <div>
+      {data.map((item) => (
+        <Item key={item.id} data={item} />
+      ))}
+    </div>
+  );
+}
 ```
 
 **Card skeleton**:
+
 ```typescript
-{isLoading ? (
-  <Card>
-    <CardHeader>
-      <Skeleton className="h-6 w-1/2" />
-      <Skeleton className="h-4 w-3/4" />
-    </CardHeader>
-    <CardContent className="space-y-2">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-2/3" />
-    </CardContent>
-  </Card>
-) : (
-  <PokemonCard pokemon={data} />
-)}
+{
+  isLoading ? (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </CardContent>
+    </Card>
+  ) : (
+    <PokemonCard pokemon={data} />
+  );
+}
 ```
 
 ---
@@ -634,7 +666,7 @@ const mutation = useMutation({ mutationFn: updateProfile });
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,  // 1 minute (SSR optimization)
+      staleTime: 60 * 1000, // 1 minute (SSR optimization)
     },
   },
 });
@@ -643,6 +675,7 @@ const queryClient = new QueryClient({
 ### Invalidating Queries
 
 **After mutation**:
+
 ```typescript
 const mutation = useMutation({
   mutationFn: createPokemon,
@@ -657,6 +690,7 @@ const mutation = useMutation({
 ```
 
 **Manual invalidation**:
+
 ```typescript
 const queryClient = useQueryClient();
 
@@ -668,6 +702,7 @@ const handleRefresh = () => {
 ### Prefetching
 
 **Prefetch on hover**:
+
 ```typescript
 const queryClient = useQueryClient();
 
@@ -678,18 +713,16 @@ const prefetchPokemon = (id: string) => {
   });
 };
 
-<Link
-  href={`/pokemon/${id}`}
-  onMouseEnter={() => prefetchPokemon(id)}
->
+<Link href={`/pokemon/${id}`} onMouseEnter={() => prefetchPokemon(id)}>
   View Pokemon
-</Link>
+</Link>;
 ```
 
 **Prefetch on mount**:
+
 ```typescript
 useEffect(() => {
-  nextPokemonIds.forEach(id => {
+  nextPokemonIds.forEach((id) => {
     queryClient.prefetchQuery({
       queryKey: ['pokemon', id],
       queryFn: () => fetchPokemon(id),
@@ -704,13 +737,10 @@ useEffect(() => {
 const queryClient = useQueryClient();
 
 // After successful mutation
-queryClient.setQueryData(
-  ['pokemon', pokemonId],
-  (oldData) => ({
-    ...oldData,
-    ...newData,
-  })
-);
+queryClient.setQueryData(['pokemon', pokemonId], (oldData) => ({
+  ...oldData,
+  ...newData,
+}));
 ```
 
 ---
@@ -724,8 +754,9 @@ queryClient.setQueryData(
 **Location**: `@pokehub/frontend/pokehub-data-provider`
 
 **Implementation**:
+
 ```typescript
-export const withAuthRetry = async <Data>(
+export const withAuthRetry = async <Data,>(
   accessToken: string,
   request: (accessToken: string) => Promise<FetchResponse<Data>>
 ): Promise<FetchResponse<Data>> => {
@@ -749,6 +780,7 @@ export const withAuthRetry = async <Data>(
 ```
 
 **Usage**:
+
 ```typescript
 import { withAuthRetry } from '@pokehub/frontend/pokehub-data-provider';
 
@@ -756,23 +788,23 @@ const { data: session } = useAuthSession();
 
 const { data } = useQuery({
   queryKey: ['protected-data'],
-  queryFn: () => withAuthRetry(
-    session!.accessToken,
-    (token) => getFetchClient('API').fetchThrowsError('/protected', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  ),
+  queryFn: () =>
+    withAuthRetry(session!.accessToken, (token) =>
+      getFetchClient('API').fetchThrowsError('/protected', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    ),
   enabled: !!session?.accessToken,
 });
 ```
 
 **In mutations**:
+
 ```typescript
 const mutation = useMutation({
   mutationFn: async (data) => {
-    const response = await withAuthRetry(
-      accessToken,
-      (token) => getFetchClient('API').fetchThrowsError('/users/profile', {
+    const response = await withAuthRetry(accessToken, (token) =>
+      getFetchClient('API').fetchThrowsError('/users/profile', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify(data),
@@ -815,31 +847,30 @@ if (pokemon.isLoading || learnset.isLoading || evolution.isLoading) {
 ### Infinite Queries
 
 ```typescript
-const {
-  data,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-} = useInfiniteQuery({
-  queryKey: ['pokemon', filters],
-  queryFn: ({ pageParam = 0 }) => fetchPokemon({ offset: pageParam, ...filters }),
-  getNextPageParam: (lastPage, pages) => {
-    if (lastPage.hasMore) {
-      return pages.length * 20;  // Next offset
-    }
-    return undefined;
-  },
-});
+const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  useInfiniteQuery({
+    queryKey: ['pokemon', filters],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchPokemon({ offset: pageParam, ...filters }),
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.hasMore) {
+        return pages.length * 20; // Next offset
+      }
+      return undefined;
+    },
+  });
 
 <InfiniteScroll
   loadMore={fetchNextPage}
   hasMore={hasNextPage}
   loading={isFetchingNextPage}
 >
-  {data?.pages.flatMap(page => page.items).map(pokemon => (
-    <PokemonCard key={pokemon.id} pokemon={pokemon} />
-  ))}
-</InfiniteScroll>
+  {data?.pages
+    .flatMap((page) => page.items)
+    .map((pokemon) => (
+      <PokemonCard key={pokemon.id} pokemon={pokemon} />
+    ))}
+</InfiniteScroll>;
 ```
 
 ### Polling
@@ -848,8 +879,8 @@ const {
 const { data } = useQuery({
   queryKey: ['battle-status', battleId],
   queryFn: () => fetchBattleStatus(battleId),
-  refetchInterval: 2000,  // Poll every 2 seconds
-  enabled: battleActive,   // Only poll while battle active
+  refetchInterval: 2000, // Poll every 2 seconds
+  enabled: battleActive, // Only poll while battle active
 });
 ```
 
@@ -893,12 +924,11 @@ export const useCreateResource = () => {
 ### API Call Template
 
 ```typescript
-const response = await getFetchClient('API')
-  .fetchThrowsError('/endpoint', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
+const response = await getFetchClient('API').fetchThrowsError('/endpoint', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify(data),
+});
 
 const result = await response.json();
 ```
@@ -906,9 +936,8 @@ const result = await response.json();
 ### Auth Retry Template
 
 ```typescript
-const response = await withAuthRetry(
-  accessToken,
-  (token) => getFetchClient('API').fetchThrowsError('/protected', {
+const response = await withAuthRetry(accessToken, (token) =>
+  getFetchClient('API').fetchThrowsError('/protected', {
     headers: { Authorization: `Bearer ${token}` },
   })
 );
@@ -921,6 +950,7 @@ const response = await withAuthRetry(
 ### Overview
 
 For pages that need data immediately on load, use server-side prefetching with React Query's `HydrationBoundary`. This pattern:
+
 - Fetches data on the server during SSR
 - Dehydrates the cache state and sends it to the client
 - Hydrates the client-side cache with prefetched data
@@ -936,12 +966,16 @@ For pages that need data immediately on load, use server-side prefetching with R
 ### Implementation Pattern
 
 **Server Component (Page)**:
+
 ```typescript
 // app/team-builder/page.tsx
+import {
+  getUserTeams,
+  teamsKeys,
+} from '@pokehub/frontend/pokehub-team-builder';
 import { auth } from '@pokehub/frontend/shared-auth/server';
 import { getQueryClient } from '@pokehub/frontend/shared-data-provider';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { getUserTeams, teamsKeys } from '@pokehub/frontend/pokehub-team-builder';
 import { redirect } from 'next/navigation';
 
 export default async function TeamBuilderPage() {
@@ -973,13 +1007,14 @@ export default async function TeamBuilderPage() {
 ```
 
 **Client Component (Hook)**:
+
 ```typescript
 // hooks/useTeams.ts
 export function useUserTeams() {
   const { data: session } = useAuthSession();
 
   return useQuery({
-    queryKey: teamsKeys.all,  // Same key as prefetch!
+    queryKey: teamsKeys.all, // Same key as prefetch!
     queryFn: async () => {
       const { accessToken } = session || {};
       if (!accessToken) throw new Error('Access token is required');
@@ -1000,12 +1035,12 @@ export function useUserTeams() {
 
 ### Benefits
 
-| Without Prefetch | With Prefetch |
-|-----------------|---------------|
+| Without Prefetch                                              | With Prefetch                            |
+| ------------------------------------------------------------- | ---------------------------------------- |
 | Page loads → Loading spinner → Data fetches → Content renders | Page loads → Content renders immediately |
-| 2+ network round trips | 1 network round trip (during SSR) |
-| Layout shift when content loads | No layout shift |
-| Visible loading state | No loading state on initial render |
+| 2+ network round trips                                        | 1 network round trip (during SSR)        |
+| Layout shift when content loads                               | No layout shift                          |
+| Visible loading state                                         | No loading state on initial render       |
 
 ### Real Example: Team Viewer
 
@@ -1041,42 +1076,46 @@ The `TeamViewer` component uses `useUserTeams()` which automatically picks up th
 ### Common Mistakes
 
 **❌ Different query keys**:
+
 ```typescript
 // Server
 await queryClient.prefetchQuery({
-  queryKey: ['teams'],  // Wrong!
+  queryKey: ['teams'], // Wrong!
   queryFn: () => getUserTeams(token),
 });
 
 // Client
 useQuery({
-  queryKey: teamsKeys.all,  // ['teams', 'all'] - Different key!
+  queryKey: teamsKeys.all, // ['teams', 'all'] - Different key!
   queryFn: () => getUserTeams(token),
 });
 ```
 
 **✅ Same query keys**:
+
 ```typescript
 // Server
 await queryClient.prefetchQuery({
-  queryKey: teamsKeys.all,  // Use the same key helper
+  queryKey: teamsKeys.all, // Use the same key helper
   queryFn: () => getUserTeams(token),
 });
 
 // Client
 useQuery({
-  queryKey: teamsKeys.all,  // Same key!
+  queryKey: teamsKeys.all, // Same key!
   queryFn: () => getUserTeams(token),
 });
 ```
 
 **❌ Forgetting HydrationBoundary**:
+
 ```typescript
 // This won't work - data won't transfer to client
 return <TeamViewer />;
 ```
 
 **✅ With HydrationBoundary**:
+
 ```typescript
 return (
   <HydrationBoundary state={dehydrate(queryClient)}>
