@@ -161,9 +161,9 @@ async function globalSetup(config: FullConfig) {
       authFile
     );
 
-    // Verify existing user can reach dashboard
+    // Verify existing user can reach team-builder
     const verifyPage = await existingUserContext.newPage();
-    await verifyPage.goto(`${baseURL}/dashboard`);
+    await verifyPage.goto(`${baseURL}/team-builder`);
     await verifyPage.waitForTimeout(2000);
     const currentUrl = verifyPage.url();
     if (currentUrl.includes('/login') || currentUrl.includes('/api/auth')) {
@@ -173,7 +173,7 @@ async function globalSetup(config: FullConfig) {
       console.warn(`Current URL: ${currentUrl}`);
     } else {
       console.log(
-        `✓ Existing user authentication verified - reached dashboard`
+        `✓ Existing user authentication verified - reached team-builder`
       );
     }
     await existingUserContext.close();
@@ -190,7 +190,7 @@ async function globalSetup(config: FullConfig) {
 
     // Verify new user auth by checking they get redirected to create-profile
     const verifyNewUserPage = await newUserContext.newPage();
-    await verifyNewUserPage.goto(`${baseURL}/dashboard`);
+    await verifyNewUserPage.goto(`${baseURL}/team-builder`);
     await verifyNewUserPage.waitForTimeout(3000);
     const newUserUrl = verifyNewUserPage.url();
     if (newUserUrl.includes('/login') || newUserUrl.includes('/api/auth')) {

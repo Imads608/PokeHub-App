@@ -62,42 +62,46 @@ PokeHub is a full-stack Pokemon application built as an Nx monorepo. It consists
 ## Technology Stack
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| **Next.js 14** | React framework with App Router |
-| **TypeScript** | Type-safe JavaScript |
-| **Tailwind CSS** | Utility-first CSS framework |
-| **Radix UI** | Accessible component primitives |
-| **TanStack Query** | Server state management |
-| **NextAuth.js v5** | Authentication (Google OAuth) |
-| **React Hook Form** | Form state management |
-| **Zod** | Schema validation |
+
+| Technology          | Purpose                         |
+| ------------------- | ------------------------------- |
+| **Next.js 14**      | React framework with App Router |
+| **TypeScript**      | Type-safe JavaScript            |
+| **Tailwind CSS**    | Utility-first CSS framework     |
+| **Radix UI**        | Accessible component primitives |
+| **TanStack Query**  | Server state management         |
+| **NextAuth.js v5**  | Authentication (Google OAuth)   |
+| **React Hook Form** | Form state management           |
+| **Zod**             | Schema validation               |
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| **NestJS** | Node.js framework |
-| **TypeScript** | Type-safe JavaScript |
+
+| Technology      | Purpose                       |
+| --------------- | ----------------------------- |
+| **NestJS**      | Node.js framework             |
+| **TypeScript**  | Type-safe JavaScript          |
 | **Drizzle ORM** | Type-safe database operations |
-| **PostgreSQL** | Relational database |
-| **Passport.js** | Authentication strategies |
-| **Winston** | Structured logging |
+| **PostgreSQL**  | Relational database           |
+| **Passport.js** | Authentication strategies     |
+| **Winston**     | Structured logging            |
 
 ### External Services
-| Service | Purpose |
-|---------|---------|
-| **Google OAuth** | User authentication |
-| **Azure Blob Storage** | Avatar file storage |
-| **@pkmn/dex** | Pokemon data library |
-| **PokeAPI** | Secondary Pokemon data |
+
+| Service                | Purpose                |
+| ---------------------- | ---------------------- |
+| **Google OAuth**       | User authentication    |
+| **Azure Blob Storage** | Avatar file storage    |
+| **@pkmn/dex**          | Pokemon data library   |
+| **PokeAPI**            | Secondary Pokemon data |
 
 ### Development
-| Tool | Purpose |
-|------|---------|
-| **Nx** | Monorepo management |
-| **Jest** | Unit testing |
-| **Playwright** | E2E testing |
-| **ESLint** | Code linting |
+
+| Tool           | Purpose             |
+| -------------- | ------------------- |
+| **Nx**         | Monorepo management |
+| **Jest**       | Unit testing        |
+| **Playwright** | E2E testing         |
+| **ESLint**     | Code linting        |
 
 ---
 
@@ -114,9 +118,9 @@ pokehub-app/
 │   │   │   ├── api/               # Next.js API routes
 │   │   │   ├── login/             # Login page
 │   │   │   ├── create-profile/    # Profile creation
-│   │   │   ├── dashboard/         # User dashboard
 │   │   │   ├── pokedex/           # Pokemon browser
-│   │   │   └── team-builder/      # Team building
+│   │   │   ├── team-builder/      # Team building
+│   │   │   └── settings/          # User settings
 │   │   └── public/                # Static assets
 │   │
 │   ├── pokehub-api/               # NestJS backend
@@ -216,6 +220,7 @@ The frontend uses Next.js 14 with the App Router, combining Server and Client Co
 ```
 
 **Key Patterns:**
+
 - **Server Components** (default): Data fetching, static content, SEO
 - **Client Components** (`'use client'`): Interactivity, hooks, state
 - **Route Groups**: `(components)` for shared page components
@@ -262,6 +267,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 ```
 
 **Key Patterns:**
+
 - **Modular Design**: Self-contained feature modules
 - **Dependency Injection**: NestJS DI container
 - **Guards**: Authentication (JWT, OAuth) and authorization (Roles)
@@ -311,6 +317,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 ```
 
 **Token Types:**
+
 - **Access Token**: 1 hour expiry, used for API requests
 - **Refresh Token**: 12 hour expiry, used to get new access tokens
 
@@ -356,6 +363,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 ```
 
 **Key Features:**
+
 - **Automatic Retry**: `withAuthRetry` handles 401 responses
 - **Cache Management**: TanStack Query caches responses
 - **Query Keys**: Hierarchical keys for cache invalidation
@@ -402,6 +410,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Code sharing, consistent tooling, atomic changes across frontend/backend.
 
 **Benefits**:
+
 - Shared TypeScript types between frontend and backend
 - Single dependency management
 - Incremental builds and caching
@@ -412,6 +421,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Modern React patterns, Server Components, built-in API routes.
 
 **Benefits**:
+
 - Server Components reduce client JavaScript
 - Built-in routing and layouts
 - API routes for Next.js-specific features (SAS URL generation)
@@ -422,6 +432,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Enterprise-grade framework with TypeScript, dependency injection, modular architecture.
 
 **Benefits**:
+
 - Strong typing throughout
 - Testable via dependency injection
 - Built-in support for guards, middleware, interceptors
@@ -432,6 +443,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Type-safe, lightweight ORM that feels like SQL.
 
 **Benefits**:
+
 - Full TypeScript inference from schema
 - No runtime overhead
 - Easy to write complex queries
@@ -442,6 +454,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Powerful data fetching with caching, background updates, and optimistic updates.
 
 **Benefits**:
+
 - Automatic caching and cache invalidation
 - Background refetching
 - Query deduplication
@@ -452,6 +465,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Simplified authentication, no password management.
 
 **Benefits**:
+
 - Email verification handled by Google
 - No password storage
 - Familiar login flow for users
@@ -462,6 +476,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Scalable file storage with SAS token support.
 
 **Benefits**:
+
 - Direct client-to-storage uploads
 - Time-limited access tokens
 - Cost-effective for infrequent access
@@ -472,6 +487,7 @@ The backend follows NestJS modular architecture with clear separation of concern
 **Why**: Clear boundaries between frontend, backend, and shared code.
 
 **Benefits**:
+
 - Prevents accidental mixing of concerns
 - Explicit dependencies
 - Easy to identify reusable code
@@ -482,34 +498,38 @@ The backend follows NestJS modular architecture with clear separation of concern
 ## Related Documentation
 
 ### Core Documentation
-| Document | Description |
-|----------|-------------|
-| [Backend System](./backend-system.md) | Detailed backend architecture, modules, and APIs |
-| [Code Style & Patterns](./code-style-and-patterns.md) | Coding conventions and component patterns |
-| [Data Fetching Patterns](./data-fetching-patterns.md) | TanStack Query patterns and examples |
-| [Common Patterns & Recipes](./common-patterns-and-recipes.md) | Copy-paste code snippets |
+
+| Document                                                      | Description                                      |
+| ------------------------------------------------------------- | ------------------------------------------------ |
+| [Backend System](./backend-system.md)                         | Detailed backend architecture, modules, and APIs |
+| [Code Style & Patterns](./code-style-and-patterns.md)         | Coding conventions and component patterns        |
+| [Data Fetching Patterns](./data-fetching-patterns.md)         | TanStack Query patterns and examples             |
+| [Common Patterns & Recipes](./common-patterns-and-recipes.md) | Copy-paste code snippets                         |
 
 ### Feature Documentation
-| Document | Description |
-|----------|-------------|
-| [Authentication](./features/authentication.md) | OAuth, JWT, profile creation |
-| [Pokedex](./features/pokedex.md) | Pokemon data fetching and display |
-| [Team Builder](./features/team-builder.md) | Team creation and management |
+
+| Document                                       | Description                       |
+| ---------------------------------------------- | --------------------------------- |
+| [Authentication](./features/authentication.md) | OAuth, JWT, profile creation      |
+| [Pokedex](./features/pokedex.md)               | Pokemon data fetching and display |
+| [Team Builder](./features/team-builder.md)     | Team creation and management      |
 
 ### Development & Deployment
-| Document | Description |
-|----------|-------------|
-| [Environment Setup](./development/environment-setup.md) | Local development setup |
+
+| Document                                                  | Description                        |
+| --------------------------------------------------------- | ---------------------------------- |
+| [Environment Setup](./development/environment-setup.md)   | Local development setup            |
 | [Building & Optimization](./building-and-optimization.md) | Production builds, bundle analysis |
-| [Deployment Guide](./deployment/README.md) | Azure Container Apps deployment |
-| [Database](./deployment/database.md) | PostgreSQL setup and migrations |
+| [Deployment Guide](./deployment/README.md)                | Azure Container Apps deployment    |
+| [Database](./deployment/database.md)                      | PostgreSQL setup and migrations    |
 
 ### Testing
-| Document | Description |
-|----------|-------------|
-| [Unit & Integration Testing](./development/unit-integration-testing.md) | Jest testing |
-| [Frontend E2E Testing](./development/frontend-e2e-testing.md) | Playwright tests |
-| [Backend E2E Testing](./development/backend-e2e-testing.md) | API testing |
+
+| Document                                                                | Description      |
+| ----------------------------------------------------------------------- | ---------------- |
+| [Unit & Integration Testing](./development/unit-integration-testing.md) | Jest testing     |
+| [Frontend E2E Testing](./development/frontend-e2e-testing.md)           | Playwright tests |
+| [Backend E2E Testing](./development/backend-e2e-testing.md)             | API testing      |
 
 ---
 

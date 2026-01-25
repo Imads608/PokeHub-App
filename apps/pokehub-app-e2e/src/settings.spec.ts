@@ -78,8 +78,8 @@ async function createAuthenticatedUserWithProfile(page: Page): Promise<{
   // Submit the form
   await submitButton.click();
 
-  // Wait for redirect to dashboard
-  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  // Wait for redirect to team-builder
+  await page.waitForURL('**/team-builder', { timeout: 30000 });
 
   return { email, username };
 }
@@ -367,7 +367,7 @@ test.describe('Settings Page - Danger Zone', () => {
 
 test.describe('User Menu - Desktop Navigation', () => {
   test('should navigate to Settings from user dropdown', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/team-builder');
 
     await expect(page.getByTestId('nav-user-avatar')).toBeVisible({
       timeout: 15000,
@@ -381,7 +381,7 @@ test.describe('User Menu - Desktop Navigation', () => {
   });
 
   test('should display Settings and Logout in user menu', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/team-builder');
 
     await expect(page.getByTestId('nav-user-avatar')).toBeVisible({
       timeout: 15000,
@@ -404,7 +404,7 @@ test.describe('User Menu - Mobile Navigation', () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
   test('should navigate to Settings from mobile menu', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/team-builder');
 
     await expect(page.getByTestId('mobile-menu-button')).toBeVisible({
       timeout: 15000,

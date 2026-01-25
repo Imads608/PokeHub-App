@@ -170,7 +170,7 @@ interface JWT {
 **Server-Side Check**:
 
 - Calls `handleServerAuth()` to check existing session
-- Redirects authenticated users to dashboard
+- Redirects authenticated users to team-builder
 - Redirects users without username to `/create-profile`
 
 **Login Form**: `packages/frontend/pokehub-auth-forms/src/lib/login/login.form.tsx`
@@ -263,8 +263,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
 1. **Unauthenticated user on private route** → Redirect to `/login?from=<current-path>`
 2. **Authenticated user without username** → Redirect to `/create-profile`
-3. **Authenticated user on public route with `isAuthAccessible: false`** → Redirect to `/dashboard`
-4. **User without required role** → Redirect to `/dashboard`
+3. **Authenticated user on public route with `isAuthAccessible: false`** → Redirect to `/team-builder`
+4. **User without required role** → Redirect to `/team-builder`
 
 **Implementation**:
 
@@ -325,7 +325,7 @@ publicRoutes: [
 ```typescript
 privilegedRoutes: [
   {
-    route: '/dashboard',
+    route: '/team-builder',
     rolesAllowed: ['ADMIN', 'USER'],
     allowSubRoutes: true,
   },
@@ -1209,7 +1209,7 @@ https://{storageAccount}.blob.core.windows.net/avatars/{userId}/{avatarFilename}
 13. Client-side route guard checks profile completion
    ↓
 14. If no username: Redirect to /create-profile
-    If has username: Redirect to /dashboard
+    If has username: Redirect to /team-builder
 ```
 
 ### Profile Creation Flow
@@ -1246,7 +1246,7 @@ https://{storageAccount}.blob.core.windows.net/avatars/{userId}/{avatarFilename}
    ↓
 15. Frontend updates NextAuth session
    ↓
-16. Route guard redirects to /dashboard
+16. Route guard redirects to /team-builder
 ```
 
 ### Token Refresh Flow
