@@ -9,6 +9,7 @@ export default defineConfig({
   schema: [
     'packages/backend/pokehub-users-db/src/lib/schema',
     'packages/backend/pokehub-teams-db/src/lib/schema',
+    'packages/backend/pokehub-battles-db/src/lib/schema',
   ],
   dialect: 'postgresql',
   dbCredentials: {

@@ -36,10 +36,11 @@ This document outlines options for hosting PokeHub on the root domain (`pokehub.
 | Container Apps Environment | East US | ~$25-35 |
 | Backend API (`pokehub-api`) | 1-3 replicas, 1 CPU, 2 GB | ~$15-20 |
 | Frontend App (`pokehub-app`) | 1-3 replicas, 1 CPU, 2 GB | ~$15-20 |
+| Azure Cache for Redis | Basic C0 | ~$16 |
 | Supabase PostgreSQL | Free tier (500MB) | $0 |
 | Azure DNS Zone | pokehub.space | ~$0.50 |
 | Azure Container Registry | Basic tier | ~$5 |
-| **Total** | | **~$55-75/month** |
+| **Total** | | **~$71-91/month** |
 
 ### Current Domain Configuration
 
@@ -436,14 +437,14 @@ For multi-region deployments, consider database replication:
 ### Current State
 ```
 Domain Registrar → Azure DNS → Azure Container Apps (East US)
-Cost: ~$55-75/month
+Cost: ~$71-91/month
 Apex domain: Not supported
 ```
 
 ### After Cloudflare Migration
 ```
 Domain Registrar → Cloudflare DNS → Azure Container Apps (East US)
-Cost: ~$55-75/month (same)
+Cost: ~$71-91/month (same)
 Apex domain: Supported
 Bonus: Free CDN, DDoS protection
 ```

@@ -1,5 +1,5 @@
 import type { PokemonSet, SpeciesName, MoveName, AbilityName, ItemName } from '@pkmn/dex';
-import { Dex, TeamValidator } from '@pkmn/sim';
+import { Dex, TeamValidator, Teams } from '@pkmn/sim';
 import type {
   PokemonInTeam,
   PokemonTeam,
@@ -248,3 +248,33 @@ export function isItemBanned(itemName: ItemName, formatId: string): boolean {
     return false;
   }
 }
+
+/**
+ * Pack a team of PokemonInTeam into Showdown's packed format string.
+ * This is required for battle creation and deterministic replay.
+ *
+ * @param pokemon - Array of Pokemon in team
+ * @returns Packed team string
+ *
+ * @example
+ * const packedTeam = packTeam(team.pokemon);
+ * // Returns something like: "Pikachu||lightball|static|thunderbolt,volttackle..."
+ */
+export function packTeam(pokemon: PokemonInTeam[]): string {
+  const pokemonSets = pokemon.map(toPokemonSet);
+  return Teams.pack(pokemonSets);
+}
+
+/**
+ * Unpack a Showdown packed team string back to PokemonSet array.
+ * Useful for displaying replay teams.
+ *
+ * @param packedTeam - Packed team string from Showdown format
+ * @returns Array of PokemonSet or null if invalid
+ */
+export function unpackTeam(packedTeam: string): PokemonSet[] | null {
+  return Teams.unpack(packedTeam);
+}
+
+// Re-export toPokemonSet for external use
+export { toPokemonSet };

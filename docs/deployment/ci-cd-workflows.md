@@ -123,6 +123,9 @@ Manually triggered to deploy to production.
 | `ACR_PASSWORD`         | ACR password for pushing images                              |
 | `AZURE_CREDENTIALS`    | Azure service principal credentials (JSON) for deployment    |
 | `AZURE_RESOURCE_GROUP` | Azure resource group containing the Container Apps           |
+| `REDIS_HOST`           | Azure Cache for Redis hostname                               |
+| `REDIS_PORT`           | Azure Cache for Redis port (6380 for SSL)                    |
+| `REDIS_PASSWORD`       | Azure Cache for Redis primary access key                     |
 
 ### Setting up AZURE_CREDENTIALS
 

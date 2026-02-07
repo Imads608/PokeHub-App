@@ -23,7 +23,7 @@ export class AppLogger implements LoggerService {
     this.logger.warn(message, this.context, ...optionalParams);
   }
 
-  debug?(message: unknown, ...optionalParams: unknown[]) {
+  debug(message: unknown, ...optionalParams: unknown[]) {
     this.logger.debug(message, this.context, ...optionalParams);
   }
 

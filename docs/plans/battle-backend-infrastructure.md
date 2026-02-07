@@ -17,7 +17,7 @@ This document describes the implementation plan for a real-time Pokemon battle s
 - Support horizontal scaling (multiple API instances)
 - Handle disconnects gracefully with reconnection support
 - Recover battles if a server crashes
-- Persist completed battles for history/replays
+- Allow users to optionally save replays (no automatic battle history)
 
 ## Confirmed Decisions
 
@@ -29,6 +29,9 @@ This document describes the implementation plan for a real-time Pokemon battle s
 | Redis Tier        | Azure Cache Basic C0 ($16/mo)            | Full functionality, upgrade path to Standard |
 | Redis Unavailable | Fail queue joins (safer)                 | Don't allow degraded battles                 |
 | Battle Formats    | Support multiple formats                 | gen9ou, gen9uu, etc. from start              |
+| Replay Saving     | Optional, user chooses at battle end     | Save storage, let users keep meaningful ones |
+| Max Replays       | 10 per user                              | Prevents unbounded storage growth            |
+| Battle Persistence| Only when replay saved                   | No battle history, reduces DB storage        |
 
 ---
 
@@ -248,26 +251,90 @@ This document describes the implementation plan for a real-time Pokemon battle s
      │             │               │<──────────────│              │
      │             │               │               │              │
      │             │               │  INSERT INTO battles         │
-     │             │               │  (log, winner, status)       │
+     │             │               │  (NO log yet, replaySaved:   │
+     │             │               │   false for both players)    │
      │             │               │─────────────────────────────>│
      │             │               │               │              │
-     │             │               │  DEL battle:abc123           │
-     │             │               │  DEL battle:abc123:log       │
-     │             │               │  DEL battle:abc123:seed      │
-     │             │               │  DEL user:p1:battle          │
-     │             │               │  DEL user:p2:battle          │
-     │             │               │──────────────>│              │
+     │             │               │  Keep log in Redis temporarily
+     │             │               │  (5 min TTL for save window) │
      │             │               │               │              │
      │  BATTLE_END                 │               │              │
      │  {winner: "p1",             │               │              │
-     │   reason: "win"}            │               │              │
+     │   reason: "win",            │               │              │
+     │   canSaveReplay: true}      │               │              │
      │<────────────────────────────│               │              │
      │             │               │               │              │
      │             │  BATTLE_END   │               │              │
      │             │  {winner: "p1"│               │              │
-     │             │   reason:"win"}               │              │
+     │             │   reason:"win"│               │              │
+     │             │   canSaveReplay: true}        │              │
      │             │<──────────────│               │              │
      │             │               │               │              │
+```
+
+### 4b. Save Replay Flow (Optional, after battle ends)
+
+```
+┌──────────┐  ┌──────────────┐  ┌─────────┐  ┌────────────┐
+│  Player  │  │  API Server  │  │  Redis  │  │ PostgreSQL │
+└────┬─────┘  └──────┬───────┘  └────┬────┘  └─────┬──────┘
+     │               │               │              │
+     │  SAVE_REPLAY  │               │              │
+     │  {battleId}   │               │              │
+     │──────────────>│               │              │
+     │               │               │              │
+     │               │  Check user's replay count   │
+     │               │─────────────────────────────>│
+     │               │  count < 10?                 │
+     │               │<─────────────────────────────│
+     │               │               │              │
+     │               │  GET battle:abc123:log       │
+     │               │  (still in Redis, TTL)       │
+     │               │──────────────>│              │
+     │               │  [all commands]              │
+     │               │<──────────────│              │
+     │               │               │              │
+     │               │  UPDATE battles SET          │
+     │               │  battleLog = [...],          │
+     │               │  player1ReplaySaved = true   │
+     │               │─────────────────────────────>│
+     │               │               │              │
+     │  REPLAY_SAVED │               │              │
+     │  {battleId,   │               │              │
+     │   replayCount: 5}             │              │
+     │<──────────────│               │              │
+     │               │               │              │
+     │               │  If both players saved or    │
+     │               │  TTL expires:                │
+     │               │  DEL battle:abc123:log       │
+     │               │──────────────>│              │
+     │               │               │              │
+```
+
+**Replay limit exceeded:**
+
+```
+┌──────────┐  ┌──────────────┐  ┌────────────┐
+│  Player  │  │  API Server  │  │ PostgreSQL │
+└────┬─────┘  └──────┬───────┘  └─────┬──────┘
+     │               │                │
+     │  SAVE_REPLAY  │                │
+     │  {battleId}   │                │
+     │──────────────>│                │
+     │               │                │
+     │               │  Check replay count
+     │               │───────────────>│
+     │               │  count = 10    │
+     │               │<───────────────│
+     │               │                │
+     │  ERROR        │                │
+     │  {code:       │                │
+     │   "MAX_REPLAYS_REACHED",       │
+     │   message: "Delete a replay    │
+     │    to save new ones",          │
+     │   replayCount: 10}             │
+     │<──────────────│                │
+     │               │                │
 ```
 
 ### 5. Forfeit Flow
@@ -700,7 +767,8 @@ export type ClientBattleEvent =
   | { type: 'LEAVE_QUEUE' }
   | { type: 'MOVE'; battleId: string; choice: string }
   | { type: 'FORFEIT'; battleId: string }
-  | { type: 'REJOIN'; battleId: string };
+  | { type: 'REJOIN'; battleId: string }
+  | { type: 'SAVE_REPLAY'; battleId: string };
 
 export type ServerBattleEvent =
   | { type: 'QUEUE_JOINED'; position: number }
@@ -712,25 +780,27 @@ export type ServerBattleEvent =
       battleId: string;
       winner: string | null;
       reason: string;
+      canSaveReplay: boolean;
     }
+  | { type: 'REPLAY_SAVED'; battleId: string; replayCount: number }
   | { type: 'ERROR'; code: string; message: string; recoverable: boolean }
   | { type: 'TURN_WARNING'; battleId: string; secondsRemaining: number };
 ```
 
 ### 3. `packages/backend/pokehub-battles-db/`
 
-Battle persistence with Drizzle ORM.
+Replay persistence with Drizzle ORM. **Note:** Database records are only created when a user explicitly saves a replay - we do not store every battle.
 
 ```
 packages/backend/pokehub-battles-db/
 ├── src/
 │   ├── index.ts
 │   └── lib/
-│       ├── pokehub-battles-db.module.ts
-│       ├── schema.ts
-│       ├── battles.repository.ts
-│       ├── battles.repository.interface.ts
-│       └── battles.repository.provider.ts
+│       ├── backend-pokehub-battles-db.module.ts
+│       ├── schema/
+│       │   └── battle.schema.ts
+│       ├── battles-db-service.interface.ts
+│       └── battles-db.service.ts
 ├── project.json
 ├── tsconfig.json
 ├── tsconfig.lib.json
@@ -740,8 +810,12 @@ packages/backend/pokehub-battles-db/
 **Schema:**
 
 ```typescript
-export const battlesTable = pgTable('battles', {
+export const battleReplays = pgTable('battle_replays', {
   id: uuid('id').primaryKey().defaultRandom(),
+  battleId: varchar('battle_id', { length: 100 }).notNull(), // Original battle ID from Redis
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }), // User who saved this replay
   format: varchar('format', { length: 50 }).notNull(),
   player1Id: uuid('player1_id')
     .references(() => usersTable.id)
@@ -750,19 +824,26 @@ export const battlesTable = pgTable('battles', {
     .references(() => usersTable.id)
     .notNull(),
   player1TeamId: uuid('player1_team_id')
-    .references(() => teamsTable.id)
+    .references(() => teams.id)
     .notNull(),
   player2TeamId: uuid('player2_team_id')
-    .references(() => teamsTable.id)
+    .references(() => teams.id)
     .notNull(),
   winnerId: uuid('winner_id').references(() => usersTable.id),
-  status: varchar('status', { length: 20 }).notNull().default('active'),
-  battleLog: jsonb('battle_log').$type<string[]>(),
-  seed: varchar('seed', { length: 50 }).notNull(),
-  startedAt: timestamp('started_at').defaultNow().notNull(),
-  endedAt: timestamp('ended_at'),
+  battleLog: jsonb('battle_log').notNull().$type<string[]>(),
+  seed: varchar('seed', { length: 100 }).notNull(),
+  playedAt: timestamp('played_at').notNull(),
+  savedAt: timestamp('saved_at').notNull().defaultNow(),
 });
 ```
+
+**Replay Storage Design:**
+
+- **No automatic battle persistence** - Records are only created when a user saves a replay
+- Each user saves their own copy (both players can save the same battle independently)
+- Maximum 10 saved replays per user (enforced at application level)
+- Redis keeps the battle log for 5 minutes after battle ends for the save window
+- If user doesn't save within window, the battle data is lost (not stored in DB)
 
 ---
 
@@ -772,29 +853,27 @@ export const battlesTable = pgTable('battles', {
 
 ```
 apps/pokehub-api/src/battle/
-├── battle.module.ts
-├── battle.gateway.ts
-├── battle.controller.ts
+├── battle.module.ts                    ✅ Created
+├── battle.gateway.ts                   (pending)
 ├── services/
 │   ├── battle-manager/
-│   │   ├── battle-manager.service.ts
-│   │   ├── battle-manager.service.interface.ts
-│   │   └── battle-manager.service.provider.ts
+│   │   ├── battle-manager.service.ts           (pending)
+│   │   └── battle-manager.service.interface.ts ✅ Created
 │   ├── matchmaking/
-│   │   ├── matchmaking.service.ts
-│   │   ├── matchmaking.service.interface.ts
-│   │   └── matchmaking.service.provider.ts
+│   │   ├── matchmaking.service.ts              (pending)
+│   │   └── matchmaking.service.interface.ts    ✅ Created
 │   └── battle-persistence/
-│       ├── battle-persistence.service.ts
-│       ├── battle-persistence.service.interface.ts
-│       └── battle-persistence.service.provider.ts
+│       ├── battle-persistence.service.ts       (pending)
+│       └── battle-persistence.service.interface.ts ✅ Created
 ├── guards/
-│   └── ws-jwt.guard.ts
-├── adapters/
-│   └── redis-io.adapter.ts
-└── dto/
-    ├── join-queue.dto.ts
-    └── battle-move.dto.ts
+│   └── ws-jwt.guard.ts                 ✅ Created
+└── adapters/
+    └── redis-io.adapter.ts             (pending)
+
+# DTOs moved to shared package:
+packages/shared/pokemon-battle-types/src/lib/dto/
+├── join-queue.dto.ts                   ✅ Created (Zod schema)
+└── battle-move.dto.ts                  ✅ Created (Zod schema)
 ```
 
 ### Service Interfaces
@@ -837,11 +916,19 @@ export interface IBattlePersistenceService {
     winnerId: string | null,
     reason: string
   ): Promise<void>;
+  saveReplay(
+    battleId: string,
+    userId: string,
+    log: string[]
+  ): Promise<{ replayCount: number }>;
+  deleteReplay(battleId: string, userId: string): Promise<void>;
+  getUserReplayCount(userId: string): Promise<number>;
   getBattleHistory(
     userId: string,
     limit: number,
     offset: number
   ): Promise<BattleRecord[]>;
+  getSavedReplays(userId: string): Promise<BattleRecord[]>;
   getBattleReplay(battleId: string): Promise<string[] | null>;
 }
 ```
@@ -850,25 +937,28 @@ export interface IBattlePersistenceService {
 
 **Client → Server:**
 
-| Event         | Payload                | Description                |
-| ------------- | ---------------------- | -------------------------- |
-| `JOIN_QUEUE`  | `{ format, teamId }`   | Join matchmaking queue     |
-| `LEAVE_QUEUE` | `{}`                   | Leave queue                |
-| `MOVE`        | `{ battleId, choice }` | Submit move/switch         |
-| `FORFEIT`     | `{ battleId }`         | Forfeit battle             |
-| `REJOIN`      | `{ battleId }`         | Reconnect to active battle |
+| Event         | Payload                | Description                       |
+| ------------- | ---------------------- | --------------------------------- |
+| `JOIN_QUEUE`  | `{ format, teamId }`   | Join matchmaking queue            |
+| `LEAVE_QUEUE` | `{}`                   | Leave queue                       |
+| `MOVE`        | `{ battleId, choice }` | Submit move/switch                |
+| `FORFEIT`     | `{ battleId }`         | Forfeit battle                    |
+| `REJOIN`      | `{ battleId }`         | Reconnect to active battle        |
+| `SAVE_REPLAY` | `{ battleId }`         | Save replay (within 5 min window) |
 
 **Server → Client:**
 
-| Event           | Payload                          | Description        |
-| --------------- | -------------------------------- | ------------------ |
-| `QUEUE_JOINED`  | `{ position }`                   | Confirmed in queue |
-| `MATCH_FOUND`   | `{ battleId, opponent }`         | Match made         |
-| `BATTLE_START`  | `{ battleId, initialState }`     | Battle beginning   |
-| `BATTLE_UPDATE` | `{ battleId, data }`             | Turn result        |
-| `BATTLE_END`    | `{ battleId, winner, reason }`   | Battle over        |
-| `TURN_WARNING`  | `{ battleId, secondsRemaining }` | Timer warning      |
-| `ERROR`         | `{ code, message, recoverable }` | Error occurred     |
+| Event           | Payload                                       | Description               |
+| --------------- | --------------------------------------------- | ------------------------- |
+| `QUEUE_JOINED`  | `{ position }`                                | Confirmed in queue        |
+| `MATCH_FOUND`   | `{ battleId, opponent }`                      | Match made                |
+| `BATTLE_START`  | `{ battleId, initialState }`                  | Battle beginning          |
+| `BATTLE_UPDATE` | `{ battleId, data }`                          | Turn result               |
+| `BATTLE_END`    | `{ battleId, winner, reason, canSaveReplay }` | Battle over               |
+| `REPLAY_SAVED`  | `{ battleId, replayCount }`                   | Replay saved successfully |
+| `TURN_WARNING`  | `{ battleId, secondsRemaining }`              | Timer warning             |
+| `ERROR`         | `{ code, message, recoverable }`              | Error occurred            |
+| `ERROR`         | `{ code, message, recoverable }`              | Error occurred            |
 
 ---
 
@@ -889,6 +979,7 @@ battle:{battleId}:seed
   - PRNG seed for deterministic replay
 
 # Battle input log (list, RPUSH to append)
+# NOTE: After battle ends, log stays with 5 min TTL for replay save window
 battle:{battleId}:log
   - All input commands in order
 
@@ -930,12 +1021,14 @@ server:{serverId}:battles
 
 ### Battle Errors
 
-| Code               | Cause                | Handling                 |
-| ------------------ | -------------------- | ------------------------ |
-| `INVALID_MOVE`     | Move not available   | Reject, request valid    |
-| `NOT_YOUR_TURN`    | Out-of-order command | Ignore                   |
-| `BATTLE_ENDED`     | Action after over    | Notify, send final state |
-| `BATTLE_NOT_FOUND` | Invalid battleId     | Clear local state        |
+| Code                    | Cause                   | Handling                 |
+| ----------------------- | ----------------------- | ------------------------ |
+| `INVALID_MOVE`          | Move not available      | Reject, request valid    |
+| `NOT_YOUR_TURN`         | Out-of-order command    | Ignore                   |
+| `BATTLE_ENDED`          | Action after over       | Notify, send final state |
+| `BATTLE_NOT_FOUND`      | Invalid battleId        | Clear local state        |
+| `MAX_REPLAYS_REACHED`   | User has 10 replays     | Prompt to delete one     |
+| `REPLAY_WINDOW_EXPIRED` | >5 min since battle end | Cannot save anymore      |
 
 ---
 
@@ -972,23 +1065,23 @@ Add battle routes.
 
 ## Implementation Order
 
-| Step | Task                                  | Depends On      |
-| ---- | ------------------------------------- | --------------- |
-| 1    | Install npm dependencies              | -               |
-| 2    | Update `docker-compose.dev.yaml`      | -               |
-| 3    | Create `pokehub-redis` package        | Step 1          |
-| 4    | Create `pokemon-battle-types` package | -               |
-| 5    | Create `pokehub-battles-db` package   | -               |
-| 6    | Generate Drizzle migration            | Step 5          |
-| 7    | Update API configuration files        | Step 3          |
-| 8    | Create battle module structure        | Steps 3, 4, 5   |
-| 9    | Implement `BattleManagerService`      | Step 8          |
-| 10   | Implement `MatchmakingService`        | Step 8          |
-| 11   | Implement `BattlePersistenceService`  | Step 8          |
-| 12   | Implement `BattleGateway`             | Steps 9, 10, 11 |
-| 13   | Implement crash recovery              | Step 12         |
-| 14   | Update deployment configs             | Step 3          |
-| 15   | Write tests                           | All             |
+| Step | Task                                  | Depends On      | Status |
+| ---- | ------------------------------------- | --------------- | ------ |
+| 1    | Install npm dependencies              | -               | ✅ Done |
+| 2    | Update `docker-compose.dev.yaml`      | -               | ✅ Done |
+| 3    | Create `pokehub-redis` package        | Step 1          | ✅ Done |
+| 4    | Create `pokemon-battle-types` package | -               | ✅ Done |
+| 5    | Create `pokehub-battles-db` package   | -               | ✅ Done |
+| 6    | Generate Drizzle migration            | Step 5          | Pending |
+| 7    | Update API configuration files        | Step 3          | ✅ Done |
+| 8    | Create battle module structure        | Steps 3, 4, 5   | Pending |
+| 9    | Implement `BattleManagerService`      | Step 8          | Pending |
+| 10   | Implement `MatchmakingService`        | Step 8          | Pending |
+| 11   | Implement `BattlePersistenceService`  | Step 8          | Pending |
+| 12   | Implement `BattleGateway`             | Steps 9, 10, 11 | Pending |
+| 13   | Implement crash recovery              | Step 12         | Pending |
+| 14   | Update deployment configs             | Step 3          | Pending |
+| 15   | Write tests                           | All             | Pending |
 
 ---
 
@@ -1031,6 +1124,8 @@ Add battle routes.
 - [ ] Forfeit ends battle correctly
 - [ ] Disconnected player can reconnect within 60s
 - [ ] Server crash doesn't lose battle state (recovery works)
-- [ ] Completed battles are saved to PostgreSQL
-- [ ] Battle history/replays are retrievable
+- [ ] Players can optionally save replay within 5 min window
+- [ ] Max 10 replays per user enforced
+- [ ] Players can delete saved replays to free up slots
+- [ ] Saved replays are retrievable and playable
 - [ ] Multi-server: players on different servers can battle
