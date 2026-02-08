@@ -6,6 +6,7 @@ export {
 export {
   type JoinQueueEvent,
   type LeaveQueueEvent,
+  type DeclineMatchEvent,
   type MoveEvent,
   type ForfeitEvent,
   type RejoinEvent,
@@ -17,6 +18,7 @@ export {
   type QueueJoinedEvent,
   type QueueLeftEvent,
   type MatchFoundEvent,
+  type MatchCancelledEvent,
   type BattleStartEvent,
   type BattleUpdateEvent,
   type BattleEndReason,
@@ -44,6 +46,8 @@ export {
   type SaveReplayDTO,
   RejoinDTOSchema,
   type RejoinDTO,
+  DeclineMatchDTOSchema,
+  type DeclineMatchDTO,
 } from './lib/dto/battle-move.dto';
 export {
   BATTLE_NAMESPACE,

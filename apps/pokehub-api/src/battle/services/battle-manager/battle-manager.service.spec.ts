@@ -83,6 +83,7 @@ describe('BattleManagerService', () => {
     setBattleLogTTL: jest.fn().mockResolvedValue(undefined),
     removeServerBattle: jest.fn().mockResolvedValue(undefined),
     isServerAlive: jest.fn(),
+    cleanupBattle: jest.fn().mockResolvedValue(undefined),
   };
 
   // Mock turn timer service
@@ -529,6 +530,63 @@ describe('BattleManagerService', () => {
 
       // Battle should no longer be hosted locally
       expect(service.isHostedLocally(testBattleId)).toBe(false);
+    });
+  });
+
+  describe('cancelBattle', () => {
+    beforeEach(async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+      jest.clearAllMocks();
+    });
+
+    it('should cancel timers, clear user battles, and cleanup Redis', async () => {
+      await service.cancelBattle(testBattleId);
+
+      // Should cancel all battle timers
+      expect(mockTurnTimerService.cancelBattleTimers).toHaveBeenCalledWith(
+        testBattleId
+      );
+
+      // Should clear user battles for both players
+      expect(mockRedisService.clearUserBattle).toHaveBeenCalledWith(
+        testPlayer1Id
+      );
+      expect(mockRedisService.clearUserBattle).toHaveBeenCalledWith(
+        testPlayer2Id
+      );
+
+      // Should cleanup all Redis state
+      expect(mockRedisService.cleanupBattle).toHaveBeenCalledWith(testBattleId);
+
+      // Battle should no longer be hosted locally
+      expect(service.isHostedLocally(testBattleId)).toBe(false);
+    });
+
+    it('should not throw when battle does not exist locally', async () => {
+      // Should not throw, just cleanup Redis
+      await expect(
+        service.cancelBattle('non-existent-battle')
+      ).resolves.not.toThrow();
+
+      // Should still attempt Redis cleanup
+      expect(mockRedisService.cleanupBattle).toHaveBeenCalledWith(
+        'non-existent-battle'
+      );
+    });
+
+    it('should NOT publish end event (unlike forfeit)', async () => {
+      await service.cancelBattle(testBattleId);
+
+      // Cancel should NOT publish battle end (no winner, no game played)
+      expect(mockRedisService.publishBattleUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should NOT set battle log TTL (battle never really started)', async () => {
+      await service.cancelBattle(testBattleId);
+
+      // No replay possible for cancelled battles
+      expect(mockRedisService.setBattleLogTTL).not.toHaveBeenCalled();
     });
   });
 });

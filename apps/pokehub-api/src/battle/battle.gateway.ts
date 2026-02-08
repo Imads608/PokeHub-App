@@ -1,4 +1,5 @@
 import { WsJwtGuard, type AuthenticatedSocket } from './guards/ws-jwt.guard';
+import { WsThrottlerGuard, WsThrottle } from './guards/ws-throttler.guard';
 import {
   BATTLE_MANAGER_SERVICE,
   type IBattleManagerService,
@@ -47,6 +48,7 @@ import {
   ForfeitDTOSchema,
   RejoinDTOSchema,
   SaveReplayDTOSchema,
+  DeclineMatchDTOSchema,
   BATTLE_NAMESPACE,
   BattleRooms,
   BATTLE_EVENT,
@@ -54,10 +56,6 @@ import {
 import { packTeam } from '@pokehub/shared/pokemon-showdown-validation';
 import { randomUUID } from 'crypto';
 import { Server } from 'socket.io';
-
-// Track socket to user mapping
-const socketToUser = new Map<string, string>();
-const userToSocket = new Map<string, string>();
 
 @WebSocketGateway({
   namespace: BATTLE_NAMESPACE,
@@ -75,6 +73,10 @@ export class BattleGateway
     RedisService['createSubscriberClient']
   >;
   private heartbeatInterval: NodeJS.Timeout | null = null;
+
+  // Track socket to user mapping
+  private readonly socketToUser = new Map<string, string>();
+  private readonly userToSocket = new Map<string, string>();
 
   constructor(
     private readonly logger: AppLogger,
@@ -146,7 +148,7 @@ export class BattleGateway
     userId: string,
     message: MatchFoundMessage
   ): void {
-    const socketId = userToSocket.get(userId);
+    const socketId = this.userToSocket.get(userId);
     if (socketId) {
       this.server.to(socketId).emit(BATTLE_EVENT, {
         type: 'MATCH_FOUND',
@@ -247,7 +249,7 @@ export class BattleGateway
     // Guards on @SubscribeMessage handlers provide per-message auth,
     // but we also validate here to reject invalid connections immediately
     const isValid = await this.wsJwtGuard.validateClient(client);
-    if (!isValid) {
+    if (!isValid || !client.user?.userId) {
       this.logger.warn(`Connection rejected: invalid or missing token`);
       client.disconnect();
       return;
@@ -256,8 +258,8 @@ export class BattleGateway
     const userId = client.user.userId;
 
     // Track the connection
-    socketToUser.set(client.id, userId);
-    userToSocket.set(userId, client.id);
+    this.socketToUser.set(client.id, userId);
+    this.userToSocket.set(userId, client.id);
 
     this.logger.log(`User ${userId} connected (socket: ${client.id})`);
 
@@ -285,7 +287,7 @@ export class BattleGateway
   }
 
   async handleDisconnect(client: AuthenticatedSocket): Promise<void> {
-    const userId = socketToUser.get(client.id);
+    const userId = this.socketToUser.get(client.id);
     if (!userId) return;
 
     this.logger.log(`User ${userId} disconnected (socket: ${client.id})`);
@@ -307,8 +309,8 @@ export class BattleGateway
     await this.matchmaking.leaveQueue(userId);
 
     // Clean up mappings
-    socketToUser.delete(client.id);
-    userToSocket.delete(userId);
+    this.socketToUser.delete(client.id);
+    this.userToSocket.delete(userId);
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -331,7 +333,8 @@ export class BattleGateway
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(10, 60000) // 10 requests per minute
   @SubscribeMessage('JOIN_QUEUE')
   async handleJoinQueue(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -411,7 +414,8 @@ export class BattleGateway
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(10, 60000) // 10 requests per minute
   @SubscribeMessage('LEAVE_QUEUE')
   async handleLeaveQueue(
     @ConnectedSocket() client: AuthenticatedSocket
@@ -427,7 +431,107 @@ export class BattleGateway
     this.logger.log(`User ${userId} left queue`);
   }
 
-  @UseGuards(WsJwtGuard)
+  /**
+   * Handle a client declining a match they were paired into.
+   * This happens when the client receives MATCH_FOUND but the user had already
+   * left the queue from their perspective (TOCTOU race between leave and match).
+   *
+   * The declining player forfeits, and the opponent is notified and requeued.
+   */
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(5, 60000) // 5 requests per minute
+  @SubscribeMessage('DECLINE_MATCH')
+  async handleDeclineMatch(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: unknown
+  ): Promise<void> {
+    const userId = client.user.userId;
+
+    // Validate input
+    const parsed = DeclineMatchDTOSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'INVALID_INPUT',
+        message: parsed.error.message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+      return;
+    }
+
+    const { battleId } = parsed.data;
+
+    try {
+      // Get battle metadata to find the opponent
+      const metadata = await this.redis.getBattleMetadata(battleId);
+      if (!metadata) {
+        this.logger.warn(
+          `User ${userId} tried to decline non-existent battle ${battleId}`
+        );
+        return;
+      }
+
+      const config: BattleConfig = JSON.parse(metadata.config);
+
+      // Determine who the opponent is
+      const isPlayer1 = config.player1.id === userId;
+      const isPlayer2 = config.player2.id === userId;
+
+      if (!isPlayer1 && !isPlayer2) {
+        this.logger.warn(
+          `User ${userId} tried to decline battle ${battleId} they're not in`
+        );
+        return;
+      }
+
+      const opponentId = isPlayer1 ? config.player2.id : config.player1.id;
+      const opponentTeamId = isPlayer1
+        ? config.player2.teamId
+        : config.player1.teamId;
+      const opponentPackedTeam = isPlayer1
+        ? config.player2.packedTeam
+        : config.player1.packedTeam;
+
+      this.logger.log(
+        `User ${userId} declined match ${battleId}, requeuing opponent ${opponentId}`
+      );
+
+      // Clean up the battle (it never really started)
+      await this.battleManager.cancelBattle(battleId);
+
+      // Notify the opponent and requeue them
+      const opponentSocketId = this.userToSocket.get(opponentId);
+      if (opponentSocketId) {
+        this.server.to(opponentSocketId).emit(BATTLE_EVENT, {
+          type: 'MATCH_CANCELLED',
+          battleId,
+          reason: 'opponent_declined',
+        } satisfies ServerBattleEvent);
+      }
+
+      // Requeue the opponent
+      await this.matchmaking.joinQueue(
+        opponentId,
+        config.format,
+        opponentTeamId,
+        opponentPackedTeam
+      );
+
+      // Try to find a new match for the requeued player
+      await this.tryFindMatch(config.format);
+    } catch (error) {
+      this.logger.error(`Error handling decline match: ${error}`);
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'DECLINE_MATCH_ERROR',
+        message: 'Failed to decline match',
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+    }
+  }
+
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(2, 1000) // 2 requests per second
   @SubscribeMessage('MOVE')
   async handleMove(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -463,7 +567,8 @@ export class BattleGateway
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(1, 5000) // 1 request per 5 seconds
   @SubscribeMessage('FORFEIT')
   async handleForfeit(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -500,7 +605,8 @@ export class BattleGateway
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(5, 60000) // 5 requests per minute
   @SubscribeMessage('REJOIN')
   async handleRejoin(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -554,7 +660,8 @@ export class BattleGateway
     }
   }
 
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(5, 60000) // 5 requests per minute
   @SubscribeMessage('SAVE_REPLAY')
   async handleSaveReplay(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -706,8 +813,8 @@ export class BattleGateway
       ]);
 
       // Join both players to the battle room (if on this server)
-      const socket1 = userToSocket.get(player1.userId);
-      const socket2 = userToSocket.get(player2.userId);
+      const socket1 = this.userToSocket.get(player1.userId);
+      const socket2 = this.userToSocket.get(player2.userId);
 
       // Join both players to the battle room and emit BATTLE_START
       const battleRoom = BattleRooms.battle(battleId);

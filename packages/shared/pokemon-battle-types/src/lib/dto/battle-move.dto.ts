@@ -25,3 +25,9 @@ export const RejoinDTOSchema = z.object({
 });
 
 export type RejoinDTO = z.infer<typeof RejoinDTOSchema>;
+
+export const DeclineMatchDTOSchema = z.object({
+  battleId: z.string().min(1),
+});
+
+export type DeclineMatchDTO = z.infer<typeof DeclineMatchDTOSchema>;

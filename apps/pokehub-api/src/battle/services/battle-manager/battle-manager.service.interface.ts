@@ -18,7 +18,11 @@ export interface IBattleManagerService {
   /**
    * Process a player's choice (move or switch)
    */
-  processChoice(battleId: string, playerId: string, choice: string): Promise<void>;
+  processChoice(
+    battleId: string,
+    playerId: string,
+    choice: string
+  ): Promise<void>;
 
   /**
    * Forfeit a battle
@@ -49,4 +53,10 @@ export interface IBattleManagerService {
    * Handle player reconnect
    */
   handleReconnect(battleId: string, playerId: string): Promise<ActiveBattle>;
+
+  /**
+   * Cancel a battle before it really starts (e.g., opponent declined match).
+   * Cleans up all battle state without declaring a winner.
+   */
+  cancelBattle(battleId: string): Promise<void>;
 }

@@ -679,6 +679,33 @@ class BattleManagerService implements IBattleManagerService {
       }
     }
   }
+
+  /**
+   * Cancel a battle before it really starts (e.g., opponent declined match).
+   * Cleans up all battle state without declaring a winner.
+   */
+  async cancelBattle(battleId: string): Promise<void> {
+    this.logger.log(`Cancelling battle ${battleId}`);
+
+    // Cancel timers
+    this.turnTimer.cancelBattleTimers(battleId);
+    this.clearBattleDisconnectTimeouts(battleId);
+
+    const instance = this.battles.get(battleId);
+    if (instance) {
+      // Clear user battle states
+      await Promise.all([
+        this.redis.clearUserBattle(instance.config.player1.id),
+        this.redis.clearUserBattle(instance.config.player2.id),
+      ]);
+
+      // Remove from local map
+      this.battles.delete(battleId);
+    }
+
+    // Clean up all Redis state for this battle
+    await this.redis.cleanupBattle(battleId);
+  }
 }
 
 /**

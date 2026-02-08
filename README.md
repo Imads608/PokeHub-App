@@ -32,6 +32,9 @@ PokeHub is an ambitious recreation of Pokemon Showdown, delivering competitive P
 
 - **NestJS** for scalable Node.js server architecture
 - **PostgreSQL** with **Drizzle ORM** for type-safe database operations
+- **Redis** for real-time battle state, pub/sub, and matchmaking
+- **Socket.io** for WebSocket communication
+- **@pkmn/sim** for Pokemon Showdown-compatible battle simulation
 - **Passport.js** with JWT authentication strategies
 - **Winston** for structured logging
 - **Azure Blob Storage** for file uploads
@@ -68,6 +71,7 @@ For a comprehensive overview of the system architecture, data flows, and design 
 
 - Node.js 18+
 - PostgreSQL database
+- Redis (for battle system)
 - Google OAuth credentials (for authentication)
 
 ### Installation
@@ -77,6 +81,12 @@ npm install
 ```
 
 ### Development
+
+Start Redis (required for battle system):
+
+```bash
+docker compose -f docker-compose.dev.yaml up -d redis
+```
 
 Start the frontend:
 
@@ -164,6 +174,7 @@ Comprehensive documentation is available in the `docs/` directory:
   - [Authentication](./docs/features/authentication.md)
   - [Pokedex](./docs/features/pokedex.md)
   - [Team Builder](./docs/features/team-builder.md)
+  - [Battle System](./docs/features/battle-system.md) - Real-time battles, matchmaking, WebSocket API
 
 ## 🎯 Project Goals
 

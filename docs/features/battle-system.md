@@ -24,6 +24,7 @@
   - [3. Turn Timer Flow](#3-turn-timer-flow)
   - [4. Disconnect & Reconnect Flow](#4-disconnect--reconnect-flow)
   - [5. Crash Recovery Flow](#5-crash-recovery-flow)
+  - [6. Match Decline Flow](#6-match-decline-flow)
 - [Battle Engine Integration](#battle-engine-integration)
   - [@pkmn/sim Usage](#pkmnsim-usage)
   - [Team Packing](#team-packing)
@@ -36,6 +37,7 @@
   - [Disconnect Timeout Management](#disconnect-timeout-management)
   - [Gateway Resource Cleanup](#gateway-resource-cleanup)
   - [Zod Validation on WebSocket Handlers](#zod-validation-on-websocket-handlers)
+  - [WebSocket Rate Limiting](#websocket-rate-limiting)
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
   - [Docker Compose (Development)](#docker-compose-development)
@@ -151,7 +153,8 @@ type ClientBattleEvent =
   | { type: 'MOVE'; battleId: string; choice: string }
   | { type: 'FORFEIT'; battleId: string }
   | { type: 'REJOIN'; battleId: string }
-  | { type: 'SAVE_REPLAY'; battleId: string };
+  | { type: 'SAVE_REPLAY'; battleId: string }
+  | { type: 'DECLINE_MATCH'; battleId: string };
 
 // Server events
 type ServerBattleEvent =
@@ -186,6 +189,7 @@ type ServerBattleEvent =
       currentState: string;
       message?: string;
     }
+  | { type: 'MATCH_CANCELLED'; battleId: string; reason: string }
   | { type: 'ERROR'; code: string; message: string; recoverable: boolean };
 ```
 
@@ -411,31 +415,33 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 
 **Client → Server:**
 
-| Event         | Payload                                | Description                               |
-| ------------- | -------------------------------------- | ----------------------------------------- |
-| `JOIN_QUEUE`  | `{ format: string, teamId: string }`   | Join matchmaking queue                    |
-| `LEAVE_QUEUE` | `{}`                                   | Leave queue                               |
-| `MOVE`        | `{ battleId: string, choice: string }` | Submit move (e.g., "move 1", "switch 2")  |
-| `FORFEIT`     | `{ battleId: string }`                 | Forfeit battle                            |
-| `REJOIN`      | `{ battleId: string }`                 | Reconnect to active battle                |
-| `SAVE_REPLAY` | `{ battleId: string }`                 | Save replay (within 1 hour of battle end) |
+| Event           | Payload                                | Description                                                   |
+| --------------- | -------------------------------------- | ------------------------------------------------------------- |
+| `JOIN_QUEUE`    | `{ format: string, teamId: string }`   | Join matchmaking queue                                        |
+| `LEAVE_QUEUE`   | `{}`                                   | Leave queue                                                   |
+| `MOVE`          | `{ battleId: string, choice: string }` | Submit move (e.g., "move 1", "switch 2")                      |
+| `FORFEIT`       | `{ battleId: string }`                 | Forfeit battle                                                |
+| `REJOIN`        | `{ battleId: string }`                 | Reconnect to active battle                                    |
+| `SAVE_REPLAY`   | `{ battleId: string }`                 | Save replay (within 1 hour of battle end)                     |
+| `DECLINE_MATCH` | `{ battleId: string }`                 | Decline match (client left queue before MATCH_FOUND received) |
 
 **Server → Client:**
 
-| Event                   | Payload                                       | Description              |
-| ----------------------- | --------------------------------------------- | ------------------------ |
-| `QUEUE_JOINED`          | `{ position: number }`                        | Confirmed in queue       |
-| `QUEUE_LEFT`            | `{}`                                          | Left queue               |
-| `MATCH_FOUND`           | `{ battleId, opponent: { id, name } }`        | Match created            |
-| `BATTLE_START`          | `{ battleId, initialState }`                  | Battle beginning         |
-| `BATTLE_UPDATE`         | `{ battleId, data, autoMove? }`               | Turn result              |
-| `BATTLE_END`            | `{ battleId, winner, reason, canSaveReplay }` | Battle over              |
-| `REPLAY_SAVED`          | `{ battleId, replayCount }`                   | Replay saved             |
-| `TURN_WARNING`          | `{ battleId, secondsRemaining }`              | Timer warning (30s left) |
-| `OPPONENT_DISCONNECTED` | `{ battleId, timeout }`                       | Player disconnected      |
-| `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected       |
-| `BATTLE_RESTORED`       | `{ battleId, currentState, message? }`        | Reconnection state       |
-| `ERROR`                 | `{ code, message, recoverable }`              | Error occurred           |
+| Event                   | Payload                                       | Description                |
+| ----------------------- | --------------------------------------------- | -------------------------- |
+| `QUEUE_JOINED`          | `{ position: number }`                        | Confirmed in queue         |
+| `QUEUE_LEFT`            | `{}`                                          | Left queue                 |
+| `MATCH_FOUND`           | `{ battleId, opponent: { id, name } }`        | Match created              |
+| `BATTLE_START`          | `{ battleId, initialState }`                  | Battle beginning           |
+| `BATTLE_UPDATE`         | `{ battleId, data, autoMove? }`               | Turn result                |
+| `BATTLE_END`            | `{ battleId, winner, reason, canSaveReplay }` | Battle over                |
+| `REPLAY_SAVED`          | `{ battleId, replayCount }`                   | Replay saved               |
+| `TURN_WARNING`          | `{ battleId, secondsRemaining }`              | Timer warning (30s left)   |
+| `OPPONENT_DISCONNECTED` | `{ battleId, timeout }`                       | Player disconnected        |
+| `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected         |
+| `BATTLE_RESTORED`       | `{ battleId, currentState, message? }`        | Reconnection state         |
+| `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
+| `ERROR`                 | `{ code, message, recoverable }`              | Error occurred             |
 
 ---
 
@@ -573,6 +579,83 @@ Player 1      Dead Server      New Server      Redis
    |<-- BATTLE_RESTORED -----------|              |
 ```
 
+### 6. Match Decline Flow
+
+This flow handles a race condition (TOCTOU - Time Of Check To Time Of Use) where a player leaves the queue but still receives a `MATCH_FOUND` event. This can occur because:
+
+1. Player clicks "Leave Queue"
+2. Server processes `LEAVE_QUEUE`, clears their queue status
+3. Meanwhile, matchmaking has already popped both players and created a battle
+4. Player receives `MATCH_FOUND` for a battle they didn't want
+
+**Solution:** The client tracks its "in queue" state. If it receives `MATCH_FOUND` but is no longer in queue, it sends `DECLINE_MATCH` to cancel the battle gracefully.
+
+```
+Client A      Client B      Server                    Redis
+   |             |            |                          |
+   |-- LEAVE_QUEUE --------->|                          |
+   |             |            |-- Clear queue status --->|
+   |             |            |                          |
+   |<- QUEUE_LEFT ------------|                          |
+   |             |            |                          |
+   |             |            | (Match already created)  |
+   |             |            |                          |
+   |<-- MATCH_FOUND ---------|                          |
+   |             |<-- MATCH_FOUND ----------------------|
+   |             |            |                          |
+   | (Not in queue!)          |                          |
+   |             |            |                          |
+   |-- DECLINE_MATCH ------->|                          |
+   |   {battleId}             |                          |
+   |             |            |                          |
+   |             |            |-- cancelBattle()         |
+   |             |            |   - Clear timers         |
+   |             |            |   - Clear user battles   |
+   |             |            |   - Cleanup Redis ------>|
+   |             |            |                          |
+   |             |<-- MATCH_CANCELLED ------------------|
+   |             |   {battleId, reason}                  |
+   |             |            |                          |
+   |             |            |-- Re-queue opponent ---->|
+   |             |            |                          |
+   |             |<-- QUEUE_JOINED ---------------------|
+```
+
+**Key Points:**
+
+- `cancelBattle()` differs from `forfeit()`: no winner is declared, no `BATTLE_END` event is published, and no replay TTL is set
+- The opponent is automatically re-queued so they don't lose their place
+- Rate limited: 5 requests per minute to prevent abuse
+- Only the player who received `MATCH_FOUND` after leaving can decline (verified via battle participant check)
+
+**Client Implementation Requirements:**
+
+```typescript
+// Track queue state locally
+let isInQueue = false;
+
+socket.on('QUEUE_JOINED', () => {
+  isInQueue = true;
+});
+socket.on('QUEUE_LEFT', () => {
+  isInQueue = false;
+});
+
+socket.on('MATCH_FOUND', ({ battleId, opponent }) => {
+  if (!isInQueue) {
+    // We left the queue but got matched anyway - decline
+    socket.emit('DECLINE_MATCH', { battleId });
+    return;
+  }
+  // Normal match handling...
+});
+
+socket.on('MATCH_CANCELLED', ({ battleId, reason }) => {
+  showNotification('Opponent declined, finding new match...');
+  // UI will update when QUEUE_JOINED is received
+});
+```
+
 ---
 
 ## Battle Engine Integration
@@ -697,24 +780,26 @@ services:
 
 ## Implementation Status
 
-| Component                      | Status  | Notes                                  |
-| ------------------------------ | ------- | -------------------------------------- |
-| `pokemon-battle-types` package | Done    | Shared types, DTOs, Zod schemas        |
-| `pokehub-redis` package        | Done    | Full Redis service                     |
-| `pokehub-battles-db` package   | Done    | Replay persistence                     |
-| Docker Compose Redis           | Done    | Local development                      |
-| API configuration              | Done    | Redis config integration               |
-| BattleGateway                  | Done    | WebSocket handling, resource cleanup   |
-| BattleManagerService           | Done    | Battle lifecycle, per-battle locking   |
-| MatchmakingService             | Done    | FIFO queue matching                    |
-| BattlePersistenceService       | Done    | Replay save/delete                     |
-| TurnTimerService               | Done    | Warning + timeout                      |
-| WsJwtGuard                     | Done    | WebSocket auth                         |
-| Database migration             | Done    | `battle_replays` table                 |
-| Concurrency protection         | Done    | Battle locks, timeout cleanup          |
-| Zod validation                 | Done    | Runtime validation for all WS handlers |
-| Frontend battle UI             | Pending | Socket.io client, battle UI            |
-| Rating system                  | Future  | See `rating-matchmaking-system.md`     |
+| Component                      | Status  | Notes                                      |
+| ------------------------------ | ------- | ------------------------------------------ |
+| `pokemon-battle-types` package | Done    | Shared types, DTOs, Zod schemas            |
+| `pokehub-redis` package        | Done    | Full Redis service                         |
+| `pokehub-battles-db` package   | Done    | Replay persistence                         |
+| Docker Compose Redis           | Done    | Local development                          |
+| API configuration              | Done    | Redis config integration                   |
+| BattleGateway                  | Done    | WebSocket handling, resource cleanup       |
+| BattleManagerService           | Done    | Battle lifecycle, per-battle locking       |
+| MatchmakingService             | Done    | FIFO queue matching                        |
+| BattlePersistenceService       | Done    | Replay save/delete                         |
+| TurnTimerService               | Done    | Warning + timeout                          |
+| WsJwtGuard                     | Done    | WebSocket auth                             |
+| Database migration             | Done    | `battle_replays` table                     |
+| Concurrency protection         | Done    | Battle locks, timeout cleanup              |
+| Zod validation                 | Done    | Runtime validation for all WS handlers     |
+| WebSocket rate limiting        | Done    | Per-event throttling via @nestjs/throttler |
+| Match decline flow             | Done    | TOCTOU race condition fix                  |
+| Frontend battle UI             | Pending | Socket.io client, battle UI                |
+| Rating system                  | Future  | See `rating-matchmaking-system.md`         |
 
 ---
 
@@ -804,15 +889,74 @@ async onModuleDestroy(): Promise<void> {
 
 All WebSocket event handlers validate payloads using Zod schemas from `@pokehub/shared/pokemon-battle-types`:
 
-| Handler            | Schema                |
-| ------------------ | --------------------- |
-| `handleJoinQueue`  | `JoinQueueDTOSchema`  |
-| `handleMove`       | `BattleMoveDTOSchema` |
-| `handleForfeit`    | `ForfeitDTOSchema`    |
-| `handleRejoin`     | `RejoinDTOSchema`     |
-| `handleSaveReplay` | `SaveReplayDTOSchema` |
+| Handler              | Schema                  |
+| -------------------- | ----------------------- |
+| `handleJoinQueue`    | `JoinQueueDTOSchema`    |
+| `handleMove`         | `BattleMoveDTOSchema`   |
+| `handleForfeit`      | `ForfeitDTOSchema`      |
+| `handleRejoin`       | `RejoinDTOSchema`       |
+| `handleSaveReplay`   | `SaveReplayDTOSchema`   |
+| `handleDeclineMatch` | `DeclineMatchDTOSchema` |
 
 This provides runtime validation in addition to TypeScript's compile-time type checking.
+
+### WebSocket Rate Limiting
+
+The battle gateway uses `@nestjs/throttler` to protect against spam and abuse. Rate limiting is applied at the application level since infrastructure load balancers only limit WebSocket connection handshakes, not individual messages.
+
+**Implementation:**
+
+```typescript
+// Custom guard extends ThrottlerGuard for WebSocket context
+@Injectable()
+export class WsThrottlerGuard extends ThrottlerGuard {
+  async handleRequest(requestProps: ThrottlerRequest): Promise<boolean> {
+    const { context, throttler } = requestProps;
+    const client: AuthenticatedSocket = context.switchToWs().getClient();
+    const handler = context.getHandler();
+
+    // Use authenticated user ID, fall back to socket address
+    const tracker = client.data?.user?.userId ?? client.conn.remoteAddress;
+    const eventName = handler.name;
+    const key = `${this.generateKey(context, tracker, throttler.name)}:${eventName}`;
+    // ... rate check logic
+  }
+}
+
+// Per-handler rate limits via decorator
+@WsThrottle(2, 1000)  // 2 requests per second
+@SubscribeMessage(BATTLE_EVENT.MOVE)
+async handleMove(...) { }
+```
+
+**Rate Limits by Event:**
+
+| Event           | Limit | Window | Rationale                          |
+| --------------- | ----- | ------ | ---------------------------------- |
+| `JOIN_QUEUE`    | 10    | 60s    | Prevent queue manipulation         |
+| `LEAVE_QUEUE`   | 10    | 60s    | Prevent queue manipulation         |
+| `MOVE`          | 2     | 1s     | Prevent spam clicking during turns |
+| `FORFEIT`       | 1     | 5s     | Prevent accidental double-forfeit  |
+| `REJOIN`        | 5     | 60s    | Prevent reconnection spam          |
+| `SAVE_REPLAY`   | 5     | 60s    | Prevent save button spam           |
+| `DECLINE_MATCH` | 5     | 60s    | Prevent decline spam               |
+
+**Key Design Decisions:**
+
+- **Per-user-per-event keys**: Rate limits are tracked separately for each user and event type, so queue limits don't affect move limits
+- **User ID tracking**: Authenticated users are tracked by user ID (not IP), preventing issues with shared IPs
+- **In-memory storage**: Uses `ThrottlerModule`'s default in-memory storage, which is appropriate since battles are hosted on a single server
+- **Structured error response**: When rate limited, clients receive an `ERROR` event with code `RATE_LIMITED`
+
+**Client Error Handling:**
+
+```typescript
+socket.on('ERROR', (payload) => {
+  if (payload.code === 'RATE_LIMITED') {
+    // Show "Too many requests, please wait" message
+  }
+});
+```
 
 ---
 

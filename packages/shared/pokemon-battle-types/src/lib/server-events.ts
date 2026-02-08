@@ -87,6 +87,16 @@ export interface BattleRestoredEvent {
   message?: string;
 }
 
+/**
+ * Sent when a match is cancelled because the opponent declined.
+ * The player will be automatically requeued.
+ */
+export interface MatchCancelledEvent {
+  type: 'MATCH_CANCELLED';
+  battleId: string;
+  reason: 'opponent_declined';
+}
+
 export interface BattleErrorEvent {
   type: 'ERROR';
   code: string;
@@ -99,6 +109,7 @@ export type ServerBattleEvent =
   | QueueJoinedEvent
   | QueueLeftEvent
   | MatchFoundEvent
+  | MatchCancelledEvent
   | BattleStartEvent
   | BattleUpdateEvent
   | BattleEndEvent
