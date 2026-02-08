@@ -451,6 +451,15 @@ describe('Battle API (e2e)', () => {
       const state2 = (start2 as { initialState: string }).initialState;
       expect(state1).toBeTruthy();
       expect(state2).toBeTruthy();
+
+      // Per-player perspective: each player should receive DIFFERENT state
+      // because @pkmn/sim sends per-player views with |request| data
+      // unique to that player's side (opponent info is redacted)
+      expect(state1).not.toBe(state2);
+
+      // Both should contain their own |request| data (active moves, etc.)
+      expect(state1).toContain('|request|');
+      expect(state2).toContain('|request|');
     }, 15000);
   });
 
@@ -589,6 +598,11 @@ describe('Battle API (e2e)', () => {
       expect(
         (rejoinEvent as { initialState: string }).initialState
       ).toBeTruthy();
+
+      // Rejoined state should contain |request| (player's own perspective)
+      const rejoinState = (rejoinEvent as { initialState: string })
+        .initialState;
+      expect(rejoinState).toContain('|request|');
     });
   });
 });

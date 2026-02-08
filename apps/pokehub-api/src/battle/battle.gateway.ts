@@ -168,14 +168,27 @@ export class BattleGateway
     const room = BattleRooms.battle(battleId);
 
     switch (message.type) {
-      case 'state':
-        // Raw battle state from @pkmn/sim
-        this.server.to(room).emit(BATTLE_EVENT, {
-          type: 'BATTLE_UPDATE',
-          battleId,
-          data: message.data,
-        } satisfies ServerBattleEvent);
+      case 'state': {
+        // Send each player their own perspective (opponent info redacted)
+        const p1SocketId = this.userToSocket.get(message.p1Id);
+        const p2SocketId = this.userToSocket.get(message.p2Id);
+
+        if (p1SocketId) {
+          this.server.to(p1SocketId).emit(BATTLE_EVENT, {
+            type: 'BATTLE_UPDATE',
+            battleId,
+            data: message.p1Data,
+          } satisfies ServerBattleEvent);
+        }
+        if (p2SocketId) {
+          this.server.to(p2SocketId).emit(BATTLE_EVENT, {
+            type: 'BATTLE_UPDATE',
+            battleId,
+            data: message.p2Data,
+          } satisfies ServerBattleEvent);
+        }
         break;
+      }
 
       case 'event':
         // Structured battle events
@@ -277,12 +290,22 @@ export class BattleGateway
 
       // Try to get current battle state
       const battle = this.battleManager.getBattle(activeBattleId);
-      client.emit(BATTLE_EVENT, {
-        type: 'BATTLE_RESTORED',
-        battleId: activeBattleId,
-        currentState: battle?.currentState ?? '',
-        message: battle ? undefined : 'Battle needs recovery - please rejoin',
-      } satisfies ServerBattleEvent);
+      if (battle) {
+        const slot =
+          battle.config.player1.id === userId ? 'p1' : 'p2';
+        client.emit(BATTLE_EVENT, {
+          type: 'BATTLE_RESTORED',
+          battleId: activeBattleId,
+          currentState: slot === 'p1' ? battle.p1State : battle.p2State,
+        } satisfies ServerBattleEvent);
+      } else {
+        client.emit(BATTLE_EVENT, {
+          type: 'BATTLE_RESTORED',
+          battleId: activeBattleId,
+          currentState: '',
+          message: 'Battle needs recovery - please rejoin',
+        } satisfies ServerBattleEvent);
+      }
     }
   }
 
@@ -641,10 +664,13 @@ export class BattleGateway
         );
       }
 
+      // Send the correct perspective based on player slot
+      const slot =
+        battle.config.player1.id === userId ? 'p1' : 'p2';
       client.emit(BATTLE_EVENT, {
         type: 'BATTLE_START',
         battleId: battle.id,
-        initialState: battle.currentState,
+        initialState: slot === 'p1' ? battle.p1State : battle.p2State,
       } satisfies ServerBattleEvent);
 
       this.logger.log(`User ${userId} rejoined battle ${battleId}`);
@@ -827,7 +853,7 @@ export class BattleGateway
           sockets1[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
-            initialState: battle.currentState,
+            initialState: battle.p1State,
           } satisfies ServerBattleEvent);
         }
       }
@@ -839,7 +865,7 @@ export class BattleGateway
           sockets2[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
-            initialState: battle.currentState,
+            initialState: battle.p2State,
           } satisfies ServerBattleEvent);
         }
       }

@@ -120,6 +120,8 @@ class BattleManagerService implements IBattleManagerService {
       id: config.id,
       config,
       currentState: instance.currentState,
+      p1State: instance.p1State,
+      p2State: instance.p2State,
     };
   }
 
@@ -250,6 +252,8 @@ class BattleManagerService implements IBattleManagerService {
       id: battleId,
       config,
       currentState: instance.currentState,
+      p1State: instance.p1State,
+      p2State: instance.p2State,
     };
   }
 
@@ -266,6 +270,8 @@ class BattleManagerService implements IBattleManagerService {
       id: battleId,
       config: instance.config,
       currentState: instance.currentState,
+      p1State: instance.p1State,
+      p2State: instance.p2State,
     };
   }
 
@@ -366,6 +372,8 @@ class BattleManagerService implements IBattleManagerService {
       id: battleId,
       config: instance.config,
       currentState: instance.currentState,
+      p1State: instance.p1State,
+      p2State: instance.p2State,
     };
   }
 
@@ -406,13 +414,26 @@ class BattleManagerService implements IBattleManagerService {
     const stream = new BattleStreams.BattleStream();
     const streams = BattleStreams.getPlayerStreams(stream);
 
-    // Buffer to collect battle output
+    // Buffer to collect omniscient output (for win/tie detection + replay log)
     let currentState = '';
-
-    // Start reading from omniscient stream
     void (async () => {
       for await (const chunk of streams.omniscient) {
         currentState += chunk + '\n';
+      }
+    })();
+
+    // Buffer per-player perspective streams (opponent info redacted)
+    let p1State = '';
+    void (async () => {
+      for await (const chunk of streams.p1) {
+        p1State += chunk + '\n';
+      }
+    })();
+
+    let p2State = '';
+    void (async () => {
+      for await (const chunk of streams.p2) {
+        p2State += chunk + '\n';
       }
     })();
 
@@ -442,6 +463,12 @@ class BattleManagerService implements IBattleManagerService {
       streams,
       get currentState() {
         return currentState;
+      },
+      get p1State() {
+        return p1State;
+      },
+      get p2State() {
+        return p2State;
       },
       ended: false,
       winnerId: null,
@@ -481,16 +508,17 @@ class BattleManagerService implements IBattleManagerService {
     // Clear pending choices
     await this.redis.setPendingChoices(battleId, {});
 
-    // Get the new state
-    const newState = instance.currentState;
-
-    // Publish update to both players
+    // Publish per-player perspective data
     await this.redis.publishBattleUpdate(battleId, {
       type: 'state',
-      data: newState,
+      p1Id: instance.config.player1.id,
+      p2Id: instance.config.player2.id,
+      p1Data: instance.p1State,
+      p2Data: instance.p2State,
     });
 
-    // Check if battle ended (look for |win| or |tie| in the output)
+    // Use omniscient state for win/tie detection
+    const newState = instance.currentState;
     const winMatch = newState.match(/\|win\|(.+)/);
     const tieMatch = newState.match(/\|tie/);
 
@@ -715,7 +743,12 @@ interface BattleInstance {
   config: BattleConfig;
   stream: BattleStreams.BattleStream;
   streams: ReturnType<typeof BattleStreams.getPlayerStreams>;
+  /** Omniscient state (for win/tie detection + replay log) */
   currentState: string;
+  /** Player 1 perspective (opponent info redacted) */
+  p1State: string;
+  /** Player 2 perspective (opponent info redacted) */
+  p2State: string;
   ended: boolean;
   winnerId: string | null;
 }

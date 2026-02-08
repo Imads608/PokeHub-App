@@ -31,7 +31,7 @@ jest.mock('@pkmn/sim', () => {
     ],
   };
 
-  // Mock omniscient stream
+  // Mock omniscient stream (full info for win/tie detection + replay)
   const mockOmniscientStream = {
     write: jest.fn().mockResolvedValue(undefined),
     [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
@@ -41,11 +41,30 @@ jest.mock('@pkmn/sim', () => {
     }),
   };
 
+  // Mock per-player perspective streams (opponent info redacted)
+  const mockP1Stream = {
+    write: jest.fn(),
+    [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
+      yield '|start';
+      yield '|turn|1';
+      yield '|request|{"active":[]}';
+    }),
+  };
+
+  const mockP2Stream = {
+    write: jest.fn(),
+    [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
+      yield '|start';
+      yield '|turn|1';
+      yield '|request|{"active":[]}';
+    }),
+  };
+
   // Mock streams object
   const mockStreams = {
     omniscient: mockOmniscientStream,
-    p1: { write: jest.fn() },
-    p2: { write: jest.fn() },
+    p1: mockP1Stream,
+    p2: mockP2Stream,
   };
 
   // Mock BattleStream class
@@ -176,11 +195,13 @@ describe('BattleManagerService', () => {
 
       const result = await service.createBattle(config);
 
-      // Returns ActiveBattle
+      // Returns ActiveBattle with per-player perspectives
       expect(result).toEqual({
         id: config.id,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Stores metadata in Redis
@@ -341,6 +362,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Should update host server
@@ -393,6 +416,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
     });
 
@@ -464,6 +489,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config: expect.any(Object),
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Should clear disconnect flag
@@ -587,6 +614,71 @@ describe('BattleManagerService', () => {
 
       // No replay possible for cancelled battles
       expect(mockRedisService.setBattleLogTTL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('per-player stream perspectives', () => {
+    it('should return distinct p1State and p2State from createBattle', async () => {
+      const config = createMockBattleConfig();
+      const result = await service.createBattle(config);
+
+      // Both perspective states should be populated
+      expect(result.p1State).toBeTruthy();
+      expect(result.p2State).toBeTruthy();
+      // Omniscient state should also be populated
+      expect(result.currentState).toBeTruthy();
+    });
+
+    it('should publish per-player data via Redis on executeTurn', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      // Both players choose
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
+
+      mockRedisService.getPendingChoices!.mockResolvedValue({
+        p1: 'move 1',
+      });
+      await service.processChoice(testBattleId, testPlayer2Id, 'move 2');
+
+      // Should publish per-player perspective data
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        expect.objectContaining({
+          type: 'state',
+          p1Id: testPlayer1Id,
+          p2Id: testPlayer2Id,
+          p1Data: expect.any(String),
+          p2Data: expect.any(String),
+        })
+      );
+    });
+
+    it('should include p1State and p2State in getBattle result', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      const result = service.getBattle(testBattleId);
+
+      expect(result).toBeDefined();
+      expect(result!.p1State).toBeTruthy();
+      expect(result!.p2State).toBeTruthy();
+      expect(result!.currentState).toBeTruthy();
+    });
+
+    it('should include p1State and p2State in handleReconnect result', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      const result = await service.handleReconnect(
+        testBattleId,
+        testPlayer1Id
+      );
+
+      expect(result.p1State).toBeTruthy();
+      expect(result.p2State).toBeTruthy();
+      expect(result.currentState).toBeTruthy();
     });
   });
 });

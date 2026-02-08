@@ -237,11 +237,17 @@ export type BattleEventPayload =
   | TurnWarningPayload;
 
 /**
- * Pub/Sub message for battle state update (raw @pkmn/sim output)
+ * Pub/Sub message for battle state update (raw @pkmn/sim output).
+ * Contains per-player perspective data so each player only sees
+ * information they should have access to (opponent info redacted).
+ * Player IDs are included for cross-server routing.
  */
 export interface BattleStateUpdateMessage {
   type: 'state';
-  data: string;
+  p1Id: string;
+  p2Id: string;
+  p1Data: string;
+  p2Data: string;
 }
 
 /**
