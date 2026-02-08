@@ -19,3 +19,9 @@ export const SaveReplayDTOSchema = z.object({
 });
 
 export type SaveReplayDTO = z.infer<typeof SaveReplayDTOSchema>;
+
+export const RejoinDTOSchema = z.object({
+  battleId: z.string().min(1),
+});
+
+export type RejoinDTO = z.infer<typeof RejoinDTOSchema>;

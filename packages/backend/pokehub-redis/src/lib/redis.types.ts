@@ -102,6 +102,8 @@ export interface BattleMetadata {
   p1DisconnectTime?: string;
   /** Timestamp when p2 disconnected (if applicable) */
   p2DisconnectTime?: string;
+  /** Winner user ID when battle ends (empty string for draw) */
+  winnerId?: string;
 }
 
 /**
@@ -165,6 +167,7 @@ export function parseBattleMetadata(
     p2Disconnected,
     p1DisconnectTime: data['p1DisconnectTime'],
     p2DisconnectTime: data['p2DisconnectTime'],
+    winnerId: data['winnerId'],
   };
 }
 

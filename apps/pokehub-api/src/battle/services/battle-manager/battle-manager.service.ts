@@ -1,12 +1,12 @@
 import {
+  TURN_TIMER_SERVICE,
+  type ITurnTimerService,
+} from '../turn-timer/turn-timer.service.interface';
+import {
   BATTLE_MANAGER_SERVICE,
   type ActiveBattle,
   type IBattleManagerService,
 } from './battle-manager.service.interface';
-import {
-  TURN_TIMER_SERVICE,
-  type ITurnTimerService,
-} from '../turn-timer/turn-timer.service.interface';
 import type { Provider } from '@nestjs/common';
 import { Inject, Injectable } from '@nestjs/common';
 import { BattleStreams } from '@pkmn/sim';
@@ -33,6 +33,18 @@ const DISCONNECT_TIMEOUT_MS = 2 * 60 * 1000;
 class BattleManagerService implements IBattleManagerService {
   /** Map of battle ID -> active battle instance */
   private readonly battles = new Map<string, BattleInstance>();
+
+  /** Map of "battleId:playerId" -> disconnect timeout handle */
+  private readonly disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+
+  /**
+   * Map of battle ID -> lock promise for serializing state-changing operations.
+   * Prevents race conditions when multiple operations (processChoice, forfeit,
+   * handleTurnTimeout) occur simultaneously on the same battle.
+   * This works because battles are hosted on a single server.
+   * TODO: If multi-server battle hosting is needed, replace with Redis Lua script.
+   */
+  private readonly battleLocks = new Map<string, Promise<void>>();
 
   constructor(
     private readonly logger: AppLogger,
@@ -119,6 +131,19 @@ class BattleManagerService implements IBattleManagerService {
     playerId: string,
     choice: string
   ): Promise<void> {
+    return this.withBattleLock(battleId, async () => {
+      await this.processChoiceInternal(battleId, playerId, choice);
+    });
+  }
+
+  /**
+   * Internal implementation of processChoice (must be called while holding the battle lock)
+   */
+  private async processChoiceInternal(
+    battleId: string,
+    playerId: string,
+    choice: string
+  ): Promise<void> {
     const instance = this.battles.get(battleId);
     if (!instance) {
       throw new Error(`Battle ${battleId} not found on this server`);
@@ -152,26 +177,30 @@ class BattleManagerService implements IBattleManagerService {
    * Forfeit a battle
    */
   async forfeit(battleId: string, playerId: string): Promise<void> {
-    const instance = this.battles.get(battleId);
-    if (!instance) {
-      throw new Error(`Battle ${battleId} not found on this server`);
-    }
+    return this.withBattleLock(battleId, async () => {
+      const instance = this.battles.get(battleId);
+      if (!instance) {
+        throw new Error(`Battle ${battleId} not found on this server`);
+      }
 
-    const player = this.getPlayerSlot(instance.config, playerId);
-    if (!player) {
-      throw new Error(`Player ${playerId} is not in battle ${battleId}`);
-    }
+      const player = this.getPlayerSlot(instance.config, playerId);
+      if (!player) {
+        throw new Error(`Player ${playerId} is not in battle ${battleId}`);
+      }
 
-    this.logger.log(`Battle ${battleId}: ${player} forfeited`);
+      this.logger.log(`Battle ${battleId}: ${player} forfeited`);
 
-    // Log the forfeit
-    await this.redis.appendBattleLog(battleId, `>${player} forfeit`);
+      // Log the forfeit
+      await this.redis.appendBattleLog(battleId, `>${player} forfeit`);
 
-    // End the battle with the other player as winner
-    const winnerId =
-      player === 'p1' ? instance.config.player2.id : instance.config.player1.id;
+      // End the battle with the other player as winner
+      const winnerId =
+        player === 'p1'
+          ? instance.config.player2.id
+          : instance.config.player1.id;
 
-    await this.endBattle(battleId, winnerId, 'forfeited');
+      await this.endBattle(battleId, winnerId, 'forfeited');
+    });
   }
 
   /**
@@ -316,6 +345,9 @@ class BattleManagerService implements IBattleManagerService {
 
     this.logger.log(`Battle ${battleId}: ${player} reconnected`);
 
+    // Clear disconnect timeout (only effective if reconnecting to same server)
+    this.clearDisconnectTimeout(`${battleId}:${playerId}`);
+
     // Clear disconnect flag
     const updates =
       player === 'p1'
@@ -338,6 +370,34 @@ class BattleManagerService implements IBattleManagerService {
   }
 
   // ==================== Private Helpers ====================
+
+  /**
+   * Execute a function while holding a lock for the specified battle.
+   * Ensures only one state-changing operation runs at a time per battle.
+   */
+  private async withBattleLock<T>(
+    battleId: string,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    // Wait for any pending operation on this battle
+    while (this.battleLocks.has(battleId)) {
+      await this.battleLocks.get(battleId);
+    }
+
+    // Create a lock
+    let unlock!: () => void;
+    const lock = new Promise<void>((resolve) => {
+      unlock = resolve;
+    });
+    this.battleLocks.set(battleId, lock);
+
+    try {
+      return await fn();
+    } finally {
+      this.battleLocks.delete(battleId);
+      unlock();
+    }
+  }
 
   private async createBattleInstance(
     config: BattleConfig
@@ -469,11 +529,17 @@ class BattleManagerService implements IBattleManagerService {
     // Cancel all turn timers
     this.turnTimer.cancelBattleTimers(battleId);
 
+    // Clear any pending disconnect timeouts
+    this.clearBattleDisconnectTimeouts(battleId);
+
     const instance = this.battles.get(battleId);
     if (!instance) return;
 
-    // Update Redis status
-    await this.redis.updateBattleMetadata(battleId, { status });
+    // Update Redis status and winner
+    await this.redis.updateBattleMetadata(battleId, {
+      status,
+      winnerId: winnerId ?? '',
+    });
 
     // Determine the end reason
     let reason: 'win' | 'forfeit' | 'draw';
@@ -505,9 +571,6 @@ class BattleManagerService implements IBattleManagerService {
   }
 
   /**
-   * Handle turn timeout - auto-select a random valid move
-   */
-  /**
    * Handle turn timeout - use Pokemon Showdown's built-in autoChoose
    */
   private async handleTurnTimeout(
@@ -515,36 +578,58 @@ class BattleManagerService implements IBattleManagerService {
     player: 'p1' | 'p2',
     playerId: string
   ): Promise<void> {
-    const instance = this.battles.get(battleId);
-    if (!instance || instance.ended) return;
+    return this.withBattleLock(battleId, async () => {
+      const instance = this.battles.get(battleId);
+      if (!instance || instance.ended) return;
 
-    const battle = instance.stream.battle;
-    if (!battle) {
-      this.logger.error(`Battle ${battleId}: no battle instance for auto-move`);
-      return;
-    }
+      // battle is typed as Battle | null in @pkmn/sim
+      const battle = instance.stream.battle;
+      if (!battle) {
+        this.logger.error(
+          `Battle ${battleId}: no battle instance for auto-move`
+        );
+        return;
+      }
 
-    const sideIndex = player === 'p1' ? 0 : 1;
-    const side = battle.sides[sideIndex];
+      // sides is a tuple [Side, Side] (or [Side, Side, Side, Side] for multi-battles)
+      // so indices 0 and 1 are always valid Side objects for standard battles
+      const sideIndex = player === 'p1' ? 0 : 1;
+      const side = battle.sides[sideIndex];
 
-    try {
-      // Use Pokemon Showdown's built-in auto-choice logic
-      side.autoChoose();
-      const choice = side.getChoice();
+      try {
+        // Use Pokemon Showdown's built-in auto-choice logic
+        side.autoChoose();
+        const choice = side.getChoice();
 
-      this.logger.log(
-        `Battle ${battleId}: ${player} auto-move selected: "${choice}"`
-      );
+        this.logger.log(
+          `Battle ${battleId}: ${player} auto-move selected: "${choice}"`
+        );
 
-      // Process the choice
-      await this.processChoice(battleId, playerId, choice);
-    } catch (error) {
-      this.logger.error(`Battle ${battleId}: auto-move failed: ${error}`);
-    }
+        // Process the choice internally (already holding lock, so call inner logic)
+        await this.processChoiceInternal(battleId, playerId, choice);
+      } catch (error) {
+        this.logger.error(`Battle ${battleId}: auto-move failed: ${error}`);
+      }
+    });
   }
 
+  /**
+   * Schedule a timeout to forfeit if player doesn't reconnect.
+   *
+   * Note: The timeout is only cleared if the player reconnects to the SAME server.
+   * If they reconnect to a different server, the timeout will still fire but the
+   * Redis check (p1Disconnected/p2Disconnected flag) prevents incorrect forfeits.
+   */
   private scheduleDisconnectTimeout(battleId: string, playerId: string): void {
-    setTimeout(async () => {
+    const timeoutKey = `${battleId}:${playerId}`;
+
+    // Clear any existing timeout for this player (e.g., rapid disconnect/reconnect)
+    this.clearDisconnectTimeout(timeoutKey);
+
+    const timeout = setTimeout(async () => {
+      // Clean up the timeout reference
+      this.disconnectTimeouts.delete(timeoutKey);
+
       const metadata = await this.redis.getBattleMetadata(battleId);
       if (!metadata || metadata.status !== 'active') {
         return; // Battle already ended
@@ -556,7 +641,7 @@ class BattleManagerService implements IBattleManagerService {
       const player = this.getPlayerSlot(instance.config, playerId);
       if (!player) return;
 
-      // Check if still disconnected
+      // Check if still disconnected (handles cross-server reconnect case)
       const isDisconnected =
         player === 'p1'
           ? metadata.p1Disconnected === 'true'
@@ -567,6 +652,32 @@ class BattleManagerService implements IBattleManagerService {
         await this.forfeit(battleId, playerId);
       }
     }, DISCONNECT_TIMEOUT_MS);
+
+    this.disconnectTimeouts.set(timeoutKey, timeout);
+  }
+
+  /**
+   * Clear a disconnect timeout by key
+   */
+  private clearDisconnectTimeout(timeoutKey: string): void {
+    const timeout = this.disconnectTimeouts.get(timeoutKey);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.disconnectTimeouts.delete(timeoutKey);
+    }
+  }
+
+  /**
+   * Clear all disconnect timeouts for a battle
+   */
+  private clearBattleDisconnectTimeouts(battleId: string): void {
+    const prefix = `${battleId}:`;
+    for (const [key, timeout] of this.disconnectTimeouts.entries()) {
+      if (key.startsWith(prefix)) {
+        clearTimeout(timeout);
+        this.disconnectTimeouts.delete(key);
+      }
+    }
   }
 }
 

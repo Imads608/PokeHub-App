@@ -281,10 +281,10 @@ describe('BattleManagerService', () => {
         testBattleId
       );
 
-      // Should update status
+      // Should update status and winner
       expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
         testBattleId,
-        { status: 'forfeited' }
+        { status: 'forfeited', winnerId: testPlayer2Id }
       );
 
       // Should publish end event with player2 as winner
@@ -504,10 +504,10 @@ describe('BattleManagerService', () => {
         testBattleId
       );
 
-      // Update status
+      // Update status and winner
       expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
         testBattleId,
-        { status: 'forfeited' }
+        { status: 'forfeited', winnerId: testPlayer2Id }
       );
 
       // Publish end event

@@ -26,10 +26,10 @@
 
 **Current Test Results:**
 
-- ✅ **Backend API E2E Tests: 90/90 passing (100%)**
+- ✅ **Backend API E2E Tests: 91/91 passing (100%)**
   - Teams API: 43 tests
   - Users API: 27 tests
-  - Battle API: 14 tests (WebSocket)
+  - Battle API: 15 tests (WebSocket)
   - Health/Exceptions: 6 tests
 - ✅ Backend Unit Tests: 215 passing
 - ✅ Backend Integration Tests: 87 passing
@@ -585,9 +585,10 @@ The Battle API uses WebSocket (Socket.IO) for real-time communication. Tests val
 
 - ✅ Match two players and start battle (full flow validation)
 
-#### 4. Forfeit (1 test)
+#### 4. Forfeit (2 tests)
 
-- ✅ End battle with opponent as winner when forfeiting
+- ✅ End battle with opponent as winner when player 1 forfeits
+- ✅ Set player 1 as winner when player 2 forfeits
 
 #### 5. Reconnection (2 tests)
 

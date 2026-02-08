@@ -16,6 +16,7 @@
   - [Service Responsibilities](#service-responsibilities)
 - [WebSocket Communication](#websocket-communication)
   - [Connection Flow](#connection-flow)
+  - [Authentication Security](#authentication-security)
   - [Event Reference](#event-reference)
 - [Core Flows](#core-flows)
   - [1. Matchmaking Flow](#1-matchmaking-flow)
@@ -30,6 +31,11 @@
 - [Error Handling](#error-handling)
   - [Client Errors](#client-errors)
   - [Battle Errors](#battle-errors)
+- [Concurrency & Resource Management](#concurrency--resource-management)
+  - [Battle Locking](#battle-locking)
+  - [Disconnect Timeout Management](#disconnect-timeout-management)
+  - [Gateway Resource Cleanup](#gateway-resource-cleanup)
+  - [Zod Validation on WebSocket Handlers](#zod-validation-on-websocket-handlers)
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
   - [Docker Compose (Development)](#docker-compose-development)
@@ -239,6 +245,7 @@ battle:{battleId}
   - p2Disconnected: "true" | "false"
   - p1DisconnectTime: timestamp (optional)
   - p2DisconnectTime: timestamp (optional)
+  - winnerId: winner's user ID (set when battle ends, empty string for draw)
 
 # Battle seed (string)
 battle:{battleId}:seed
@@ -284,9 +291,9 @@ The `battle:{battleId}:update` channel uses a discriminated union (`BattleUpdate
 
 ```typescript
 type BattleUpdateMessage =
-  | { type: 'state'; data: string }           // Raw @pkmn/sim battle output
+  | { type: 'state'; data: string } // Raw @pkmn/sim battle output
   | { type: 'event'; data: BattleEventPayload } // Structured events (disconnect, turn warning)
-  | { type: 'end';   data: BattleEndData }     // Battle ended (winner, reason)
+  | { type: 'end'; data: BattleEndData }; // Battle ended (winner, reason)
 ```
 
 This allows the gateway to handle each message type with proper type safety via a `switch` on `message.type`.
@@ -371,6 +378,34 @@ apps/pokehub-api/src/battle/
 3. User is added to socket-to-user mapping
 4. Gateway subscribes to Redis `match:user:{userId}` channel
 5. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+
+### Authentication Security
+
+The `WsJwtGuard` accepts tokens from multiple sources. **Use the auth object** for security:
+
+```typescript
+// Recommended: Token in auth object (secure)
+const socket = io('ws://api.pokehub.app/battle', {
+  auth: { token: accessToken },
+});
+
+// Alternative: Authorization header (also secure)
+const socket = io('ws://api.pokehub.app/battle', {
+  extraHeaders: { Authorization: `Bearer ${accessToken}` },
+});
+
+// Deprecated: Query params (INSECURE - do not use)
+// Tokens in URLs leak via server logs, browser history, and referrer headers
+const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
+```
+
+**Token Source Priority:**
+
+| Priority | Source               | Security | Notes                               |
+| -------- | -------------------- | -------- | ----------------------------------- |
+| 1        | `auth.token`         | Secure   | Recommended, sent in handshake body |
+| 2        | Authorization header | Secure   | Standard Bearer token               |
+| 3        | Query param `token`  | Insecure | Deprecated, logs warning when used  |
 
 ### Event Reference
 
@@ -662,22 +697,122 @@ services:
 
 ## Implementation Status
 
-| Component                      | Status  | Notes                              |
-| ------------------------------ | ------- | ---------------------------------- |
-| `pokemon-battle-types` package | Done    | Shared types and DTOs              |
-| `pokehub-redis` package        | Done    | Full Redis service                 |
-| `pokehub-battles-db` package   | Done    | Replay persistence                 |
-| Docker Compose Redis           | Done    | Local development                  |
-| API configuration              | Done    | Redis config integration           |
-| BattleGateway                  | Done    | WebSocket handling                 |
-| BattleManagerService           | Done    | Battle lifecycle                   |
-| MatchmakingService             | Done    | FIFO queue matching                |
-| BattlePersistenceService       | Done    | Replay save/delete                 |
-| TurnTimerService               | Done    | Warning + timeout                  |
-| WsJwtGuard                     | Done    | WebSocket auth                     |
-| Database migration             | Done    | `battle_replays` table             |
-| Frontend battle UI             | Pending | Socket.io client, battle UI        |
-| Rating system                  | Future  | See `rating-matchmaking-system.md` |
+| Component                      | Status  | Notes                                  |
+| ------------------------------ | ------- | -------------------------------------- |
+| `pokemon-battle-types` package | Done    | Shared types, DTOs, Zod schemas        |
+| `pokehub-redis` package        | Done    | Full Redis service                     |
+| `pokehub-battles-db` package   | Done    | Replay persistence                     |
+| Docker Compose Redis           | Done    | Local development                      |
+| API configuration              | Done    | Redis config integration               |
+| BattleGateway                  | Done    | WebSocket handling, resource cleanup   |
+| BattleManagerService           | Done    | Battle lifecycle, per-battle locking   |
+| MatchmakingService             | Done    | FIFO queue matching                    |
+| BattlePersistenceService       | Done    | Replay save/delete                     |
+| TurnTimerService               | Done    | Warning + timeout                      |
+| WsJwtGuard                     | Done    | WebSocket auth                         |
+| Database migration             | Done    | `battle_replays` table                 |
+| Concurrency protection         | Done    | Battle locks, timeout cleanup          |
+| Zod validation                 | Done    | Runtime validation for all WS handlers |
+| Frontend battle UI             | Pending | Socket.io client, battle UI            |
+| Rating system                  | Future  | See `rating-matchmaking-system.md`     |
+
+---
+
+## Concurrency & Resource Management
+
+### Battle Locking
+
+The `BattleManagerService` uses per-battle locks to serialize state-changing operations and prevent race conditions. This is implemented via an in-memory lock map since battles are hosted on a single server.
+
+**Protected Operations:**
+
+| Operation             | Potential Conflicts                                  |
+| --------------------- | ---------------------------------------------------- |
+| `processChoice()`     | Simultaneous moves from both players, timeout firing |
+| `forfeit()`           | Player submits move while forfeiting                 |
+| `handleTurnTimeout()` | Timeout fires while player submits move or forfeits  |
+
+**Implementation:**
+
+```typescript
+// Map of battle ID -> lock promise
+private readonly battleLocks = new Map<string, Promise<void>>();
+
+private async withBattleLock<T>(battleId: string, fn: () => Promise<T>): Promise<T> {
+  // Wait for any pending operation on this battle
+  while (this.battleLocks.has(battleId)) {
+    await this.battleLocks.get(battleId);
+  }
+
+  // Create a lock
+  let unlock!: () => void;
+  const lock = new Promise<void>((resolve) => { unlock = resolve; });
+  this.battleLocks.set(battleId, lock);
+
+  try {
+    return await fn();
+  } finally {
+    this.battleLocks.delete(battleId);
+    unlock();
+  }
+}
+```
+
+**Note:** If multi-server battle hosting is ever needed, this should be replaced with Redis Lua scripts for distributed locking.
+
+### Disconnect Timeout Management
+
+When a player disconnects, a 2-minute timeout is scheduled. These timeouts are tracked and properly cleaned up:
+
+```typescript
+// Map of "battleId:playerId" -> timeout handle
+private readonly disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+```
+
+**Cleanup Scenarios:**
+
+| Scenario                        | Action                                                            |
+| ------------------------------- | ----------------------------------------------------------------- |
+| Player reconnects (same server) | Timeout cleared via `clearDisconnectTimeout()`                    |
+| Player reconnects (diff server) | Timeout fires but Redis flag check prevents forfeit               |
+| Battle ends                     | All battle timeouts cleared via `clearBattleDisconnectTimeouts()` |
+
+### Gateway Resource Cleanup
+
+The `BattleGateway` implements `OnModuleDestroy` to properly clean up resources on shutdown:
+
+```typescript
+async onModuleDestroy(): Promise<void> {
+  // Clear heartbeat interval
+  if (this.heartbeatInterval) {
+    clearInterval(this.heartbeatInterval);
+  }
+  // Disconnect Redis subscriber
+  if (this.redisSubscriber) {
+    await this.redisSubscriber.disconnect();
+  }
+}
+```
+
+**Tracked Resources:**
+
+- Server heartbeat interval (5-second refresh)
+- Redis subscriber client (per-gateway)
+- Per-battle Redis channel subscriptions (cleaned up on battle end)
+
+### Zod Validation on WebSocket Handlers
+
+All WebSocket event handlers validate payloads using Zod schemas from `@pokehub/shared/pokemon-battle-types`:
+
+| Handler            | Schema                |
+| ------------------ | --------------------- |
+| `handleJoinQueue`  | `JoinQueueDTOSchema`  |
+| `handleMove`       | `BattleMoveDTOSchema` |
+| `handleForfeit`    | `ForfeitDTOSchema`    |
+| `handleRejoin`     | `RejoinDTOSchema`     |
+| `handleSaveReplay` | `SaveReplayDTOSchema` |
+
+This provides runtime validation in addition to TypeScript's compile-time type checking.
 
 ---
 

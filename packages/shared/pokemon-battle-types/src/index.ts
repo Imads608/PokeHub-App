@@ -31,7 +31,10 @@ export {
   type ServerBattleEventType,
 } from './lib/server-events';
 export { type BattleErrorCode, isRecoverableError } from './lib/errors';
-export { JoinQueueDTOSchema, type JoinQueueDTO } from './lib/dto/join-queue.dto';
+export {
+  JoinQueueDTOSchema,
+  type JoinQueueDTO,
+} from './lib/dto/join-queue.dto';
 export {
   BattleMoveDTOSchema,
   type BattleMoveDTO,
@@ -39,6 +42,8 @@ export {
   type ForfeitDTO,
   SaveReplayDTOSchema,
   type SaveReplayDTO,
+  RejoinDTOSchema,
+  type RejoinDTO,
 } from './lib/dto/battle-move.dto';
 export {
   BATTLE_NAMESPACE,

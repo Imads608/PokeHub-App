@@ -57,8 +57,25 @@ export class WsJwtGuard implements CanActivate {
     }
   }
 
+  /**
+   * Extract JWT token from the socket handshake.
+   *
+   * Token sources (in order of preference):
+   * 1. auth object (recommended) - sent in WebSocket handshake body, not visible in URLs
+   * 2. Authorization header - standard Bearer token, also secure
+   * 3. query params (deprecated) - INSECURE, can leak in logs/history/referrer headers
+   *
+   * Clients should use: `io(url, { auth: { token: 'xxx' } })`
+   */
   private extractToken(client: Socket): string | undefined {
-    // Try to get token from auth header in handshake
+    // 1. Preferred: Token from auth object (Socket.io recommended approach)
+    // Sent in WebSocket handshake body, not visible in URLs or logs
+    const authToken = client.handshake.auth?.['token'];
+    if (typeof authToken === 'string') {
+      return authToken;
+    }
+
+    // 2. Alternative: Authorization header (also secure)
     const authHeader = client.handshake.headers.authorization;
     if (authHeader) {
       const [type, token] = authHeader.split(' ');
@@ -67,16 +84,15 @@ export class WsJwtGuard implements CanActivate {
       }
     }
 
-    // Try to get token from query params
+    // 3. Deprecated: Query params (INSECURE - logs warning)
+    // Tokens in URLs can leak via server logs, browser history, and referrer headers
     const queryToken = client.handshake.query['token'];
     if (typeof queryToken === 'string') {
+      this.logger.warn(
+        'Token passed via query param is insecure and deprecated. ' +
+          'Use auth object instead: io(url, { auth: { token } })'
+      );
       return queryToken;
-    }
-
-    // Try to get token from auth object
-    const authToken = client.handshake.auth?.['token'];
-    if (typeof authToken === 'string') {
-      return authToken;
     }
 
     return undefined;

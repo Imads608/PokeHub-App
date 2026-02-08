@@ -11,7 +11,7 @@ import {
   MATCHMAKING_SERVICE,
   type IMatchmakingService,
 } from './services/matchmaking/matchmaking.service.interface';
-import { Inject, UseGuards } from '@nestjs/common';
+import { Inject, OnModuleDestroy, UseGuards } from '@nestjs/common';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -44,6 +44,9 @@ import {
   type ServerBattleEvent,
   JoinQueueDTOSchema,
   BattleMoveDTOSchema,
+  ForfeitDTOSchema,
+  RejoinDTOSchema,
+  SaveReplayDTOSchema,
   BATTLE_NAMESPACE,
   BattleRooms,
   BATTLE_EVENT,
@@ -63,12 +66,15 @@ const userToSocket = new Map<string, string>();
     credentials: true,
   },
 })
-export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class BattleGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
+{
   @WebSocketServer() server!: Server;
 
   private readonly subscriberClient: ReturnType<
     RedisService['createSubscriberClient']
   >;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly logger: AppLogger,
@@ -183,6 +189,13 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
           reason: message.data.reason,
           canSaveReplay: true,
         } satisfies ServerBattleEvent);
+
+        // Unsubscribe from battle updates now that battle has ended
+        if (this.subscriberClient) {
+          void this.subscriberClient.unsubscribe(
+            RedisKeys.channels.battleUpdate(battleId)
+          );
+        }
         break;
     }
   }
@@ -220,7 +233,7 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private startHeartbeat(): void {
     // Refresh heartbeat every 5 seconds
-    setInterval(() => {
+    this.heartbeatInterval = setInterval(() => {
       void this.redis.refreshHeartbeat();
     }, 5000);
 
@@ -296,6 +309,26 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Clean up mappings
     socketToUser.delete(client.id);
     userToSocket.delete(userId);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    this.logger.log('Battle Gateway shutting down...');
+
+    // Clear heartbeat interval
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+
+    // Disconnect Redis subscriber
+    if (this.subscriberClient) {
+      try {
+        await this.subscriberClient.quit();
+        this.logger.log('Redis subscriber disconnected');
+      } catch (error) {
+        this.logger.error(`Error disconnecting Redis subscriber: ${error}`);
+      }
+    }
   }
 
   @UseGuards(WsJwtGuard)
@@ -437,7 +470,20 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { battleId: string }
   ): Promise<void> {
     const userId = client.user.userId;
-    const { battleId } = data;
+
+    // Validate input
+    const parsed = ForfeitDTOSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'INVALID_INPUT',
+        message: parsed.error.message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+      return;
+    }
+
+    const { battleId } = parsed.data;
 
     try {
       await this.battleManager.forfeit(battleId, userId);
@@ -461,7 +507,20 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { battleId: string }
   ): Promise<void> {
     const userId = client.user.userId;
-    const { battleId } = data;
+
+    // Validate input
+    const parsed = RejoinDTOSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'INVALID_INPUT',
+        message: parsed.error.message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+      return;
+    }
+
+    const { battleId } = parsed.data;
 
     try {
       const battle = await this.battleManager.handleReconnect(battleId, userId);
@@ -502,7 +561,20 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { battleId: string }
   ): Promise<void> {
     const userId = client.user.userId;
-    const { battleId } = data;
+
+    // Validate input
+    const parsed = SaveReplayDTOSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'INVALID_INPUT',
+        message: parsed.error.message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+      return;
+    }
+
+    const { battleId } = parsed.data;
 
     try {
       // Check if user can save more replays
@@ -539,7 +611,7 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
         battleId,
         config,
         battleLog,
-        winnerId: null, // TODO: Get from battle end data
+        winnerId: metadata.winnerId || null,
         playedAt: new Date(),
       });
 

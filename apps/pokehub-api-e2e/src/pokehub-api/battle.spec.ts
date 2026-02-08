@@ -483,14 +483,49 @@ describe('Battle API (e2e)', () => {
     });
 
     it('should end battle with opponent as winner when forfeiting', async () => {
+      // Set up listeners for both players before forfeiting
+      const end1Promise = waitForEvent(socket1, 'BATTLE_END');
+      const end2Promise = waitForEvent(socket2, 'BATTLE_END');
+
       // Player 1 forfeits
       socket1.emit('FORFEIT', { battleId });
 
-      // Player 2 should receive BATTLE_END with player 2 as winner
-      const endEvent = await waitForEvent(socket2, 'BATTLE_END');
-      expect(endEvent.type).toBe('BATTLE_END');
-      expect((endEvent as { winner: string }).winner).toBe(testUser2.id);
-      expect((endEvent as { reason: string }).reason).toBe('forfeit');
+      // Both players should receive BATTLE_END with player 2 as winner
+      const [end1Event, end2Event] = await Promise.all([
+        end1Promise,
+        end2Promise,
+      ]);
+
+      // Verify player 1's event
+      expect(end1Event.type).toBe('BATTLE_END');
+      expect((end1Event as { winner: string }).winner).toBe(testUser2.id);
+      expect((end1Event as { reason: string }).reason).toBe('forfeit');
+
+      // Verify player 2's event
+      expect(end2Event.type).toBe('BATTLE_END');
+      expect((end2Event as { winner: string }).winner).toBe(testUser2.id);
+      expect((end2Event as { reason: string }).reason).toBe('forfeit');
+    });
+
+    it('should set player 1 as winner when player 2 forfeits', async () => {
+      // Set up listeners for both players before forfeiting
+      const end1Promise = waitForEvent(socket1, 'BATTLE_END');
+      const end2Promise = waitForEvent(socket2, 'BATTLE_END');
+
+      // Player 2 forfeits
+      socket2.emit('FORFEIT', { battleId });
+
+      // Both players should receive BATTLE_END with player 1 as winner
+      const [end1Event, end2Event] = await Promise.all([
+        end1Promise,
+        end2Promise,
+      ]);
+
+      // Verify winner is player 1
+      expect((end1Event as { winner: string }).winner).toBe(testUser1.id);
+      expect((end2Event as { winner: string }).winner).toBe(testUser1.id);
+      expect((end1Event as { reason: string }).reason).toBe('forfeit');
+      expect((end2Event as { reason: string }).reason).toBe('forfeit');
     });
   });
 
