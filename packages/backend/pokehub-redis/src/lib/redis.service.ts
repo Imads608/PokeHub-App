@@ -103,7 +103,9 @@ export class RedisBattleService {
     }
     const parsed = entries.map((e) => parseQueueEntry(e));
     this.logger.debug(
-      `Popped ${count} entries from ${format} queue: ${parsed.map((p) => p.userId).join(', ')}`
+      `Popped ${count} entries from ${format} queue: ${parsed
+        .map((p) => p.userId)
+        .join(', ')}`
     );
     return parsed;
   }
@@ -269,7 +271,9 @@ export class RedisBattleService {
   async removeServerBattle(battleId: string): Promise<void> {
     const key = RedisKeys.server.battles(this.serverId);
     await this.client.srem(key, battleId);
-    this.logger.debug(`Removed battle ${battleId} from server ${this.serverId}`);
+    this.logger.debug(
+      `Removed battle ${battleId} from server ${this.serverId}`
+    );
   }
 
   async getServerBattles(serverId: string): Promise<string[]> {
@@ -307,7 +311,9 @@ export class RedisBattleService {
   ): Promise<void> {
     const channel = RedisKeys.channels.battleUpdate(battleId);
     await this.client.publish(channel, JSON.stringify(message));
-    this.logger.debug(`Published battle update for ${battleId}: ${message.type}`);
+    this.logger.debug(
+      `Published battle update for ${battleId}: ${message.type}`
+    );
   }
 
   // ==================== Cleanup ====================
@@ -348,6 +354,23 @@ export const redisProvider = {
       port: redisConfig.port,
       password: redisConfig.password || undefined,
       tls: redisConfig.tls ? {} : undefined,
+      // Retry strategy: linear backoff, fail fast after 3 attempts
+      //
+      // Current: 200ms → 400ms → 600ms → stop
+      // This is intentional for MVP - fail fast during startup rather than
+      // hanging indefinitely if Redis is misconfigured.
+      //
+      // For production with many server instances, consider exponential backoff
+      // with jitter to prevent "thundering herd" when Redis recovers:
+      //
+      //   const exponentialDelay = Math.min(100 * Math.pow(2, times - 1), 30000);
+      //   const jitter = exponentialDelay * 0.25 * (Math.random() - 0.5);
+      //   return Math.round(exponentialDelay + jitter);
+      //
+      // When to upgrade:
+      // - Running 10+ API server instances
+      // - Seeing connection storm issues in logs after Redis restarts
+      // - Need graceful degradation instead of fail-fast behavior
       retryStrategy: (times) => {
         if (times > 3) {
           logger.error(`Redis connection failed after ${times} attempts`);
