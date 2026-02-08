@@ -9,6 +9,12 @@ export default (): PokeHubApiConfiguration => ({
     password: process.env.DB_PASS || 'postgres',
     name: process.env.DB_NAME || 'pokehub',
   },
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : 6379,
+    password: process.env.REDIS_PASSWORD || '',
+    tls: process.env.REDIS_TLS === 'true',
+  },
   secrets: {
     ACCESS_TOKEN: {
       value: process.env.ACCESS_TOKEN || 'access',
@@ -24,7 +30,9 @@ export default (): PokeHubApiConfiguration => ({
     },
   },
   googleOAuth: {
-    clientId: process.env.GOOGLE_CLIENT_ID || 'sampleid',
+    clientId:
+      process.env.GOOGLE_CLIENT_ID ||
+      '490564752077-hlbp1k70hlsqo1quibgmcpetanscrpqu.apps.googleusercontent.com',
   },
   azure: {
     storageAccount: {

@@ -16,6 +16,8 @@
 - [x] Fixed IPv6 connectivity (using Supabase pooler with IPv4)
 - [x] Docker build configuration (excluded `.env` files from image)
 - [x] Backend successfully deployed and running
+- [x] Azure Cache for Redis (`pokehub-cache`, Basic C0)
+- [x] Redis secrets added to GitHub Actions pipeline
 
 ### In Progress
 
@@ -50,6 +52,14 @@
   - `pokehub-api:dev` (Backend API)
   - `pokehub-app:dev` (Frontend - to be built)
 
+## Redis
+
+- **Provider:** Azure Cache for Redis (Basic C0)
+- **Host:** pokehub-cache.redis.cache.windows.net
+- **Port:** 6380 (SSL)
+- **TLS:** 1.2 (required)
+- **Auth:** Access Keys
+
 ## Cost Estimate
 
 | Resource | Monthly Cost |
@@ -57,11 +67,10 @@
 | Container Apps Environment | ~$25-35 |
 | Backend API (1-3 replicas, 1 CPU, 2 GB) | ~$15-20 |
 | Frontend App (1-3 replicas, 1 CPU, 2 GB) | ~$15-20 |
+| Azure Cache for Redis (Basic C0) | ~$16 |
 | Supabase Free Tier | $0 |
 | Azure DNS | ~$0.50 |
-| **Total** | **~$55-75/month** |
-
-**Compared to AKS:** Saving ~$52-78/month ($624-936 annually)
+| **Total** | **~$71-91/month** |
 
 ## Next Steps
 

@@ -1,4 +1,5 @@
 import { AuthModule } from '../auth/auth.module';
+import { BattleModule } from '../battle/battle.module';
 import { CommonModule } from '../common/common.module';
 import { TraceMiddleware } from '../common/middleware/trace.middleware';
 import configuration from '../config/configuration';
@@ -18,6 +19,7 @@ import { APP_FILTER, RouterModule } from '@nestjs/core';
     AuthModule,
     UsersModule,
     TeamsModule,
+    BattleModule, // WebSocket gateway for real-time battles
     TestModule, // Test endpoints (secured by controller guard)
     RouterModule.register(routes),
     ConfigModule.forRoot({

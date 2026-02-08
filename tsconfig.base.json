@@ -147,7 +147,16 @@
       "@pokehub/shared/shared-user-models": [
         "packages/shared/shared-user-models/src/index.ts"
       ],
-      "@pokehub/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
+      "@pokehub/workspace-plugin": ["tools/workspace-plugin/src/index.ts"],
+      "@pokehub/backend/pokehub-redis": [
+        "packages/backend/pokehub-redis/src/index.ts"
+      ],
+      "@pokehub/shared/pokemon-battle-types": [
+        "packages/shared/pokemon-battle-types/src/index.ts"
+      ],
+      "@pokehub/backend/pokehub-battles-db": [
+        "packages/backend/pokehub-battles-db/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

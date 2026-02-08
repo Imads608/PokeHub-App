@@ -132,6 +132,15 @@ rm pokehub-api.deploy.yaml
 
 See [database.md](../database.md) for switching between local and production databases.
 
+### Redis
+
+- **Provider**: Azure Cache for Redis (Basic C0)
+- **Host**: `pokehub-cache.redis.cache.windows.net`
+- **Port**: 6380 (SSL)
+- **TLS**: 1.2 (required)
+- **Auth**: Access Keys
+- **Used for**: Battle state management, matchmaking queues, pub/sub messaging
+
 ## Security Notes
 
 - **Never commit `.env` file** - it's already in `.gitignore`
@@ -147,11 +156,10 @@ See [database.md](../database.md) for switching between local and production dat
 | Container Apps Environment | ~$25-35 |
 | Backend API (1-3 replicas) | ~$15-20 |
 | Frontend App (1-3 replicas) | ~$15-20 |
+| Azure Cache for Redis (Basic C0) | ~$16 |
 | Supabase Free Tier | $0 |
 | Azure DNS | ~$0.50 |
-| **Total** | **~$55-75/month** |
-
-**Savings vs AKS**: ~$52-78/month ($624-936 annually)
+| **Total** | **~$71-91/month** |
 
 ## Next Steps
 

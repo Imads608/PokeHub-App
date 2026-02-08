@@ -7,6 +7,7 @@
 - [Database Setup Strategy](#database-setup-strategy)
   - [Local Development](#local-development)
   - [CI Environment](#ci-environment)
+- [Redis Setup (Battle API)](#redis-setup-battle-api)
 - [Test Implementation Approach](#test-implementation-approach)
 - [Test Coverage](#test-coverage)
 - [Files & Components](#files--components)
@@ -25,10 +26,12 @@
 
 **Current Test Results:**
 
-- ✅ **Backend API E2E Tests: 70/70 passing (100%)**
+- ✅ **Backend API E2E Tests: 91/91 passing (100%)**
   - Teams API: 43 tests
   - Users API: 27 tests
-- ✅ Backend Unit Tests: 64 passing
+  - Battle API: 15 tests (WebSocket)
+  - Health/Exceptions: 6 tests
+- ✅ Backend Unit Tests: 215 passing
 - ✅ Backend Integration Tests: 87 passing
 - ✅ Frontend Playwright E2E Tests: 63 passing
 - ✅ Frontend Unit Tests: 283+ passing
@@ -40,10 +43,12 @@
 The backend E2E tests validate the full Teams API through complete HTTP request/response cycles, including:
 
 - **Real Database**: PostgreSQL with full schema
+- **Real Cache**: Redis for battle state and matchmaking
 - **Real Authentication**: JWT tokens and guards
 - **Real Validation**: Zod schemas + Pokemon Showdown validation
 - **Real Business Logic**: Full service layer execution
 - **HTTP Layer**: Complete NestJS request pipeline
+- **WebSocket Layer**: Socket.IO for real-time battle communication
 
 ### Key Components
 
@@ -160,6 +165,53 @@ steps:
 - PostgreSQL container starts with empty `pokehub_test` database
 - Migrations create the schema (users, teams tables, etc.)
 - Without migrations, E2E tests fail with "relation does not exist" errors
+
+---
+
+## Redis Setup (Battle API)
+
+The Battle API requires Redis for matchmaking queues and battle state management.
+
+### Local Development
+
+**Setup:**
+
+1. Local Redis instance running (default: port 6379)
+2. No password required for local development
+3. Battle state and queue data auto-expires
+
+**Environment Variables (optional - defaults work for local):**
+
+```bash
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_TLS=false
+```
+
+### CI Environment
+
+**Setup (GitHub Actions):**
+
+Redis 7 Docker container is started alongside PostgreSQL:
+
+```yaml
+# .github/workflows/ci.yml
+services:
+  postgres:
+    # ... PostgreSQL configuration
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    options: >-
+      --health-cmd="redis-cli ping"
+      --health-interval=10s
+      --health-timeout=5s
+      --health-retries=5
+```
+
+No additional environment variables needed - the app defaults to `localhost:6379`.
 
 ---
 
@@ -303,6 +355,116 @@ afterAll(async () => {
 });
 ```
 
+### 4. WebSocket Testing (Battle API)
+
+**Purpose:** Test real-time battle communication via Socket.IO
+
+The Battle API uses WebSocket connections instead of HTTP requests. Here's the pattern:
+
+```typescript
+// apps/pokehub-api-e2e/src/pokehub-api/battle.spec.ts
+import { io, type Socket } from 'socket.io-client';
+
+let serverAddress: string;
+
+beforeAll(async () => {
+  // ... bootstrap NestJS app ...
+
+  // Start HTTP server for WebSocket connections
+  const server = app.getHttpServer();
+  await new Promise<void>((resolve) => {
+    server.listen(0, () => resolve());
+  });
+  const address = server.address();
+  const port = typeof address === 'object' ? address?.port : 0;
+  serverAddress = `http://localhost:${port}`;
+});
+
+// Helper to connect with JWT authentication
+function connectSocket(token: string): Socket {
+  return io(`${serverAddress}/battle`, {
+    auth: { token },
+    transports: ['websocket'],
+    forceNew: true,
+  });
+}
+
+// Helper to wait for specific event types
+function waitForEvent(
+  socket: Socket,
+  eventType: string,
+  timeout = 5000
+): Promise<ServerBattleEvent> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Timeout waiting for event: ${eventType}`));
+    }, timeout);
+
+    const handler = (event: ServerBattleEvent) => {
+      if (event.type === eventType) {
+        clearTimeout(timer);
+        socket.off('BATTLE_EVENT', handler);
+        resolve(event);
+      }
+    };
+
+    socket.on('BATTLE_EVENT', handler);
+  });
+}
+
+// Example test
+it('should match two players and start battle', async () => {
+  const socket1 = connectSocket(user1AccessToken);
+  const socket2 = connectSocket(user2AccessToken);
+
+  await Promise.all([waitForConnect(socket1), waitForConnect(socket2)]);
+
+  // Player 1 joins queue
+  socket1.emit('JOIN_QUEUE', {
+    format: 'gen9anythinggoes',
+    teamId: user1TeamId,
+  });
+  await waitForEvent(socket1, 'QUEUE_JOINED');
+
+  // Set up battle start listeners before player 2 joins
+  const start1Promise = waitForEvent(socket1, 'BATTLE_START', 10000);
+  const start2Promise = waitForEvent(socket2, 'BATTLE_START', 10000);
+
+  // Player 2 joins - triggers match
+  socket2.emit('JOIN_QUEUE', {
+    format: 'gen9anythinggoes',
+    teamId: user2TeamId,
+  });
+
+  // Both receive BATTLE_START
+  const [start1, start2] = await Promise.all([start1Promise, start2Promise]);
+  expect(start1.battleId).toBe(start2.battleId);
+
+  socket1.disconnect();
+  socket2.disconnect();
+});
+```
+
+**Redis State Cleanup:**
+
+Battle tests require cleanup of Redis state between tests to prevent flaky behavior:
+
+```typescript
+async function cleanupUserBattleState(): Promise<void> {
+  // Clear battle associations
+  await redisService.clearUserBattle(testUser1.id);
+  await redisService.clearUserBattle(testUser2.id);
+
+  // Clear queue status (prevents ghost queue entries from affecting matches)
+  await redisService.clearUserQueueStatus(testUser1.id);
+  await redisService.clearUserQueueStatus(testUser2.id);
+}
+
+beforeEach(async () => {
+  await cleanupUserBattleState();
+});
+```
+
 ---
 
 ## Test Coverage
@@ -401,6 +563,50 @@ The E2E tests validate **70 test cases** covering:
 
 **Key Finding:** Backend only validates username length (3-20 characters), not character set. Character validation (letters, numbers, underscores only) is enforced on the frontend.
 
+### Battle API (14 tests)
+
+The Battle API uses WebSocket (Socket.IO) for real-time communication. Tests validate the complete battle flow from matchmaking to battle completion.
+
+#### 1. Connection & Auth (3 tests)
+
+- ✅ Connect successfully with valid JWT
+- ✅ Disconnect immediately with invalid JWT
+- ✅ Disconnect with missing token
+
+#### 2. Queue Management (5 tests)
+
+- ✅ Receive QUEUE_JOINED with position when joining with valid team
+- ✅ Receive ERROR with TEAM_NOT_FOUND when joining with non-existent teamId
+- ✅ Receive ERROR with INVALID_TEAM when joining with another user's team
+- ✅ Receive QUEUE_LEFT when leaving queue
+- ✅ Receive ERROR with INVALID_INPUT for invalid input
+
+#### 3. Matchmaking & Battle Flow (1 test)
+
+- ✅ Match two players and start battle (full flow validation)
+
+#### 4. Forfeit (2 tests)
+
+- ✅ End battle with opponent as winner when player 1 forfeits
+- ✅ Set player 1 as winner when player 2 forfeits
+
+#### 5. Reconnection (2 tests)
+
+- ✅ Notify opponent when player disconnects (OPPONENT_DISCONNECTED event)
+- ✅ Allow player to rejoin and receive battle state (REJOIN → BATTLE_START)
+
+#### 6. Additional Test Suites (2 tests)
+
+- ✅ Health check endpoint validation
+- ✅ Exception filter validation
+
+**Key Implementation Details:**
+
+- Tests use `socket.io-client` to connect to the battle namespace (`/battle`)
+- JWT tokens are passed via `auth.token` in socket handshake
+- Battle events use a single `BATTLE_EVENT` channel with typed payloads
+- Tests include proper Redis state cleanup between runs to prevent flaky tests
+
 ---
 
 ## Files & Components
@@ -427,6 +633,23 @@ Users API E2E test suite with 27 test cases organized in describe blocks:
 - POST /users/:userId/profile - profile updates (14 tests)
 - Username uniqueness (2 tests)
 - Edge cases and security (4 tests)
+
+**`apps/pokehub-api-e2e/src/pokehub-api/battle.spec.ts`**
+
+Battle API E2E test suite with 14 test cases for WebSocket-based battle system:
+
+- Connection & Auth (3 tests)
+- Queue Management (5 tests)
+- Matchmaking & Battle Flow (1 test)
+- Forfeit (1 test)
+- Reconnection (2 tests)
+
+**Key differences from HTTP-based tests:**
+
+- Uses `socket.io-client` instead of `supertest`
+- Connects to `/battle` namespace with JWT in handshake
+- Uses event-based assertions with `waitForEvent()` helper
+- Requires Redis for battle state and matchmaking queue
 
 ### Configuration Files
 
@@ -691,6 +914,96 @@ afterAll(async () => {
 });
 ```
 
+### Issue 6: Redis Connection Required (Battle API) ❌
+
+**Symptom:**
+
+```
+Error: Redis connection failed after 3 attempts
+```
+
+**Root Cause:**
+
+- Redis not running locally
+- Battle tests require Redis for matchmaking and battle state
+
+**Fix:**
+
+```bash
+# Start Redis locally
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Or install and run Redis directly
+redis-server
+```
+
+### Issue 7: Self-Match in Queue (Battle API) ❌
+
+**Symptom:**
+
+```
+Match found: user123 vs user123 in gen9anythinggoes
+```
+
+**Root Cause:**
+
+- Stale queue entries from previous test runs
+- Same user has multiple entries in the matchmaking queue
+- Queue uses lazy cleanup (status check instead of list removal)
+
+**Fix:**
+
+The matchmaking service now includes self-match prevention:
+
+```typescript
+// In matchmaking.service.ts
+if (entry1.userId === entry2.userId) {
+  this.logger.warn(`Rejecting self-match for user ${entry1.userId}`);
+  await this.redis.joinQueue(format, entry2);
+  return null;
+}
+```
+
+Also ensure tests clean up queue status:
+
+```typescript
+async function cleanupUserBattleState(): Promise<void> {
+  await redisService.clearUserBattle(testUser1.id);
+  await redisService.clearUserQueueStatus(testUser1.id); // Critical!
+}
+```
+
+### Issue 8: WebSocket Event Timeout (Battle API) ❌
+
+**Symptom:**
+
+```
+Error: Timeout waiting for event: QUEUE_JOINED
+```
+
+**Root Cause:**
+
+- Event listener registered after event was emitted
+- Socket not fully connected before emitting
+- Previous test left user in a battle (blocking queue join)
+
+**Fix:**
+
+```typescript
+// Always set up listeners BEFORE emitting
+const queuePromise = waitForEvent(socket, 'QUEUE_JOINED');
+socket.emit('JOIN_QUEUE', { format, teamId });
+await queuePromise;
+
+// Ensure socket is connected before using
+await waitForConnect(socket);
+
+// Clean up battle state before each test
+beforeEach(async () => {
+  await cleanupUserBattleState();
+});
+```
+
 ---
 
 ## Test Isolation & Parallel Execution
@@ -931,12 +1244,14 @@ jobs:
 - [Authentication Documentation](../features/authentication.md)
 - [Database Schema](../deployment/database.md)
 - [Environment Setup](./environment-setup.md)
+- [Battle System Documentation](../features/battle-system.md)
 - [NestJS Testing](https://docs.nestjs.com/fundamentals/testing)
 - [Supertest Documentation](https://github.com/ladjs/supertest)
+- [Socket.IO Client](https://socket.io/docs/v4/client-api/)
 
 ---
 
-**Last Updated:** December 20, 2025  
-**Status:** ✅ Fully Functional - All 70 Tests Passing  
-**Test Coverage:** Complete API validation with real database (Teams + Users)  
+**Last Updated:** February 7, 2026  
+**Status:** ✅ Fully Functional - All 90 Tests Passing  
+**Test Coverage:** Complete API validation with real database and Redis (Teams + Users + Battle)  
 **Execution:** Parallel execution with proper test isolation

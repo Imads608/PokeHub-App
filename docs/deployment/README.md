@@ -38,12 +38,14 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
 │           │                                     │
 └───────────┼─────────────────────────────────────┘
             │
-            ▼
-    ┌───────────────┐
-    │   Supabase    │
-    │   PostgreSQL  │
-    │   Database    │
-    └───────────────┘
+       ┌────┴────┐
+       │         │
+       ▼         ▼
+┌───────────┐  ┌─────────────────┐
+│ Supabase  │  │ Azure Cache     │
+│ PostgreSQL│  │ for Redis       │
+│ Database  │  │ (pokehub-cache) │
+└───────────┘  └─────────────────┘
 ```
 
 ### Resources
@@ -64,6 +66,13 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
   - Provider: Supabase (500MB free tier)
   - Connection: IPv4-compatible pooler
   - SSL: Required in production
+
+- **Redis** (`pokehub-cache`)
+  - Provider: Azure Cache for Redis (Basic C0)
+  - Host: `pokehub-cache.redis.cache.windows.net`
+  - Port: 6380 (SSL)
+  - TLS: 1.2 (required)
+  - Auth: Access Keys
 
 ## Getting Started
 
@@ -128,11 +137,10 @@ Check the [troubleshooting guide](./container-apps/troubleshooting.md) for commo
 | Container Apps Environment | ~$25-35 |
 | Backend API (1-3 replicas) | ~$15-20 |
 | Frontend App (1-3 replicas) | ~$15-20 |
+| Azure Cache for Redis (Basic C0) | ~$16 |
 | Supabase Free Tier | $0 |
 | Azure DNS | ~$0.50 |
-| **Total** | **~$55-75/month** |
-
-**Savings vs AKS**: ~$52-78/month ($624-936 annually)
+| **Total** | **~$71-91/month** |
 
 ## Additional Resources
 

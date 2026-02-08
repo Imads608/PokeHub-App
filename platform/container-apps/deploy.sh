@@ -46,6 +46,9 @@ sed -i "s|REPLACE_WITH_REFRESH_TOKEN_SECRET|${REFRESH_TOKEN_SECRET}|g" "$TEMP_FI
 sed -i "s|REPLACE_WITH_ACCESS_TOKEN_SECRET|${ACCESS_TOKEN_SECRET}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_API_URL|${API_URL}|g" "$TEMP_FILE"
 sed -i "s|REPLACE_WITH_APP_URL|${APP_URL}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_REDIS_HOST|${REDIS_HOST}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_REDIS_PORT|${REDIS_PORT}|g" "$TEMP_FILE"
+sed -i "s|REPLACE_WITH_REDIS_PASSWORD|${REDIS_PASSWORD}|g" "$TEMP_FILE"
 
 # Check if app exists
 if az containerapp show --name "$APP_NAME" --resource-group pokehub_group &>/dev/null; then

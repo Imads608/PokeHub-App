@@ -19,42 +19,46 @@ This document provides a high-level overview of the PokeHub application architec
 PokeHub is a full-stack Pokemon application built as an Nx monorepo. It consists of two main applications and numerous shared libraries that enable code reuse across the frontend and backend.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              PokeHub System                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                        External Services                             │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐  │   │
-│  │  │   Google    │  │   Azure     │  │   Pokemon Data Sources      │  │   │
-│  │  │   OAuth     │  │   Blob      │  │  (@pkmn/dex, PokeAPI)       │  │   │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────────────┬──────────────┘  │   │
-│  └─────────┼────────────────┼────────────────────────┼──────────────────┘   │
-│            │                │                        │                      │
-│  ┌─────────┴────────────────┴────────────────────────┴──────────────────┐   │
-│  │                         Frontend (Next.js)                            │   │
-│  │                         localhost:4200                                │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │   │
-│  │  │  NextAuth   │  │   React     │  │  TanStack   │  │  Tailwind   │  │   │
-│  │  │  (Auth)     │  │   Components│  │  Query      │  │  CSS        │  │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │   │
-│  └───────────────────────────────┬──────────────────────────────────────┘   │
-│                                  │ HTTP/REST                                │
-│  ┌───────────────────────────────┴──────────────────────────────────────┐   │
-│  │                         Backend (NestJS)                              │   │
-│  │                         localhost:3000/api                            │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │   │
-│  │  │   Auth      │  │   Users     │  │   Teams     │  │   JWT       │  │   │
-│  │  │   Module    │  │   Module    │  │   Module    │  │   Service   │  │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │   │
-│  └───────────────────────────────┬──────────────────────────────────────┘   │
-│                                  │ SQL                                      │
-│  ┌───────────────────────────────┴──────────────────────────────────────┐   │
-│  │                         Database (PostgreSQL)                         │   │
-│  │                         Drizzle ORM                                   │   │
-│  └───────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                PokeHub System                                     │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          External Services                                  │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐         │  │
+│  │  │   Google    │  │   Azure     │  │   Pokemon Data Sources      │         │  │
+│  │  │   OAuth     │  │   Blob      │  │  (@pkmn/dex, @pkmn/sim)     │         │  │
+│  │  └──────┬──────┘  └──────┬──────┘  └──────────────┬──────────────┘         │  │
+│  └─────────┼────────────────┼────────────────────────┼────────────────────────┘  │
+│            │                │                        │                           │
+│  ┌─────────┴────────────────┴────────────────────────┴────────────────────────┐  │
+│  │                           Frontend (Next.js)                                │  │
+│  │                           localhost:4200                                    │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │  │
+│  │  │  NextAuth   │  │   React     │  │  TanStack   │  │  Socket.io  │        │  │
+│  │  │  (Auth)     │  │   Components│  │  Query      │  │  Client     │        │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └──────┬──────┘        │  │
+│  └───────────────────────────────┬───────────────────────────┬────────────────┘  │
+│                                  │ HTTP/REST                 │ WebSocket         │
+│  ┌───────────────────────────────┴───────────────────────────┴────────────────┐  │
+│  │                           Backend (NestJS)                                  │  │
+│  │                           localhost:3000/api                                │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │  │
+│  │  │  Auth    │  │  Users   │  │  Teams   │  │  JWT     │  │   Battle     │  │  │
+│  │  │  Module  │  │  Module  │  │  Module  │  │  Service │  │   Gateway    │  │  │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └───────┬──────┘  │  │
+│  └───────────────────────────────┬──────────────────────────────────┼─────────┘  │
+│                                  │ SQL                              │ Pub/Sub    │
+│  ┌───────────────────────────────┴──────────────────────────────────┴─────────┐  │
+│  │                             Data Layer                                      │  │
+│  │  ┌─────────────────────────────────────┐  ┌─────────────────────────────┐  │  │
+│  │  │         PostgreSQL                   │  │          Redis              │  │  │
+│  │  │         (Drizzle ORM)                │  │   (Battle State, Pub/Sub,   │  │  │
+│  │  │  - Users, Teams, Replays             │  │    Matchmaking Queue)       │  │  │
+│  │  └─────────────────────────────────────┘  └─────────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -76,14 +80,17 @@ PokeHub is a full-stack Pokemon application built as an Nx monorepo. It consists
 
 ### Backend
 
-| Technology      | Purpose                       |
-| --------------- | ----------------------------- |
-| **NestJS**      | Node.js framework             |
-| **TypeScript**  | Type-safe JavaScript          |
-| **Drizzle ORM** | Type-safe database operations |
-| **PostgreSQL**  | Relational database           |
-| **Passport.js** | Authentication strategies     |
-| **Winston**     | Structured logging            |
+| Technology      | Purpose                            |
+| --------------- | ---------------------------------- |
+| **NestJS**      | Node.js framework                  |
+| **TypeScript**  | Type-safe JavaScript               |
+| **Drizzle ORM** | Type-safe database operations      |
+| **PostgreSQL**  | Relational database                |
+| **Redis**       | Battle state, pub/sub, matchmaking |
+| **Socket.io**   | Real-time WebSocket communication  |
+| **Passport.js** | Authentication strategies          |
+| **Winston**     | Structured logging                 |
+| **@pkmn/sim**   | Pokemon battle simulation engine   |
 
 ### External Services
 
@@ -129,6 +136,7 @@ pokehub-app/
 │   │       ├── auth/              # Authentication
 │   │       ├── users/             # User management
 │   │       ├── teams/             # Team management
+│   │       ├── battle/            # Real-time battle system (WebSocket)
 │   │       └── common/            # Shared utilities
 │   │
 │   └── *-e2e/                     # E2E test projects
@@ -150,11 +158,15 @@ pokehub-app/
 │   │   ├── shared-logger/         # Winston logging
 │   │   ├── shared-exceptions/     # Custom exceptions
 │   │   ├── pokehub-postgres/      # Database connection
-│   │   └── pokehub-users-db/      # User DB operations
+│   │   ├── pokehub-users-db/      # User DB operations
+│   │   ├── pokehub-teams-db/      # Team DB operations
+│   │   ├── pokehub-battles-db/    # Battle replay persistence
+│   │   └── pokehub-redis/         # Redis (battle state, pub/sub, matchmaking)
 │   │
 │   └── shared/                    # Cross-platform packages
 │       ├── shared-auth-models/    # Auth types
-│       └── shared-user-models/    # User types
+│       ├── shared-user-models/    # User types
+│       └── pokemon-battle-types/  # Battle events, DTOs, Zod schemas
 │
 ├── docs/                          # Documentation
 ├── drizzle/                       # Database migrations
@@ -231,39 +243,53 @@ The frontend uses Next.js 14 with the App Router, combining Server and Client Co
 The backend follows NestJS modular architecture with clear separation of concerns.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Backend Architecture                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                         Request Flow                              │   │
-│  │                                                                   │   │
-│  │  Request → Middleware → Guards → Controller → Service → Database │   │
-│  │                                                                   │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                         Module Structure                          │   │
-│  │                                                                   │   │
-│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │   │
-│  │  │   Auth Module   │  │   Users Module  │  │   Teams Module  │   │   │
-│  │  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤   │   │
-│  │  │ Controller      │  │ Controller      │  │ Controller      │   │   │
-│  │  │ Service         │  │ Service         │  │ Service         │   │   │
-│  │  │ Guards          │  │ Guards          │  │ Guards          │   │   │
-│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘   │   │
-│  │                                                                   │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                       Shared Services                             │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐               │   │
-│  │  │ JWT Service │  │ Logger      │  │ Postgres    │               │   │
-│  │  │             │  │ Service     │  │ Service     │               │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘               │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                            Backend Architecture                                    │
+├───────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐  │
+│  │                            Request Flow                                      │  │
+│  │                                                                              │  │
+│  │  HTTP:      Request → Middleware → Guards → Controller → Service → Database │  │
+│  │  WebSocket: Connect → WsJwtGuard → Gateway → Service → Redis                 │  │
+│  │                                                                              │  │
+│  └─────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐  │
+│  │                            Module Structure                                  │  │
+│  │                                                                              │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │  │
+│  │  │   Auth Module   │  │   Users Module  │  │   Teams Module  │              │  │
+│  │  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤              │  │
+│  │  │ Controller      │  │ Controller      │  │ Controller      │              │  │
+│  │  │ Service         │  │ Service         │  │ Service         │              │  │
+│  │  │ Guards          │  │ Guards          │  │ Guards          │              │  │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘              │  │
+│  │                                                                              │  │
+│  │  ┌───────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │                        Battle Module (WebSocket)                       │  │  │
+│  │  ├───────────────────────────────────────────────────────────────────────┤  │  │
+│  │  │  ┌──────────────┐  ┌────────────────┐  ┌────────────────────────────┐ │  │  │
+│  │  │  │   Battle     │  │  Matchmaking   │  │    Battle Manager          │ │  │  │
+│  │  │  │   Gateway    │  │  Service       │  │    Service (@pkmn/sim)     │ │  │  │
+│  │  │  └──────────────┘  └────────────────┘  └────────────────────────────┘ │  │  │
+│  │  │  ┌──────────────┐  ┌────────────────┐  ┌────────────────────────────┐ │  │  │
+│  │  │  │  Turn Timer  │  │  Persistence   │  │    WsJwtGuard              │ │  │  │
+│  │  │  │  Service     │  │  Service       │  │    WsThrottlerGuard        │ │  │  │
+│  │  │  └──────────────┘  └────────────────┘  └────────────────────────────┘ │  │  │
+│  │  └───────────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                              │  │
+│  └─────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐  │
+│  │                          Shared Services                                     │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │  │
+│  │  │ JWT Service │  │ Logger      │  │ Postgres    │  │ Redis Battle        │ │  │
+│  │  │             │  │ Service     │  │ Service     │  │ Service             │ │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────────┘ │  │
+│  └─────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                   │
+└───────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key Patterns:**
@@ -493,6 +519,29 @@ The backend follows NestJS modular architecture with clear separation of concern
 - Easy to identify reusable code
 - Facilitates team ownership
 
+### 9. Real-Time Battle System with Redis
+
+**Why**: Support competitive Pokemon battles with horizontal scaling, crash recovery, and real-time communication.
+
+**Benefits**:
+
+- **Redis for State**: Battle state stored in Redis enables crash recovery via deterministic replay
+- **Pub/Sub**: Cross-server communication when players connect to different API instances
+- **WebSocket (Socket.io)**: Real-time bidirectional communication for battles
+- **@pkmn/sim Integration**: Authentic Pokemon Showdown-compatible battle simulation
+- **Matchmaking Queue**: FIFO queue in Redis with lazy cleanup for stale entries
+
+**Key Design Decisions**:
+
+| Decision           | Choice                     | Rationale                                   |
+| ------------------ | -------------------------- | ------------------------------------------- |
+| Crash Recovery     | Input log replay           | @pkmn/sim is deterministic with same seed   |
+| Turn Timer         | Warning 30s, auto-move 60s | Prevents stalling without harsh forfeit     |
+| Replay Saving      | Optional, user-initiated   | Reduces storage, users keep meaningful ones |
+| Disconnect Timeout | 2 minutes                  | Balance recovery time vs opponent waiting   |
+
+See [Battle System Design](./features/battle-system.md) for detailed architecture.
+
 ---
 
 ## Related Documentation
@@ -508,11 +557,12 @@ The backend follows NestJS modular architecture with clear separation of concern
 
 ### Feature Documentation
 
-| Document                                       | Description                       |
-| ---------------------------------------------- | --------------------------------- |
-| [Authentication](./features/authentication.md) | OAuth, JWT, profile creation      |
-| [Pokedex](./features/pokedex.md)               | Pokemon data fetching and display |
-| [Team Builder](./features/team-builder.md)     | Team creation and management      |
+| Document                                       | Description                           |
+| ---------------------------------------------- | ------------------------------------- |
+| [Authentication](./features/authentication.md) | OAuth, JWT, profile creation          |
+| [Pokedex](./features/pokedex.md)               | Pokemon data fetching and display     |
+| [Team Builder](./features/team-builder.md)     | Team creation and management          |
+| [Battle System](./features/battle-system.md)   | Real-time battles, matchmaking, Redis |
 
 ### Development & Deployment
 
@@ -543,6 +593,9 @@ npm install
 nx serve pokehub-app          # Frontend (http://localhost:4200)
 nx serve pokehub-api          # Backend (http://localhost:3000)
 nx serve pokehub-app pokehub-api  # Both
+
+# Start Redis (required for battle system)
+docker compose -f docker-compose.dev.yaml up -d redis
 
 # Run tests
 nx test pokehub-app           # Frontend tests

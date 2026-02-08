@@ -104,6 +104,9 @@ jobs:
           ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
           API_URL=https://api.pokehub.space/api
           APP_URL=https://www.pokehub.space
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           EOF
 
       - name: Update image tag in YAML
@@ -197,6 +200,9 @@ jobs:
           ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
           API_URL=https://api.pokehub.space/api
           APP_URL=https://www.pokehub.space
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           EOF
 
       - name: Update image tag in YAML

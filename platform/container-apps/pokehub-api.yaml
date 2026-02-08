@@ -30,6 +30,12 @@ properties:
         value: REPLACE_WITH_REFRESH_TOKEN_SECRET
       - name: access-token-secret
         value: REPLACE_WITH_ACCESS_TOKEN_SECRET
+      - name: redis-host
+        value: REPLACE_WITH_REDIS_HOST
+      - name: redis-port
+        value: REPLACE_WITH_REDIS_PORT
+      - name: redis-password
+        value: REPLACE_WITH_REDIS_PASSWORD
   template:
     containers:
       - name: pokehub-api
@@ -66,6 +72,14 @@ properties:
             value: 'avatars'
           - name: GOOGLE_CLIENT_ID
             secretRef: google-client-id
+          - name: REDIS_HOST
+            secretRef: redis-host
+          - name: REDIS_PORT
+            secretRef: redis-port
+          - name: REDIS_PASSWORD
+            secretRef: redis-password
+          - name: REDIS_TLS
+            value: 'true'
     scale:
       minReplicas: 1
       maxReplicas: 3
