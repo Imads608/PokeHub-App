@@ -39,7 +39,7 @@ describe('WsThrottlerGuard', () => {
         getPattern: () => eventName,
         getData: () => ({}),
       }),
-      getHandler: () => () => {},
+      getHandler: () => () => ({}),
       getClass: () => class {},
       getType: () => 'ws' as const,
       getArgs: () => [],
@@ -47,7 +47,7 @@ describe('WsThrottlerGuard', () => {
       switchToHttp: () => ({
         getRequest: () => ({}),
         getResponse: () => ({}),
-        getNext: () => () => {},
+        getNext: () => () => ({}),
       }),
       switchToRpc: () => ({
         getContext: () => ({}),
