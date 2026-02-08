@@ -118,6 +118,16 @@ class MatchmakingService implements IMatchmakingService {
 
     const [entry1, entry2] = entries;
 
+    // Prevent matching a user with themselves (can happen with stale queue entries)
+    if (entry1.userId === entry2.userId) {
+      this.logger.warn(
+        `Rejecting self-match for user ${entry1.userId} - putting one entry back`
+      );
+      // Put back one entry and discard the stale duplicate
+      await this.redis.joinQueue(format, entry2);
+      return null;
+    }
+
     // Verify both players are still in queue (haven't left)
     const [status1, status2] = await Promise.all([
       this.redis.getUserQueueStatus(entry1.userId),

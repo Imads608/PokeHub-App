@@ -66,7 +66,9 @@ const userToSocket = new Map<string, string>();
 export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
 
-  private subscriberClient: ReturnType<RedisService['createSubscriberClient']>;
+  private readonly subscriberClient: ReturnType<
+    RedisService['createSubscriberClient']
+  >;
 
   constructor(
     private readonly logger: AppLogger,
@@ -82,14 +84,13 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(USERS_DB_SERVICE) private readonly usersDb: IUsersDBService
   ) {
     this.logger.setContext(BattleGateway.name);
+    this.subscriberClient = this.redis.createSubscriberClient();
     this.setupRedisSubscriptions();
     this.startHeartbeat();
     this.logger.log('Battle Gateway initialized');
   }
 
   private setupRedisSubscriptions(): void {
-    this.subscriberClient = this.redis.createSubscriberClient();
-
     // Handle connection events
     this.subscriberClient.on('ready', () => {
       this.logger.log('Redis subscriber connected and ready');
@@ -249,7 +250,9 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Subscribe to match notifications for this user
     if (this.subscriberClient) {
-      void this.subscriberClient.subscribe(RedisKeys.channels.matchFound(userId));
+      void this.subscriberClient.subscribe(
+        RedisKeys.channels.matchFound(userId)
+      );
     }
 
     // Check if user has an active battle to rejoin
@@ -276,7 +279,9 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Unsubscribe from match notifications
     if (this.subscriberClient) {
-      void this.subscriberClient.unsubscribe(RedisKeys.channels.matchFound(userId));
+      void this.subscriberClient.unsubscribe(
+        RedisKeys.channels.matchFound(userId)
+      );
     }
 
     // Check if user is in a battle
@@ -466,7 +471,9 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Subscribe to battle updates
       if (this.subscriberClient) {
-        void this.subscriberClient.subscribe(RedisKeys.channels.battleUpdate(battleId));
+        void this.subscriberClient.subscribe(
+          RedisKeys.channels.battleUpdate(battleId)
+        );
       }
 
       client.emit(BATTLE_EVENT, {
@@ -607,7 +614,9 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Subscribe to battle updates
       if (this.subscriberClient) {
-        void this.subscriberClient.subscribe(RedisKeys.channels.battleUpdate(battleId));
+        void this.subscriberClient.subscribe(
+          RedisKeys.channels.battleUpdate(battleId)
+        );
       }
 
       // Notify both players
@@ -628,11 +637,15 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const socket1 = userToSocket.get(player1.userId);
       const socket2 = userToSocket.get(player2.userId);
 
+      // Join both players to the battle room and emit BATTLE_START
+      const battleRoom = BattleRooms.battle(battleId);
+
       if (socket1) {
-        const s1 = this.server.sockets.sockets.get(socket1);
-        if (s1) {
-          await s1.join(BattleRooms.battle(battleId));
-          s1.emit(BATTLE_EVENT, {
+        // Use fetchSockets to get the actual socket and join the room
+        const sockets1 = await this.server.in(socket1).fetchSockets();
+        if (sockets1.length > 0) {
+          await sockets1[0].join(battleRoom);
+          sockets1[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
             initialState: battle.currentState,
@@ -641,10 +654,10 @@ export class BattleGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       if (socket2) {
-        const s2 = this.server.sockets.sockets.get(socket2);
-        if (s2) {
-          await s2.join(BattleRooms.battle(battleId));
-          s2.emit(BATTLE_EVENT, {
+        const sockets2 = await this.server.in(socket2).fetchSockets();
+        if (sockets2.length > 0) {
+          await sockets2[0].join(battleRoom);
+          sockets2[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
             initialState: battle.currentState,

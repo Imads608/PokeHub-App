@@ -1,0 +1,534 @@
+import {
+  TURN_TIMER_SERVICE,
+  type ITurnTimerService,
+} from '../turn-timer/turn-timer.service.interface';
+import { BattleManagerServiceProvider } from './battle-manager.service';
+import {
+  BATTLE_MANAGER_SERVICE,
+  type IBattleManagerService,
+} from './battle-manager.service.interface';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+  REDIS_SERVICE,
+  type RedisService,
+} from '@pokehub/backend/pokehub-redis';
+import { AppLogger } from '@pokehub/backend/shared-logger';
+import type { BattleConfig } from '@pokehub/shared/pokemon-battle-types';
+
+// Mock @pkmn/sim module
+jest.mock('@pkmn/sim', () => {
+  // Mock battle instance
+  const mockBattle = {
+    sides: [
+      {
+        autoChoose: jest.fn(),
+        getChoice: jest.fn().mockReturnValue('move 1'),
+      },
+      {
+        autoChoose: jest.fn(),
+        getChoice: jest.fn().mockReturnValue('move 2'),
+      },
+    ],
+  };
+
+  // Mock omniscient stream
+  const mockOmniscientStream = {
+    write: jest.fn().mockResolvedValue(undefined),
+    [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
+      yield '|start';
+      yield '|turn|1';
+      yield '|request|{}';
+    }),
+  };
+
+  // Mock streams object
+  const mockStreams = {
+    omniscient: mockOmniscientStream,
+    p1: { write: jest.fn() },
+    p2: { write: jest.fn() },
+  };
+
+  // Mock BattleStream class
+  const MockBattleStream = jest.fn().mockImplementation(() => ({
+    battle: mockBattle,
+  }));
+
+  return {
+    BattleStreams: {
+      BattleStream: MockBattleStream,
+      getPlayerStreams: jest.fn().mockReturnValue(mockStreams),
+    },
+  };
+});
+
+describe('BattleManagerService', () => {
+  let service: IBattleManagerService;
+
+  // Mock Redis service methods used by BattleManagerService
+  const mockRedisService: Partial<jest.Mocked<RedisService>> = {
+    getServerId: jest.fn().mockReturnValue('test-server-1'),
+    createBattle: jest.fn().mockResolvedValue(undefined),
+    setBattleSeed: jest.fn().mockResolvedValue(undefined),
+    addServerBattle: jest.fn().mockResolvedValue(undefined),
+    setUserBattle: jest.fn().mockResolvedValue(undefined),
+    clearUserBattle: jest.fn().mockResolvedValue(undefined),
+    getPendingChoices: jest.fn().mockResolvedValue({}),
+    setPendingChoices: jest.fn().mockResolvedValue(undefined),
+    appendBattleLog: jest.fn().mockResolvedValue(undefined),
+    getBattleMetadata: jest.fn(),
+    updateBattleMetadata: jest.fn().mockResolvedValue(undefined),
+    getBattleSeed: jest.fn(),
+    getBattleLog: jest.fn().mockResolvedValue([]),
+    publishBattleUpdate: jest.fn().mockResolvedValue(undefined),
+    setBattleLogTTL: jest.fn().mockResolvedValue(undefined),
+    removeServerBattle: jest.fn().mockResolvedValue(undefined),
+    isServerAlive: jest.fn(),
+  };
+
+  // Mock turn timer service
+  const mockTurnTimerService: Partial<jest.Mocked<ITurnTimerService>> = {
+    setCallbacks: jest.fn(),
+    startTimers: jest.fn(),
+    cancelPlayerTimer: jest.fn(),
+    cancelBattleTimers: jest.fn(),
+    hasActiveTimer: jest.fn(),
+  };
+
+  const mockLogger = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    setContext: jest.fn(),
+  };
+
+  // Test data
+  const testBattleId = 'battle-123';
+  const testPlayer1Id = 'player-1';
+  const testPlayer2Id = 'player-2';
+  const testSeed = '12345,67890,11111,22222';
+
+  const createMockBattleConfig = (
+    overrides?: Partial<BattleConfig>
+  ): BattleConfig => ({
+    id: testBattleId,
+    format: 'gen9ou',
+    seed: testSeed,
+    player1: {
+      id: testPlayer1Id,
+      name: 'Player One',
+      teamId: 'team-1',
+      packedTeam: 'Pikachu|Static|LightBall|Thunderbolt',
+    },
+    player2: {
+      id: testPlayer2Id,
+      name: 'Player Two',
+      teamId: 'team-2',
+      packedTeam: 'Charizard|Blaze|Charcoal|Flamethrower',
+    },
+    ...overrides,
+  });
+
+  const createService = async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        BattleManagerServiceProvider,
+        {
+          provide: REDIS_SERVICE,
+          useValue: mockRedisService,
+        },
+        {
+          provide: TURN_TIMER_SERVICE,
+          useValue: mockTurnTimerService,
+        },
+        {
+          provide: AppLogger,
+          useValue: mockLogger,
+        },
+      ],
+    }).compile();
+
+    return module.get<IBattleManagerService>(BATTLE_MANAGER_SERVICE);
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    service = await createService();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('constructor', () => {
+    it('should register turn timer callbacks on initialization', () => {
+      expect(mockTurnTimerService.setCallbacks).toHaveBeenCalledWith(
+        expect.any(Function), // warning callback
+        expect.any(Function) // timeout callback
+      );
+    });
+  });
+
+  describe('createBattle', () => {
+    it('should create battle, store in Redis, set user battles, and start timers', async () => {
+      const config = createMockBattleConfig();
+
+      const result = await service.createBattle(config);
+
+      // Returns ActiveBattle
+      expect(result).toEqual({
+        id: config.id,
+        config,
+        currentState: expect.any(String),
+      });
+
+      // Stores metadata in Redis
+      expect(mockRedisService.createBattle).toHaveBeenCalledWith(config.id, {
+        config: JSON.stringify(config),
+        status: 'active',
+        hostServer: 'test-server-1',
+        pending: '{}',
+        p1Disconnected: 'false',
+        p2Disconnected: 'false',
+      });
+
+      // Stores seed
+      expect(mockRedisService.setBattleSeed).toHaveBeenCalledWith(
+        config.id,
+        config.seed
+      );
+
+      // Tracks battle on server
+      expect(mockRedisService.addServerBattle).toHaveBeenCalledWith(config.id);
+
+      // Sets user battles
+      expect(mockRedisService.setUserBattle).toHaveBeenCalledWith(
+        config.player1.id,
+        config.id
+      );
+      expect(mockRedisService.setUserBattle).toHaveBeenCalledWith(
+        config.player2.id,
+        config.id
+      );
+
+      // Starts turn timers
+      expect(mockTurnTimerService.startTimers).toHaveBeenCalledWith(
+        config.id,
+        config.player1.id,
+        config.player2.id,
+        false,
+        false
+      );
+    });
+  });
+
+  describe('processChoice', () => {
+    beforeEach(async () => {
+      // Create a battle first
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+    });
+
+    it('should store pending choice and cancel player timer', async () => {
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
+
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
+
+      expect(mockTurnTimerService.cancelPlayerTimer).toHaveBeenCalledWith(
+        testBattleId,
+        'p1'
+      );
+      expect(mockRedisService.setPendingChoices).toHaveBeenCalledWith(
+        testBattleId,
+        { p1: 'move 1' }
+      );
+      expect(mockRedisService.appendBattleLog).toHaveBeenCalledWith(
+        testBattleId,
+        '>p1 move 1'
+      );
+    });
+
+    it('should throw when battle not found', async () => {
+      await expect(
+        service.processChoice('non-existent', testPlayer1Id, 'move 1')
+      ).rejects.toThrow('Battle non-existent not found on this server');
+    });
+
+    it('should throw when player is not in battle', async () => {
+      await expect(
+        service.processChoice(testBattleId, 'unknown-player', 'move 1')
+      ).rejects.toThrow('Player unknown-player is not in battle');
+    });
+  });
+
+  describe('forfeit', () => {
+    beforeEach(async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+    });
+
+    it('should end battle with other player as winner', async () => {
+      await service.forfeit(testBattleId, testPlayer1Id);
+
+      // Should log the forfeit
+      expect(mockRedisService.appendBattleLog).toHaveBeenCalledWith(
+        testBattleId,
+        '>p1 forfeit'
+      );
+
+      // Should cancel timers
+      expect(mockTurnTimerService.cancelBattleTimers).toHaveBeenCalledWith(
+        testBattleId
+      );
+
+      // Should update status
+      expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
+        testBattleId,
+        { status: 'forfeited' }
+      );
+
+      // Should publish end event with player2 as winner
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        {
+          type: 'end',
+          data: { winnerId: testPlayer2Id, reason: 'forfeit' },
+        }
+      );
+
+      // Should clear user battles
+      expect(mockRedisService.clearUserBattle).toHaveBeenCalledWith(
+        testPlayer1Id
+      );
+      expect(mockRedisService.clearUserBattle).toHaveBeenCalledWith(
+        testPlayer2Id
+      );
+    });
+
+    it('should throw when battle not found', async () => {
+      await expect(
+        service.forfeit('non-existent', testPlayer1Id)
+      ).rejects.toThrow('Battle non-existent not found on this server');
+    });
+
+    it('should throw when player is not in battle', async () => {
+      await expect(
+        service.forfeit(testBattleId, 'unknown-player')
+      ).rejects.toThrow('Player unknown-player is not in battle');
+    });
+  });
+
+  describe('recoverBattle', () => {
+    it('should recover battle from Redis, replay commands, and update host server', async () => {
+      const config = createMockBattleConfig();
+      const battleLog = ['>p1 move 1', '>p2 move 2'];
+
+      mockRedisService.getBattleMetadata!.mockResolvedValue({
+        config: JSON.stringify(config),
+        status: 'active',
+        hostServer: 'old-server',
+        pending: '{}',
+        p1Disconnected: 'false',
+        p2Disconnected: 'false',
+      });
+      mockRedisService.getBattleSeed!.mockResolvedValue(testSeed);
+      mockRedisService.getBattleLog!.mockResolvedValue(battleLog);
+
+      const result = await service.recoverBattle(testBattleId);
+
+      expect(result).toEqual({
+        id: testBattleId,
+        config,
+        currentState: expect.any(String),
+      });
+
+      // Should update host server
+      expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
+        testBattleId,
+        { hostServer: 'test-server-1' }
+      );
+
+      // Should track battle on this server
+      expect(mockRedisService.addServerBattle).toHaveBeenCalledWith(
+        testBattleId
+      );
+    });
+
+    it('should throw when metadata not found', async () => {
+      mockRedisService.getBattleMetadata!.mockResolvedValue(null);
+
+      await expect(service.recoverBattle(testBattleId)).rejects.toThrow(
+        `Battle ${testBattleId} not found in Redis`
+      );
+    });
+
+    it('should throw when seed not found', async () => {
+      const config = createMockBattleConfig();
+
+      mockRedisService.getBattleMetadata!.mockResolvedValue({
+        config: JSON.stringify(config),
+        status: 'active',
+        hostServer: 'old-server',
+        pending: '{}',
+        p1Disconnected: 'false',
+        p2Disconnected: 'false',
+      });
+      mockRedisService.getBattleSeed!.mockResolvedValue(null);
+
+      await expect(service.recoverBattle(testBattleId)).rejects.toThrow(
+        `Seed not found for battle ${testBattleId}`
+      );
+    });
+  });
+
+  describe('getBattle', () => {
+    it('should return battle when exists locally', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      const result = service.getBattle(testBattleId);
+
+      expect(result).toEqual({
+        id: testBattleId,
+        config,
+        currentState: expect.any(String),
+      });
+    });
+
+    it('should return undefined when battle does not exist', () => {
+      const result = service.getBattle('non-existent');
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('isHostedLocally', () => {
+    it('should return true when battle is hosted locally', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      expect(service.isHostedLocally(testBattleId)).toBe(true);
+    });
+
+    it('should return false when battle is not hosted locally', () => {
+      expect(service.isHostedLocally('non-existent')).toBe(false);
+    });
+  });
+
+  describe('handleDisconnect', () => {
+    beforeEach(async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+    });
+
+    it('should set disconnect flag and publish event', async () => {
+      await service.handleDisconnect(testBattleId, testPlayer1Id);
+
+      // Should update metadata with disconnect flag and time
+      expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
+        testBattleId,
+        expect.objectContaining({
+          p1Disconnected: 'true',
+          p1DisconnectTime: expect.any(String),
+        })
+      );
+
+      // Should publish opponent disconnected event
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        {
+          type: 'event',
+          data: { event: 'opponent_disconnected', player: 'p1' },
+        }
+      );
+    });
+
+    it('should return early if battle not found locally', async () => {
+      await service.handleDisconnect('non-existent', testPlayer1Id);
+
+      expect(mockRedisService.updateBattleMetadata).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleReconnect', () => {
+    beforeEach(async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+    });
+
+    it('should clear disconnect flag and publish event when battle is local', async () => {
+      const result = await service.handleReconnect(testBattleId, testPlayer1Id);
+
+      expect(result).toEqual({
+        id: testBattleId,
+        config: expect.any(Object),
+        currentState: expect.any(String),
+      });
+
+      // Should clear disconnect flag
+      expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
+        testBattleId,
+        { p1Disconnected: 'false' }
+      );
+
+      // Should publish opponent reconnected event
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        {
+          type: 'event',
+          data: { event: 'opponent_reconnected', player: 'p1' },
+        }
+      );
+    });
+
+    it('should throw when player is not in battle', async () => {
+      await expect(
+        service.handleReconnect(testBattleId, 'unknown-player')
+      ).rejects.toThrow('Player unknown-player is not in battle');
+    });
+  });
+
+  describe('endBattle (via forfeit)', () => {
+    beforeEach(async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+    });
+
+    it('should cancel timers, update Redis, publish end event, clear user battles, and set log TTL', async () => {
+      jest.clearAllMocks();
+
+      await service.forfeit(testBattleId, testPlayer1Id);
+
+      // Cancel timers
+      expect(mockTurnTimerService.cancelBattleTimers).toHaveBeenCalledWith(
+        testBattleId
+      );
+
+      // Update status
+      expect(mockRedisService.updateBattleMetadata).toHaveBeenCalledWith(
+        testBattleId,
+        { status: 'forfeited' }
+      );
+
+      // Publish end event
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        expect.objectContaining({
+          type: 'end',
+        })
+      );
+
+      // Clear user battles
+      expect(mockRedisService.clearUserBattle).toHaveBeenCalledTimes(2);
+
+      // Set log TTL
+      expect(mockRedisService.setBattleLogTTL).toHaveBeenCalledWith(
+        testBattleId,
+        3600
+      );
+
+      // Battle should no longer be hosted locally
+      expect(service.isHostedLocally(testBattleId)).toBe(false);
+    });
+  });
+});
