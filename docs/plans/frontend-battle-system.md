@@ -13,6 +13,7 @@ The backend battle infrastructure is complete (WebSocket gateway, matchmaking, b
 ## Phase 0: Backend Per-Player Stream Fix (DONE)
 
 The `@pkmn/sim` `BattleStreams.getPlayerStreams()` creates three output streams:
+
 - `streams.omniscient` — sees everything (full team details, exact HP, etc.)
 - `streams.p1` — sees only what player 1 should see (opponent info redacted)
 - `streams.p2` — sees only what player 2 should see (opponent info redacted)
@@ -30,9 +31,9 @@ interface BattleInstance {
   config: BattleConfig;
   stream: BattleStreams.BattleStream;
   streams: ReturnType<typeof BattleStreams.getPlayerStreams>;
-  currentState: string;   // Keep: omniscient (for win/tie detection + replay log)
-  p1State: string;        // NEW: p1 perspective output
-  p2State: string;        // NEW: p2 perspective output
+  currentState: string; // Keep: omniscient (for win/tie detection + replay log)
+  p1State: string; // NEW: p1 perspective output
+  p2State: string; // NEW: p2 perspective output
   ended: boolean;
   winnerId: string | null;
 }
@@ -70,13 +71,23 @@ void (async () => {
 ```
 
 Return object includes all three:
+
 ```typescript
 return {
-  config, stream, streams,
-  get currentState() { return currentState; },
-  get p1State() { return p1State; },
-  get p2State() { return p2State; },
-  ended: false, winnerId: null,
+  config,
+  stream,
+  streams,
+  get currentState() {
+    return currentState;
+  },
+  get p1State() {
+    return p1State;
+  },
+  get p2State() {
+    return p2State;
+  },
+  ended: false,
+  winnerId: null,
 };
 ```
 
@@ -88,9 +99,9 @@ return {
 export interface ActiveBattle {
   id: string;
   config: BattleConfig;
-  currentState: string;  // omniscient (for internal use / replay)
-  p1State: string;       // p1 perspective
-  p2State: string;       // p2 perspective
+  currentState: string; // omniscient (for internal use / replay)
+  p1State: string; // p1 perspective
+  p2State: string; // p2 perspective
 }
 ```
 
@@ -165,15 +176,17 @@ Send each player their own perspective on `BATTLE_START`:
 if (socket1) {
   // ...
   sockets1[0].emit(BATTLE_EVENT, {
-    type: 'BATTLE_START', battleId,
-    initialState: battle.p1State,  // was: battle.currentState
+    type: 'BATTLE_START',
+    battleId,
+    initialState: battle.p1State, // was: battle.currentState
   } satisfies ServerBattleEvent);
 }
 if (socket2) {
   // ...
   sockets2[0].emit(BATTLE_EVENT, {
-    type: 'BATTLE_START', battleId,
-    initialState: battle.p2State,  // was: battle.currentState
+    type: 'BATTLE_START',
+    battleId,
+    initialState: battle.p2State, // was: battle.currentState
   } satisfies ServerBattleEvent);
 }
 ```
@@ -183,32 +196,36 @@ if (socket2) {
 **File:** `apps/pokehub-api/src/battle/battle.gateway.ts`
 
 In `handleRejoin()` (line ~644), determine player slot and send correct perspective:
+
 ```typescript
 const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
 client.emit(BATTLE_EVENT, {
-  type: 'BATTLE_START', battleId: battle.id,
+  type: 'BATTLE_START',
+  battleId: battle.id,
   initialState: slot === 'p1' ? battle.p1State : battle.p2State,
 } satisfies ServerBattleEvent);
 ```
 
 In `handleConnection()` (line ~280), same for `BATTLE_RESTORED`:
+
 ```typescript
 const config = battle.config;
 const slot = config.player1.id === userId ? 'p1' : 'p2';
 client.emit(BATTLE_EVENT, {
-  type: 'BATTLE_RESTORED', battleId: activeBattleId,
+  type: 'BATTLE_RESTORED',
+  battleId: activeBattleId,
   currentState: slot === 'p1' ? battle.p1State : battle.p2State,
 });
 ```
 
 ### 0.9 Summary of Phase 0 changes
 
-| File | Change |
-|------|--------|
-| `battle-manager.service.ts` | Add p1/p2 stream readers in `createBattleInstance()`, update `BattleInstance` type, update `executeTurn()` to publish per-player data |
-| `battle-manager.service.interface.ts` | Add `p1State`, `p2State` to `ActiveBattle` |
-| `redis.types.ts` | Change `BattleStateUpdateMessage` from `{ data }` to `{ p1Id, p2Id, p1Data, p2Data }` |
-| `battle.gateway.ts` | Send per-player data in `handleBattleUpdateMessage()`, `tryFindMatch()`, `handleRejoin()`, `handleConnection()` |
+| File                                  | Change                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `battle-manager.service.ts`           | Add p1/p2 stream readers in `createBattleInstance()`, update `BattleInstance` type, update `executeTurn()` to publish per-player data |
+| `battle-manager.service.interface.ts` | Add `p1State`, `p2State` to `ActiveBattle`                                                                                            |
+| `redis.types.ts`                      | Change `BattleStateUpdateMessage` from `{ data }` to `{ p1Id, p2Id, p1Data, p2Data }`                                                 |
+| `battle.gateway.ts`                   | Send per-player data in `handleBattleUpdateMessage()`, `tryFindMatch()`, `handleRejoin()`, `handleConnection()`                       |
 
 **No changes needed** to server event types (`server-events.ts`) — `BattleStartEvent.initialState`, `BattleUpdateEvent.data`, and `BattleRestoredEvent.currentState` are all per-player fields; the fix is in which data we populate them with.
 
@@ -289,6 +306,7 @@ npm install @pkmn/client
 ### 1.2 Create `pokehub-battle-components` Nx library
 
 Generate with Nx:
+
 ```bash
 nx g @nx/react:library pokehub-battle-components --directory=packages/frontend/pokehub-battle-components --importPath=@pokehub/frontend/pokehub-battle-components --bundler=none --unitTestRunner=jest --style=none
 ```
@@ -298,6 +316,7 @@ nx g @nx/react:library pokehub-battle-components --directory=packages/frontend/p
 **File:** `apps/pokehub-app/router.ts`
 
 Add to `privilegedRoutes`:
+
 ```typescript
 {
   route: '/battle',
@@ -317,8 +336,8 @@ function useBattleSocket(options: {
   onAuthError: () => void;
 }): {
   isConnected: boolean;
-  emit: (event: ClientBattleEvent) => void;  // Typed emissions
-}
+  emit: (event: ClientBattleEvent) => void; // Typed emissions
+};
 ```
 
 **Socket creation — single `useEffect` (deps: `[]`):**
@@ -338,6 +357,7 @@ If `accessToken` is already available at mount, `socket.connect()` is called imm
 **Token arrival / refresh — second `useEffect` (deps: `[accessToken]`):**
 
 Handles two scenarios:
+
 1. **Token arrives after mount** — session was loading, token was `undefined` at mount time. When the session resolves, `accessToken` becomes truthy, `tokenRef` updates, and `socket.connect()` is called.
 2. **Token refreshed after auth failure** — server rejected an expired token (see below), parent refreshed the session, `accessToken` changed. `tokenRef` updates and `socket.connect()` reconnects with the fresh token.
 
@@ -382,7 +402,7 @@ interface BattleUIState {
 
   // Turn state
   turnTimer: { secondsRemaining: number; warning: boolean } | null;
-  pendingChoice: boolean;  // Has user submitted a choice this turn?
+  pendingChoice: boolean; // Has user submitted a choice this turn?
 
   // Disconnection
   opponentDisconnected: boolean;
@@ -403,6 +423,7 @@ interface BattleUIState {
 ```
 
 **Reducer cases by event type:**
+
 - `QUEUE_JOINED` -> phase='queued', set position
 - `QUEUE_LEFT` -> phase='idle', clear queue state
 - `MATCH_FOUND` -> phase='matched', set battleId + opponent
@@ -437,7 +458,7 @@ interface BattleSocketContextValue {
 
 Each action method emits the corresponding typed `ClientBattleEvent` on the socket. The `onEvent` callback dispatches to the reducer.
 
-**Auth refresh:** Passes `onAuthError: () => session.update()` to `useBattleSocket`. `useAuthSession()` provides the `update` function which triggers NextAuth's JWT callback to refresh the access token.
+**Auth refresh:** Passes `onAuthError` callback to `useBattleSocket` that calls `getAuthSession()` (re-exported from `next-auth/react`'s `getSession`). This makes a request to `/api/auth/session`, which runs the JWT callback on the server — the callback checks token expiry and refreshes via `GET /auth/access-token` if needed. When the session updates, `accessToken` changes → `tokenRef` updates → socket reconnects with the fresh token.
 
 **DECLINE_MATCH logic:** Track local `isInQueue` flag. If `MATCH_FOUND` arrives when `phase !== 'queued'`, auto-send `DECLINE_MATCH` (per design doc's TOCTOU handling).
 
@@ -446,22 +467,22 @@ Each action method emits the corresponding typed `ClientBattleEvent` on the sock
 Shows toast notifications when battle events arrive while the user is **not** on the `/battle` page. Uses `usePathname()` from `next/navigation` to detect the current route.
 
 ```typescript
-function useBattleNotifications(state: BattleUIState): void
+function useBattleNotifications(state: BattleUIState): void;
 ```
 
 **When notifications fire:** Only when `pathname` does not start with `/battle` AND there is an active battle (`phase === 'battle'` or `phase === 'ended'`).
 
 **Events that trigger notifications:**
 
-| Event | Toast | Action |
-|-------|-------|--------|
-| `BATTLE_UPDATE` with new `\|request\|` | "It's your turn! Make your move." | "Go to battle" button |
-| `TURN_WARNING` | "Turn timer: {seconds}s remaining!" | "Go to battle" button |
-| `OPPONENT_DISCONNECTED` | "Your opponent disconnected." | "Go to battle" button |
-| `OPPONENT_RECONNECTED` | "Your opponent reconnected." | (dismiss only) |
-| `BATTLE_END` (win) | "Victory! You won the battle." | "View results" button |
-| `BATTLE_END` (loss/draw) | "Battle ended — {reason}." | "View results" button |
-| `BATTLE_RESTORED` | "You have an active battle." | "Rejoin battle" button |
+| Event                                  | Toast                               | Action                 |
+| -------------------------------------- | ----------------------------------- | ---------------------- |
+| `BATTLE_UPDATE` with new `\|request\|` | "It's your turn! Make your move."   | "Go to battle" button  |
+| `TURN_WARNING`                         | "Turn timer: {seconds}s remaining!" | "Go to battle" button  |
+| `OPPONENT_DISCONNECTED`                | "Your opponent disconnected."       | "Go to battle" button  |
+| `OPPONENT_RECONNECTED`                 | "Your opponent reconnected."        | (dismiss only)         |
+| `BATTLE_END` (win)                     | "Victory! You won the battle."      | "View results" button  |
+| `BATTLE_END` (loss/draw)               | "Battle ended — {reason}."          | "View results" button  |
+| `BATTLE_RESTORED`                      | "You have an active battle."        | "Rejoin battle" button |
 
 **Action buttons:** Use Sonner's `action` option with `router.push(`/battle/${battleId}`)`.
 
@@ -495,6 +516,7 @@ Client component. Uses `useBattleSocketContext()` for state and actions. Shows d
 ### 2.3 Components
 
 **`format-selector.tsx`**: Reuses the format system from `@pokehub/frontend/dex-data-provider` (`packages/frontend/dex-data-provider/src/lib/api/formats.api.ts`):
+
 - Generation selector (1-9) defaulting to Gen 9
 - Format dropdown populated by `getFormatsForGeneration(gen)`, grouped by category via `groupFormatsByCategory()` (Singles, Doubles, VGC, Monotype, National Dex, Other)
 - Optional search filter using `searchFormats()` when the list is long
@@ -518,6 +540,7 @@ Client component. Reads `battleId` from params. If `state.battleId` doesn't matc
 ### 3.2 @pkmn/client Integration
 
 The `Battle` instance from `@pkmn/client` is created in the reducer on `BATTLE_START`:
+
 ```typescript
 import { Battle } from '@pkmn/client';
 import { Generations } from '@pkmn/data';
@@ -531,12 +554,14 @@ battle.update();
 ```
 
 On `BATTLE_UPDATE`, feed additional protocol:
+
 ```typescript
 battle.add(data);
 battle.update();
 ```
 
 The `battle` object now contains structured state:
+
 - `battle.p1` / `battle.p2` -- Player sides with Pokemon, name, rating
 - `battle.p1.pokemon[0]` -- Active Pokemon with HP, status, moves, stats, boosts
 - `battle.field` -- Weather, terrain, side conditions
@@ -549,71 +574,84 @@ The `battle.request` object is critical -- it tells us what moves/switches are a
 ### 3.3 Component Details
 
 **`battle-container.tsx`** -- Main layout grid:
+
 - Desktop: 2-column (battlefield + action panel on left, battle log on right)
 - Mobile: Stacked (battlefield -> battle log snippet -> action panel)
 - Contains: BattleHeader, OpponentSide, PlayerSide, ActionPanel, BattleLog
 - Shows BattleEndOverlay when phase='ended'
 
 **`pokemon-side.tsx`** -- Renders one player's active Pokemon:
+
 - Props: `pokemon: Pokemon` (from @pkmn/client), `isOpponent: boolean`
 - Contains: PokemonSprite, HPBar, StatusBadge, name/level display
 - Opponent side: Shows limited info (no exact HP number, only %)
 - Player side: Shows full info (exact HP, PP counts)
 
 **`pokemon-sprite.tsx`** -- Shows Pokemon sprite using `@pkmn/img`:
+
 - Uses `Sprites.getPokemon(name, { gen, side })` to get sprite URL
 - Opponent sprite faces left/back, player sprite faces right/front
 - CSS fade-out animation on faint
 
 **`hp-bar.tsx`** -- Animated health bar:
+
 - Props: `current: number, max: number`
 - Color: green (>50%), yellow (25-50%), red (<25%)
 - CSS transition on width change: `transition: width 0.5s ease`
 - Shows percentage text
 
 **`status-badge.tsx`** -- Shows status condition (BRN, PAR, SLP, FRZ, PSN, TOX):
+
 - Props: `status: string | null`
 - Uses Badge component with status-specific colors
 - Reuses Pokemon type color palette where applicable
 
 **`move-button.tsx`** -- Single move button:
+
 - Props: `move: { name, type, pp, maxpp, disabled }`, `onSelect: () => void`
 - Shows move name, type color background (using `typeColors` from shared-utils), PP counter
 - Disabled state when no PP or not player's turn
 - `onClick` -> calls `submitMove(battleId, 'move N')`
 
 **`move-panel.tsx`** -- 2x2 grid of MoveButtons:
+
 - Reads available moves from `battle.request.active[0].moves`
 - If forced (only 1 choice), auto-select or show disabled state
 
 **`switch-panel.tsx`** -- List of team members for switching:
+
 - Shows all non-active, non-fainted Pokemon
 - Each `TeamMember` shows icon, HP preview, status
 - `onClick` -> calls `submitMove(battleId, 'switch N')`
 
 **`action-panel.tsx`** -- Container for move/switch selection:
+
 - Tabs/toggle between "Moves" and "Switch"
 - Shows "Waiting for opponent..." after submitting choice
 - Disabled when `pendingChoice === true`
 - Determines available actions from `battle.request`
 
 **`battle-header.tsx`** -- Top bar:
+
 - Format badge (e.g., "Gen 9 OU")
 - Turn counter ("Turn 5")
 - TurnTimer component
 - Forfeit button (with confirmation dialog)
 
 **`turn-timer.tsx`** -- Countdown display:
+
 - Shows seconds remaining
 - Turns red/pulses when `warning === true` (under 30s)
 - Updates from TURN_WARNING events
 
 **`battle-log.tsx`** -- Scrollable text log:
+
 - Renders protocol text lines as readable messages
 - Auto-scrolls to bottom on new entries
 - Color-coded by event type (damage in red, heal in green, etc.)
 
 **`battle-end-overlay.tsx`** -- Post-battle screen:
+
 - Overlay/modal on top of battle field
 - Shows "Victory!" or "Defeat" with opponent name
 - End reason text
@@ -683,6 +721,7 @@ States:
 ```
 
 Styling:
+
 - Fixed position at the bottom of the viewport, full width
 - Semi-transparent background with backdrop blur (consistent with app's toast styling)
 - Border-top accent color: default = muted, your turn = primary, timer warning = destructive
@@ -713,78 +752,82 @@ The `useBattleNotifications` hook (see 1.7) fires Sonner toast notifications whe
 - Battle page checks if `state.battleId` matches the URL param and calls `rejoin()` if the state is stale.
 
 ### 4.5 Opponent disconnect UI
+
 - Overlay message: "Opponent disconnected. Waiting {timeout}s..."
 - Countdown timer for disconnect timeout
 - Clears when OPPONENT_RECONNECTED received
 
 ### 4.6 Error handling
+
 - Toast notifications for recoverable errors (using Sonner via shared-ui-components)
 - Redirect to lobby for non-recoverable errors
 - Network disconnect detection (socket.io `disconnect` event with transport reasons)
 
 ### 4.7 Mobile responsiveness
+
 - Stacked layout on mobile (field -> log -> actions)
 - Smaller sprites, compact move buttons
 - Touch-friendly button sizes
 
 ### 4.8 Remove "Coming Soon" from home page
+
 - Update `apps/pokehub-app/app/page.tsx` to set `comingSoon: false` for Battle feature card
 
 ---
 
 ## Files to Create
 
-| File | Type | Description |
-|------|------|-------------|
-| `packages/frontend/pokehub-battle-components/project.json` | Config | Nx project config (DONE) |
-| `packages/frontend/pokehub-battle-components/tsconfig.json` | Config | TypeScript config (DONE) |
-| `packages/frontend/pokehub-battle-components/tsconfig.lib.json` | Config | Lib tsconfig (DONE) |
-| `packages/frontend/pokehub-battle-components/src/index.ts` | Export | Public API (DONE) |
-| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-socket.ts` | Hook | Socket.io connection lifecycle |
-| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-state.ts` | Hook | State reducer |
-| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-notifications.ts` | Hook | Toast notifications when away from battle |
-| `packages/frontend/pokehub-battle-components/src/lib/context/battle-socket.context.tsx` | Context | Socket + state + notifications provider |
-| `packages/frontend/pokehub-battle-components/src/lib/types/battle-ui.types.ts` | Types | UI state types (DONE) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/lobby/*` | Components | Lobby UI (4 files) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/battlefield/*` | Components | Battle field (6 files) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/actions/*` | Components | Action panel (5 files) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/info/*` | Components | Header/timer/log (3 files) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/end/*` | Components | End overlay (1 file) |
-| `packages/frontend/pokehub-battle-components/src/lib/components/active-battle-bar.tsx` | Component | Persistent floating bar for returning to active battle |
-| `apps/pokehub-app/app/battle/layout.tsx` | Layout | Auth guard only |
-| `apps/pokehub-app/app/battle/page.tsx` | Page | Battle lobby |
-| `apps/pokehub-app/app/battle/[battleId]/page.tsx` | Page | Active battle |
+| File                                                                                    | Type       | Description                                            |
+| --------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------ |
+| `packages/frontend/pokehub-battle-components/project.json`                              | Config     | Nx project config (DONE)                               |
+| `packages/frontend/pokehub-battle-components/tsconfig.json`                             | Config     | TypeScript config (DONE)                               |
+| `packages/frontend/pokehub-battle-components/tsconfig.lib.json`                         | Config     | Lib tsconfig (DONE)                                    |
+| `packages/frontend/pokehub-battle-components/src/index.ts`                              | Export     | Public API (DONE)                                      |
+| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-socket.ts`        | Hook       | Socket.io connection lifecycle                         |
+| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-state.ts`         | Hook       | State reducer                                          |
+| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-notifications.ts` | Hook       | Toast notifications when away from battle              |
+| `packages/frontend/pokehub-battle-components/src/lib/context/battle-socket.context.tsx` | Context    | Socket + state + notifications provider                |
+| `packages/frontend/pokehub-battle-components/src/lib/types/battle-ui.types.ts`          | Types      | UI state types (DONE)                                  |
+| `packages/frontend/pokehub-battle-components/src/lib/components/lobby/*`                | Components | Lobby UI (4 files)                                     |
+| `packages/frontend/pokehub-battle-components/src/lib/components/battlefield/*`          | Components | Battle field (6 files)                                 |
+| `packages/frontend/pokehub-battle-components/src/lib/components/actions/*`              | Components | Action panel (5 files)                                 |
+| `packages/frontend/pokehub-battle-components/src/lib/components/info/*`                 | Components | Header/timer/log (3 files)                             |
+| `packages/frontend/pokehub-battle-components/src/lib/components/end/*`                  | Components | End overlay (1 file)                                   |
+| `packages/frontend/pokehub-battle-components/src/lib/components/active-battle-bar.tsx`  | Component  | Persistent floating bar for returning to active battle |
+| `apps/pokehub-app/app/battle/layout.tsx`                                                | Layout     | Auth guard only                                        |
+| `apps/pokehub-app/app/battle/page.tsx`                                                  | Page       | Battle lobby                                           |
+| `apps/pokehub-app/app/battle/[battleId]/page.tsx`                                       | Page       | Active battle                                          |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.ts` | Phase 0 (DONE) |
-| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.interface.ts` | Phase 0 (DONE) |
-| `packages/backend/pokehub-redis/src/lib/redis.types.ts` | Phase 0 (DONE) |
-| `apps/pokehub-api/src/battle/battle.gateway.ts` | Phase 0 (DONE) |
-| `apps/pokehub-app/router.ts` | Add `/battle` privileged route (DONE) |
-| `apps/pokehub-app/app/(components)/app.tsx` | Wrap children with `BattleSocketProvider` |
-| `apps/pokehub-app/app/page.tsx` | Remove `comingSoon: true` from Battle card |
-| `tsconfig.base.json` | Add `@pokehub/frontend/pokehub-battle-components` path alias (DONE) |
-| `package.json` | Add `@pkmn/client` dependency (DONE) |
+| File                                                                                      | Change                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.ts`           | Phase 0 (DONE)                                                      |
+| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.interface.ts` | Phase 0 (DONE)                                                      |
+| `packages/backend/pokehub-redis/src/lib/redis.types.ts`                                   | Phase 0 (DONE)                                                      |
+| `apps/pokehub-api/src/battle/battle.gateway.ts`                                           | Phase 0 (DONE)                                                      |
+| `apps/pokehub-app/router.ts`                                                              | Add `/battle` privileged route (DONE)                               |
+| `apps/pokehub-app/app/(components)/app.tsx`                                               | Wrap children with `BattleSocketProvider`                           |
+| `apps/pokehub-app/app/page.tsx`                                                           | Remove `comingSoon: true` from Battle card                          |
+| `tsconfig.base.json`                                                                      | Add `@pokehub/frontend/pokehub-battle-components` path alias (DONE) |
+| `package.json`                                                                            | Add `@pkmn/client` dependency (DONE)                                |
 
 ## Reused Existing Code
 
-| What | From | Usage |
-|------|------|-------|
-| `ServerBattleEvent`, `ClientBattleEvent`, `BATTLE_EVENT`, `BATTLE_NAMESPACE` | `@pokehub/shared/pokemon-battle-types` | All event types + constants |
-| `Button`, `Card`, `Badge`, `Select`, `Dialog`, `Tabs`, `ScrollArea`, `Skeleton` | `@pokehub/frontend/shared-ui-components` | UI primitives |
-| `typeColors`, `getTypeColor()` | `@pokehub/frontend/shared-utils` | Move type colors |
-| `getFormatsForGeneration()`, `groupFormatsByCategory()`, `searchFormats()`, `getShowdownFormatId()` | `@pokehub/frontend/dex-data-provider` | Format selector (same as Team Builder) |
-| `PokemonTypeBadge` | `@pokehub/frontend/pokehub-ui-components` | Type badges |
-| `useAuthSession()` | `@pokehub/frontend/shared-auth` | Access token for socket |
-| `useUserTeams()` | `@pokehub/frontend/pokehub-team-builder` | Team list for selector |
-| `handleServerAuth()` | `apps/pokehub-app/app/(utils)/handleServerAuth` | Layout auth guard |
-| `toast` | `sonner` (via shared-ui-components Toaster) | Error notifications |
-| `@pkmn/img` | Already installed | Pokemon sprites |
-| `@pkmn/data` + `@pkmn/dex` | Already installed | Generations data for @pkmn/client |
-| `@pkmn/client` | New install | Protocol parsing |
+| What                                                                                                | From                                            | Usage                                  |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------- |
+| `ServerBattleEvent`, `ClientBattleEvent`, `BATTLE_EVENT`, `BATTLE_NAMESPACE`                        | `@pokehub/shared/pokemon-battle-types`          | All event types + constants            |
+| `Button`, `Card`, `Badge`, `Select`, `Dialog`, `Tabs`, `ScrollArea`, `Skeleton`                     | `@pokehub/frontend/shared-ui-components`        | UI primitives                          |
+| `typeColors`, `getTypeColor()`                                                                      | `@pokehub/frontend/shared-utils`                | Move type colors                       |
+| `getFormatsForGeneration()`, `groupFormatsByCategory()`, `searchFormats()`, `getShowdownFormatId()` | `@pokehub/frontend/dex-data-provider`           | Format selector (same as Team Builder) |
+| `PokemonTypeBadge`                                                                                  | `@pokehub/frontend/pokehub-ui-components`       | Type badges                            |
+| `useAuthSession()`                                                                                  | `@pokehub/frontend/shared-auth`                 | Access token for socket                |
+| `useUserTeams()`                                                                                    | `@pokehub/frontend/pokehub-team-builder`        | Team list for selector                 |
+| `handleServerAuth()`                                                                                | `apps/pokehub-app/app/(utils)/handleServerAuth` | Layout auth guard                      |
+| `toast`                                                                                             | `sonner` (via shared-ui-components Toaster)     | Error notifications                    |
+| `@pkmn/img`                                                                                         | Already installed                               | Pokemon sprites                        |
+| `@pkmn/data` + `@pkmn/dex`                                                                          | Already installed                               | Generations data for @pkmn/client      |
+| `@pkmn/client`                                                                                      | New install                                     | Protocol parsing                       |
 
 ---
 
