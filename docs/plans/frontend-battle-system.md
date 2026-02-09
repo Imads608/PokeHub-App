@@ -10,7 +10,7 @@ The backend battle infrastructure is complete (WebSocket gateway, matchmaking, b
 
 ---
 
-## Phase 0: Backend Per-Player Stream Fix
+## Phase 0: Backend Per-Player Stream Fix (DONE)
 
 The `@pkmn/sim` `BattleStreams.getPlayerStreams()` creates three output streams:
 - `streams.omniscient` — sees everything (full team details, exact HP, etc.)
@@ -216,20 +216,35 @@ client.emit(BATTLE_EVENT, {
 
 ## Architecture Overview
 
-```
-apps/pokehub-app/app/battle/
-├── layout.tsx                 # Auth guard + BattleSocketProvider
-├── page.tsx                   # Battle lobby (format/team select, queue)
-└── [battleId]/
-    └── page.tsx               # Active battle page
+### Provider Placement
 
-packages/frontend/pokehub-battle-components/   # New Nx library
+`BattleSocketProvider` is mounted at the **app level** inside the `App` component (`apps/pokehub-app/app/(components)/app.tsx`), not inside the `/battle` layout. This ensures:
+
+- The socket connection persists when the user navigates away from `/battle` (e.g., to `/team-builder`) and back.
+- Battle state (queue position, active battle, etc.) survives route changes.
+- The provider can show toast notifications for battle events regardless of which page the user is on.
+- The socket only connects when `accessToken` is truthy, so unauthenticated users incur no overhead.
+
+```
+apps/pokehub-app/app/
+├── (components)/
+│   ├── app.tsx                # Wraps children with BattleSocketProvider
+│   └── bootstrapper.tsx       # SessionProvider, QueryProvider, ThemeProvider
+├── battle/
+│   ├── layout.tsx             # Auth guard only (no provider)
+│   ├── page.tsx               # Battle lobby (format/team select, queue)
+│   └── [battleId]/
+│       └── page.tsx           # Active battle page
+└── ...other routes            # Socket stays alive across navigation
+
+packages/frontend/pokehub-battle-components/   # Nx library
 └── src/lib/
     ├── hooks/
-    │   ├── use-battle-socket.ts       # Socket.io connection + event dispatch
-    │   └── use-battle-state.ts        # useReducer for battle state
+    │   ├── use-battle-socket.ts       # Socket.io connection lifecycle
+    │   ├── use-battle-state.ts        # useReducer for battle state
+    │   └── use-battle-notifications.ts # Toast notifications when away from battle
     ├── context/
-    │   └── battle-socket.context.tsx   # React context for socket + state
+    │   └── battle-socket.context.tsx   # React context for socket + state + notifications
     ├── components/
     │   ├── lobby/
     │   │   ├── battle-lobby.tsx        # Main lobby component
@@ -293,26 +308,63 @@ Add to `privilegedRoutes`:
 
 ### 1.4 Socket hook: `use-battle-socket.ts`
 
-Manages the socket.io connection lifecycle. Connects when component mounts, disconnects on unmount. Listens on `BATTLE_EVENT` ('event') channel and dispatches to a callback.
+Manages a single long-lived Socket.io connection to the `/battle` namespace. The socket is created once on mount and stays alive across route navigations (since the provider is at the app level).
 
 ```typescript
-// Key API:
 function useBattleSocket(options: {
   accessToken: string | undefined;
   onEvent: (event: ServerBattleEvent) => void;
+  onAuthError: () => void;
 }): {
-  socket: Socket | null;
   isConnected: boolean;
-  emit: (eventType: string, data: unknown) => void;
+  emit: (event: ClientBattleEvent) => void;  // Typed emissions
 }
 ```
 
-**Connection logic:**
-- Connect to `${NEXT_PUBLIC_POKEHUB_API_URL}/battle` with `auth: { token: accessToken }`
-- Transport: `['websocket']` (skip polling)
-- Single listener on `BATTLE_EVENT` channel -> parse -> call `onEvent`
-- Auto-disconnect on unmount via `useEffect` cleanup
-- Only connect when `accessToken` is truthy
+**Socket creation — single `useEffect` (deps: `[]`):**
+
+The socket is created once with `autoConnect: false` (socket is instantiated but does not connect until `socket.connect()` is called — needed because the token may not be available at mount time while the session is loading). The `auth` option uses a **callback function** that reads the latest token from a ref, so every (re)connection attempt uses the freshest token without recreating the socket:
+
+```typescript
+const socket = io(`${apiUrl}${BATTLE_NAMESPACE}`, {
+  auth: (cb) => cb({ token: tokenRef.current }),
+  transports: ['websocket'],
+  autoConnect: false,
+});
+```
+
+If `accessToken` is already available at mount, `socket.connect()` is called immediately inside this effect.
+
+**Token arrival / refresh — second `useEffect` (deps: `[accessToken]`):**
+
+Handles two scenarios:
+1. **Token arrives after mount** — session was loading, token was `undefined` at mount time. When the session resolves, `accessToken` becomes truthy, `tokenRef` updates, and `socket.connect()` is called.
+2. **Token refreshed after auth failure** — server rejected an expired token (see below), parent refreshed the session, `accessToken` changed. `tokenRef` updates and `socket.connect()` reconnects with the fresh token.
+
+Uses `socket.active` (true when connected or actively reconnecting) to avoid calling `connect()` redundantly.
+
+**Auth failure handling — `disconnect` event:**
+
+The backend validates the token in `handleConnection()`. If invalid, the server calls `client.disconnect()`, which fires a `disconnect` event on the client with reason `"io server disconnect"`. We check the reason to selectively trigger a token refresh:
+
+```typescript
+socket.on('disconnect', (reason) => {
+  if (reason === 'io server disconnect') {
+    // Server rejected us — likely expired token. Trigger refresh.
+    onAuthError();
+  }
+  // 'ping timeout', 'transport close', 'transport error':
+  //   socket.io auto-reconnects — auth callback reads latest token from ref.
+  // 'io client disconnect':
+  //   We initiated disconnect — no action needed.
+});
+```
+
+**Typed emissions:**
+
+The `emit` function accepts `ClientBattleEvent` (discriminated union from `@pokehub/shared/pokemon-battle-types`). It destructures `{ type, ...payload }` and calls `socket.emit(type, payload)`, matching the gateway's `@SubscribeMessage(type)` handlers.
+
+**Cleanup:** On unmount, the socket is disconnected and all listeners removed.
 
 ### 1.5 Battle state reducer: `use-battle-state.ts`
 
@@ -367,7 +419,7 @@ interface BattleUIState {
 
 ### 1.6 Socket context: `battle-socket.context.tsx`
 
-Combines socket hook + state reducer. Provides to children:
+Combines socket hook + state reducer + notifications. Mounted inside `App` (app-level) so it persists across all route navigations.
 
 ```typescript
 interface BattleSocketContextValue {
@@ -383,9 +435,39 @@ interface BattleSocketContextValue {
 }
 ```
 
-Each action method emits the corresponding event type on the socket. The `onEvent` callback dispatches to the reducer.
+Each action method emits the corresponding typed `ClientBattleEvent` on the socket. The `onEvent` callback dispatches to the reducer.
+
+**Auth refresh:** Passes `onAuthError: () => session.update()` to `useBattleSocket`. `useAuthSession()` provides the `update` function which triggers NextAuth's JWT callback to refresh the access token.
 
 **DECLINE_MATCH logic:** Track local `isInQueue` flag. If `MATCH_FOUND` arrives when `phase !== 'queued'`, auto-send `DECLINE_MATCH` (per design doc's TOCTOU handling).
+
+### 1.7 Notification hook: `use-battle-notifications.ts`
+
+Shows toast notifications when battle events arrive while the user is **not** on the `/battle` page. Uses `usePathname()` from `next/navigation` to detect the current route.
+
+```typescript
+function useBattleNotifications(state: BattleUIState): void
+```
+
+**When notifications fire:** Only when `pathname` does not start with `/battle` AND there is an active battle (`phase === 'battle'` or `phase === 'ended'`).
+
+**Events that trigger notifications:**
+
+| Event | Toast | Action |
+|-------|-------|--------|
+| `BATTLE_UPDATE` with new `\|request\|` | "It's your turn! Make your move." | "Go to battle" button |
+| `TURN_WARNING` | "Turn timer: {seconds}s remaining!" | "Go to battle" button |
+| `OPPONENT_DISCONNECTED` | "Your opponent disconnected." | "Go to battle" button |
+| `OPPONENT_RECONNECTED` | "Your opponent reconnected." | (dismiss only) |
+| `BATTLE_END` (win) | "Victory! You won the battle." | "View results" button |
+| `BATTLE_END` (loss/draw) | "Battle ended — {reason}." | "View results" button |
+| `BATTLE_RESTORED` | "You have an active battle." | "Rejoin battle" button |
+
+**Action buttons:** Use Sonner's `action` option with `router.push(`/battle/${battleId}`)`.
+
+**Deduplication:** Track last notified turn number to avoid repeated "your turn" toasts for the same turn.
+
+This hook is called inside `BattleSocketProvider`, so notifications work on every page.
 
 ---
 
@@ -393,12 +475,12 @@ Each action method emits the corresponding event type on the socket. The `onEven
 
 ### 2.1 Layout: `apps/pokehub-app/app/battle/layout.tsx`
 
-Server component with auth guard + client BattleSocketProvider wrapper:
+Server component with auth guard only. The `BattleSocketProvider` lives at the app level (see Architecture Overview), not here.
 
 ```typescript
 export default async function BattleLayout({ children }) {
   await handleServerAuth();
-  return <BattleSocketProvider>{children}</BattleSocketProvider>;
+  return <>{children}</>;
 }
 ```
 
@@ -541,29 +623,111 @@ The `battle.request` object is critical -- it tells us what moves/switches are a
 
 ---
 
-## Phase 4: Polish & Edge Cases
+## Phase 4: Navigation Persistence, Notifications & Polish
 
-### 4.1 Reconnection handling
-- On page load, if user has active battle (BATTLE_RESTORED event on connect), redirect to `/battle/[battleId]`
-- Battle page checks if `battleId` matches and calls `rejoin()` if needed
-- Shows "Reconnecting..." state while recovering
+### 4.1 Navigation away from an active battle
 
-### 4.2 Opponent disconnect UI
+Because `BattleSocketProvider` is at the app level:
+
+- **Socket stays connected.** The user can navigate to `/team-builder`, `/pokedex`, `/settings`, etc. and the WebSocket connection remains alive. All battle events (`BATTLE_UPDATE`, `TURN_WARNING`, `BATTLE_END`, etc.) continue to be received and processed by the reducer.
+- **State is preserved.** The `@pkmn/client` `Battle` instance and all UI state (`phase`, `pendingChoice`, `turnTimer`, etc.) live in the context and are not lost on route change.
+- **Return to battle.** When the user navigates back to `/battle/[battleId]`, the page reads from the existing context state — no rejoin/reconnect needed. The UI renders the current battle state immediately.
+
+### 4.2 Returning to the battle
+
+The user has multiple ways to navigate back to an active battle:
+
+**A. Persistent battle bar (`active-battle-bar.tsx`)**
+
+A small floating bar rendered at the bottom of every page when `phase === 'battle'` and the user is NOT on `/battle/*`. Mounted inside `BattleSocketProvider` (app-level), uses `usePathname()` to conditionally render.
+
+```
+Desktop:
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        (current page content)                          │
+│                                                                        │
+│                                                                        │
+├──────────────────────────────────────────────────────────────────────────┤
+│ ⚔ vs. Ash  │  Turn 5 — Your turn!  │  ⏱ 01:23  │  [ Return to Battle ] │
+└──────────────────────────────────────────────────────────────────────────┘
+
+Mobile:
+┌────────────────────────────────┐
+│     (current page content)     │
+│                                │
+├────────────────────────────────┤
+│ ⚔ vs. Ash — Your turn!  ⏱ 82s│
+│       [ Return to Battle ]     │
+└────────────────────────────────┘
+
+States:
+┌─ Your turn ────────────────────────────────────────────────────────────┐
+│ ⚔ vs. Ash  │  Turn 5 — Your turn!  │  ⏱ 01:23  │  [ Return to Battle ]│
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Waiting ──────────────────────────────────────────────────────────────┐
+│ ⚔ vs. Ash  │  Turn 5 — Waiting for opponent...  │  [ Return to Battle ]│
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Timer warning (bar pulses/red accent) ────────────────────────────────┐
+│ ⚔ vs. Ash  │  Turn 5 — Your turn!  │  ⏱ 00:15  │  [ Return to Battle ]│
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Opponent disconnected ───────────────────────────────────────────────┐
+│ ⚔ vs. Ash  │  Opponent disconnected (45s)       │  [ Return to Battle ]│
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─ Battle ended ────────────────────────────────────────────────────────┐
+│ ⚔ vs. Ash  │  Victory!                          │  [ View Results ]    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+Styling:
+- Fixed position at the bottom of the viewport, full width
+- Semi-transparent background with backdrop blur (consistent with app's toast styling)
+- Border-top accent color: default = muted, your turn = primary, timer warning = destructive
+- Dismissible via `X` button (but reappears on next event if still in battle)
+
+**B. Nav link indicator**
+
+The "Battle" link in `AppNav` shows a visual indicator (pulsing dot or badge) when there's an active battle. The context exposes `state.phase` and `state.battleId`, so `AppNav` (or a small wrapper) can read from the battle context to conditionally render the indicator. Clicking the Battle nav link when there's an active battle navigates to `/battle/[battleId]` instead of the lobby.
+
+**C. Toast notification actions**
+
+Each toast notification (see 4.3) includes a "Go to battle" / "Rejoin" action button that navigates to the battle page. These are reactive (shown when events arrive) rather than persistent.
+
+### 4.3 Toast notifications when away from battle
+
+The `useBattleNotifications` hook (see 1.7) fires Sonner toast notifications when battle events arrive while the user is NOT on `/battle/*`. Each toast includes an action button to navigate back. Key notifications:
+
+- **"It's your turn!"** — when `BATTLE_UPDATE` contains a new `|request|` (opponent made their move, waiting on user)
+- **Turn timer warning** — when `TURN_WARNING` arrives with low time remaining
+- **Opponent disconnected / reconnected** — status updates
+- **Battle ended** — win/loss/draw result with "View results" action
+
+### 4.4 Reconnection handling (page refresh / new session)
+
+- On page load, if user has an active battle, the backend sends `BATTLE_RESTORED` on socket connect. The reducer transitions to `phase='battle'` with the restored state.
+- If user is NOT on `/battle/*`, the active battle bar appears and a toast notification shows: "You have an active battle" with a "Rejoin" button.
+- If user IS on `/battle/[battleId]`, the page renders from the restored state.
+- Battle page checks if `state.battleId` matches the URL param and calls `rejoin()` if the state is stale.
+
+### 4.5 Opponent disconnect UI
 - Overlay message: "Opponent disconnected. Waiting {timeout}s..."
 - Countdown timer for disconnect timeout
 - Clears when OPPONENT_RECONNECTED received
 
-### 4.3 Error handling
+### 4.6 Error handling
 - Toast notifications for recoverable errors (using Sonner via shared-ui-components)
 - Redirect to lobby for non-recoverable errors
-- Network disconnect detection (socket.io 'disconnect' event)
+- Network disconnect detection (socket.io `disconnect` event with transport reasons)
 
-### 4.4 Mobile responsiveness
+### 4.7 Mobile responsiveness
 - Stacked layout on mobile (field -> log -> actions)
 - Smaller sprites, compact move buttons
 - Touch-friendly button sizes
 
-### 4.5 Remove "Coming Soon" from home page
+### 4.8 Remove "Coming Soon" from home page
 - Update `apps/pokehub-app/app/page.tsx` to set `comingSoon: false` for Battle feature card
 
 ---
@@ -572,20 +736,22 @@ The `battle.request` object is critical -- it tells us what moves/switches are a
 
 | File | Type | Description |
 |------|------|-------------|
-| `packages/frontend/pokehub-battle-components/project.json` | Config | Nx project config |
-| `packages/frontend/pokehub-battle-components/tsconfig.json` | Config | TypeScript config |
-| `packages/frontend/pokehub-battle-components/tsconfig.lib.json` | Config | Lib tsconfig |
-| `packages/frontend/pokehub-battle-components/src/index.ts` | Export | Public API |
-| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-socket.ts` | Hook | Socket.io connection |
+| `packages/frontend/pokehub-battle-components/project.json` | Config | Nx project config (DONE) |
+| `packages/frontend/pokehub-battle-components/tsconfig.json` | Config | TypeScript config (DONE) |
+| `packages/frontend/pokehub-battle-components/tsconfig.lib.json` | Config | Lib tsconfig (DONE) |
+| `packages/frontend/pokehub-battle-components/src/index.ts` | Export | Public API (DONE) |
+| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-socket.ts` | Hook | Socket.io connection lifecycle |
 | `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-state.ts` | Hook | State reducer |
-| `packages/frontend/pokehub-battle-components/src/lib/context/battle-socket.context.tsx` | Context | Socket + state provider |
-| `packages/frontend/pokehub-battle-components/src/lib/types/battle-ui.types.ts` | Types | UI state types |
+| `packages/frontend/pokehub-battle-components/src/lib/hooks/use-battle-notifications.ts` | Hook | Toast notifications when away from battle |
+| `packages/frontend/pokehub-battle-components/src/lib/context/battle-socket.context.tsx` | Context | Socket + state + notifications provider |
+| `packages/frontend/pokehub-battle-components/src/lib/types/battle-ui.types.ts` | Types | UI state types (DONE) |
 | `packages/frontend/pokehub-battle-components/src/lib/components/lobby/*` | Components | Lobby UI (4 files) |
 | `packages/frontend/pokehub-battle-components/src/lib/components/battlefield/*` | Components | Battle field (6 files) |
 | `packages/frontend/pokehub-battle-components/src/lib/components/actions/*` | Components | Action panel (5 files) |
 | `packages/frontend/pokehub-battle-components/src/lib/components/info/*` | Components | Header/timer/log (3 files) |
 | `packages/frontend/pokehub-battle-components/src/lib/components/end/*` | Components | End overlay (1 file) |
-| `apps/pokehub-app/app/battle/layout.tsx` | Layout | Auth guard + provider |
+| `packages/frontend/pokehub-battle-components/src/lib/components/active-battle-bar.tsx` | Component | Persistent floating bar for returning to active battle |
+| `apps/pokehub-app/app/battle/layout.tsx` | Layout | Auth guard only |
 | `apps/pokehub-app/app/battle/page.tsx` | Page | Battle lobby |
 | `apps/pokehub-app/app/battle/[battleId]/page.tsx` | Page | Active battle |
 
@@ -593,14 +759,15 @@ The `battle.request` object is critical -- it tells us what moves/switches are a
 
 | File | Change |
 |------|--------|
-| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.ts` | Phase 0: Add p1/p2 stream readers, update `BattleInstance`, update `executeTurn()` |
-| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.interface.ts` | Phase 0: Add `p1State`, `p2State` to `ActiveBattle` |
-| `packages/backend/pokehub-redis/src/lib/redis.types.ts` | Phase 0: Change `BattleStateUpdateMessage` to per-player data |
-| `apps/pokehub-api/src/battle/battle.gateway.ts` | Phase 0: Send per-player data in 4 methods |
-| `apps/pokehub-app/router.ts` | Add `/battle` privileged route |
+| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.ts` | Phase 0 (DONE) |
+| `apps/pokehub-api/src/battle/services/battle-manager/battle-manager.service.interface.ts` | Phase 0 (DONE) |
+| `packages/backend/pokehub-redis/src/lib/redis.types.ts` | Phase 0 (DONE) |
+| `apps/pokehub-api/src/battle/battle.gateway.ts` | Phase 0 (DONE) |
+| `apps/pokehub-app/router.ts` | Add `/battle` privileged route (DONE) |
+| `apps/pokehub-app/app/(components)/app.tsx` | Wrap children with `BattleSocketProvider` |
 | `apps/pokehub-app/app/page.tsx` | Remove `comingSoon: true` from Battle card |
-| `tsconfig.base.json` | Add `@pokehub/frontend/pokehub-battle-components` path alias |
-| `package.json` | Add `@pkmn/client` dependency |
+| `tsconfig.base.json` | Add `@pokehub/frontend/pokehub-battle-components` path alias (DONE) |
+| `package.json` | Add `@pkmn/client` dependency (DONE) |
 
 ## Reused Existing Code
 
@@ -642,4 +809,14 @@ docker compose -f docker-compose.dev.yaml up -d redis postgres
 # 6. Select moves, verify updates
 # 7. Forfeit, verify end screen
 # 8. Save replay, verify confirmation
+
+# Navigation persistence test flow:
+# 1. Start a battle (steps 1-5 above)
+# 2. Navigate to /team-builder — verify active battle bar appears at bottom
+# 3. Have opponent make a move — verify "It's your turn!" toast appears
+# 4. Click "Return to Battle" on the bar — verify battle state is intact
+# 5. Navigate to /pokedex — verify bar reappears with current status
+# 6. Wait for turn timer warning — verify warning toast appears
+# 7. Click "Go to battle" on toast — verify navigation back works
+# 8. Refresh the page on /team-builder — verify BATTLE_RESTORED toast + bar
 ```

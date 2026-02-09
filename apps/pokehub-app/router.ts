@@ -31,6 +31,11 @@ export const PokeHubRouter: AppRouter = {
       allowSubRoutes: true,
     },
     {
+      route: '/battle',
+      rolesAllowed: ['USER'],
+      allowSubRoutes: true,
+    },
+    {
       route: '/settings',
       rolesAllowed: ['ADMIN', 'USER'],
       allowSubRoutes: false,
