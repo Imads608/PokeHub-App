@@ -1,4 +1,5 @@
 import type { Battle } from '@pkmn/client';
+import type { LogFormatter } from '@pkmn/view';
 import type { BattleEndReason } from '@pokehub/shared/pokemon-battle-types';
 
 export interface BattleUIState {
@@ -9,11 +10,13 @@ export interface BattleUIState {
 
   /** @pkmn/client Battle instance (handles protocol parsing) */
   battle: Battle | null;
+  /** @pkmn/view LogFormatter for pretty-printing protocol */
+  logFormatter: LogFormatter | null;
 
   /** Turn state */
   turnTimer: { secondsRemaining: number; warning: boolean } | null;
-  /** Has user submitted a choice this turn? */
-  pendingChoice: boolean;
+  /** The choice submitted this turn (null if none yet) */
+  pendingChoice: string | null;
 
   /** Disconnection */
   opponentDisconnected: boolean;
@@ -38,8 +41,9 @@ export const initialBattleUIState: BattleUIState = {
   battleId: null,
   opponent: null,
   battle: null,
+  logFormatter: null,
   turnTimer: null,
-  pendingChoice: false,
+  pendingChoice: null,
   opponentDisconnected: false,
   disconnectTimeout: null,
   winner: null,

@@ -10,6 +10,9 @@ import {
   BATTLE_NAMESPACE,
   BATTLE_EVENT,
 } from '@pokehub/shared/pokemon-battle-types';
+import { createClientLogger } from '@pokehub/frontend/shared-logger';
+
+const log = createClientLogger('BattleSocket');
 
 export interface UseBattleSocketOptions {
   /** Access token from the auth session. Socket connects when truthy. */
@@ -54,6 +57,7 @@ export function useBattleSocket({
 }: UseBattleSocketOptions): UseBattleSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+  const pendingEventsRef = useRef<ClientBattleEvent[]>([]);
 
   // Stable refs so socket listeners always use the latest callbacks
   // without re-triggering the creation effect.
@@ -68,11 +72,17 @@ export function useBattleSocket({
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_POKEHUB_API_URL;
     if (!apiUrl) {
-      console.error('[useBattleSocket] NEXT_PUBLIC_POKEHUB_API_URL is not set');
+      log.error('NEXT_PUBLIC_POKEHUB_API_URL is not set');
       return;
     }
 
-    const socket = io(`${apiUrl}${BATTLE_NAMESPACE}`, {
+    // NEXT_PUBLIC_POKEHUB_API_URL includes the REST prefix (e.g., "http://localhost:3000/api").
+    // WebSocket gateways in NestJS don't use the global prefix, so we need the
+    // base server origin. Strip the path to get "http://localhost:3000".
+    const baseUrl = new URL(apiUrl).origin;
+    log.info(`Connecting to ${baseUrl}${BATTLE_NAMESPACE}`);
+
+    const socket = io(`${baseUrl}${BATTLE_NAMESPACE}`, {
       // Callback form: called on every (re)connection attempt so we always
       // send the latest token without recreating the socket.
       auth: (cb) => {
@@ -84,9 +94,25 @@ export function useBattleSocket({
 
     socketRef.current = socket;
 
-    socket.on('connect', () => setIsConnected(true));
+    socket.on('connect', () => {
+      log.info('Connected', { id: socket.id });
+      setIsConnected(true);
+
+      // Flush any events that were queued while disconnected
+      const pending = pendingEventsRef.current;
+      if (pending.length > 0) {
+        log.info(`Flushing ${pending.length} pending event(s)`);
+        pendingEventsRef.current = [];
+        for (const event of pending) {
+          const { type, ...payload } = event;
+          log.debug('Flushing', { type, ...payload });
+          socket.emit(type, payload);
+        }
+      }
+    });
 
     socket.on('disconnect', (reason) => {
+      log.warn('Disconnected', { reason });
       setIsConnected(false);
 
       if (reason === 'io server disconnect') {
@@ -104,6 +130,7 @@ export function useBattleSocket({
     });
 
     socket.on(BATTLE_EVENT, (data: ServerBattleEvent) => {
+      log.debug('Received', { type: data.type, ...data });
       onEventRef.current(data);
     });
 
@@ -116,6 +143,7 @@ export function useBattleSocket({
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
+      pendingEventsRef.current = [];
       setIsConnected(false);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -141,13 +169,13 @@ export function useBattleSocket({
   const emit = useCallback((event: ClientBattleEvent) => {
     const socket = socketRef.current;
     if (!socket?.connected) {
-      console.warn('[useBattleSocket] Cannot emit: socket not connected');
+      log.info('Queuing event (socket not connected)', { type: event.type });
+      pendingEventsRef.current.push(event);
       return;
     }
 
-    // The gateway uses @SubscribeMessage(event.type) per event type,
-    // so we emit the type as the socket event name with the rest as payload.
     const { type, ...payload } = event;
+    log.debug('Emitting', { type, ...payload });
     socket.emit(type, payload);
   }, []);
 

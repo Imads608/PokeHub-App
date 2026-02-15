@@ -7,8 +7,12 @@ import type { ServerBattleEvent } from '@pokehub/shared/pokemon-battle-types';
 import type { BattleUIState } from '../types/battle-ui.types';
 
 /**
- * Shows toast notifications for battle events when the user is NOT on the
- * `/battle` page. Called inside BattleSocketProvider so it works on every page.
+ * Shows toast notifications for battle events.
+ *
+ * - **Global notifications** (errors, match cancelled, auto-move, replay saved)
+ *   show on any page.
+ * - **Away notifications** (your turn, timer, disconnect, battle end) show only
+ *   when the user is NOT on the `/battle` page.
  *
  * Relies on the @pkmn/client Battle instance for structured state (turn number,
  * request availability, player side) rather than manually parsing protocol text.
@@ -24,6 +28,39 @@ export function useBattleNotifications(
   const isOnBattlePage = pathname?.startsWith('/battle') ?? false;
   const battleId = state.battleId;
 
+  // ── Global notifications (show on any page) ─────────────────────────
+  useEffect(() => {
+    if (!lastEvent) return;
+
+    switch (lastEvent.type) {
+      case 'ERROR': {
+        if (lastEvent.recoverable) {
+          toast.warning(lastEvent.message);
+        } else {
+          toast.error(lastEvent.message);
+        }
+        break;
+      }
+
+      case 'MATCH_CANCELLED':
+        toast.info('Match cancelled — opponent declined.', {
+          description: "You've been placed back in the queue.",
+        });
+        break;
+
+      case 'BATTLE_UPDATE':
+        if (lastEvent.autoMove) {
+          toast.warning('Time expired — a move was chosen for you.');
+        }
+        break;
+
+      case 'REPLAY_SAVED':
+        toast.success('Replay saved.');
+        break;
+    }
+  }, [lastEvent]);
+
+  // ── Away notifications (only when NOT on /battle) ───────────────────
   useEffect(() => {
     if (!lastEvent || isOnBattlePage || !battleId) return;
 

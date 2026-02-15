@@ -116,12 +116,17 @@ class BattleManagerService implements IBattleManagerService {
       false // p2 hasn't chosen
     );
 
+    // Read deltas to advance cursors — the initial state IS the first delta.
+    // Subsequent reads of p1Delta/p2Delta will only return new data.
+    const p1Initial = instance.p1Delta;
+    const p2Initial = instance.p2Delta;
+
     return {
       id: config.id,
       config,
       currentState: instance.currentState,
-      p1State: instance.p1State,
-      p2State: instance.p2State,
+      p1State: p1Initial,
+      p2State: p2Initial,
     };
   }
 
@@ -151,18 +156,45 @@ class BattleManagerService implements IBattleManagerService {
       throw new Error(`Battle ${battleId} not found on this server`);
     }
 
+    if (instance.ended) {
+      this.logger.warn(`Battle ${battleId}: choice rejected — battle has ended`);
+      return;
+    }
+
     const player = this.getPlayerSlot(instance.config, playerId);
     if (!player) {
       throw new Error(`Player ${playerId} is not in battle ${battleId}`);
     }
 
-    this.logger.debug(`Battle ${battleId}: ${player} chose "${choice}"`);
+    if (!instance.awaitingChoices) {
+      this.logger.warn(
+        `Battle ${battleId}: ${player} choice rejected — turn is being processed`
+      );
+      return;
+    }
+
+    const pending = await this.redis.getPendingChoices(battleId);
+    const opponent = player === 'p1' ? 'p2' : 'p1';
+
+    if (pending[player] && pending[opponent]) {
+      this.logger.warn(
+        `Battle ${battleId}: ${player} choice rejected — turn already locked`
+      );
+      return;
+    }
+
+    if (pending[player]) {
+      this.logger.debug(
+        `Battle ${battleId}: ${player} changed choice from "${pending[player]}" to "${choice}"`
+      );
+    } else {
+      this.logger.debug(`Battle ${battleId}: ${player} chose "${choice}"`);
+    }
 
     // Cancel the player's turn timer
     this.turnTimer.cancelPlayerTimer(battleId, player);
 
-    // Store the choice
-    const pending = await this.redis.getPendingChoices(battleId);
+    // Store the choice (overwrites previous if opponent hasn't chosen yet)
     pending[player] = choice;
     await this.redis.setPendingChoices(battleId, pending);
 
@@ -248,12 +280,20 @@ class BattleManagerService implements IBattleManagerService {
 
     this.logger.log(`Battle ${battleId} recovered successfully`);
 
+    // Read full state for the rejoin response, and advance cursors
+    // so subsequent executeTurn calls only send deltas.
+    const p1Full = instance.p1State;
+    const p2Full = instance.p2State;
+    // Advance cursors past the full state
+    instance.p1Delta;
+    instance.p2Delta;
+
     return {
       id: battleId,
       config,
       currentState: instance.currentState,
-      p1State: instance.p1State,
-      p2State: instance.p2State,
+      p1State: p1Full,
+      p2State: p2Full,
     };
   }
 
@@ -368,6 +408,10 @@ class BattleManagerService implements IBattleManagerService {
       data: { event: 'opponent_reconnected', player },
     });
 
+    // Advance cursors so subsequent executeTurn calls only send deltas
+    instance.p1Delta;
+    instance.p2Delta;
+
     return {
       id: battleId,
       config: instance.config,
@@ -414,7 +458,7 @@ class BattleManagerService implements IBattleManagerService {
     const stream = new BattleStreams.BattleStream();
     const streams = BattleStreams.getPlayerStreams(stream);
 
-    // Buffer to collect omniscient output (for win/tie detection + replay log)
+    // Buffer to collect omniscient output (for replay log)
     let currentState = '';
     void (async () => {
       for await (const chunk of streams.omniscient) {
@@ -422,17 +466,23 @@ class BattleManagerService implements IBattleManagerService {
       }
     })();
 
-    // Buffer per-player perspective streams (opponent info redacted)
+    // Buffer per-player perspective streams (opponent info redacted).
+    // Track cursor positions so we can return deltas for BATTLE_UPDATE
+    // while still having the full state available for BATTLE_START / rejoin.
     let p1State = '';
+    let p1Cursor = 0;
     void (async () => {
       for await (const chunk of streams.p1) {
+        this.logger.debug(`Battle ${config.id} p1 stream: ${chunk}`);
         p1State += chunk + '\n';
       }
     })();
 
     let p2State = '';
+    let p2Cursor = 0;
     void (async () => {
       for await (const chunk of streams.p2) {
+        this.logger.debug(`Battle ${config.id} p2 stream: ${chunk}`);
         p2State += chunk + '\n';
       }
     })();
@@ -457,6 +507,11 @@ class BattleManagerService implements IBattleManagerService {
         `>player p2 ${JSON.stringify(p2spec)}`
     );
 
+    // Yield to the event loop so the async iterators reading from
+    // streams.p1, streams.p2, and streams.omniscient can drain the
+    // output buffers produced by the write above.
+    await new Promise((resolve) => setImmediate(resolve));
+
     return {
       config,
       stream,
@@ -470,8 +525,19 @@ class BattleManagerService implements IBattleManagerService {
       get p2State() {
         return p2State;
       },
+      get p1Delta() {
+        const delta = p1State.slice(p1Cursor);
+        p1Cursor = p1State.length;
+        return delta;
+      },
+      get p2Delta() {
+        const delta = p2State.slice(p2Cursor);
+        p2Cursor = p2State.length;
+        return delta;
+      },
       ended: false,
       winnerId: null,
+      awaitingChoices: true,
     };
   }
 
@@ -480,6 +546,10 @@ class BattleManagerService implements IBattleManagerService {
     command: string
   ): Promise<void> {
     await instance.streams.omniscient.write(command);
+    // Yield to the event loop so the async iterators reading from
+    // streams.p1, streams.p2, and streams.omniscient can drain the
+    // output buffers produced by the write above.
+    await new Promise((resolve) => setImmediate(resolve));
   }
 
   private getPlayerSlot(
@@ -497,6 +567,8 @@ class BattleManagerService implements IBattleManagerService {
     p1Choice: string,
     p2Choice: string
   ): Promise<void> {
+    instance.awaitingChoices = false;
+
     this.logger.debug(
       `Battle ${battleId}: executing turn (p1: ${p1Choice}, p2: ${p2Choice})`
     );
@@ -508,35 +580,37 @@ class BattleManagerService implements IBattleManagerService {
     // Clear pending choices
     await this.redis.setPendingChoices(battleId, {});
 
-    // Publish per-player perspective data
+    // Publish only the new per-player data since the last send
     await this.redis.publishBattleUpdate(battleId, {
       type: 'state',
       p1Id: instance.config.player1.id,
       p2Id: instance.config.player2.id,
-      p1Data: instance.p1State,
-      p2Data: instance.p2State,
+      p1Data: instance.p1Delta,
+      p2Data: instance.p2Delta,
     });
 
-    // Use omniscient state for win/tie detection
-    const newState = instance.currentState;
-    const winMatch = newState.match(/\|win\|(.+)/);
-    const tieMatch = newState.match(/\|tie/);
-
-    if (winMatch) {
-      const winnerName = winMatch[1];
-      const winnerId =
-        winnerName === instance.config.player1.name
-          ? instance.config.player1.id
-          : instance.config.player2.id;
-      instance.ended = true;
-      instance.winnerId = winnerId;
-      await this.endBattle(battleId, winnerId, 'completed');
-    } else if (tieMatch) {
-      instance.ended = true;
-      instance.winnerId = null;
-      await this.endBattle(battleId, null, 'completed');
+    // Use the sim's Battle object for win/tie detection
+    const simBattle = instance.stream.battle;
+    if (!simBattle) {
+      return;
+    }
+    if (simBattle.ended) {
+      if (simBattle.winner) {
+        const winnerId =
+          simBattle.winner === instance.config.player1.name
+            ? instance.config.player1.id
+            : instance.config.player2.id;
+        instance.ended = true;
+        instance.winnerId = winnerId;
+        await this.endBattle(battleId, winnerId, 'completed');
+      } else {
+        instance.ended = true;
+        instance.winnerId = null;
+        await this.endBattle(battleId, null, 'completed');
+      }
     } else {
-      // Battle continues - start new turn timers
+      // Battle continues - accept new choices and start turn timers
+      instance.awaitingChoices = true;
       this.turnTimer.startTimers(
         battleId,
         instance.config.player1.id,
@@ -743,14 +817,20 @@ interface BattleInstance {
   config: BattleConfig;
   stream: BattleStreams.BattleStream;
   streams: ReturnType<typeof BattleStreams.getPlayerStreams>;
-  /** Omniscient state (for win/tie detection + replay log) */
+  /** Omniscient state — full accumulated output (for replay log) */
   currentState: string;
-  /** Player 1 perspective (opponent info redacted) */
+  /** Player 1 perspective — full accumulated output (for BATTLE_START / rejoin) */
   p1State: string;
-  /** Player 2 perspective (opponent info redacted) */
+  /** Player 2 perspective — full accumulated output (for BATTLE_START / rejoin) */
   p2State: string;
+  /** Player 1 delta — new data since last call (for BATTLE_UPDATE) */
+  p1Delta: string;
+  /** Player 2 delta — new data since last call (for BATTLE_UPDATE) */
+  p2Delta: string;
   ended: boolean;
   winnerId: string | null;
+  /** Whether the sim is waiting for player choices. False while a turn is being processed. */
+  awaitingChoices: boolean;
 }
 
 export const BattleManagerServiceProvider: Provider = {

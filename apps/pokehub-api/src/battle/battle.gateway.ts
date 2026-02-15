@@ -150,6 +150,9 @@ export class BattleGateway
   ): void {
     const socketId = this.userToSocket.get(userId);
     if (socketId) {
+      this.logger.log(
+        `Sending MATCH_FOUND to user ${userId} — battle ${message.battleId}, opponent: ${message.opponentName}`
+      );
       this.server.to(socketId).emit(BATTLE_EVENT, {
         type: 'MATCH_FOUND',
         battleId: message.battleId,
@@ -158,6 +161,10 @@ export class BattleGateway
           name: message.opponentName,
         },
       } satisfies ServerBattleEvent);
+    } else {
+      this.logger.warn(
+        `Cannot send MATCH_FOUND to user ${userId} — no socket found`
+      );
     }
   }
 
@@ -167,11 +174,25 @@ export class BattleGateway
   ): void {
     const room = BattleRooms.battle(battleId);
 
+    this.logger.debug(
+      `Battle update received — battle ${battleId}, type: ${message.type}`
+    );
+
     switch (message.type) {
       case 'state': {
         // Send each player their own perspective (opponent info redacted)
         const p1SocketId = this.userToSocket.get(message.p1Id);
         const p2SocketId = this.userToSocket.get(message.p2Id);
+
+        this.logger.debug(
+          `Sending BATTLE_UPDATE — battle ${battleId}, p1: ${message.p1Id} (${
+            p1SocketId ? 'online' : 'offline'
+          }), p2: ${message.p2Id} (${
+            p2SocketId ? 'online' : 'offline'
+          }), p1Data: ${message.p1Data.length} chars, p2Data: ${
+            message.p2Data.length
+          } chars`
+        );
 
         if (p1SocketId) {
           this.server.to(p1SocketId).emit(BATTLE_EVENT, {
@@ -192,11 +213,19 @@ export class BattleGateway
 
       case 'event':
         // Structured battle events
+        this.logger.debug(
+          `Sending battle event — battle ${battleId}, event: ${message.data.event}`
+        );
         this.handleBattleEvent(battleId, room, message.data);
         break;
 
       case 'end':
         // Battle ended
+        this.logger.log(
+          `Sending BATTLE_END — battle ${battleId}, winner: ${
+            message.data.winnerId ?? 'draw'
+          }, reason: ${message.data.reason}`
+        );
         this.server.to(room).emit(BATTLE_EVENT, {
           type: 'BATTLE_END',
           battleId,
@@ -222,6 +251,7 @@ export class BattleGateway
   ): void {
     switch (event.event) {
       case 'opponent_disconnected':
+        this.logger.log(`Sending OPPONENT_DISCONNECTED — battle ${battleId}`);
         this.server.to(room).emit(BATTLE_EVENT, {
           type: 'OPPONENT_DISCONNECTED',
           battleId,
@@ -230,6 +260,7 @@ export class BattleGateway
         break;
 
       case 'opponent_reconnected':
+        this.logger.log(`Sending OPPONENT_RECONNECTED — battle ${battleId}`);
         this.server.to(room).emit(BATTLE_EVENT, {
           type: 'OPPONENT_RECONNECTED',
           battleId,
@@ -237,6 +268,9 @@ export class BattleGateway
         break;
 
       case 'turn_warning':
+        this.logger.log(
+          `Sending TURN_WARNING — battle ${battleId}, ${event.secondsRemaining}s remaining`
+        );
         this.server.to(room).emit(BATTLE_EVENT, {
           type: 'TURN_WARNING',
           battleId,
@@ -291,14 +325,19 @@ export class BattleGateway
       // Try to get current battle state
       const battle = this.battleManager.getBattle(activeBattleId);
       if (battle) {
-        const slot =
-          battle.config.player1.id === userId ? 'p1' : 'p2';
+        const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
+        this.logger.log(
+          `Sending BATTLE_RESTORED to user ${userId} — battle ${activeBattleId}, slot: ${slot}`
+        );
         client.emit(BATTLE_EVENT, {
           type: 'BATTLE_RESTORED',
           battleId: activeBattleId,
           currentState: slot === 'p1' ? battle.p1State : battle.p2State,
         } satisfies ServerBattleEvent);
       } else {
+        this.logger.log(
+          `Sending BATTLE_RESTORED (empty) to user ${userId} — battle ${activeBattleId} needs recovery`
+        );
         client.emit(BATTLE_EVENT, {
           type: 'BATTLE_RESTORED',
           battleId: activeBattleId,
@@ -365,9 +404,14 @@ export class BattleGateway
   ): Promise<void> {
     const userId = client.user.userId;
 
+    this.logger.log(`Received JOIN_QUEUE from user ${userId}`);
+
     // Validate input
     const parsed = JoinQueueDTOSchema.safeParse(data);
     if (!parsed.success) {
+      this.logger.warn(
+        `Sending ERROR to user ${userId} — INVALID_INPUT: ${parsed.error.message}`
+      );
       client.emit(BATTLE_EVENT, {
         type: 'ERROR',
         code: 'INVALID_INPUT',
@@ -378,6 +422,10 @@ export class BattleGateway
     }
 
     const { format, teamId } = parsed.data;
+
+    this.logger.debug(
+      `JOIN_QUEUE details — user ${userId}, format: ${format}, teamId: ${teamId}`
+    );
 
     try {
       // Fetch the team and pack it
@@ -414,14 +462,13 @@ export class BattleGateway
         packedTeam
       );
 
+      this.logger.log(
+        `Sending QUEUE_JOINED to user ${userId} — format: ${format}, position: ${position}`
+      );
       client.emit(BATTLE_EVENT, {
         type: 'QUEUE_JOINED',
         position,
       } satisfies ServerBattleEvent);
-
-      this.logger.log(
-        `User ${userId} joined ${format} queue at position ${position}`
-      );
 
       // Try to find a match
       await this.tryFindMatch(format);
@@ -445,13 +492,14 @@ export class BattleGateway
   ): Promise<void> {
     const userId = client.user.userId;
 
+    this.logger.log(`Received LEAVE_QUEUE from user ${userId}`);
+
     await this.matchmaking.leaveQueue(userId);
 
+    this.logger.log(`Sending QUEUE_LEFT to user ${userId}`);
     client.emit(BATTLE_EVENT, {
       type: 'QUEUE_LEFT',
     } satisfies ServerBattleEvent);
-
-    this.logger.log(`User ${userId} left queue`);
   }
 
   /**
@@ -469,6 +517,8 @@ export class BattleGateway
     @MessageBody() data: unknown
   ): Promise<void> {
     const userId = client.user.userId;
+
+    this.logger.log(`Received DECLINE_MATCH from user ${userId}`);
 
     // Validate input
     const parsed = DeclineMatchDTOSchema.safeParse(data);
@@ -525,6 +575,9 @@ export class BattleGateway
       // Notify the opponent and requeue them
       const opponentSocketId = this.userToSocket.get(opponentId);
       if (opponentSocketId) {
+        this.logger.log(
+          `Sending MATCH_CANCELLED to opponent ${opponentId} — battle ${battleId}`
+        );
         this.server.to(opponentSocketId).emit(BATTLE_EVENT, {
           type: 'MATCH_CANCELLED',
           battleId,
@@ -562,6 +615,8 @@ export class BattleGateway
   ): Promise<void> {
     const userId = client.user.userId;
 
+    this.logger.debug(`Received MOVE from user ${userId}`);
+
     // Validate input
     const parsed = BattleMoveDTOSchema.safeParse(data);
     if (!parsed.success) {
@@ -575,6 +630,10 @@ export class BattleGateway
     }
 
     const { battleId, choice } = parsed.data;
+
+    this.logger.debug(
+      `Received MOVE from user ${userId} — battle ${battleId}, choice: ${choice}`
+    );
 
     try {
       await this.battleManager.processChoice(battleId, userId, choice);
@@ -612,6 +671,10 @@ export class BattleGateway
     }
 
     const { battleId } = parsed.data;
+
+    this.logger.log(
+      `Received FORFEIT from user ${userId} — battle ${battleId}`
+    );
 
     try {
       await this.battleManager.forfeit(battleId, userId);
@@ -651,6 +714,8 @@ export class BattleGateway
 
     const { battleId } = parsed.data;
 
+    this.logger.log(`Received REJOIN from user ${userId} — battle ${battleId}`);
+
     try {
       const battle = await this.battleManager.handleReconnect(battleId, userId);
 
@@ -665,8 +730,10 @@ export class BattleGateway
       }
 
       // Send the correct perspective based on player slot
-      const slot =
-        battle.config.player1.id === userId ? 'p1' : 'p2';
+      const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
+      this.logger.log(
+        `Sending BATTLE_START (rejoin) to user ${userId} — battle ${battle.id}, slot: ${slot}`
+      );
       client.emit(BATTLE_EVENT, {
         type: 'BATTLE_START',
         battleId: battle.id,
@@ -708,6 +775,10 @@ export class BattleGateway
     }
 
     const { battleId } = parsed.data;
+
+    this.logger.log(
+      `Received SAVE_REPLAY from user ${userId} — battle ${battleId}`
+    );
 
     try {
       // Check if user can save more replays
@@ -850,24 +921,38 @@ export class BattleGateway
         const sockets1 = await this.server.in(socket1).fetchSockets();
         if (sockets1.length > 0) {
           await sockets1[0].join(battleRoom);
+          this.logger.log(
+            `Sending BATTLE_START to p1 ${player1.userId} — battle ${battleId}, initialState: ${battle.p1State.length} chars`
+          );
           sockets1[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
             initialState: battle.p1State,
           } satisfies ServerBattleEvent);
         }
+      } else {
+        this.logger.warn(
+          `Cannot send BATTLE_START to p1 ${player1.userId} — not connected to this server`
+        );
       }
 
       if (socket2) {
         const sockets2 = await this.server.in(socket2).fetchSockets();
         if (sockets2.length > 0) {
           await sockets2[0].join(battleRoom);
+          this.logger.log(
+            `Sending BATTLE_START to p2 ${player2.userId} — battle ${battleId}, initialState: ${battle.p2State.length} chars`
+          );
           sockets2[0].emit(BATTLE_EVENT, {
             type: 'BATTLE_START',
             battleId,
             initialState: battle.p2State,
           } satisfies ServerBattleEvent);
         }
+      } else {
+        this.logger.warn(
+          `Cannot send BATTLE_START to p2 ${player2.userId} — not connected to this server`
+        );
       }
 
       this.logger.log(

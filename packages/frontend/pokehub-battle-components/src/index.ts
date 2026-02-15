@@ -10,3 +10,6 @@ export { type BattleUIState, initialBattleUIState } from './lib/types/battle-ui.
 
 // Lobby
 export { BattleLobby } from './lib/components/lobby/battle-lobby';
+
+// Battle UI
+export { BattleContainer } from './lib/components/battlefield/battle-container';
