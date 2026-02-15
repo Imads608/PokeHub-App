@@ -7,3 +7,6 @@ export {
 
 // Types
 export { type BattleUIState, initialBattleUIState } from './lib/types/battle-ui.types';
+
+// Lobby
+export { BattleLobby } from './lib/components/lobby/battle-lobby';
