@@ -2,6 +2,7 @@
 
 import { PokeHubRouter } from '../../router';
 import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
+import { BattleSocketProvider } from '@pokehub/frontend/pokehub-battle-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
@@ -25,7 +26,9 @@ export const App = ({
         privilegedRoutes={PokeHubRouter.privilegedRoutes}
       >
         <AppNav />
-        {children}
+        <BattleSocketProvider>
+          {children}
+        </BattleSocketProvider>
         <Toaster
           position="top-center"
           toastOptions={{
