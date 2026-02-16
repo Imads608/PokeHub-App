@@ -31,13 +31,12 @@ export function BattleLog({ entries }: BattleLogProps) {
               Battle events will appear here...
             </p>
           )}
-          {entries.map((line, index) => (
-            <p
+          {entries.map((html, index) => (
+            <div
               key={index}
-              className="text-xs text-muted-foreground font-mono whitespace-pre-wrap leading-relaxed"
-            >
-              {line}
-            </p>
+              className="text-xs text-muted-foreground leading-relaxed [&_strong]:font-bold [&_strong]:text-foreground [&_small]:text-muted-foreground/70 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mt-2 [&_h2]:mb-1 [&_abbr]:no-underline [&_abbr]:cursor-help"
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
           ))}
           <div ref={bottomRef} />
         </div>

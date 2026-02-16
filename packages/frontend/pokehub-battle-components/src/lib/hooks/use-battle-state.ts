@@ -30,24 +30,12 @@ function getGenerations(): Generations {
 }
 
 /**
- * Clean formatText output:
- * - `||tooltip||display||` → `display` (HP damage tokens)
- * - `**text**` → `text` (bold markers)
- * - Trim whitespace
- */
-function cleanFormatText(text: string): string {
-  return text
-    .replace(/\|\|[^|]*\|\|([^|]*)\|\|/g, '$1')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .trim();
-}
-
-/**
- * Feed multi-line protocol text into a @pkmn/client Battle instance.
+ * Feed protocol text into a @pkmn/client Battle instance.
  *
- * For each line: format first (formatter reads current HP for deltas),
- * then battle.add() to update state for the next line.
- * battle.add() is called line-by-line because it has special |request| handling.
+ * Follows the official @pkmn/view pattern: for each parsed protocol message,
+ * format first (formatter reads pre-damage HP for deltas), then update battle state.
+ * Uses formatHTML for rich output (bold names, damage tooltips, etc.).
+ * See: https://www.npmjs.com/package/@pkmn/view
  */
 function processBattleProtocol(
   battle: Battle,
@@ -56,15 +44,11 @@ function processBattleProtocol(
 ): string[] {
   const logLines: string[] = [];
 
-  for (const line of text.split('\n')) {
-    if (!line) continue;
+  for (const { args, kwArgs } of Protocol.parse(text)) {
+    const html = formatter.formatHTML(args, kwArgs);
+    if (html) logLines.push(html);
 
-    for (const { args, kwArgs } of Protocol.parse(line)) {
-      const formatted = formatter.formatText(args, kwArgs);
-      if (formatted) logLines.push(cleanFormatText(formatted));
-    }
-
-    battle.add(line);
+    battle.add(args, kwArgs);
   }
 
   if (battle.request) {
@@ -355,12 +339,11 @@ export function useBattleState() {
       }
 
       default: {
-        const prev = reducerState.phase;
         log.debug(event.type);
         rawDispatch(event);
       }
     }
-  }, [reducerState.phase]);
+  }, []);
 
   // Combine reducer state with ref-held Battle/LogFormatter
   const state: BattleUIState = useMemo(
