@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer } from 'react';
+import { useCallback, useReducer, useRef, useMemo } from 'react';
 import { Battle } from '@pkmn/client';
 import { Generations } from '@pkmn/data';
 import { Dex } from '@pkmn/dex';
@@ -30,11 +30,24 @@ function getGenerations(): Generations {
 }
 
 /**
+ * Clean formatText output:
+ * - `||tooltip||display||` → `display` (HP damage tokens)
+ * - `**text**` → `text` (bold markers)
+ * - Trim whitespace
+ */
+function cleanFormatText(text: string): string {
+  return text
+    .replace(/\|\|[^|]*\|\|([^|]*)\|\|/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .trim();
+}
+
+/**
  * Feed multi-line protocol text into a @pkmn/client Battle instance.
  *
- * LogFormatter.formatText() is called **before** battle.add() for each line,
- * because the formatter needs the pre-updated state (e.g., HP before damage).
- * Returns an array of formatted log lines.
+ * For each line: format first (formatter reads current HP for deltas),
+ * then battle.add() to update state for the next line.
+ * battle.add() is called line-by-line because it has special |request| handling.
  */
 function processBattleProtocol(
   battle: Battle,
@@ -46,13 +59,9 @@ function processBattleProtocol(
   for (const line of text.split('\n')) {
     if (!line) continue;
 
-    const parsed = Protocol.parseLine(line);
-    if (parsed) {
-      const formatted = formatter.formatText(
-        parsed as Parameters<LogFormatter['formatText']>[0],
-        {} as Parameters<LogFormatter['formatText']>[1]
-      );
-      if (formatted) logLines.push(formatted);
+    for (const { args, kwArgs } of Protocol.parse(line)) {
+      const formatted = formatter.formatText(args, kwArgs);
+      if (formatted) logLines.push(cleanFormatText(formatted));
     }
 
     battle.add(line);
@@ -65,9 +74,22 @@ function processBattleProtocol(
   return logLines;
 }
 
+// ── Internal reducer actions (carry pre-processed results) ────────────────
+
+type InternalEvent =
+  | { type: '_BATTLE_INITIALIZED'; battleId: string; logLines: string[] }
+  | { type: '_BATTLE_UPDATED'; logLines: string[] }
+  | { type: '_BATTLE_RESTORED'; battleId: string; logLines: string[] };
+
+type ReducerEvent = ServerBattleEvent | LocalUIEvent | InternalEvent;
+
+/**
+ * Pure reducer — no Battle/LogFormatter mutation happens here.
+ * Protocol processing is done in the dispatch wrapper (useBattleState).
+ */
 function battleReducer(
   state: BattleUIState,
-  event: BattleEvent
+  event: ReducerEvent
 ): BattleUIState {
   switch (event.type) {
     case 'QUEUE_JOINED':
@@ -102,22 +124,11 @@ function battleReducer(
         opponent: null,
       };
 
-    case 'BATTLE_START': {
-      const battle = new Battle(getGenerations());
-      const formatter = new LogFormatter('p1', battle);
-      const logLines = processBattleProtocol(battle, formatter, event.initialState);
-
-      // Update formatter perspective from the request
-      if (battle.request?.side?.id) {
-        formatter.perspective = battle.request.side.id;
-      }
-
+    case '_BATTLE_INITIALIZED':
       return {
         ...state,
         phase: 'battle',
         battleId: event.battleId,
-        battle,
-        logFormatter: formatter,
         pendingChoice: null,
         turnTimer: null,
         opponentDisconnected: false,
@@ -127,25 +138,25 @@ function battleReducer(
         canSaveReplay: false,
         replaySaved: false,
         error: null,
-        logEntries: logLines,
+        logEntries: event.logLines,
       };
-    }
 
-    case 'BATTLE_UPDATE': {
-      if (!state.battle || !state.logFormatter) return state;
-
-      const logLines = processBattleProtocol(
-        state.battle,
-        state.logFormatter,
-        event.data
-      );
-
+    case '_BATTLE_UPDATED':
       return {
         ...state,
         pendingChoice: null,
-        logEntries: [...state.logEntries, ...logLines],
+        logEntries: [...state.logEntries, ...event.logLines],
       };
-    }
+
+    case '_BATTLE_RESTORED':
+      return {
+        ...state,
+        phase: 'battle',
+        battleId: event.battleId,
+        pendingChoice: null,
+        error: null,
+        logEntries: event.logLines,
+      };
 
     case 'BATTLE_END':
       return {
@@ -182,27 +193,6 @@ function battleReducer(
         disconnectTimeout: null,
       };
 
-    case 'BATTLE_RESTORED': {
-      const battle = new Battle(getGenerations());
-      const formatter = new LogFormatter('p1', battle);
-      const logLines = processBattleProtocol(battle, formatter, event.currentState);
-
-      if (battle.request?.side?.id) {
-        formatter.perspective = battle.request.side.id;
-      }
-
-      return {
-        ...state,
-        phase: 'battle',
-        battleId: event.battleId,
-        battle,
-        logFormatter: formatter,
-        pendingChoice: null,
-        error: null,
-        logEntries: logLines,
-      };
-    }
-
     case 'REPLAY_SAVED':
       return {
         ...state,
@@ -234,7 +224,6 @@ function battleReducer(
 
 /**
  * Picks the serializable, human-readable fields from BattleUIState for logging.
- * Excludes the Battle instance and LogFormatter (non-serializable, noisy).
  */
 function stateSnapshot(state: BattleUIState) {
   return {
@@ -294,32 +283,96 @@ function battleSnapshot(battle: Battle) {
   };
 }
 
-function battleReducerWithLogging(
-  state: BattleUIState,
-  event: BattleEvent
-): BattleUIState {
-  const prev = state.phase;
-  const next = battleReducer(state, event);
-
-  if (prev !== next.phase) {
-    log.info(`${prev} → ${next.phase}`, {
-      event: event.type,
-      state: stateSnapshot(next),
-    });
-  } else {
-    log.debug(event.type, { state: stateSnapshot(next) });
-  }
-
-  // Log Battle object state for events that modify it
-  if (next.battle && (event.type === 'BATTLE_START' || event.type === 'BATTLE_UPDATE' || event.type === 'BATTLE_RESTORED')) {
-    log.debug('Battle', battleSnapshot(next.battle));
-  }
-
-  return next;
-}
-
+/**
+ * Battle state hook.
+ *
+ * Protocol processing (which mutates the Battle object) happens in the
+ * dispatch wrapper, not in the reducer. This keeps the reducer pure and
+ * prevents React strict mode from double-processing protocol data.
+ *
+ * - Battle & LogFormatter live in refs (mutable singletons)
+ * - Reducer only handles serializable state transitions
+ * - dispatch wrapper processes protocol once, then dispatches pre-computed results
+ */
 export function useBattleState() {
-  return useReducer(battleReducerWithLogging, initialBattleUIState);
+  const battleRef = useRef<Battle | null>(null);
+  const formatterRef = useRef<LogFormatter | null>(null);
+
+  const [reducerState, rawDispatch] = useReducer(battleReducer, initialBattleUIState);
+
+  const dispatch = useCallback((event: BattleEvent) => {
+    switch (event.type) {
+      case 'BATTLE_START': {
+        const battle = new Battle(getGenerations());
+        const formatter = new LogFormatter('p1', battle);
+        const logLines = processBattleProtocol(battle, formatter, event.initialState);
+
+        if (battle.request?.side?.id) {
+          formatter.perspective = battle.request.side.id;
+        }
+
+        battleRef.current = battle;
+        formatterRef.current = formatter;
+
+        log.info('→ battle', { event: 'BATTLE_START', battleId: event.battleId });
+        log.debug('Battle', battleSnapshot(battle));
+
+        rawDispatch({ type: '_BATTLE_INITIALIZED', battleId: event.battleId, logLines });
+        break;
+      }
+
+      case 'BATTLE_UPDATE': {
+        const battle = battleRef.current;
+        const formatter = formatterRef.current;
+        if (!battle || !formatter) return;
+
+        const logLines = processBattleProtocol(battle, formatter, event.data);
+
+        log.debug('BATTLE_UPDATE', { newLogLines: logLines.length });
+        log.debug('Battle', battleSnapshot(battle));
+
+        rawDispatch({ type: '_BATTLE_UPDATED', logLines });
+        break;
+      }
+
+      case 'BATTLE_RESTORED': {
+        const battle = new Battle(getGenerations());
+        const formatter = new LogFormatter('p1', battle);
+        const logLines = processBattleProtocol(battle, formatter, event.currentState);
+
+        if (battle.request?.side?.id) {
+          formatter.perspective = battle.request.side.id;
+        }
+
+        battleRef.current = battle;
+        formatterRef.current = formatter;
+
+        log.info('→ battle (restored)', { event: 'BATTLE_RESTORED', battleId: event.battleId });
+        log.debug('Battle', battleSnapshot(battle));
+
+        rawDispatch({ type: '_BATTLE_RESTORED', battleId: event.battleId, logLines });
+        break;
+      }
+
+      default: {
+        const prev = reducerState.phase;
+        log.debug(event.type);
+        rawDispatch(event);
+      }
+    }
+  }, [reducerState.phase]);
+
+  // Combine reducer state with ref-held Battle/LogFormatter
+  const state: BattleUIState = useMemo(
+    () => ({
+      ...reducerState,
+      battle: battleRef.current,
+      logFormatter: formatterRef.current,
+    }),
+    [reducerState]
+  );
+
+  return [state, dispatch] as const;
 }
 
 export { battleReducer };

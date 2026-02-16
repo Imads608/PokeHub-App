@@ -7,6 +7,7 @@ import { BattleHeader } from '../info/battle-header';
 import { BattleLog } from '../info/battle-log';
 import { FieldEffects } from './field-effects';
 import { PokemonSide } from './pokemon-side';
+import { TeamPanel } from './team-panel';
 
 export function BattleContainer() {
   const { state, userId, submitMove, cancelChoice, forfeit, saveReplay } =
@@ -15,9 +16,9 @@ export function BattleContainer() {
 
   if (!battle || !battleId) return null;
 
-  // Determine which side we are from the request
-  const mySideId = battle.request?.side?.id ?? 'p1';
-  const opponentSideId = mySideId === 'p1' ? 'p2' : 'p1';
+  // Determine which side we are from the request (singles: always p1 or p2)
+  const mySideId = (battle.request?.side?.id ?? 'p1') as 'p1' | 'p2';
+  const opponentSideId: 'p1' | 'p2' = mySideId === 'p1' ? 'p2' : 'p1';
 
   const mySide = battle[mySideId];
   const opponentSide = battle[opponentSideId];
@@ -38,7 +39,7 @@ export function BattleContainer() {
   };
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-4">
+    <div className="container mx-auto max-w-7xl px-4 py-4">
       <BattleHeader
         format={String(battle.tier || '')}
         turn={battle.turn}
@@ -46,18 +47,28 @@ export function BattleContainer() {
         onForfeit={() => forfeit(battleId)}
       />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_280px]">
-        {/* Main battlefield */}
-        <div className="relative">
-          {/* Arena area with subtle background */}
-          <div className="relative rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 p-6 min-h-[340px] flex flex-col justify-between">
+      {/* Main layout: Team Panels | Battlefield | Log */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-[180px_1fr_280px]">
+        {/* Left column: Player's team roster */}
+        <div className="hidden lg:block rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-2 self-start">
+          <TeamPanel
+            battle={battle}
+            sideId={mySideId}
+            isPlayer
+          />
+        </div>
+
+        {/* Center column: Battlefield + Actions */}
+        <div className="space-y-3">
+          {/* Arena */}
+          <div className="relative rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 p-8 min-h-[400px] flex flex-col justify-between">
             {/* Opponent side — top right */}
             <div className="flex justify-end">
               <PokemonSide pokemon={opponentActive} isOpponent />
             </div>
 
             {/* Field effects — centered */}
-            <div className="py-2">
+            <div className="py-3">
               <FieldEffects field={battle.field} />
             </div>
 
@@ -97,25 +108,55 @@ export function BattleContainer() {
               />
             )}
           </div>
+
+          {/* Action panel — below battlefield */}
+          {state.phase === 'battle' && (
+            <ActionPanel
+              battle={battle}
+              pendingChoice={state.pendingChoice}
+              onMoveSelect={handleMoveSelect}
+              onSwitchSelect={handleSwitchSelect}
+              onTeamSelect={handleTeamSelect}
+              onCancelChoice={cancelChoice}
+            />
+          )}
+
+          {/* Mobile-only team rosters */}
+          <div className="grid grid-cols-2 gap-3 lg:hidden">
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-2">
+              <TeamPanel
+                battle={battle}
+                sideId={mySideId}
+                isPlayer
+              />
+            </div>
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-2">
+              <TeamPanel
+                battle={battle}
+                sideId={opponentSideId}
+                isPlayer={false}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Right column: log */}
-        <BattleLog entries={state.logEntries} />
+        {/* Right column: Opponent roster + Battle log */}
+        <div className="flex flex-col gap-3">
+          {/* Opponent team roster */}
+          <div className="hidden lg:block rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-2">
+            <TeamPanel
+              battle={battle}
+              sideId={opponentSideId}
+              isPlayer={false}
+            />
+          </div>
+
+          {/* Battle log — fills remaining space */}
+          <div className="flex-1 min-h-0">
+            <BattleLog entries={state.logEntries} />
+          </div>
+        </div>
       </div>
-
-      {/* Action panel */}
-      {state.phase === 'battle' && (
-        <div className="mt-4">
-          <ActionPanel
-            battle={battle}
-            pendingChoice={state.pendingChoice}
-            onMoveSelect={handleMoveSelect}
-            onSwitchSelect={handleSwitchSelect}
-            onTeamSelect={handleTeamSelect}
-            onCancelChoice={cancelChoice}
-          />
-        </div>
-      )}
     </div>
   );
 }
