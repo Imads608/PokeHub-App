@@ -2,7 +2,7 @@
 
 import type { TypeName } from '@pkmn/dex';
 import { Button } from '@pokehub/frontend/shared-ui-components';
-import { typeColors } from '@pokehub/frontend/shared-utils';
+import { typeMoveStyles } from '@pokehub/frontend/shared-utils';
 
 interface MoveButtonProps {
   name: string;
@@ -21,21 +21,38 @@ export function MoveButton({
   disabled = false,
   onSelect,
 }: MoveButtonProps) {
-  const typeClass = type ? typeColors[type] : '';
+  const style = type ? typeMoveStyles[type] : null;
+  const ppLow = pp !== undefined && maxpp !== undefined && pp <= Math.floor(maxpp / 4);
 
   return (
     <Button
       variant="outline"
-      className={`h-auto flex-col gap-0.5 py-2 px-3 w-full ${typeClass} ${
-        disabled ? 'opacity-50' : ''
-      }`}
+      className={`
+        relative overflow-hidden h-auto rounded-xl px-4 py-3 w-full text-left justify-start flex-col items-start
+        ring-1 ring-inset border-0
+        ${style
+          ? `bg-gradient-to-br ${style.bg} ${style.text} ${style.ring} hover:brightness-110`
+          : 'bg-muted text-foreground ring-border'
+        }
+        ${disabled ? 'opacity-40 grayscale-[30%]' : 'hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'}
+      `}
       disabled={disabled}
       onClick={onSelect}
     >
-      <span className="font-semibold text-sm">{name}</span>
+      {/* Subtle highlight across top */}
+      <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
+
+      <span className="block font-bold text-sm leading-tight">{name}</span>
       {pp !== undefined && maxpp !== undefined && (
-        <span className="text-xs opacity-80">
+        <span className={`block text-[11px] mt-0.5 ${ppLow ? 'font-semibold opacity-90' : 'opacity-60'}`}>
           {pp}/{maxpp} PP
+        </span>
+      )}
+
+      {/* Type label */}
+      {type && (
+        <span className="absolute top-1.5 right-2 text-[9px] font-bold uppercase tracking-wider opacity-40">
+          {type}
         </span>
       )}
     </Button>

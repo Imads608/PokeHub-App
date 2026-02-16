@@ -14,6 +14,7 @@ const log = createClientLogger('BattleContext');
 export interface BattleSocketContextValue {
   state: BattleUIState;
   isConnected: boolean;
+  userId: string;
   joinQueue: (format: string, teamId: string) => void;
   leaveQueue: () => void;
   declineMatch: (battleId: string) => void;
@@ -35,6 +36,7 @@ export function BattleSocketProvider({
 }) {
   const { data: session } = useAuthSession();
   const accessToken = session?.accessToken;
+  const userId = session?.user?.id ?? '';
 
   const [state, dispatch] = useBattleState();
   const [lastEvent, setLastEvent] = useState<ServerBattleEvent | null>(null);
@@ -142,6 +144,7 @@ export function BattleSocketProvider({
   const value: BattleSocketContextValue = {
     state,
     isConnected,
+    userId,
     joinQueue,
     leaveQueue,
     declineMatch,

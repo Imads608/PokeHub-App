@@ -20,7 +20,6 @@ export type {
   BattleMetadata,
   RedisBattleMetadata,
   PendingChoices,
-  MatchFoundMessage,
   BattleMoveMessage,
   BattleUpdateMessage,
   BattleStateUpdateMessage,

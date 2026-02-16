@@ -130,7 +130,7 @@ export function useBattleSocket({
     });
 
     socket.on(BATTLE_EVENT, (data: ServerBattleEvent) => {
-      log.debug('Received', { type: data.type, ...data });
+      log.debug('Received', data);
       onEventRef.current(data);
     });
 

@@ -196,15 +196,6 @@ export function parsePendingChoices(json: string): PendingChoices {
 }
 
 /**
- * Pub/Sub message for match found
- */
-export interface MatchFoundMessage {
-  battleId: string;
-  opponentId: string;
-  opponentName: string;
-}
-
-/**
  * Pub/Sub message for battle move (cross-server)
  */
 export interface BattleMoveMessage {

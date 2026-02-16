@@ -9,7 +9,7 @@ import { FieldEffects } from './field-effects';
 import { PokemonSide } from './pokemon-side';
 
 export function BattleContainer() {
-  const { state, submitMove, cancelChoice, forfeit, saveReplay } =
+  const { state, userId, submitMove, cancelChoice, forfeit, saveReplay } =
     useBattleSocketContext();
   const { battle, battleId } = state;
 
@@ -24,8 +24,6 @@ export function BattleContainer() {
 
   const myActive = mySide?.active[0] ?? null;
   const opponentActive = opponentSide?.active[0] ?? null;
-
-  const myName = mySide?.name || null;
 
   const handleMoveSelect = (choice: string) => {
     submitMove(battleId, choice);
@@ -48,47 +46,57 @@ export function BattleContainer() {
         onForfeit={() => forfeit(battleId)}
       />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_300px]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_280px]">
         {/* Main battlefield */}
-        <div className="relative space-y-4">
-          {/* Opponent side */}
-          <div className="flex justify-start">
-            <PokemonSide pokemon={opponentActive} isOpponent />
-          </div>
-
-          {/* Field effects */}
-          <FieldEffects field={battle.field} />
-
-          {/* Player side */}
-          <div className="flex justify-end">
-            <PokemonSide pokemon={myActive} isOpponent={false} />
-          </div>
-
-          {/* Opponent disconnect overlay */}
-          {state.opponentDisconnected && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
-              <div className="text-center">
-                <p className="font-semibold">Opponent disconnected</p>
-                {state.disconnectTimeout && (
-                  <p className="text-sm text-muted-foreground">
-                    Waiting {state.disconnectTimeout}s...
-                  </p>
-                )}
-              </div>
+        <div className="relative">
+          {/* Arena area with subtle background */}
+          <div className="relative rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 p-6 min-h-[340px] flex flex-col justify-between">
+            {/* Opponent side — top right */}
+            <div className="flex justify-end">
+              <PokemonSide pokemon={opponentActive} isOpponent />
             </div>
-          )}
 
-          {/* Battle end overlay */}
-          {state.phase === 'ended' && (
-            <BattleEndOverlay
-              winner={state.winner}
-              myName={myName}
-              endReason={state.endReason}
-              canSaveReplay={state.canSaveReplay}
-              replaySaved={state.replaySaved}
-              onSaveReplay={() => saveReplay(battleId)}
-            />
-          )}
+            {/* Field effects — centered */}
+            <div className="py-2">
+              <FieldEffects field={battle.field} />
+            </div>
+
+            {/* Player side — bottom left */}
+            <div className="flex justify-start">
+              <PokemonSide pokemon={myActive} isOpponent={false} />
+            </div>
+
+            {/* Opponent disconnect overlay */}
+            {state.opponentDisconnected && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-md rounded-2xl">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-yellow-500/10 px-4 py-2 ring-1 ring-yellow-500/20">
+                    <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-yellow-500">
+                      Opponent disconnected
+                    </span>
+                  </div>
+                  {state.disconnectTimeout && (
+                    <p className="text-sm text-muted-foreground">
+                      Waiting <span className="font-mono tabular-nums font-semibold">{state.disconnectTimeout}s</span>...
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Battle end overlay */}
+            {state.phase === 'ended' && (
+              <BattleEndOverlay
+                winner={state.winner}
+                myUserId={userId}
+                endReason={state.endReason}
+                canSaveReplay={state.canSaveReplay}
+                replaySaved={state.replaySaved}
+                onSaveReplay={() => saveReplay(battleId)}
+              />
+            )}
+          </div>
         </div>
 
         {/* Right column: log */}

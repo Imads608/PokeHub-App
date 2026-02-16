@@ -15,20 +15,23 @@ export default function BattlePage() {
 
   // If we're not in battle phase for this battleId, attempt rejoin
   useEffect(() => {
-    if (state.phase === 'idle' && battleId) {
+    if (state.phase === 'idle' && battleId && !state.error) {
       rejoin(battleId);
     }
-  }, [state.phase, battleId, rejoin]);
+  }, [state.phase, battleId, state.error, rejoin]);
 
-  // Redirect to lobby if battle ended
+  // Redirect to lobby if battle ended or rejoin failed
   useEffect(() => {
     if (state.phase === 'ended') return; // Show end overlay, don't redirect
-    if (state.phase === 'idle' && !state.battleId) {
-      // No active battle and not loading — go back to lobby
+    if (
+      state.phase === 'idle' &&
+      (!state.battleId || state.error)
+    ) {
+      // No active battle or rejoin failed — go back to lobby
       const timer = setTimeout(() => router.push('/battle'), 3000);
       return () => clearTimeout(timer);
     }
-  }, [state.phase, state.battleId, router]);
+  }, [state.phase, state.battleId, state.error, router]);
 
   if (state.phase !== 'battle' && state.phase !== 'ended') {
     return (

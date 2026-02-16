@@ -9,11 +9,11 @@ import type {
   BattleMetadata,
   BattleMoveMessage,
   BattleUpdateMessage,
-  MatchFoundMessage,
   PendingChoices,
   QueueEntry,
   RedisBattleMetadata,
 } from './redis.types';
+import type { ServerBattleEvent } from '@pokehub/shared/pokemon-battle-types';
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import Redis from 'ioredis';
@@ -219,6 +219,16 @@ export class RedisBattleService {
     await this.client.expire(key, seconds);
   }
 
+  async setBattleMetadataTTL(battleId: string, seconds: number): Promise<void> {
+    const key = RedisKeys.battle.metadata(battleId);
+    await this.client.expire(key, seconds);
+  }
+
+  async setBattleSeedTTL(battleId: string, seconds: number): Promise<void> {
+    const key = RedisKeys.battle.seed(battleId);
+    await this.client.expire(key, seconds);
+  }
+
   async deleteBattleLog(battleId: string): Promise<void> {
     const key = RedisKeys.battle.log(battleId);
     await this.client.del(key);
@@ -283,14 +293,14 @@ export class RedisBattleService {
 
   // ==================== Pub/Sub ====================
 
-  async publishMatchFound(
+  async publishUserBattleEvent(
     userId: string,
-    message: MatchFoundMessage
+    event: ServerBattleEvent
   ): Promise<void> {
-    const channel = RedisKeys.channels.matchFound(userId);
-    await this.client.publish(channel, JSON.stringify(message));
+    const channel = RedisKeys.channels.userBattleEvent(userId);
+    await this.client.publish(channel, JSON.stringify(event));
     this.logger.debug(
-      `Published match found to user ${userId}: battle ${message.battleId}`
+      `Published ${event.type} to user ${userId} via Redis`
     );
   }
 

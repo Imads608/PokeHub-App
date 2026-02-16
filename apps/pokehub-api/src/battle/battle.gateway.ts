@@ -25,7 +25,6 @@ import {
 import {
   REDIS_SERVICE,
   type RedisService,
-  type MatchFoundMessage,
   type BattleUpdateMessage,
   type BattleEventPayload,
   RedisKeys,
@@ -126,10 +125,22 @@ export class BattleGateway
 
   private handleRedisMessage(channel: string, message: string): void {
     try {
-      // Handle match found: match:user:{userId}
-      const matchUserId = RedisKeys.channels.parseMatchFoundUserId(channel);
-      if (matchUserId) {
-        this.handleMatchFoundMessage(matchUserId, JSON.parse(message));
+      // Handle per-user battle events: user:{userId}:battle-events
+      const eventUserId =
+        RedisKeys.channels.parseUserBattleEventUserId(channel);
+      if (eventUserId) {
+        const event: ServerBattleEvent = JSON.parse(message);
+        const socketId = this.userToSocket.get(eventUserId);
+        if (socketId) {
+          this.logger.debug(
+            `Forwarding ${event.type} from Redis to user ${eventUserId}`
+          );
+          this.server.to(socketId).emit(BATTLE_EVENT, event);
+        } else {
+          this.logger.warn(
+            `Cannot forward ${event.type} to user ${eventUserId} — no socket found`
+          );
+        }
         return;
       }
 
@@ -141,30 +152,6 @@ export class BattleGateway
       }
     } catch (error) {
       this.logger.error(`Error handling Redis message: ${error}`);
-    }
-  }
-
-  private handleMatchFoundMessage(
-    userId: string,
-    message: MatchFoundMessage
-  ): void {
-    const socketId = this.userToSocket.get(userId);
-    if (socketId) {
-      this.logger.log(
-        `Sending MATCH_FOUND to user ${userId} — battle ${message.battleId}, opponent: ${message.opponentName}`
-      );
-      this.server.to(socketId).emit(BATTLE_EVENT, {
-        type: 'MATCH_FOUND',
-        battleId: message.battleId,
-        opponent: {
-          id: message.opponentId,
-          name: message.opponentName,
-        },
-      } satisfies ServerBattleEvent);
-    } else {
-      this.logger.warn(
-        `Cannot send MATCH_FOUND to user ${userId} — no socket found`
-      );
     }
   }
 
@@ -181,33 +168,20 @@ export class BattleGateway
     switch (message.type) {
       case 'state': {
         // Send each player their own perspective (opponent info redacted)
-        const p1SocketId = this.userToSocket.get(message.p1Id);
-        const p2SocketId = this.userToSocket.get(message.p2Id);
-
         this.logger.debug(
-          `Sending BATTLE_UPDATE — battle ${battleId}, p1: ${message.p1Id} (${
-            p1SocketId ? 'online' : 'offline'
-          }), p2: ${message.p2Id} (${
-            p2SocketId ? 'online' : 'offline'
-          }), p1Data: ${message.p1Data.length} chars, p2Data: ${
-            message.p2Data.length
-          } chars`
+          `Sending BATTLE_UPDATE — battle ${battleId}, p1Data: ${message.p1Data.length} chars, p2Data: ${message.p2Data.length} chars`
         );
 
-        if (p1SocketId) {
-          this.server.to(p1SocketId).emit(BATTLE_EVENT, {
-            type: 'BATTLE_UPDATE',
-            battleId,
-            data: message.p1Data,
-          } satisfies ServerBattleEvent);
-        }
-        if (p2SocketId) {
-          this.server.to(p2SocketId).emit(BATTLE_EVENT, {
-            type: 'BATTLE_UPDATE',
-            battleId,
-            data: message.p2Data,
-          } satisfies ServerBattleEvent);
-        }
+        this.emitToUser(message.p1Id, {
+          type: 'BATTLE_UPDATE',
+          battleId,
+          data: message.p1Data,
+        });
+        this.emitToUser(message.p2Id, {
+          type: 'BATTLE_UPDATE',
+          battleId,
+          data: message.p2Data,
+        });
         break;
       }
 
@@ -310,10 +284,10 @@ export class BattleGateway
 
     this.logger.log(`User ${userId} connected (socket: ${client.id})`);
 
-    // Subscribe to match notifications for this user
+    // Subscribe to per-user battle events (for cross-server delivery)
     if (this.subscriberClient) {
       void this.subscriberClient.subscribe(
-        RedisKeys.channels.matchFound(userId)
+        RedisKeys.channels.userBattleEvent(userId)
       );
     }
 
@@ -354,10 +328,10 @@ export class BattleGateway
 
     this.logger.log(`User ${userId} disconnected (socket: ${client.id})`);
 
-    // Unsubscribe from match notifications
+    // Unsubscribe from per-user battle events
     if (this.subscriberClient) {
       void this.subscriberClient.unsubscribe(
-        RedisKeys.channels.matchFound(userId)
+        RedisKeys.channels.userBattleEvent(userId)
       );
     }
 
@@ -573,17 +547,14 @@ export class BattleGateway
       await this.battleManager.cancelBattle(battleId);
 
       // Notify the opponent and requeue them
-      const opponentSocketId = this.userToSocket.get(opponentId);
-      if (opponentSocketId) {
-        this.logger.log(
-          `Sending MATCH_CANCELLED to opponent ${opponentId} — battle ${battleId}`
-        );
-        this.server.to(opponentSocketId).emit(BATTLE_EVENT, {
-          type: 'MATCH_CANCELLED',
-          battleId,
-          reason: 'opponent_declined',
-        } satisfies ServerBattleEvent);
-      }
+      this.logger.log(
+        `Sending MATCH_CANCELLED to opponent ${opponentId} — battle ${battleId}`
+      );
+      this.emitToUser(opponentId, {
+        type: 'MATCH_CANCELLED',
+        battleId,
+        reason: 'opponent_declined',
+      });
 
       // Requeue the opponent
       await this.matchmaking.joinQueue(
@@ -839,6 +810,20 @@ export class BattleGateway
   }
 
   /**
+   * Emit a battle event to a user. If the user's socket is on this server,
+   * emit directly for guaranteed ordering. Otherwise publish via Redis
+   * pub/sub for cross-server delivery.
+   */
+  private emitToUser(userId: string, event: ServerBattleEvent): void {
+    const socketId = this.userToSocket.get(userId);
+    if (socketId) {
+      this.server.to(socketId).emit(BATTLE_EVENT, event);
+    } else {
+      void this.redis.publishUserBattleEvent(userId, event);
+    }
+  }
+
+  /**
    * Try to find a match for a format and create a battle if successful
    */
   private async tryFindMatch(format: string): Promise<void> {
@@ -895,65 +880,54 @@ export class BattleGateway
         );
       }
 
-      // Notify both players
-      await Promise.all([
-        this.redis.publishMatchFound(player1.userId, {
-          battleId,
-          opponentId: player2.userId,
-          opponentName: user2Name,
-        }),
-        this.redis.publishMatchFound(player2.userId, {
-          battleId,
-          opponentId: player1.userId,
-          opponentName: user1Name,
-        }),
-      ]);
-
-      // Join both players to the battle room (if on this server)
+      // Join local players to the battle room
+      const battleRoom = BattleRooms.battle(battleId);
       const socket1 = this.userToSocket.get(player1.userId);
       const socket2 = this.userToSocket.get(player2.userId);
 
-      // Join both players to the battle room and emit BATTLE_START
-      const battleRoom = BattleRooms.battle(battleId);
-
       if (socket1) {
-        // Use fetchSockets to get the actual socket and join the room
         const sockets1 = await this.server.in(socket1).fetchSockets();
         if (sockets1.length > 0) {
           await sockets1[0].join(battleRoom);
-          this.logger.log(
-            `Sending BATTLE_START to p1 ${player1.userId} — battle ${battleId}, initialState: ${battle.p1State.length} chars`
-          );
-          sockets1[0].emit(BATTLE_EVENT, {
-            type: 'BATTLE_START',
-            battleId,
-            initialState: battle.p1State,
-          } satisfies ServerBattleEvent);
         }
-      } else {
-        this.logger.warn(
-          `Cannot send BATTLE_START to p1 ${player1.userId} — not connected to this server`
-        );
       }
-
       if (socket2) {
         const sockets2 = await this.server.in(socket2).fetchSockets();
         if (sockets2.length > 0) {
           await sockets2[0].join(battleRoom);
-          this.logger.log(
-            `Sending BATTLE_START to p2 ${player2.userId} — battle ${battleId}, initialState: ${battle.p2State.length} chars`
-          );
-          sockets2[0].emit(BATTLE_EVENT, {
-            type: 'BATTLE_START',
-            battleId,
-            initialState: battle.p2State,
-          } satisfies ServerBattleEvent);
         }
-      } else {
-        this.logger.warn(
-          `Cannot send BATTLE_START to p2 ${player2.userId} — not connected to this server`
-        );
       }
+
+      // Send MATCH_FOUND then BATTLE_START to each player.
+      // emitToUser delivers directly if local, or via Redis if remote,
+      // guaranteeing correct ordering either way.
+      this.emitToUser(player1.userId, {
+        type: 'MATCH_FOUND',
+        battleId,
+        opponent: { id: player2.userId, name: user2Name },
+      });
+      this.logger.log(
+        `Sending BATTLE_START to p1 ${player1.userId} — battle ${battleId}, initialState: ${battle.p1State.length} chars`
+      );
+      this.emitToUser(player1.userId, {
+        type: 'BATTLE_START',
+        battleId,
+        initialState: battle.p1State,
+      });
+
+      this.emitToUser(player2.userId, {
+        type: 'MATCH_FOUND',
+        battleId,
+        opponent: { id: player1.userId, name: user1Name },
+      });
+      this.logger.log(
+        `Sending BATTLE_START to p2 ${player2.userId} — battle ${battleId}, initialState: ${battle.p2State.length} chars`
+      );
+      this.emitToUser(player2.userId, {
+        type: 'BATTLE_START',
+        battleId,
+        initialState: battle.p2State,
+      });
 
       this.logger.log(
         `Battle ${battleId} started: ${user1Name} vs ${user2Name}`

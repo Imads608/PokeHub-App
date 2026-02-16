@@ -29,20 +29,25 @@ export const RedisKeys = {
 
   // Pub/Sub channels
   channels: {
-    matchFound: (userId: string) => `match:user:${userId}` as const,
+    /** Per-user channel for delivering battle events when the user is on another server */
+    userBattleEvent: (userId: string) => `user:${userId}:battle-events` as const,
     battleMove: (battleId: string) => `battle:${battleId}:move` as const,
     battleUpdate: (battleId: string) => `battle:${battleId}:update` as const,
 
     // Prefixes for parsing incoming channel names
     prefixes: {
-      matchFound: 'match:user:' as const,
+      userBattleEvent: 'user:' as const,
+      userBattleEventSuffix: ':battle-events' as const,
       battleUpdate: ':update' as const,
     },
 
-    // Parse userId from match:user:{userId} channel
-    parseMatchFoundUserId: (channel: string): string | null => {
-      if (channel.startsWith('match:user:')) {
-        return channel.slice('match:user:'.length);
+    // Parse userId from user:{userId}:battle-events channel
+    parseUserBattleEventUserId: (channel: string): string | null => {
+      if (
+        channel.startsWith('user:') &&
+        channel.endsWith(':battle-events')
+      ) {
+        return channel.slice('user:'.length, -':battle-events'.length);
       }
       return null;
     },

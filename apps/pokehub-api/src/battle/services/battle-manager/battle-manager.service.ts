@@ -20,6 +20,11 @@ import type { BattleConfig } from '@pokehub/shared/pokemon-battle-types';
 // Disconnect timeout in milliseconds (2 minutes)
 const DISCONNECT_TIMEOUT_MS = 2 * 60 * 1000;
 
+// Safety-net TTL for battle Redis keys (24 hours).
+// Active battles finish well before this. Ensures orphaned keys from
+// server crashes (where no player reconnects) are eventually cleaned up.
+const BATTLE_KEY_TTL_SECONDS = 24 * 60 * 60;
+
 /**
  * Battle Manager Service
  *
@@ -103,6 +108,15 @@ class BattleManagerService implements IBattleManagerService {
     await Promise.all([
       this.redis.setUserBattle(config.player1.id, config.id),
       this.redis.setUserBattle(config.player2.id, config.id),
+    ]);
+
+    // Set safety-net TTL on all battle keys. Normal battle completion
+    // will shorten this to 1 hour (replay window). This only matters
+    // if the server crashes and no player ever reconnects.
+    await Promise.all([
+      this.redis.setBattleMetadataTTL(config.id, BATTLE_KEY_TTL_SECONDS),
+      this.redis.setBattleSeedTTL(config.id, BATTLE_KEY_TTL_SECONDS),
+      this.redis.setBattleLogTTL(config.id, BATTLE_KEY_TTL_SECONDS),
     ]);
 
     this.logger.log(`Battle ${config.id} created and ready`);
@@ -201,9 +215,27 @@ class BattleManagerService implements IBattleManagerService {
     // Log the command for replay
     await this.redis.appendBattleLog(battleId, `>${player} ${choice}`);
 
-    // Check if both players have chosen
-    if (pending.p1 && pending.p2) {
-      await this.executeTurn(battleId, instance, pending.p1, pending.p2);
+    // Check if we have all needed choices to execute
+    // The sim's requestState tells us who needs to act:
+    // '' = no request (waiting), 'move'/'switch'/'teampreview' = needs a choice
+    const simBattle = instance.stream.battle;
+    if (!simBattle) {
+      this.logger.error(`Battle ${battleId}: no sim battle instance`);
+      return;
+    }
+    const p1NeedsChoice = !!simBattle.p1.requestState;
+    const p2NeedsChoice = !!simBattle.p2.requestState;
+
+    const p1Ready = pending.p1 || !p1NeedsChoice;
+    const p2Ready = pending.p2 || !p2NeedsChoice;
+
+    if (p1Ready && p2Ready) {
+      await this.executeTurn(
+        battleId,
+        instance,
+        pending.p1 || 'pass',
+        pending.p2 || 'pass',
+      );
     }
   }
 
@@ -371,6 +403,11 @@ class BattleManagerService implements IBattleManagerService {
       const metadata = await this.redis.getBattleMetadata(battleId);
       if (!metadata) {
         throw new Error(`Battle ${battleId} not found`);
+      }
+
+      // Don't recover battles that have already ended
+      if (metadata.status !== 'active') {
+        throw new Error(`Battle ${battleId} has already ended`);
       }
 
       // Check if original host is still alive
@@ -573,9 +610,13 @@ class BattleManagerService implements IBattleManagerService {
       `Battle ${battleId}: executing turn (p1: ${p1Choice}, p2: ${p2Choice})`
     );
 
-    // Send choices to the battle stream
-    await this.writeToStream(instance, `>p1 ${p1Choice}`);
-    await this.writeToStream(instance, `>p2 ${p2Choice}`);
+    // Send choices to the battle stream (only for players who have an active request)
+    if (p1Choice !== 'pass') {
+      await this.writeToStream(instance, `>p1 ${p1Choice}`);
+    }
+    if (p2Choice !== 'pass') {
+      await this.writeToStream(instance, `>p2 ${p2Choice}`);
+    }
 
     // Clear pending choices
     await this.redis.setPendingChoices(battleId, {});
@@ -611,12 +652,19 @@ class BattleManagerService implements IBattleManagerService {
     } else {
       // Battle continues - accept new choices and start turn timers
       instance.awaitingChoices = true;
+
+      // Only start timers for players who actually need to make a choice.
+      // After a faint, only the player with the KO'd Pokemon needs to switch;
+      // the other player has no request and shouldn't get a timer.
+      const p1NeedsChoice = !!simBattle.p1.requestState;
+      const p2NeedsChoice = !!simBattle.p2.requestState;
+
       this.turnTimer.startTimers(
         battleId,
         instance.config.player1.id,
         instance.config.player2.id,
-        false,
-        false
+        !p1NeedsChoice, // treat as "already chosen" if no request
+        !p2NeedsChoice  // treat as "already chosen" if no request
       );
     }
   }
@@ -665,8 +713,13 @@ class BattleManagerService implements IBattleManagerService {
       this.redis.clearUserBattle(instance.config.player2.id),
     ]);
 
-    // Set TTL on battle log for replay saving (1 hour)
-    await this.redis.setBattleLogTTL(battleId, 3600);
+    // Set TTL on all battle keys — keeps data for 1 hour (replay save window)
+    // then Redis auto-deletes everything.
+    await Promise.all([
+      this.redis.setBattleLogTTL(battleId, 3600),
+      this.redis.setBattleMetadataTTL(battleId, 3600),
+      this.redis.setBattleSeedTTL(battleId, 3600),
+    ]);
 
     // Remove from local map
     this.battles.delete(battleId);

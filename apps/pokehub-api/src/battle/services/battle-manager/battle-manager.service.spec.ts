@@ -18,17 +18,22 @@ import type { BattleConfig } from '@pokehub/shared/pokemon-battle-types';
 // Mock @pkmn/sim module
 jest.mock('@pkmn/sim', () => {
   // Mock battle instance
+  const mockP1Side = {
+    autoChoose: jest.fn(),
+    getChoice: jest.fn().mockReturnValue('move 1'),
+    requestState: 'move' as string,
+  };
+  const mockP2Side = {
+    autoChoose: jest.fn(),
+    getChoice: jest.fn().mockReturnValue('move 2'),
+    requestState: 'move' as string,
+  };
   const mockBattle = {
-    sides: [
-      {
-        autoChoose: jest.fn(),
-        getChoice: jest.fn().mockReturnValue('move 1'),
-      },
-      {
-        autoChoose: jest.fn(),
-        getChoice: jest.fn().mockReturnValue('move 2'),
-      },
-    ],
+    sides: [mockP1Side, mockP2Side],
+    p1: mockP1Side,
+    p2: mockP2Side,
+    ended: false,
+    winner: '' as string,
   };
 
   // Mock omniscient stream (full info for win/tie detection + replay)
@@ -100,6 +105,8 @@ describe('BattleManagerService', () => {
     getBattleLog: jest.fn().mockResolvedValue([]),
     publishBattleUpdate: jest.fn().mockResolvedValue(undefined),
     setBattleLogTTL: jest.fn().mockResolvedValue(undefined),
+    setBattleMetadataTTL: jest.fn().mockResolvedValue(undefined),
+    setBattleSeedTTL: jest.fn().mockResolvedValue(undefined),
     removeServerBattle: jest.fn().mockResolvedValue(undefined),
     isServerAlive: jest.fn(),
     cleanupBattle: jest.fn().mockResolvedValue(undefined),
@@ -549,8 +556,16 @@ describe('BattleManagerService', () => {
       // Clear user battles
       expect(mockRedisService.clearUserBattle).toHaveBeenCalledTimes(2);
 
-      // Set log TTL
+      // Set TTLs on all battle keys
       expect(mockRedisService.setBattleLogTTL).toHaveBeenCalledWith(
+        testBattleId,
+        3600
+      );
+      expect(mockRedisService.setBattleMetadataTTL).toHaveBeenCalledWith(
+        testBattleId,
+        3600
+      );
+      expect(mockRedisService.setBattleSeedTTL).toHaveBeenCalledWith(
         testBattleId,
         3600
       );

@@ -30,10 +30,15 @@ export function BattleHeader({
   const [showForfeitDialog, setShowForfeitDialog] = useState(false);
 
   return (
-    <div className="flex items-center justify-between rounded-lg border bg-card px-4 py-2">
+    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm px-4 py-2.5">
       <div className="flex items-center gap-3">
-        <Badge variant="outline">{format || 'Battle'}</Badge>
-        <span className="text-sm text-muted-foreground">Turn {turn}</span>
+        <Badge variant="outline" className="font-semibold text-xs tracking-wide uppercase">
+          {format || 'Battle'}
+        </Badge>
+        <div className="h-4 w-px bg-border/60" />
+        <span className="text-sm font-medium text-muted-foreground">
+          Turn <span className="text-foreground font-bold tabular-nums">{turn}</span>
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -46,10 +51,10 @@ export function BattleHeader({
         <Button
           variant="ghost"
           size="sm"
-          className="text-destructive hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive"
           onClick={() => setShowForfeitDialog(true)}
         >
-          <Flag className="mr-1.5 h-4 w-4" />
+          <Flag className="mr-1.5 h-3.5 w-3.5" />
           Forfeit
         </Button>
       </div>

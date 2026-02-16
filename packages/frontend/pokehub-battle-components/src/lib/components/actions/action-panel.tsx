@@ -9,7 +9,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { Loader2, Undo2 } from 'lucide-react';
+import { Loader2, Undo2, Zap, ArrowLeftRight } from 'lucide-react';
 import { MovePanel } from './move-panel';
 import { SwitchPanel } from './switch-panel';
 
@@ -67,9 +67,9 @@ export function ActionPanel({
   // Waiting for server (no request) or explicit wait request
   if (!request || request.requestType === 'wait') {
     return (
-      <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm py-8 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm">Waiting for opponent...</span>
+        <span className="text-sm font-medium">Waiting for opponent...</span>
       </div>
     );
   }
@@ -79,19 +79,18 @@ export function ActionPanel({
     const label = formatChoiceLabel(pendingChoice, battle);
 
     return (
-      <div className="flex flex-col items-center gap-3 py-6">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm py-8">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">
-            Waiting for opponent...
-          </span>
+          <span className="text-sm font-medium">Waiting for opponent...</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Your choice: <span className="font-medium text-foreground">{label}</span>
+          Your choice: <span className="font-semibold text-foreground">{label}</span>
         </p>
         <Button
           variant="ghost"
           size="sm"
+          className="text-muted-foreground hover:text-foreground"
           onClick={onCancelChoice}
         >
           <Undo2 className="mr-1.5 h-3.5 w-3.5" />
@@ -106,11 +105,11 @@ export function ActionPanel({
     const pokemon = request.side.pokemon;
 
     return (
-      <div className="space-y-3">
-        <p className="text-sm font-medium">
-          Choose your lead (or confirm default order):
+      <div className="space-y-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4">
+        <p className="text-sm font-semibold text-center">
+          Choose your lead Pokemon
         </p>
-        <div className="space-y-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           {pokemon.map((poke, index) => {
             const species = poke.details.split(',')[0];
             const icon = Icons.getPokemon(species);
@@ -119,7 +118,7 @@ export function ActionPanel({
               <Button
                 key={poke.ident}
                 variant="outline"
-                className="w-full h-auto py-2 px-3 justify-start gap-3"
+                className="h-auto py-2.5 px-3 justify-start gap-3 hover:border-primary/30 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
                 onClick={() => {
                   // Build team order string: chosen lead first, rest in original order
                   const order = [index + 1];
@@ -130,12 +129,13 @@ export function ActionPanel({
                 }}
               >
                 <span style={{ ...icon.css }} className="shrink-0" />
-                <span className="font-medium text-sm">{species}</span>
+                <span className="font-semibold text-sm">{species}</span>
               </Button>
             );
           })}
         </div>
         <Button
+          variant="secondary"
           className="w-full"
           onClick={() => {
             // Default order: 1, 2, 3, ...
@@ -152,8 +152,10 @@ export function ActionPanel({
   // Force switch — only show switch panel (e.g., after a faint)
   if (request.requestType === 'switch') {
     return (
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Choose a Pokemon to switch in:</p>
+      <div className="space-y-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4">
+        <p className="text-sm font-semibold text-center">
+          Choose a Pokemon to switch in
+        </p>
         <SwitchPanel
           battle={battle}
           onSwitchSelect={onSwitchSelect}
@@ -167,28 +169,32 @@ export function ActionPanel({
     const trapped = request.active?.[0]?.trapped || request.active?.[0]?.maybeTrapped;
 
     return (
-      <Tabs defaultValue="moves">
-        <TabsList className="w-full">
-          <TabsTrigger value="moves" className="flex-1">
-            Moves
-          </TabsTrigger>
-          <TabsTrigger value="switch" className="flex-1" disabled={trapped}>
-            Switch {trapped ? '(Trapped)' : ''}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="moves" className="mt-2">
-          <MovePanel
-            battle={battle}
-            onMoveSelect={onMoveSelect}
-          />
-        </TabsContent>
-        <TabsContent value="switch" className="mt-2">
-          <SwitchPanel
-            battle={battle}
-            onSwitchSelect={onSwitchSelect}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4">
+        <Tabs defaultValue="moves">
+          <TabsList className="w-full mb-3 bg-muted/50">
+            <TabsTrigger value="moves" className="flex-1 gap-1.5">
+              <Zap className="h-3.5 w-3.5" />
+              Moves
+            </TabsTrigger>
+            <TabsTrigger value="switch" className="flex-1 gap-1.5" disabled={trapped}>
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+              Switch {trapped ? '(Trapped)' : ''}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="moves" className="mt-0">
+            <MovePanel
+              battle={battle}
+              onMoveSelect={onMoveSelect}
+            />
+          </TabsContent>
+          <TabsContent value="switch" className="mt-0">
+            <SwitchPanel
+              battle={battle}
+              onSwitchSelect={onSwitchSelect}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     );
   }
 
