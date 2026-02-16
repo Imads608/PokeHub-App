@@ -128,8 +128,11 @@ function OpponentTeamPanel({
 }: {
   side: Battle['p1'];
 }) {
-  const revealed: ClientPokemon[] = side.team;
   const totalPokemon = side.totalPokemon;
+
+  // searchid is set when a Pokemon has been switched in (real HP data).
+  // Only show Pokemon that have actually entered battle.
+  const revealed = side.team.filter((p) => p.searchid);
   const unrevealedCount = Math.max(0, totalPokemon - revealed.length);
 
   return (
@@ -140,7 +143,7 @@ function OpponentTeamPanel({
         </span>
       </div>
 
-      {/* Revealed Pokemon */}
+      {/* Revealed Pokemon (switched in, real HP data) */}
       {revealed.map((pokemon) => {
         const species = pokemon.baseSpeciesForme;
         const icon = Icons.getPokemon(species);
@@ -158,7 +161,7 @@ function OpponentTeamPanel({
 
         return (
           <div
-            key={pokemon.ident}
+            key={pokemon.searchid}
             className={`
               group relative flex items-center gap-2 rounded-lg px-2 py-1.5
               transition-colors duration-200
@@ -183,7 +186,6 @@ function OpponentTeamPanel({
                 <StatusBadge status={pokemon.status} />
               </div>
 
-              {/* HP bar — opponent only sees percentage */}
               {!isFainted && (
                 <div className="mt-0.5 h-1 w-full rounded-full bg-black/20 overflow-hidden">
                   <div
@@ -200,7 +202,6 @@ function OpponentTeamPanel({
               </span>
             )}
 
-            {/* Active indicator dot */}
             {pokemon === side.active[0] && (
               <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 h-3 w-0.5 rounded-full bg-destructive" />
             )}
@@ -214,7 +215,6 @@ function OpponentTeamPanel({
           key={`unrevealed-${i}`}
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 opacity-30"
         >
-          {/* Pokeball placeholder */}
           <div className="shrink-0 w-[40px] h-[30px] flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
               <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" />
