@@ -863,3 +863,373 @@ docker compose -f docker-compose.dev.yaml up -d redis postgres
 # 7. Click "Go to battle" on toast — verify navigation back works
 # 8. Refresh the page on /team-builder — verify BATTLE_RESTORED toast + bar
 ```
+
+---
+
+## Phase 5: Showdown-Aligned Battle UI Enhancements
+
+Bring the battle UI closer to Pokemon Showdown's information density and visual feedback. Players currently lack key combat data (move power, abilities, stat stages) that they need every turn, and battle updates appear instantly with no animation.
+
+Priority order: Move Information → Pokemon Details → Generation Mechanics → Field & Side Conditions → Informational → Active Pokemon Status → Battle Animations.
+
+---
+
+### 5.1 Move Information
+
+**Current state:** `move-button.tsx` shows name, type, PP. Missing: base power, accuracy, category, description.
+
+**Changes:**
+
+**A. Add power, accuracy, category to move buttons**
+
+**File:** `move-button.tsx`
+
+Add props: `power?: number | null`, `accuracy?: number | true | null`, `category?: 'Physical' | 'Special' | 'Status'`.
+
+Display layout (inside the existing button):
+- Top-right: type label (already there)
+- Below name: `BP {power} · {accuracy}%` inline with a category icon (Physical ⚔, Special ✦, Status ◎)
+- PP stays at bottom-left
+
+**File:** `move-panel.tsx`
+
+The `dexMove` lookup already exists (line 26). Pass additional data:
+
+```tsx
+<MoveButton
+  ...existing
+  power={dexMove?.basePower || null}
+  accuracy={dexMove?.accuracy ?? null}
+  category={dexMove?.category}
+/>
+```
+
+**B. Move tooltip on hover/long-press**
+
+**New file:** `.../components/actions/move-tooltip.tsx`
+
+Wraps each `MoveButton` with a `Tooltip` (from shared-ui-components). Content:
+- Move description (`dexMove.shortDesc` or `dexMove.desc`)
+- Secondary effect chance (`dexMove.secondary?.chance`)
+- Priority (`dexMove.priority` if non-zero, e.g. "+1 Priority")
+- Flags: contact, sound, punch, bite, bullet (from `dexMove.flags`)
+- Type effectiveness hint against the opponent's known types (use `battle.p2.active[0]?.types`)
+
+Data source: `battle.gen.moves.get(move.id)` — already available from `@pkmn/dex`.
+
+**File:** `move-panel.tsx` — wrap `MoveButton` with `MoveTooltip`, passing `dexMove` and opponent types.
+
+---
+
+### 5.2 Pokemon Details on Nameplate
+
+**Current state:** `pokemon-side.tsx` shows name, level, gender, status, HP bar. Missing: held item, ability, stat stages.
+
+**Changes:**
+
+**File:** `pokemon-side.tsx`
+
+**A. Held item display**
+
+Below the name row, show the item if known:
+```tsx
+{pokemon.item && (
+  <span className="text-[11px] text-muted-foreground">
+    {pokemon.item}
+  </span>
+)}
+```
+
+Note: `@pkmn/client`'s `Pokemon.item` is the current item string (empty if consumed/knocked off). For the opponent, it's only revealed when the protocol announces it (e.g. via `-item` or `-enditem`).
+
+**B. Ability display**
+
+Show ability below item:
+```tsx
+{pokemon.ability && (
+  <span className="text-[11px] text-muted-foreground italic">
+    {pokemon.ability}
+  </span>
+)}
+```
+
+Same visibility rules — opponent ability is only shown when revealed in battle.
+
+**C. Stat stages**
+
+**New file:** `.../components/battlefield/stat-stages.tsx`
+
+Renders non-zero boost stages from `pokemon.boosts` (`{ atk, def, spa, spd, spe, accuracy, evasion }`):
+
+```tsx
+interface StatStagesProps {
+  boosts: { [stat: string]: number };
+}
+```
+
+Display as inline colored badges:
+- Positive boosts: green text (e.g. "Atk +2")
+- Negative boosts: red text (e.g. "Spe -1")
+- Only show non-zero stats
+- Compact: `Atk +2 Def +1` in a flex-wrap row
+
+Mount in `pokemon-side.tsx` below the HP bar for both player and opponent.
+
+---
+
+### 5.3 Generation Mechanics
+
+Support gen-specific battle gimmicks. The `@pkmn/client` Battle `request` object exposes these via `canMegaEvo`, `canZMove`, `canDynamax`, `canTerastallize`.
+
+**A. Mega Evolution**
+
+**File:** `action-panel.tsx` / `move-panel.tsx`
+
+When `request.active[0].canMegaEvo` is true:
+- Show a "Mega Evolve" toggle button above the move grid
+- When toggled on, append ` mega` to the move choice string (e.g. `move 1 mega`)
+- Visual: button with Mega Evolution icon, toggles between default and active state
+
+**B. Z-Moves**
+
+When `request.active[0].canZMove` is truthy (array of z-move data):
+- Show "Z-Move" toggle button
+- When active, replace move buttons with the Z-move versions from `canZMove[i]`
+- Append ` zmove` to choice string
+
+**C. Dynamax**
+
+When `request.active[0].canDynamax` is true:
+- Show "Dynamax" toggle button
+- When active, replace moves with Max Move versions (from `canDynamax`)
+- Append ` dynamax` to choice string
+- Show 3-turn Dynamax counter on active Pokemon when dynamaxed (`pokemon.volatiles.dynamax`)
+
+**D. Terastallization**
+
+When `request.active[0].canTerastallize` is truthy (tera type string):
+- Show "Terastallize" toggle with the tera type badge
+- Append ` terastallize` to choice string
+- Show tera type indicator on Pokemon sprite/nameplate when tera'd (`pokemon.teraType`)
+
+**Implementation approach:** Add a `MechanicToggle` component and local state in `ActionPanel` for `activeMechanic: 'mega' | 'zmove' | 'dynamax' | 'tera' | null`. Only one can be active per turn. Reset on new turn (when request changes).
+
+---
+
+### 5.4 Field & Side Conditions
+
+**Current state:** `field-effects.tsx` shows weather, terrain, pseudo-weather. Missing: entry hazards, screens, tailwind, duration counters.
+
+**Changes:**
+
+**File:** `field-effects.tsx`
+
+**A. Side conditions (hazards + screens)**
+
+Access via `battle.p1.sideConditions` / `battle.p2.sideConditions` (object keyed by condition ID).
+
+Add props: `playerSide: Side`, `opponentSide: Side`.
+
+Show per-side:
+- Entry hazards: Stealth Rock, Spikes (with layer count), Toxic Spikes (with layer count), Sticky Web
+- Screens: Reflect, Light Screen, Aurora Veil (with remaining turn count from `sideConditions[id].duration`)
+- Tailwind (with duration)
+
+Layout: Two rows (opponent side conditions above field effects, player side conditions below), or integrated near each player's Pokemon side.
+
+**B. Weather/Terrain duration**
+
+If `field.weatherData?.duration` or `field.terrainData?.duration` exist, show remaining turns next to the badge (e.g. "Rain (3)").
+
+---
+
+### 5.5 Informational Enhancements
+
+**A. Type effectiveness hints on move buttons**
+
+In `move-tooltip.tsx`, calculate effectiveness against the opponent's active Pokemon types using `@pkmn/data`'s type chart:
+
+```tsx
+const types = battle.gen.types;
+const effectiveness = types.totalEffectiveness(moveType, opponentTypes);
+```
+
+Show as a small indicator: "2x", "0.5x", "0x" or color-coded dot on the move button itself.
+
+**B. Trapped indicator explanation**
+
+In the "Switch" tab of `action-panel.tsx`, when `trapped` is true, show a tooltip/text explaining why (e.g. "Trapped by Shadow Tag", "Trapped by Arena Trap"). Read from `pokemon.volatiles` for trapping moves or `opponent.ability` for trapping abilities.
+
+---
+
+### 5.6 Active Pokemon Volatile Status
+
+**Current state:** `status-badge.tsx` handles the 6 primary statuses. Missing: confusion, substitute, other volatiles.
+
+**Changes:**
+
+**File:** new `volatile-badges.tsx`
+
+Read from `pokemon.volatiles` object. Show relevant volatile conditions:
+- Confusion (`confusion`) — "CNF" badge in yellow
+- Substitute (`substitute`) — shield icon or "SUB" badge
+- Perish Song (`perishsong`) — "Perish {N}" with countdown from `volatiles.perishsong.duration`
+- Leech Seed (`leechseed`) — "Seeded" badge
+- Curse (`curse`) — "Cursed" badge
+- Encore (`encore`) — "Encored" badge
+- Taunt (`taunt`) — "Taunted" badge
+
+Mount alongside the primary `StatusBadge` in `pokemon-side.tsx`.
+
+---
+
+### 5.7 Battle Animations & Turn Playback
+
+**Current state:** Protocol text from `BATTLE_UPDATE` is processed all at once — HP changes, faints, status, and log entries all appear simultaneously. There's no visual feedback showing *what happened*.
+
+**Goal:** Play through turn events sequentially so the user sees each action: attack animation → damage → status applied → next action. Similar to how Showdown queues up messages and plays them with delays.
+
+**Approach:** Use `@pkmn/protocol` to parse protocol lines into discrete steps, then play them with timed delays using an animation queue.
+
+**A. Animation queue system**
+
+**New file:** `.../hooks/use-animation-queue.ts`
+
+```tsx
+interface AnimationStep {
+  /** Protocol args for this step (from Protocol.parse) */
+  args: Protocol.ArgType;
+  kwArgs: Protocol.KWArgType;
+  /** Delay in ms to wait AFTER this step before the next */
+  delayMs: number;
+}
+
+function useAnimationQueue(): {
+  /** Whether animations are currently playing */
+  isAnimating: boolean;
+  /** Enqueue a batch of steps (one turn's worth) */
+  enqueue: (steps: AnimationStep[]) => void;
+  /** Current step being displayed (null when idle) */
+  currentStep: AnimationStep | null;
+  /** Skip remaining animations and show final state */
+  skip: () => void;
+};
+```
+
+The queue processes steps one at a time, waiting `delayMs` between each. When the queue is empty, `isAnimating` becomes false.
+
+**B. Step-by-step protocol feeding**
+
+**File:** `use-battle-state.ts`
+
+Currently, `processBattleProtocol()` iterates through all parsed protocol messages in one loop and feeds them to `Battle` immediately. Change this:
+
+1. On `BATTLE_UPDATE`, parse protocol into individual messages but don't feed them to `Battle` yet
+2. Store the raw parsed messages as an animation batch
+3. The animation queue plays them one at a time, calling `battle.add(args, kwArgs)` per step
+4. HP bar, sprites, and log update incrementally as each step plays
+
+This requires splitting the current "process all at once" pattern into "enqueue for animated playback".
+
+**C. Delay mapping by protocol message type**
+
+Different protocol messages warrant different animation durations:
+
+| Protocol message | Delay (ms) | Visual effect |
+|-----------------|-----------|---------------|
+| `\|move\|` | 600 | Flash/shake on the attacker sprite |
+| `\|-damage\|` / `\|-heal\|` | 400 | HP bar animates (already has CSS transition) |
+| `\|-status\|` / `\|-curestatus\|` | 300 | Status badge appears/disappears |
+| `\|-boost\|` / `\|-unboost\|` | 300 | Stat stage badge animates in |
+| `\|faint\|` | 800 | Sprite fade-out (already has CSS) |
+| `\|switch\|` / `\|drag\|` | 500 | Sprite swap animation |
+| `\|-weather\|` / `\|-fieldstart\|` | 300 | Field effect badge appears |
+| `\|turn\|` | 200 | Turn counter increments |
+| `\|-supereffective\|` / `\|-resisted\|` | 0 | Just log text, no extra delay |
+| Other / info messages | 0 | No delay |
+
+**D. Sprite animations**
+
+**File:** `pokemon-sprite.tsx`
+
+Add CSS classes triggered by the current animation step:
+
+- **Attack:** Brief translateX shake (toward opponent) + scale pulse
+  ```css
+  @keyframes attack-physical { 0% { transform: translateX(0) } 50% { transform: translateX(20px) scale(1.05) } 100% { transform: translateX(0) } }
+  @keyframes attack-special { 0% { opacity: 1 } 50% { opacity: 0.6; filter: brightness(1.5) } 100% { opacity: 1 } }
+  ```
+- **Damage taken:** Brief red flash + small shake
+  ```css
+  @keyframes hit { 0%,100% { filter: none } 25%,75% { filter: brightness(0.6) saturate(2) } 50% { transform: translateX(-5px) } }
+  ```
+- **Faint:** Already has opacity transition — keep as-is
+- **Switch in:** Slide in from below with fade
+- **Switch out:** Slide out upward with fade
+
+Add `animationState` prop to `PokemonSprite`: `'idle' | 'attacking' | 'hit' | 'switching-in' | 'switching-out'`.
+
+**E. Skip button**
+
+When `isAnimating` is true, show a "Skip" button (or make clicking the battle area skip). This calls `skip()` which processes all remaining steps instantly (same as current behavior) and clears the queue.
+
+**F. Battle container integration**
+
+**File:** `battle-container.tsx`
+
+- Disable the action panel while `isAnimating` (prevent submitting moves during playback)
+- Pass `animationState` to `PokemonSprite` based on `currentStep`
+- Auto-scroll battle log as each step adds a new entry
+
+**Important considerations:**
+- If a new `BATTLE_UPDATE` arrives while animations are still playing, either queue the new batch after current or skip current + start new
+- On `BATTLE_RESTORED`, skip all animations and show final state immediately (no point animating history)
+- The `Battle` object must stay in sync — steps feed into it incrementally, so HP/status reads are correct at each point during playback
+
+---
+
+### Files to Create
+
+| File | Description |
+|------|-------------|
+| `.../components/actions/move-tooltip.tsx` | Hover/long-press tooltip with move details + effectiveness |
+| `.../components/battlefield/stat-stages.tsx` | Stat boost/drop display badges |
+| `.../components/battlefield/volatile-badges.tsx` | Volatile condition indicators |
+| `.../components/actions/mechanic-toggle.tsx` | Mega/Z-Move/Dynamax/Tera toggle button |
+| `.../hooks/use-animation-queue.ts` | Animation queue for sequential turn playback |
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `.../actions/move-button.tsx` | Add power, accuracy, category display |
+| `.../actions/move-panel.tsx` | Pass move data to buttons, wrap with tooltip |
+| `.../battlefield/pokemon-side.tsx` | Add item, ability, stat stages, volatile badges |
+| `.../battlefield/pokemon-sprite.tsx` | Add animation states (attack, hit, switch-in/out) |
+| `.../battlefield/field-effects.tsx` | Add side conditions (hazards, screens), duration counters |
+| `.../actions/action-panel.tsx` | Add mechanic toggles, disable during animations |
+| `.../battlefield/battle-container.tsx` | Integrate animation queue, pass animation state to sprites |
+| `.../hooks/use-battle-state.ts` | Split protocol processing for animated vs immediate playback |
+| `.../battlefield/status-badge.tsx` | Minor: ensure it coexists with volatile badges |
+
+### Verification
+
+```bash
+nx build pokehub-app
+
+# Manual:
+# 1. Start battle → verify move buttons show BP, accuracy, category icon
+# 2. Hover a move → tooltip shows description, flags, effectiveness
+# 3. Pokemon nameplate shows item + ability when revealed in battle
+# 4. Use a stat-boosting move → verify "+1 Atk" badge appears
+# 5. Attack plays: sprite shakes → HP bar animates down → log entry appears
+# 6. Faint plays: sprite fades out with delay after HP hits 0
+# 7. Switch plays: old Pokemon slides out, new slides in
+# 8. "Skip" button instantly shows final state
+# 9. Stealth Rock → verify hazard badge appears on opponent's side
+# 10. Set up weather → verify duration counter appears
+# 11. In a gen with Mega → verify Mega toggle appears and works
+# 12. Terastallize → verify tera type indicator on Pokemon
+# 13. Pokemon gets confused → "CNF" badge appears
+# 14. Opponent is trapped → Switch tab explains why
+```

@@ -2,11 +2,24 @@
 
 import { PokeHubRouter } from '../../router';
 import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
-import { BattleSocketProvider } from '@pokehub/frontend/pokehub-battle-components';
+import {
+  BattleSocketProvider,
+  useBattleSocketContext,
+  ActiveBattleBar,
+} from '@pokehub/frontend/pokehub-battle-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
 import { useEffect } from 'react';
+
+function BattleAwareNav() {
+  const { state } = useBattleSocketContext();
+  const activeBattleId =
+    state.phase === 'battle' || state.phase === 'ended'
+      ? state.battleId ?? undefined
+      : undefined;
+  return <AppNav activeBattleId={activeBattleId} />;
+}
 
 export const App = ({
   children,
@@ -25,9 +38,10 @@ export const App = ({
         redirectOnLogin={PokeHubRouter.redirectOnLogin}
         privilegedRoutes={PokeHubRouter.privilegedRoutes}
       >
-        <AppNav />
         <BattleSocketProvider>
+          <BattleAwareNav />
           {children}
+          <ActiveBattleBar />
         </BattleSocketProvider>
         <Toaster
           position="top-center"

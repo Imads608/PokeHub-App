@@ -7,10 +7,13 @@ import {
 import type { Provider } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import {
+  TURN_WARNING_SECONDS,
+  TURN_TIMEOUT_SECONDS,
+} from '@pokehub/shared/pokemon-battle-types';
 
-// Turn timer constants
-const TURN_WARNING_MS = 30 * 1000; // Warning at 30 seconds
-const TURN_TIMEOUT_MS = 60 * 1000; // Auto-move at 60 seconds
+const TURN_WARNING_MS = TURN_WARNING_SECONDS * 1000;
+const TURN_TIMEOUT_MS = TURN_TIMEOUT_SECONDS * 1000;
 
 interface PlayerTimers {
   warningTimer: ReturnType<typeof setTimeout> | null;

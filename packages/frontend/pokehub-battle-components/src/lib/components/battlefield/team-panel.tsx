@@ -128,11 +128,15 @@ function OpponentTeamPanel({
 }: {
   side: Battle['p1'];
 }) {
-  const totalPokemon = side.totalPokemon;
-
   // searchid is set when a Pokemon has been switched in (real HP data).
-  // Only show Pokemon that have actually entered battle.
   const revealed = side.team.filter((p) => p.searchid);
+
+  // side.totalPokemon defaults to 6 until |teamsize| is processed.
+  // During team preview, side.team is populated from |poke| lines — use
+  // the smaller of totalPokemon and team.length to avoid overestimating.
+  const totalPokemon = side.team.length > 0
+    ? Math.min(side.totalPokemon, side.team.length)
+    : side.totalPokemon;
   const unrevealedCount = Math.max(0, totalPokemon - revealed.length);
 
   return (

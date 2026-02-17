@@ -105,6 +105,15 @@ export interface BattleErrorEvent {
   recoverable: boolean;
 }
 
+/**
+ * Sent when the server's ability to process battle operations changes.
+ * Battles cannot proceed when status is 'unavailable' — the frontend should block actions.
+ */
+export interface ServerStatusEvent {
+  type: 'SERVER_STATUS';
+  status: 'unavailable' | 'restored';
+}
+
 export type ServerBattleEvent =
   | QueueJoinedEvent
   | QueueLeftEvent
@@ -118,6 +127,7 @@ export type ServerBattleEvent =
   | OpponentDisconnectedEvent
   | OpponentReconnectedEvent
   | BattleRestoredEvent
-  | BattleErrorEvent;
+  | BattleErrorEvent
+  | ServerStatusEvent;
 
 export type ServerBattleEventType = ServerBattleEvent['type'];

@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 export function BattleLobby() {
-  const { state, isConnected, joinQueue, leaveQueue } =
+  const { state, connected, joinQueue, leaveQueue } =
     useBattleSocketContext();
   const { data: teams, isLoading: teamsLoading } = useUserTeams();
   const router = useRouter();
@@ -115,13 +115,13 @@ export function BattleLobby() {
             className="w-full"
             size="lg"
             onClick={handleFindBattle}
-            disabled={!selectedTeamId || !isConnected}
+            disabled={!selectedTeamId || !connected}
           >
             <Swords className="mr-2 h-5 w-5" />
             Find Battle
           </Button>
 
-          {!isConnected && (
+          {!connected && (
             <p className="text-sm text-center text-muted-foreground">
               Connecting to battle server...
             </p>

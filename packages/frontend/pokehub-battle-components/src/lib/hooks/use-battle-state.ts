@@ -6,7 +6,10 @@ import { Generations } from '@pkmn/data';
 import { Dex } from '@pkmn/dex';
 import { Protocol } from '@pkmn/protocol';
 import { LogFormatter } from '@pkmn/view';
-import type { ServerBattleEvent } from '@pokehub/shared/pokemon-battle-types';
+import {
+  type ServerBattleEvent,
+  TURN_TIMEOUT_SECONDS,
+} from '@pokehub/shared/pokemon-battle-types';
 import { createClientLogger } from '@pokehub/frontend/shared-logger';
 import {
   type BattleUIState,
@@ -16,7 +19,8 @@ import {
 /** Local UI actions that don't come from the server */
 type LocalUIEvent =
   | { type: 'CHOICE_SUBMITTED'; choice: string }
-  | { type: 'CANCEL_CHOICE' };
+  | { type: 'CANCEL_CHOICE' }
+  | { type: 'RESET' };
 
 export type BattleEvent = ServerBattleEvent | LocalUIEvent;
 
@@ -67,6 +71,10 @@ type InternalEvent =
 
 type ReducerEvent = ServerBattleEvent | LocalUIEvent | InternalEvent;
 
+function newTimer(totalSeconds: number) {
+  return { totalSeconds, startedAt: Date.now() };
+}
+
 /**
  * Pure reducer — no Battle/LogFormatter mutation happens here.
  * Protocol processing is done in the dispatch wrapper (useBattleState).
@@ -76,6 +84,9 @@ function battleReducer(
   event: ReducerEvent
 ): BattleUIState {
   switch (event.type) {
+    case 'RESET':
+      return initialBattleUIState;
+
     case 'QUEUE_JOINED':
       return {
         ...state,
@@ -114,7 +125,7 @@ function battleReducer(
         phase: 'battle',
         battleId: event.battleId,
         pendingChoice: null,
-        turnTimer: null,
+        turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
         opponentDisconnected: false,
         disconnectTimeout: null,
         winner: null,
@@ -129,6 +140,7 @@ function battleReducer(
       return {
         ...state,
         pendingChoice: null,
+        turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
         logEntries: [...state.logEntries, ...event.logLines],
       };
 
@@ -138,6 +150,7 @@ function battleReducer(
         phase: 'battle',
         battleId: event.battleId,
         pendingChoice: null,
+        turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
         error: null,
         logEntries: event.logLines,
       };
@@ -157,10 +170,7 @@ function battleReducer(
     case 'TURN_WARNING':
       return {
         ...state,
-        turnTimer: {
-          secondsRemaining: event.secondsRemaining,
-          warning: event.secondsRemaining <= 30,
-        },
+        turnTimer: newTimer(event.secondsRemaining),
       };
 
     case 'OPPONENT_DISCONNECTED':

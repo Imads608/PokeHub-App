@@ -62,10 +62,21 @@ class BattleManagerService implements IBattleManagerService {
 
   private setupTurnTimerCallbacks(): void {
     this.turnTimer.setCallbacks(
-      // Warning callback
+      // Warning callback — skip if player already submitted
       async (battleId, player, secondsRemaining) => {
+        const pending = await this.redis.getPendingChoices(battleId);
+        if (pending[player]) return;
+
+        const instance = this.battles.get(battleId);
+        if (!instance) return;
+
+        const targetUserId = player === 'p1'
+          ? instance.config.player1.id
+          : instance.config.player2.id;
+
         await this.redis.publishBattleUpdate(battleId, {
           type: 'event',
+          targetUserId,
           data: { event: 'turn_warning', player, secondsRemaining },
         });
       },
@@ -205,8 +216,10 @@ class BattleManagerService implements IBattleManagerService {
       this.logger.debug(`Battle ${battleId}: ${player} chose "${choice}"`);
     }
 
-    // Cancel the player's turn timer
-    this.turnTimer.cancelPlayerTimer(battleId, player);
+    // Don't cancel the player's turn timer here — let it keep ticking.
+    // If the player cancels their choice, the original timer is still running.
+    // The timer is cleared when the turn executes (both players ready)
+    // or when the timeout fires (handleTurnTimeout checks for pending choice).
 
     // Store the choice (overwrites previous if opponent hasn't chosen yet)
     pending[player] = choice;
@@ -284,11 +297,8 @@ class BattleManagerService implements IBattleManagerService {
       delete pending[player];
       await this.redis.setPendingChoices(battleId, pending);
 
-      // Restart the player's turn timer
-      this.turnTimer.startTimers(battleId, instance.config.player1.id, instance.config.player2.id,
-        player === 'p1' ? false : true,
-        player === 'p2' ? false : true,
-      );
+      // Don't restart the timer — the original turn timer keeps ticking.
+      // This prevents abuse (cancel + resubmit to get infinite time).
     });
   }
 
@@ -432,8 +442,13 @@ class BattleManagerService implements IBattleManagerService {
     await this.redis.updateBattleMetadata(battleId, updates);
 
     // Notify opponent via pub/sub
+    const opponentId = player === 'p1'
+      ? instance.config.player2.id
+      : instance.config.player1.id;
+
     await this.redis.publishBattleUpdate(battleId, {
       type: 'event',
+      targetUserId: opponentId,
       data: { event: 'opponent_disconnected', player },
     });
 
@@ -493,8 +508,13 @@ class BattleManagerService implements IBattleManagerService {
     await this.redis.updateBattleMetadata(battleId, updates);
 
     // Notify opponent
+    const opponentId = player === 'p1'
+      ? instance.config.player2.id
+      : instance.config.player1.id;
+
     await this.redis.publishBattleUpdate(battleId, {
       type: 'event',
+      targetUserId: opponentId,
       data: { event: 'opponent_reconnected', player },
     });
 
@@ -789,6 +809,16 @@ class BattleManagerService implements IBattleManagerService {
     return this.withBattleLock(battleId, async () => {
       const instance = this.battles.get(battleId);
       if (!instance || instance.ended) return;
+
+      // Skip auto-move if player already submitted a choice
+      // (timer kept running after submission to support cancel/undo)
+      const pending = await this.redis.getPendingChoices(battleId);
+      if (pending[player]) {
+        this.logger.debug(
+          `Battle ${battleId}: ${player} timeout skipped — already has pending choice`
+        );
+        return;
+      }
 
       // battle is typed as Battle | null in @pkmn/sim
       const battle = instance.stream.battle;

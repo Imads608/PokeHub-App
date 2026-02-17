@@ -29,6 +29,7 @@ export {
   type OpponentReconnectedEvent,
   type BattleRestoredEvent,
   type BattleErrorEvent,
+  type ServerStatusEvent,
   type ServerBattleEvent,
   type ServerBattleEventType,
 } from './lib/server-events';
@@ -55,4 +56,6 @@ export {
   BATTLE_NAMESPACE,
   BattleRooms,
   BATTLE_EVENT,
+  TURN_WARNING_SECONDS,
+  TURN_TIMEOUT_SECONDS,
 } from './lib/socket.constants';

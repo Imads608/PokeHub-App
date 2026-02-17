@@ -29,6 +29,7 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
   private readonly socketToUser = new Map<string, string>();
   private readonly userToSocket = new Map<string, string>();
+  private redisDown = false;
 
   constructor(
     private readonly logger: AppLogger,
@@ -52,6 +53,15 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
   registerSocket(socketId: string, userId: string): void {
     this.socketToUser.set(socketId, userId);
     this.userToSocket.set(userId, socketId);
+
+    // If Redis is currently down, immediately inform the newly connected
+    // client so it doesn't assume the server is healthy.
+    if (this.redisDown) {
+      this.server.to(socketId).emit(BATTLE_EVENT, {
+        type: 'SERVER_STATUS',
+        status: 'unavailable',
+      } satisfies ServerBattleEvent);
+    }
   }
 
   unregisterSocket(socketId: string, userId: string): void {
@@ -114,17 +124,38 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
   // ── Private ───────────────────────────────────────────────────────────
 
+  private broadcastStatus(status: 'unavailable' | 'restored'): void {
+    if (!this.server) return;
+
+    this.server.emit(BATTLE_EVENT, {
+      type: 'SERVER_STATUS',
+      status,
+    } satisfies ServerBattleEvent);
+  }
+
   private setupRedisSubscriptions(): void {
     this.subscriberClient.on('ready', () => {
       this.logger.log('Redis subscriber connected and ready');
+      if (this.redisDown) {
+        this.redisDown = false;
+        this.broadcastStatus('restored');
+      }
     });
 
     this.subscriberClient.on('error', (err: Error) => {
       this.logger.error(`Redis subscriber error: ${err.message}`);
+      if (!this.redisDown) {
+        this.redisDown = true;
+        this.broadcastStatus('unavailable');
+      }
     });
 
     this.subscriberClient.on('end', () => {
       this.logger.warn('Redis subscriber connection closed');
+      if (!this.redisDown) {
+        this.redisDown = true;
+        this.broadcastStatus('unavailable');
+      }
     });
 
     this.subscriberClient.on('reconnecting', (delay: number) => {
@@ -201,9 +232,9 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
       case 'event':
         this.logger.debug(
-          `Sending battle event — battle ${battleId}, event: ${message.data.event}`
+          `Sending battle event — battle ${battleId}, event: ${message.data.event}, target: ${message.targetUserId}`
         );
-        this.handleBattleEvent(battleId, room, message.data);
+        this.handleBattleEvent(battleId, message.targetUserId, message.data);
         break;
 
       case 'end':
@@ -231,36 +262,36 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
   private handleBattleEvent(
     battleId: string,
-    room: string,
+    targetUserId: string,
     event: BattleEventPayload
   ): void {
     switch (event.event) {
       case 'opponent_disconnected':
         this.logger.log(`Sending OPPONENT_DISCONNECTED — battle ${battleId}`);
-        this.server.to(room).emit(BATTLE_EVENT, {
+        this.emitToUser(targetUserId, {
           type: 'OPPONENT_DISCONNECTED',
           battleId,
           timeout: 120,
-        } satisfies ServerBattleEvent);
+        });
         break;
 
       case 'opponent_reconnected':
         this.logger.log(`Sending OPPONENT_RECONNECTED — battle ${battleId}`);
-        this.server.to(room).emit(BATTLE_EVENT, {
+        this.emitToUser(targetUserId, {
           type: 'OPPONENT_RECONNECTED',
           battleId,
-        } satisfies ServerBattleEvent);
+        });
         break;
 
       case 'turn_warning':
         this.logger.log(
           `Sending TURN_WARNING — battle ${battleId}, ${event.secondsRemaining}s remaining`
         );
-        this.server.to(room).emit(BATTLE_EVENT, {
+        this.emitToUser(targetUserId, {
           type: 'TURN_WARNING',
           battleId,
           secondsRemaining: event.secondsRemaining,
-        } satisfies ServerBattleEvent);
+        });
         break;
     }
   }

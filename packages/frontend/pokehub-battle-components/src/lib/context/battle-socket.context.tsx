@@ -7,13 +7,20 @@ import type { BattleUIState } from '../types/battle-ui.types';
 import { useAuthSession, getAuthSession } from '@pokehub/frontend/shared-auth';
 import { createClientLogger } from '@pokehub/frontend/shared-logger';
 import type { ServerBattleEvent } from '@pokehub/shared/pokemon-battle-types';
-import { createContext, useCallback, useContext, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 const log = createClientLogger('BattleContext');
 
 export interface BattleSocketContextValue {
   state: BattleUIState;
-  isConnected: boolean;
+  /** True when the socket is connected AND the server can process battles. */
+  connected: boolean;
   userId: string;
   joinQueue: (format: string, teamId: string) => void;
   leaveQueue: () => void;
@@ -40,6 +47,7 @@ export function BattleSocketProvider({
 
   const [state, dispatch] = useBattleState();
   const [lastEvent, setLastEvent] = useState<ServerBattleEvent | null>(null);
+  const [serverAvailable, setServerAvailable] = useState(true);
 
   // Track the last event for notifications
   const onEvent = useCallback(
@@ -54,6 +62,15 @@ export function BattleSocketProvider({
         return;
       }
 
+      // Server status events are connection-level, not battle state
+      if (event.type === 'SERVER_STATUS') {
+        const available = event.status === 'restored';
+        log.warn('Server status changed', { status: event.status });
+        setServerAvailable(available);
+        setLastEvent(event);
+        return;
+      }
+
       log.info('State transition', {
         event: event.type,
         fromPhase: state.phase,
@@ -61,6 +78,14 @@ export function BattleSocketProvider({
       });
       dispatch(event);
       setLastEvent(event);
+
+      // Non-recoverable errors should reset state back to idle
+      if (event.type === 'ERROR' && !event.recoverable) {
+        log.warn('Non-recoverable error — resetting to idle', {
+          code: event.code,
+        });
+        dispatch({ type: 'RESET' });
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.phase]
@@ -76,6 +101,14 @@ export function BattleSocketProvider({
     onEvent,
     onAuthError,
   });
+
+  // Reset server availability on reconnect (optimistic — server will
+  // notify us via SERVER_STATUS if Redis is still down).
+  useEffect(() => {
+    if (isConnected) {
+      setServerAvailable(true);
+    }
+  }, [isConnected]);
 
   // Notifications for battle events when user is away from /battle
   useBattleNotifications(state, lastEvent);
@@ -145,9 +178,11 @@ export function BattleSocketProvider({
     [emit]
   );
 
+  const connected = isConnected && serverAvailable;
+
   const value: BattleSocketContextValue = {
     state,
-    isConnected,
+    connected,
     userId,
     joinQueue,
     leaveQueue,

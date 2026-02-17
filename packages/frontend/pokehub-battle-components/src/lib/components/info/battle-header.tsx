@@ -17,7 +17,7 @@ import { TurnTimer } from './turn-timer';
 interface BattleHeaderProps {
   format: string;
   turn: number;
-  timer: { secondsRemaining: number; warning: boolean } | null;
+  timer: { totalSeconds: number; startedAt: number } | null;
   onForfeit: () => void;
 }
 
@@ -44,8 +44,8 @@ export function BattleHeader({
       <div className="flex items-center gap-3">
         {timer && (
           <TurnTimer
-            secondsRemaining={timer.secondsRemaining}
-            warning={timer.warning}
+            totalSeconds={timer.totalSeconds}
+            startedAt={timer.startedAt}
           />
         )}
         <Button

@@ -242,10 +242,12 @@ export interface BattleStateUpdateMessage {
 }
 
 /**
- * Pub/Sub message for battle events (structured)
+ * Pub/Sub message for battle events (structured).
+ * targetUserId is the user who should receive this event.
  */
 export interface BattleEventUpdateMessage {
   type: 'event';
+  targetUserId: string;
   data: BattleEventPayload;
 }
 

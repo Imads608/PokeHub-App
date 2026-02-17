@@ -12,3 +12,7 @@ export const BattleRooms = {
 
 /** Socket.io event name used for all battle events */
 export const BATTLE_EVENT = 'event' as const;
+
+/** Turn timer durations (shared between server enforcement and client display) */
+export const TURN_WARNING_SECONDS = 30;
+export const TURN_TIMEOUT_SECONDS = 120;

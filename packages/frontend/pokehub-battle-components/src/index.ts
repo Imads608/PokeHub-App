@@ -13,3 +13,4 @@ export { BattleLobby } from './lib/components/lobby/battle-lobby';
 
 // Battle UI
 export { BattleContainer } from './lib/components/battlefield/battle-container';
+export { ActiveBattleBar } from './lib/components/active-battle-bar';

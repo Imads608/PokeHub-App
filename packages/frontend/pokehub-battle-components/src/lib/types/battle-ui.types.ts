@@ -13,8 +13,8 @@ export interface BattleUIState {
   /** @pkmn/view LogFormatter for pretty-printing protocol */
   logFormatter: LogFormatter | null;
 
-  /** Turn state */
-  turnTimer: { secondsRemaining: number; warning: boolean } | null;
+  /** Turn timer — totalSeconds is the budget, startedAt is Date.now() when it began */
+  turnTimer: { totalSeconds: number; startedAt: number } | null;
   /** The choice submitted this turn (null if none yet) */
   pendingChoice: string | null;
 
