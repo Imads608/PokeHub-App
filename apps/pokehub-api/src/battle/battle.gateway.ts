@@ -44,6 +44,7 @@ import {
   type ServerBattleEvent,
   JoinQueueDTOSchema,
   BattleMoveDTOSchema,
+  CancelChoiceDTOSchema,
   ForfeitDTOSchema,
   RejoinDTOSchema,
   SaveReplayDTOSchema,
@@ -614,6 +615,42 @@ export class BattleGateway
       client.emit(BATTLE_EVENT, {
         type: 'ERROR',
         code: 'MOVE_ERROR',
+        message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+    }
+  }
+
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(2, 1000) // 2 requests per second
+  @SubscribeMessage('CANCEL_CHOICE')
+  async handleCancelChoice(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: unknown
+  ): Promise<void> {
+    const userId = client.user.userId;
+
+    this.logger.debug(`Received CANCEL_CHOICE from user ${userId}`);
+
+    const parsed = CancelChoiceDTOSchema.safeParse(data);
+    if (!parsed.success) {
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'INVALID_INPUT',
+        message: parsed.error.message,
+        recoverable: true,
+      } satisfies ServerBattleEvent);
+      return;
+    }
+
+    try {
+      await this.battleManager.cancelChoice(parsed.data.battleId, userId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to cancel choice';
+      client.emit(BATTLE_EVENT, {
+        type: 'ERROR',
+        code: 'CANCEL_CHOICE_ERROR',
         message,
         recoverable: true,
       } satisfies ServerBattleEvent);

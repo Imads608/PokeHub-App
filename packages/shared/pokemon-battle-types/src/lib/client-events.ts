@@ -29,6 +29,11 @@ export interface MoveEvent {
   choice: string;
 }
 
+export interface CancelChoiceEvent {
+  type: 'CANCEL_CHOICE';
+  battleId: string;
+}
+
 export interface ForfeitEvent {
   type: 'FORFEIT';
   battleId: string;
@@ -49,6 +54,7 @@ export type ClientBattleEvent =
   | LeaveQueueEvent
   | DeclineMatchEvent
   | MoveEvent
+  | CancelChoiceEvent
   | ForfeitEvent
   | RejoinEvent
   | SaveReplayEvent;

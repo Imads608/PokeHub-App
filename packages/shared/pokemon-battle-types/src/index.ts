@@ -46,6 +46,8 @@ export {
   type SaveReplayDTO,
   RejoinDTOSchema,
   type RejoinDTO,
+  CancelChoiceDTOSchema,
+  type CancelChoiceDTO,
   DeclineMatchDTOSchema,
   type DeclineMatchDTO,
 } from './lib/dto/battle-move.dto';

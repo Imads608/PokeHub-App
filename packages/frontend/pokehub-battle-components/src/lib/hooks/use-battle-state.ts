@@ -16,7 +16,7 @@ import {
 /** Local UI actions that don't come from the server */
 type LocalUIEvent =
   | { type: 'CHOICE_SUBMITTED'; choice: string }
-  | { type: 'CHOICE_CANCELLED' };
+  | { type: 'CANCEL_CHOICE' };
 
 export type BattleEvent = ServerBattleEvent | LocalUIEvent;
 
@@ -195,7 +195,7 @@ function battleReducer(
         pendingChoice: event.choice,
       };
 
-    case 'CHOICE_CANCELLED':
+    case 'CANCEL_CHOICE':
       return {
         ...state,
         pendingChoice: null,

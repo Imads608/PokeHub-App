@@ -240,6 +240,59 @@ class BattleManagerService implements IBattleManagerService {
   }
 
   /**
+   * Cancel a player's pending choice (undo before the turn executes).
+   * Only succeeds if the opponent hasn't also submitted yet.
+   */
+  async cancelChoice(battleId: string, playerId: string): Promise<void> {
+    return this.withBattleLock(battleId, async () => {
+      const instance = this.battles.get(battleId);
+      if (!instance) {
+        throw new Error(`Battle ${battleId} not found on this server`);
+      }
+
+      const player = this.getPlayerSlot(instance.config, playerId);
+      if (!player) {
+        throw new Error(`Player ${playerId} is not in battle ${battleId}`);
+      }
+
+      if (!instance.awaitingChoices) {
+        this.logger.warn(
+          `Battle ${battleId}: ${player} cancel rejected — turn is being processed`
+        );
+        return;
+      }
+
+      const pending = await this.redis.getPendingChoices(battleId);
+      const opponent = player === 'p1' ? 'p2' : 'p1';
+
+      if (!pending[player]) {
+        this.logger.debug(`Battle ${battleId}: ${player} cancel — no pending choice`);
+        return;
+      }
+
+      if (pending[opponent]) {
+        this.logger.warn(
+          `Battle ${battleId}: ${player} cancel rejected — both players have chosen`
+        );
+        return;
+      }
+
+      this.logger.debug(
+        `Battle ${battleId}: ${player} cancelled choice "${pending[player]}"`
+      );
+
+      delete pending[player];
+      await this.redis.setPendingChoices(battleId, pending);
+
+      // Restart the player's turn timer
+      this.turnTimer.startTimers(battleId, instance.config.player1.id, instance.config.player2.id,
+        player === 'p1' ? false : true,
+        player === 'p2' ? false : true,
+      );
+    });
+  }
+
+  /**
    * Forfeit a battle
    */
   async forfeit(battleId: string, playerId: string): Promise<void> {

@@ -113,9 +113,13 @@ export function BattleSocketProvider({
   );
 
   const cancelChoice = useCallback(() => {
-    log.info('cancelChoice');
-    dispatch({ type: 'CHOICE_CANCELLED' });
-  }, [dispatch]);
+    const battleId = state.battleId;
+    log.info('cancelChoice', { battleId });
+    if (battleId) {
+      emit({ type: 'CANCEL_CHOICE', battleId });
+    }
+    dispatch({ type: 'CANCEL_CHOICE' });
+  }, [emit, dispatch, state.battleId]);
 
   const forfeit = useCallback(
     (battleId: string) => {

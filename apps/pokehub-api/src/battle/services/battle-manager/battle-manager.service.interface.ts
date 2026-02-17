@@ -29,6 +29,11 @@ export interface IBattleManagerService {
   ): Promise<void>;
 
   /**
+   * Cancel a player's pending choice (undo before the turn executes)
+   */
+  cancelChoice(battleId: string, playerId: string): Promise<void>;
+
+  /**
    * Forfeit a battle
    */
   forfeit(battleId: string, playerId: string): Promise<void>;
