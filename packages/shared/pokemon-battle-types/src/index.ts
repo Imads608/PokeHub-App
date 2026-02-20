@@ -56,6 +56,5 @@ export {
   BATTLE_NAMESPACE,
   BattleRooms,
   BATTLE_EVENT,
-  TURN_WARNING_SECONDS,
   TURN_TIMEOUT_SECONDS,
 } from './lib/socket.constants';

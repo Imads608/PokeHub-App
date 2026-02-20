@@ -1,6 +1,8 @@
 'use client';
 
-import type { Battle } from '@pkmn/client';
+import { useEffect, useRef, useState } from 'react';
+import type { Battle, Pokemon } from '@pkmn/client';
+import type { TypeName } from '@pkmn/dex';
 import { Icons } from '@pkmn/img';
 import {
   Button,
@@ -10,11 +12,14 @@ import {
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
 import { Loader2, Undo2, Zap, ArrowLeftRight } from 'lucide-react';
+import type { BattleMechanic } from '../../types/battle-ui.types';
+import { MechanicToggle } from './mechanic-toggle';
 import { MovePanel } from './move-panel';
 import { SwitchPanel } from './switch-panel';
 
 interface ActionPanelProps {
   battle: Battle;
+  opponentPokemon: Pokemon | null;
   pendingChoice: string | null;
   onMoveSelect: (choice: string) => void;
   onSwitchSelect: (choice: string) => void;
@@ -56,6 +61,7 @@ function formatChoiceLabel(choice: string, battle: Battle): string {
 
 export function ActionPanel({
   battle,
+  opponentPokemon,
   pendingChoice,
   onMoveSelect,
   onSwitchSelect,
@@ -63,6 +69,16 @@ export function ActionPanel({
   onCancelChoice,
 }: ActionPanelProps) {
   const request = battle.request;
+  const [activeMechanic, setActiveMechanic] = useState<BattleMechanic | null>(null);
+
+  // Reset mechanic when request changes (new turn)
+  const prevRequestRef = useRef(request);
+  useEffect(() => {
+    if (request !== prevRequestRef.current) {
+      setActiveMechanic(null);
+      prevRequestRef.current = request;
+    }
+  }, [request]);
 
   // Waiting for server (no request) or explicit wait request
   if (!request || request.requestType === 'wait') {
@@ -166,7 +182,19 @@ export function ActionPanel({
 
   // Normal move request — show moves and switch tabs
   if (request.requestType === 'move') {
-    const trapped = request.active?.[0]?.trapped || request.active?.[0]?.maybeTrapped;
+    const active = request.active?.[0];
+    const trapped = active?.trapped || active?.maybeTrapped;
+
+    // Detect available mechanics
+    const canMega = !!active?.canMegaEvo;
+    const canZMove = !!active?.zMoves;
+    const canDynamax = !!active?.canDynamax;
+    const canTera = !!active?.canTerastallize;
+    const hasMechanics = canMega || canZMove || canDynamax || canTera;
+
+    const toggleMechanic = (mechanic: BattleMechanic) => {
+      setActiveMechanic((prev) => (prev === mechanic ? null : mechanic));
+    };
 
     return (
       <div className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4">
@@ -178,12 +206,56 @@ export function ActionPanel({
             </TabsTrigger>
             <TabsTrigger value="switch" className="flex-1 gap-1.5" disabled={trapped}>
               <ArrowLeftRight className="h-3.5 w-3.5" />
-              Switch {trapped ? '(Trapped)' : ''}
+              Switch
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="moves" className="mt-0">
+
+          {trapped && (
+            <p className="text-[11px] text-muted-foreground italic mb-2 text-center">
+              Cannot switch — trapped by opponent
+            </p>
+          )}
+
+          <TabsContent value="moves" className="mt-0 space-y-2">
+            {/* Mechanic toggles */}
+            {hasMechanics && (
+              <div className="flex flex-wrap gap-1.5">
+                {canMega && (
+                  <MechanicToggle
+                    variant="mega"
+                    active={activeMechanic === 'mega'}
+                    onToggle={() => toggleMechanic('mega')}
+                  />
+                )}
+                {canZMove && (
+                  <MechanicToggle
+                    variant="zmove"
+                    active={activeMechanic === 'zmove'}
+                    onToggle={() => toggleMechanic('zmove')}
+                  />
+                )}
+                {canDynamax && (
+                  <MechanicToggle
+                    variant="dynamax"
+                    active={activeMechanic === 'dynamax'}
+                    onToggle={() => toggleMechanic('dynamax')}
+                  />
+                )}
+                {canTera && (
+                  <MechanicToggle
+                    variant="tera"
+                    active={activeMechanic === 'tera'}
+                    onToggle={() => toggleMechanic('tera')}
+                    teraType={active?.canTerastallize as TypeName}
+                  />
+                )}
+              </div>
+            )}
+
             <MovePanel
               battle={battle}
+              opponentPokemon={opponentPokemon}
+              activeMechanic={activeMechanic}
               onMoveSelect={onMoveSelect}
             />
           </TabsContent>

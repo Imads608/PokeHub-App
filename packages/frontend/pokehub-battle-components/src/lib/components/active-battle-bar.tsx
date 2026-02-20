@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Swords, AlertTriangle, WifiOff } from 'lucide-react';
 import { Button } from '@pokehub/frontend/shared-ui-components';
-import { TURN_WARNING_SECONDS } from '@pokehub/shared/pokemon-battle-types';
+import { TURN_TIMEOUT_SECONDS } from '@pokehub/shared/pokemon-battle-types';
 import { useBattleSocketContext } from '../context/battle-socket.context';
 import { TurnTimer } from './info/turn-timer';
 
@@ -33,7 +33,7 @@ export function ActiveBattleBar() {
   const timerWarning =
     state.turnTimer &&
     computeRemaining(state.turnTimer.totalSeconds, state.turnTimer.startedAt) <=
-      TURN_WARNING_SECONDS;
+      TURN_TIMEOUT_SECONDS / 2;
 
   // Determine accent color
   let accentClass = 'border-t-border'; // default muted

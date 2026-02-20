@@ -64,17 +64,21 @@ export function BattleContainer() {
           <div className="relative rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 p-8 min-h-[400px] flex flex-col justify-between">
             {/* Opponent side — top right */}
             <div className="flex justify-end">
-              <PokemonSide pokemon={opponentActive} isOpponent />
+              <PokemonSide pokemon={opponentActive} gen={battle.gen} isOpponent />
             </div>
 
             {/* Field effects — centered */}
             <div className="py-3">
-              <FieldEffects field={battle.field} />
+              <FieldEffects
+                field={battle.field}
+                playerSide={mySide}
+                opponentSide={opponentSide}
+              />
             </div>
 
             {/* Player side — bottom left */}
             <div className="flex justify-start">
-              <PokemonSide pokemon={myActive} isOpponent={false} />
+              <PokemonSide pokemon={myActive} gen={battle.gen} isOpponent={false} />
             </div>
 
             {/* Opponent disconnect overlay */}
@@ -113,6 +117,7 @@ export function BattleContainer() {
           {state.phase === 'battle' && (
             <ActionPanel
               battle={battle}
+              opponentPokemon={opponentActive}
               pendingChoice={state.pendingChoice}
               onMoveSelect={handleMoveSelect}
               onSwitchSelect={handleSwitchSelect}
