@@ -3,12 +3,16 @@
 import type { TypeName } from '@pkmn/dex';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import { typeMoveStyles } from '@pokehub/frontend/shared-utils';
-import { Swords, Sparkles, CircleDot } from 'lucide-react';
+import {
+  PhysicalIcon,
+  SpecialIcon,
+  StatusIcon,
+} from '@pokehub/frontend/shared-ui-icons';
 
 const categoryIcons = {
-  Physical: Swords,
-  Special: Sparkles,
-  Status: CircleDot,
+  Physical: PhysicalIcon,
+  Special: SpecialIcon,
+  Status: StatusIcon,
 } as const;
 
 interface MoveButtonProps {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TURN_TIMEOUT_SECONDS } from '@pokehub/shared/pokemon-battle-types';
 
 interface TurnTimerProps {
   totalSeconds: number;
@@ -25,7 +26,7 @@ export function TurnTimer({ totalSeconds, startedAt }: TurnTimerProps) {
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
-  const warning = remaining <= totalSeconds / 2;
+  const warning = remaining <= TURN_TIMEOUT_SECONDS / 2;
 
   return (
     <span

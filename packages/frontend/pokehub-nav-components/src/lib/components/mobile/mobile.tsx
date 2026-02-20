@@ -6,7 +6,7 @@ import {
   Button,
 } from '@pokehub/frontend/shared-ui-components';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import { LogOut, LogIn, Swords, Shield, MessageCircle } from 'lucide-react';
+import { LogOut, LogIn, Swords, BookOpen, Wrench, MessageCircle } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -26,6 +26,7 @@ export const MobileMenuItems = ({ user, activeBattleId }: { user?: UserCore; act
             variant="ghost"
             className="w-full justify-start rounded-lg text-foreground hover:bg-muted"
           >
+            <BookOpen className="mr-2 h-5 w-5" />
             Pokedex
           </Button>
         </Link>
@@ -52,7 +53,7 @@ export const MobileMenuItems = ({ user, activeBattleId }: { user?: UserCore; act
                 variant="ghost"
                 className="w-full justify-start rounded-lg text-foreground hover:bg-muted"
               >
-                <Shield className="mr-2 h-5 w-5" />
+                <Wrench className="mr-2 h-5 w-5" />
                 Team Builder
               </Button>
             </Link>

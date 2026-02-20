@@ -2,7 +2,7 @@ import { ThemeToggle } from '../theme-toggle';
 import { UserDropdown } from './user-dropdown';
 import { Button } from '@pokehub/frontend/shared-ui-components';
 import type { UserCore } from '@pokehub/shared/shared-user-models';
-import { MessageCircle, Swords, Shield } from 'lucide-react';
+import { BookOpen, MessageCircle, Swords, Wrench } from 'lucide-react';
 import Link from 'next/link';
 
 export interface DesktopNavProps {
@@ -23,6 +23,7 @@ export const DesktopNavItems = ({ user, activePath, activeBattleId }: DesktopNav
             }`}
             disabled={activePath === '/pokedex'}
           >
+            <BookOpen className="mr-2 h-4 w-4" />
             Pokedex
           </Button>
         </Link>
@@ -50,7 +51,7 @@ export const DesktopNavItems = ({ user, activePath, activeBattleId }: DesktopNav
                 className={`disabled:hover:none rounded-full text-sm font-medium text-foreground hover:bg-muted disabled:pointer-events-none disabled:bg-muted`}
                 disabled={activePath === '/team-builder'}
               >
-                <Shield className="mr-2 h-4 w-4" />
+                <Wrench className="mr-2 h-4 w-4" />
                 Team Builder
               </Button>
             </Link>

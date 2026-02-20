@@ -10,13 +10,11 @@ import {
 } from '@pokehub/frontend/shared-ui-components';
 import { getTypeEffectiveness } from '@pokehub/frontend/shared-utils';
 import {
-  Swords,
-  Sparkles,
-  CircleDot,
-  ChevronUp,
-  ChevronDown,
-  X,
-} from 'lucide-react';
+  PhysicalIcon,
+  SpecialIcon,
+  StatusIcon,
+} from '@pokehub/frontend/shared-ui-icons';
+import { ChevronUp, ChevronDown, X } from 'lucide-react';
 
 interface MoveTooltipProps {
   children: React.ReactNode;
@@ -26,9 +24,9 @@ interface MoveTooltipProps {
 }
 
 const categoryIcons = {
-  Physical: Swords,
-  Special: Sparkles,
-  Status: CircleDot,
+  Physical: PhysicalIcon,
+  Special: SpecialIcon,
+  Status: StatusIcon,
 } as const;
 
 /** Flags worth surfacing as pills */

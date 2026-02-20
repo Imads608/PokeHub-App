@@ -11,7 +11,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { Loader2, Undo2, Zap, ArrowLeftRight } from 'lucide-react';
+import { Loader2, Undo2, Swords, ArrowLeftRight } from 'lucide-react';
 import type { BattleMechanic } from '../../types/battle-ui.types';
 import { MechanicToggle } from './mechanic-toggle';
 import { MovePanel } from './move-panel';
@@ -201,7 +201,7 @@ export function ActionPanel({
         <Tabs defaultValue="moves">
           <TabsList className="w-full mb-3 bg-muted/50">
             <TabsTrigger value="moves" className="flex-1 gap-1.5">
-              <Zap className="h-3.5 w-3.5" />
+              <Swords className="h-3.5 w-3.5" />
               Moves
             </TabsTrigger>
             <TabsTrigger value="switch" className="flex-1 gap-1.5" disabled={trapped}>
