@@ -5,12 +5,25 @@ import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
 import {
   BattleSocketProvider,
   useBattleSocketContext,
-  ActiveBattleBar,
 } from '@pokehub/frontend/pokehub-battle-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+
+const ActiveBattleBar = lazy(() =>
+  import(
+    /* webpackChunkName: "active-battle-bar" */
+    '@pokehub/frontend/pokehub-battle-components'
+  ).then((mod) => ({ default: mod.ActiveBattleBar }))
+);
+
+function LazyBattleBar() {
+  const { state } = useBattleSocketContext();
+  const isActive = state.phase === 'battle' || state.phase === 'ended';
+  if (!isActive) return null;
+  return <ActiveBattleBar />;
+}
 
 function BattleAwareNav() {
   const { state } = useBattleSocketContext();
@@ -41,7 +54,9 @@ export const App = ({
         <BattleSocketProvider>
           <BattleAwareNav />
           {children}
-          <ActiveBattleBar />
+          <Suspense fallback={null}>
+            <LazyBattleBar />
+          </Suspense>
         </BattleSocketProvider>
         <Toaster
           position="top-center"

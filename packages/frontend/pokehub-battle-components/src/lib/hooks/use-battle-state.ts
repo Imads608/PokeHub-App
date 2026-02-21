@@ -24,6 +24,18 @@ type LocalUIEvent =
 
 export type BattleEvent = ServerBattleEvent | LocalUIEvent;
 
+/**
+ * Server events that the reducer handles directly (without protocol processing).
+ * BATTLE_START, BATTLE_UPDATE, and BATTLE_RESTORED are intercepted by the
+ * dispatch wrapper and converted to internal events before reaching the reducer.
+ */
+type DirectServerEvent = Exclude<
+  ServerBattleEvent,
+  | { type: 'BATTLE_START' }
+  | { type: 'BATTLE_UPDATE' }
+  | { type: 'BATTLE_RESTORED' }
+>;
+
 const log = createClientLogger('BattleState');
 
 // Lazily initialized — created once on first use.
@@ -69,7 +81,7 @@ type InternalEvent =
   | { type: '_BATTLE_UPDATED'; logLines: string[] }
   | { type: '_BATTLE_RESTORED'; battleId: string; logLines: string[] };
 
-type ReducerEvent = ServerBattleEvent | LocalUIEvent | InternalEvent;
+type ReducerEvent = DirectServerEvent | LocalUIEvent | InternalEvent;
 
 function newTimer(totalSeconds: number) {
   return { totalSeconds, startedAt: Date.now() };
