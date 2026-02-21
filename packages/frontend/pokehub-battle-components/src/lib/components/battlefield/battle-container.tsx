@@ -5,7 +5,8 @@ import { ActionPanel } from '../actions/action-panel';
 import { BattleEndOverlay } from '../end/battle-end-overlay';
 import { BattleHeader } from '../info/battle-header';
 import { BattleLog } from '../info/battle-log';
-import { FieldEffects } from './field-effects';
+import { BattlefieldBg } from './battlefield-bg';
+import { WeatherBar, SideConditions } from './field-effects';
 import { PokemonSide } from './pokemon-side';
 import { TeamPanel } from './team-panel';
 
@@ -61,24 +62,30 @@ export function BattleContainer() {
         {/* Center column: Battlefield + Actions */}
         <div className="space-y-3">
           {/* Arena */}
-          <div className="relative rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 p-8 min-h-[400px] flex flex-col justify-between">
-            {/* Opponent side — top right */}
-            <div className="flex justify-end">
-              <PokemonSide pokemon={opponentActive} gen={battle.gen} isOpponent />
-            </div>
+          <div className="relative rounded-2xl border border-border/30 overflow-hidden p-8 min-h-[400px] flex flex-col justify-between">
+            {/* Battlefield background */}
+            <BattlefieldBg
+              weather={battle.field.weather}
+              terrain={battle.field.terrain}
+            />
 
-            {/* Field effects — centered */}
-            <div className="py-3">
-              <FieldEffects
-                field={battle.field}
-                playerSide={mySide}
-                opponentSide={opponentSide}
-              />
+            {/* Weather / Terrain / Pseudo-weather — top edge bar */}
+            <WeatherBar field={battle.field} />
+
+            {/* Opponent side — top right */}
+            <div className="relative z-10 flex flex-col items-end gap-1.5">
+              <PokemonSide pokemon={opponentActive} gen={battle.gen} isOpponent />
+              {opponentSide && (
+                <SideConditions side={opponentSide} align="right" />
+              )}
             </div>
 
             {/* Player side — bottom left */}
-            <div className="flex justify-start">
+            <div className="relative z-10 flex flex-col items-start gap-1.5">
               <PokemonSide pokemon={myActive} gen={battle.gen} isOpponent={false} />
+              {mySide && (
+                <SideConditions side={mySide} align="left" />
+              )}
             </div>
 
             {/* Opponent disconnect overlay */}

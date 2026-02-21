@@ -4,16 +4,12 @@ import type { Field, Side, WeatherName, TerrainName } from '@pkmn/client';
 import { Badge } from '@pokehub/frontend/shared-ui-components';
 import type { KnownSideCondition } from '../../types/battle-ui.types';
 
-interface FieldEffectsProps {
-  field: Field;
-  playerSide?: Side;
-  opponentSide?: Side;
-}
+// ── Weather & Terrain configs ──────────────────────────────────────────
 
 const weatherConfig: Record<WeatherName, { label: string; className: string }> = {
-  Sand: { label: 'Sandstorm', className: 'bg-amber-600 text-white' },
-  Sun: { label: 'Sun', className: 'bg-orange-400 text-white' },
+  Sun: { label: 'Sun', className: 'bg-orange-400 text-black' },
   Rain: { label: 'Rain', className: 'bg-blue-500 text-white' },
+  Sand: { label: 'Sandstorm', className: 'bg-amber-600 text-white' },
   Hail: { label: 'Hail', className: 'bg-blue-200 text-black' },
   Snow: { label: 'Snow', className: 'bg-blue-100 text-black' },
   'Harsh Sunshine': { label: 'Harsh Sun', className: 'bg-red-500 text-white' },
@@ -28,35 +24,31 @@ const terrainConfig: Record<TerrainName, { label: string; className: string }> =
   Misty: { label: 'Misty Terrain', className: 'bg-pink-200 text-black' },
 };
 
-/** Styled config for known side conditions (label comes from condition.name) */
+// ── Side condition config ──────────────────────────────────────────────
+
 const sideConditionStyles: Record<KnownSideCondition, { className: string; showLevel?: boolean }> = {
-  // Hazards
-  stealthrock: { className: 'bg-stone-600/20 text-stone-400 ring-1 ring-stone-500/20' },
-  gmaxsteelsurge: { className: 'bg-slate-500/20 text-slate-400 ring-1 ring-slate-400/20' },
-  spikes: { className: 'bg-stone-600/20 text-stone-400 ring-1 ring-stone-500/20', showLevel: true },
-  toxicspikes: { className: 'bg-purple-600/20 text-purple-400 ring-1 ring-purple-500/20', showLevel: true },
-  stickyweb: { className: 'bg-amber-600/20 text-amber-400 ring-1 ring-amber-500/20' },
-  // Screens
-  reflect: { className: 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/20' },
-  lightscreen: { className: 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/20' },
-  auroraveil: { className: 'bg-gradient-to-r from-sky-500/15 to-pink-500/15 text-white ring-1 ring-sky-400/20' },
-  // Buffs
-  tailwind: { className: 'bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/20' },
-  safeguard: { className: 'bg-green-500/15 text-green-300 ring-1 ring-green-400/20' },
-  mist: { className: 'bg-blue-300/15 text-blue-200 ring-1 ring-blue-300/20' },
-  luckychant: { className: 'bg-pink-400/15 text-pink-300 ring-1 ring-pink-300/20' },
-  // Single-turn protections
-  craftyshield: { className: 'bg-pink-500/15 text-pink-300 ring-1 ring-pink-400/20' },
-  matblock: { className: 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/20' },
-  quickguard: { className: 'bg-yellow-500/15 text-yellow-300 ring-1 ring-yellow-400/20' },
-  wideguard: { className: 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/20' },
-  // Pledge combos
-  firepledge: { className: 'bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/20' },
-  grasspledge: { className: 'bg-green-700/15 text-green-400 ring-1 ring-green-500/20' },
-  waterpledge: { className: 'bg-gradient-to-r from-red-500/15 via-yellow-500/15 to-blue-500/15 text-white ring-1 ring-yellow-400/20' },
+  stealthrock: { className: 'bg-stone-600 text-white' },
+  gmaxsteelsurge: { className: 'bg-slate-600 text-white' },
+  spikes: { className: 'bg-stone-600 text-white', showLevel: true },
+  toxicspikes: { className: 'bg-purple-600 text-white', showLevel: true },
+  stickyweb: { className: 'bg-amber-700 text-white' },
+  reflect: { className: 'bg-amber-500 text-black' },
+  lightscreen: { className: 'bg-sky-500 text-white' },
+  auroraveil: { className: 'bg-gradient-to-r from-sky-500 to-pink-500 text-white' },
+  tailwind: { className: 'bg-cyan-600 text-white' },
+  safeguard: { className: 'bg-green-600 text-white' },
+  mist: { className: 'bg-blue-400 text-black' },
+  luckychant: { className: 'bg-pink-500 text-white' },
+  craftyshield: { className: 'bg-pink-600 text-white' },
+  matblock: { className: 'bg-amber-600 text-white' },
+  quickguard: { className: 'bg-yellow-500 text-black' },
+  wideguard: { className: 'bg-blue-600 text-white' },
+  firepledge: { className: 'bg-orange-600 text-white' },
+  grasspledge: { className: 'bg-green-700 text-white' },
+  waterpledge: { className: 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white' },
 };
 
-const GENERIC_CONDITION_CLASS = 'bg-muted/50 text-muted-foreground ring-1 ring-border/30';
+const GENERIC_CONDITION_CLASS = 'bg-muted text-foreground';
 
 function formatPseudoWeather(id: string): string {
   return id
@@ -65,25 +57,82 @@ function formatPseudoWeather(id: string): string {
     .trim();
 }
 
-function SideConditions({ side, label }: { side: Side; label: string }) {
+// ── Weather Bar — pinned to top of arena ───────────────────────────────
+
+interface WeatherBarProps {
+  field: Field;
+}
+
+/**
+ * Slim status bar at the top edge of the arena showing
+ * weather, terrain, and pseudo-weather (Trick Room, Gravity, etc.)
+ */
+export function WeatherBar({ field }: WeatherBarProps) {
+  const effects: { label: string; className: string }[] = [];
+
+  if (field.weather) {
+    const config = weatherConfig[field.weather];
+    const duration = field.weatherState.minDuration;
+    const label = duration > 0 ? `${config.label} (${duration})` : config.label;
+    effects.push({ label, className: config.className });
+  }
+
+  if (field.terrain) {
+    effects.push(terrainConfig[field.terrain]);
+  }
+
+  for (const id of Object.keys(field.pseudoWeather)) {
+    effects.push({
+      label: formatPseudoWeather(id),
+      className: 'bg-indigo-500 text-white',
+    });
+  }
+
+  if (effects.length === 0) return null;
+
+  return (
+    <div className="absolute top-0 left-0 right-0 z-20 flex justify-center gap-1.5 p-2">
+      {effects.map((effect) => (
+        <span
+          key={effect.label}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-md ${effect.className}`}
+        >
+          {effect.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ── Side Conditions — tucked next to each nameplate ────────────────────
+
+interface SideConditionsProps {
+  side: Side;
+  align?: 'left' | 'right';
+}
+
+/**
+ * Compact badges for a player's side conditions, meant to be
+ * placed alongside (or below) the nameplate, not in the arena center.
+ */
+export function SideConditions({ side, align = 'left' }: SideConditionsProps) {
   const conditions = Object.entries(side.sideConditions);
   if (conditions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-1 justify-center">
-      <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider self-center mr-1">
-        {label}
-      </span>
+    <div
+      className={`flex flex-wrap gap-1 ${
+        align === 'right' ? 'justify-end' : 'justify-start'
+      }`}
+    >
       {conditions.map(([id, condition]) => {
         const known = sideConditionStyles[id as KnownSideCondition];
         const className = known?.className ?? GENERIC_CONDITION_CLASS;
 
         let displayText = String(condition.name);
-
         if (known?.showLevel && condition.level > 1) {
           displayText += ` \u00d7${condition.level}`;
         }
-
         if (condition.minDuration > 0) {
           displayText += ` (${condition.minDuration})`;
         }
@@ -98,56 +147,14 @@ function SideConditions({ side, label }: { side: Side; label: string }) {
   );
 }
 
+// Keep the combined component for backwards compat, but deprecated
+interface FieldEffectsProps {
+  field: Field;
+  playerSide?: Side;
+  opponentSide?: Side;
+}
+
+/** @deprecated Use WeatherBar + SideConditions separately */
 export function FieldEffects({ field, playerSide, opponentSide }: FieldEffectsProps) {
-  const fieldEffects: { label: string; className: string }[] = [];
-
-  if (field.weather) {
-    const config = weatherConfig[field.weather];
-    const duration = field.weatherState.minDuration;
-    const label = duration > 0 ? `${config.label} (${duration})` : config.label;
-    fieldEffects.push({ label, className: config.className });
-  }
-
-  if (field.terrain) {
-    fieldEffects.push(terrainConfig[field.terrain]);
-  }
-
-  // Pseudo-weather (Trick Room, Gravity, etc.)
-  for (const id of Object.keys(field.pseudoWeather)) {
-    fieldEffects.push({
-      label: formatPseudoWeather(id),
-      className: 'bg-indigo-500 text-white',
-    });
-  }
-
-  const hasFieldEffects = fieldEffects.length > 0;
-  const hasOpponentConditions =
-    opponentSide && Object.keys(opponentSide.sideConditions).length > 0;
-  const hasPlayerConditions =
-    playerSide && Object.keys(playerSide.sideConditions).length > 0;
-
-  if (!hasFieldEffects && !hasOpponentConditions && !hasPlayerConditions)
-    return null;
-
-  return (
-    <div className="space-y-1.5">
-      {opponentSide && hasOpponentConditions && (
-        <SideConditions side={opponentSide} label="Foe" />
-      )}
-
-      {hasFieldEffects && (
-        <div className="flex flex-wrap gap-1 justify-center">
-          {fieldEffects.map((effect) => (
-            <Badge key={effect.label} className={`text-xs ${effect.className}`}>
-              {effect.label}
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      {playerSide && hasPlayerConditions && (
-        <SideConditions side={playerSide} label="You" />
-      )}
-    </div>
-  );
+  return null;
 }
