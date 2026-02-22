@@ -13,10 +13,20 @@ import { StatStages } from './stat-stages';
 import { StatusBadge } from './status-badge';
 import { VolatileBadges } from './volatile-badges';
 
+import type { SpriteTransform } from '../../types/animation.types';
+
 interface PokemonSideProps {
   pokemon: Pokemon | null;
   gen: Generation;
   isOpponent: boolean;
+  /** Callback to register sprite with animation context */
+  onRegisterSprite?: (ident: string, handle: {
+    ident: string;
+    getRect: () => DOMRect | null;
+    setTransform: (t: SpriteTransform) => void;
+  }) => void;
+  /** Callback to unregister sprite */
+  onUnregisterSprite?: (ident: string) => void;
 }
 
 function InfoTooltip({
@@ -50,7 +60,7 @@ function InfoTooltip({
   );
 }
 
-export function PokemonSide({ pokemon, gen, isOpponent }: PokemonSideProps) {
+export function PokemonSide({ pokemon, gen, isOpponent, onRegisterSprite, onUnregisterSprite }: PokemonSideProps) {
   if (!pokemon) return null;
 
   const abilityRevealed = !!pokemon.ability;
@@ -80,6 +90,9 @@ export function PokemonSide({ pokemon, gen, isOpponent }: PokemonSideProps) {
         shiny={pokemon.shiny}
         gender={pokemon.gender}
         fainted={pokemon.fainted}
+        ident={pokemon.ident}
+        onRegister={onRegisterSprite}
+        onUnregister={onUnregisterSprite}
       />
 
       {/* Nameplate: Name, level, status, HP */}

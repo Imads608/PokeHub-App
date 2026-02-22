@@ -147,14 +147,3 @@ export function SideConditions({ side, align = 'left' }: SideConditionsProps) {
   );
 }
 
-// Keep the combined component for backwards compat, but deprecated
-interface FieldEffectsProps {
-  field: Field;
-  playerSide?: Side;
-  opponentSide?: Side;
-}
-
-/** @deprecated Use WeatherBar + SideConditions separately */
-export function FieldEffects({ field, playerSide, opponentSide }: FieldEffectsProps) {
-  return null;
-}

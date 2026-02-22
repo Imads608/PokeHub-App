@@ -1,19 +1,62 @@
 'use client';
 
+import { useCallback, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { useBattleSocketContext } from '../../context/battle-socket.context';
+import {
+  AnimationProvider,
+  useAnimationContext,
+} from '../../context/animation.context';
+import { playAnimationEvent } from '../../animations/state-anims';
 import { ActionPanel } from '../actions/action-panel';
 import { BattleEndOverlay } from '../end/battle-end-overlay';
 import { BattleHeader } from '../info/battle-header';
 import { BattleLog } from '../info/battle-log';
 import { BattlefieldBg } from './battlefield-bg';
+import { PopupLayer } from './damage-popup';
+import { EffectLayer } from './effect-sprite';
 import { WeatherBar, SideConditions } from './field-effects';
 import { PokemonSide } from './pokemon-side';
 import { TeamPanel } from './team-panel';
 
 export function BattleContainer() {
-  const { state, userId, submitMove, cancelChoice, forfeit, saveReplay } =
+  return (
+    <AnimationProvider>
+      <BattleContainerInner />
+    </AnimationProvider>
+  );
+}
+
+function BattleContainerInner() {
+  const { state, userId, submitMove, cancelChoice, forfeit, saveReplay, processPendingEvents, pendingVersion } =
     useBattleSocketContext();
   const { battle, battleId } = state;
+  const {
+    arenaRef,
+    registerSprite,
+    unregisterSprite,
+    effects,
+    popups,
+    flashColor,
+    shakeOffset,
+    scene,
+    isMounted,
+  } = useAnimationContext();
+
+  // Stable animation function bound to the current scene
+  const playAnimation = useCallback(
+    (event: Parameters<typeof playAnimationEvent>[1]) => playAnimationEvent(scene, event),
+    [scene]
+  );
+
+  // Process pending protocol events when new ones arrive
+  useEffect(() => {
+    if (!battle || state.phase !== 'battle') return;
+
+    // When visible, play animations inline. When off-screen, skip animations
+    // but still process all protocol events (state stays current).
+    void processPendingEvents(isMounted ? playAnimation : undefined);
+  }, [pendingVersion]);
 
   if (!battle || !battleId) return null;
 
@@ -61,8 +104,16 @@ export function BattleContainer() {
 
         {/* Center column: Battlefield + Actions */}
         <div className="space-y-3">
-          {/* Arena */}
-          <div className="relative rounded-2xl border border-border/30 overflow-hidden p-8 min-h-[400px] flex flex-col justify-between">
+          {/* Arena — wrapped in motion.div for screen shake */}
+          <motion.div
+            ref={arenaRef as React.RefObject<HTMLDivElement>}
+            animate={{
+              x: shakeOffset.x,
+              y: shakeOffset.y,
+            }}
+            transition={{ duration: 0.05, ease: 'linear' }}
+            className="relative rounded-2xl border border-border/30 overflow-hidden p-8 min-h-[400px] flex flex-col justify-between"
+          >
             {/* Battlefield background */}
             <BattlefieldBg
               weather={battle.field.weather}
@@ -72,9 +123,29 @@ export function BattleContainer() {
             {/* Weather / Terrain / Pseudo-weather — top edge bar */}
             <WeatherBar field={battle.field} />
 
+            {/* Effect sprites layer */}
+            <EffectLayer effects={effects} />
+
+            {/* Damage/text popup layer */}
+            <PopupLayer popups={popups} />
+
+            {/* Flash overlay */}
+            {flashColor && (
+              <div
+                className="pointer-events-none absolute inset-0 z-50 transition-opacity duration-100"
+                style={{ backgroundColor: flashColor }}
+              />
+            )}
+
             {/* Opponent side — top right */}
             <div className="relative z-10 flex flex-col items-end gap-1.5">
-              <PokemonSide pokemon={opponentActive} gen={battle.gen} isOpponent />
+              <PokemonSide
+                pokemon={opponentActive}
+                gen={battle.gen}
+                isOpponent
+                onRegisterSprite={registerSprite}
+                onUnregisterSprite={unregisterSprite}
+              />
               {opponentSide && (
                 <SideConditions side={opponentSide} align="right" />
               )}
@@ -82,7 +153,13 @@ export function BattleContainer() {
 
             {/* Player side — bottom left */}
             <div className="relative z-10 flex flex-col items-start gap-1.5">
-              <PokemonSide pokemon={myActive} gen={battle.gen} isOpponent={false} />
+              <PokemonSide
+                pokemon={myActive}
+                gen={battle.gen}
+                isOpponent={false}
+                onRegisterSprite={registerSprite}
+                onUnregisterSprite={unregisterSprite}
+              />
               {mySide && (
                 <SideConditions side={mySide} align="left" />
               )}
@@ -118,7 +195,7 @@ export function BattleContainer() {
                 onSaveReplay={() => saveReplay(battleId)}
               />
             )}
-          </div>
+          </motion.div>
 
           {/* Action panel — below battlefield */}
           {state.phase === 'battle' && (

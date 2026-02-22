@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useReducer, useRef, useMemo } from 'react';
+import { useCallback, useReducer, useRef, useMemo, useState } from 'react';
 import { Battle } from '@pkmn/client';
 import { Generations } from '@pkmn/data';
 import { Dex } from '@pkmn/dex';
-import { Protocol } from '@pkmn/protocol';
+import { Protocol, type ArgType, type BattleArgsKWArgType } from '@pkmn/protocol';
 import { LogFormatter } from '@pkmn/view';
 import {
   type ServerBattleEvent,
@@ -15,6 +15,8 @@ import {
   type BattleUIState,
   initialBattleUIState,
 } from '../types/battle-ui.types';
+import type { AnimationEvent } from '../types/animation.types';
+import { extractAnimationEvent } from './animation-events';
 
 /** Local UI actions that don't come from the server */
 type LocalUIEvent =
@@ -46,12 +48,27 @@ function getGenerations(): Generations {
 }
 
 /**
- * Feed protocol text into a @pkmn/client Battle instance.
- *
- * Follows the official @pkmn/view pattern: for each parsed protocol message,
- * format first (formatter reads pre-damage HP for deltas), then update battle state.
- * Uses formatHTML for rich output (bold names, damage tooltips, etc.).
- * See: https://www.npmjs.com/package/@pkmn/view
+ * A single parsed protocol event paired with its animation event (if any).
+ * Stored in a queue and processed one at a time — animation plays first,
+ * then battle.add() is called to apply the state change.
+ */
+interface PendingProtocolEvent {
+  args: ArgType;
+  kwArgs: BattleArgsKWArgType;
+  animEvent: AnimationEvent | null;
+}
+
+/** Events that change visible state and should trigger a re-render */
+const STATE_CHANGING_EVENTS = new Set([
+  '-damage', '-heal', 'faint', 'switch', 'drag',
+  '-boost', '-unboost', '-status', '-curestatus',
+  '-weather', '-fieldstart', '-fieldend',
+  '-sidestart', '-sideend',
+]);
+
+/**
+ * Process all protocol text at once (used for BATTLE_START / BATTLE_RESTORED
+ * where we don't need incremental animations).
  */
 function processBattleProtocol(
   battle: Battle,
@@ -63,7 +80,6 @@ function processBattleProtocol(
   for (const { args, kwArgs } of Protocol.parse(text)) {
     const html = formatter.formatHTML(args, kwArgs);
     if (html) logLines.push(html);
-
     battle.add(args, kwArgs);
   }
 
@@ -289,20 +305,35 @@ function battleSnapshot(battle: Battle) {
   };
 }
 
+/** Function signature for playing a single animation event */
+export type PlayAnimationFn = (event: AnimationEvent) => Promise<void>;
+
 /**
  * Battle state hook.
  *
- * Protocol processing (which mutates the Battle object) happens in the
- * dispatch wrapper, not in the reducer. This keeps the reducer pure and
- * prevents React strict mode from double-processing protocol data.
+ * Protocol processing for BATTLE_UPDATE uses deferred application:
  *
- * - Battle & LogFormatter live in refs (mutable singletons)
- * - Reducer only handles serializable state transitions
- * - dispatch wrapper processes protocol once, then dispatches pre-computed results
+ * 1. Parse protocol into individual events, extract animation events.
+ *    Battle state is NOT mutated yet (so we can read prevHp etc.).
+ *
+ * 2. `processPendingEvents(playAnimation?)` iterates each event in a
+ *    single loop: play animation (if any) → battle.add() → re-render
+ *    on state-changing events. Every protocol event gets processed.
+ *
+ * BATTLE_START and BATTLE_RESTORED process everything at once (no animations).
  */
 export function useBattleState() {
   const battleRef = useRef<Battle | null>(null);
   const formatterRef = useRef<LogFormatter | null>(null);
+
+  /** Queue of parsed protocol events waiting to be processed */
+  const pendingEventsRef = useRef<PendingProtocolEvent[]>([]);
+  /** Bumped on each BATTLE_UPDATE to signal new events are ready */
+  const [pendingVersion, setPendingVersion] = useState(0);
+  /** Prevents re-entrant calls to processPendingEvents */
+  const processingRef = useRef(false);
+  /** Set to true to skip remaining animations (events still get applied) */
+  const skipRef = useRef(false);
 
   const [reducerState, rawDispatch] = useReducer(battleReducer, initialBattleUIState);
 
@@ -319,6 +350,7 @@ export function useBattleState() {
 
         battleRef.current = battle;
         formatterRef.current = formatter;
+        pendingEventsRef.current = [];
 
         log.info('→ battle', { event: 'BATTLE_START', battleId: event.battleId });
         log.debug('Battle', battleSnapshot(battle));
@@ -329,15 +361,25 @@ export function useBattleState() {
 
       case 'BATTLE_UPDATE': {
         const battle = battleRef.current;
-        const formatter = formatterRef.current;
-        if (!battle || !formatter) return;
+        if (!battle) return;
 
-        const logLines = processBattleProtocol(battle, formatter, event.data);
+        // Parse protocol into individual events WITHOUT mutating battle.
+        // Animation events are extracted now (reading current HP for prevHp).
+        // Actual state mutation happens later via processPendingEvents().
+        const newEvents: PendingProtocolEvent[] = [];
+        for (const { args, kwArgs } of Protocol.parse(event.data)) {
+          const animEvent = extractAnimationEvent(args, battle);
+          newEvents.push({ args, kwArgs, animEvent });
+        }
 
-        log.debug('BATTLE_UPDATE', { newLogLines: logLines.length });
-        log.debug('Battle', battleSnapshot(battle));
+        // Append to existing queue (handles events arriving mid-processing)
+        pendingEventsRef.current.push(...newEvents);
+        setPendingVersion((v) => v + 1);
 
-        rawDispatch({ type: '_BATTLE_UPDATED', logLines });
+        log.debug('BATTLE_UPDATE', {
+          totalEvents: newEvents.length,
+          animEvents: newEvents.filter((e) => e.animEvent).length,
+        });
         break;
       }
 
@@ -352,6 +394,7 @@ export function useBattleState() {
 
         battleRef.current = battle;
         formatterRef.current = formatter;
+        pendingEventsRef.current = [];
 
         log.info('→ battle (restored)', { event: 'BATTLE_RESTORED', battleId: event.battleId });
         log.debug('Battle', battleSnapshot(battle));
@@ -377,7 +420,79 @@ export function useBattleState() {
     [reducerState]
   );
 
-  return [state, dispatch] as const;
+  /**
+   * Process all pending protocol events in a single sequential loop.
+   *
+   * For each event:
+   *   1. If it has an animation and playAnimation is provided → play it
+   *   2. Format log line + battle.add() to apply the state change
+   *   3. If state-changing → dispatch re-render (so HP/faint/etc. shows)
+   *
+   * After all events: final dispatch to ensure request/turn/upkeep are applied.
+   *
+   * This is the ONLY place protocol events are consumed. No sync issues.
+   */
+  const processPendingEvents = useCallback(async (playAnimation?: PlayAnimationFn) => {
+    if (processingRef.current) return;
+
+    const battle = battleRef.current;
+    const formatter = formatterRef.current;
+    const pending = pendingEventsRef.current;
+    if (!battle || !formatter || pending.length === 0) return;
+
+    processingRef.current = true;
+    skipRef.current = false;
+
+    const logLines: string[] = [];
+    let dispatched = false;
+
+    try {
+      while (pending.length > 0) {
+        const event = pending.shift()!;
+
+        // Play animation before applying state (so prevHp is still visible)
+        if (event.animEvent && playAnimation && !skipRef.current) {
+          await playAnimation(event.animEvent);
+        }
+
+        // Apply the protocol event to battle state
+        const html = formatter.formatHTML(event.args, event.kwArgs);
+        if (html) logLines.push(html);
+        battle.add(event.args, event.kwArgs);
+
+        // Re-render after state-changing events so the UI updates
+        // between animations (HP drops after damage anim, faint shows, etc.)
+        const cmd = String(event.args[0]);
+        if (STATE_CHANGING_EVENTS.has(cmd)) {
+          // Do NOT call battle.update(request) here — the request still
+          // contains the previous turn's HP/status. update() overwrites
+          // pokemon.hp from the request, undoing the battle.add() mutation.
+          // We call update() only in the final dispatch after all events
+          // (including the new |request|) have been processed.
+          rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines] });
+          logLines.length = 0;
+          dispatched = true;
+        }
+      }
+    } finally {
+      // Final dispatch for remaining log lines and non-state-changing events
+      // (request, upkeep, turn, etc.)
+      if (battle.request) battle.update(battle.request);
+      if (logLines.length > 0 || !dispatched) {
+        rawDispatch({ type: '_BATTLE_UPDATED', logLines });
+      }
+
+      processingRef.current = false;
+      skipRef.current = false;
+    }
+  }, []);
+
+  /** Skip remaining animations (events still get applied immediately) */
+  const skipAnimations = useCallback(() => {
+    skipRef.current = true;
+  }, []);
+
+  return [state, dispatch, processPendingEvents, pendingVersion, skipAnimations] as const;
 }
 
 export { battleReducer };

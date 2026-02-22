@@ -2,7 +2,7 @@
 
 import { useBattleNotifications } from '../hooks/use-battle-notifications';
 import { useBattleSocket } from '../hooks/use-battle-socket';
-import { useBattleState } from '../hooks/use-battle-state';
+import { useBattleState, type PlayAnimationFn } from '../hooks/use-battle-state';
 import type { BattleUIState } from '../types/battle-ui.types';
 import { useAuthSession, getAuthSession } from '@pokehub/frontend/shared-auth';
 import { createClientLogger } from '@pokehub/frontend/shared-logger';
@@ -30,6 +30,12 @@ export interface BattleSocketContextValue {
   forfeit: (battleId: string) => void;
   rejoin: (battleId: string) => void;
   saveReplay: (battleId: string) => void;
+  /** Process all pending protocol events, playing animations inline */
+  processPendingEvents: (playAnimation?: PlayAnimationFn) => Promise<void>;
+  /** Increments when new pending protocol events arrive */
+  pendingVersion: number;
+  /** Skip remaining animations (events still get applied) */
+  skipAnimations: () => void;
 }
 
 const BattleSocketContext = createContext<BattleSocketContextValue | null>(
@@ -45,7 +51,7 @@ export function BattleSocketProvider({
   const accessToken = session?.accessToken;
   const userId = session?.user?.id ?? '';
 
-  const [state, dispatch] = useBattleState();
+  const [state, dispatch, processPendingEvents, pendingVersion, skipAnimations] = useBattleState();
   const [lastEvent, setLastEvent] = useState<ServerBattleEvent | null>(null);
   const [serverAvailable, setServerAvailable] = useState(true);
 
@@ -192,6 +198,9 @@ export function BattleSocketProvider({
     forfeit,
     rejoin,
     saveReplay,
+    processPendingEvents,
+    pendingVersion,
+    skipAnimations,
   };
 
   return (
