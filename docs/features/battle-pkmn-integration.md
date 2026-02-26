@@ -420,7 +420,7 @@ The `PokemonSprite` component uses this to render the correct sprite for each Po
 
 ### Battle Initialization
 
-On `BATTLE_START`, all protocol is processed at once (no animations):
+On `BATTLE_START`, events are queued for animated processing (same pipeline as `BATTLE_UPDATE`). The initial `|switch|` events play switch-in animations so the player sees their Pokemon materialize:
 
 ```
   BATTLE_START { battleId, initialState }
@@ -430,18 +430,18 @@ On `BATTLE_START`, all protocol is processed at once (no animations):
   new LogFormatter('p1', battle)        (@pkmn/view)
     │
     ▼
-  processBattleProtocol(battle, formatter, initialState)
-    │
-    ├── Protocol.parse(initialState)    (@pkmn/protocol)
-    ├── formatter.formatHTML(args, kwArgs)
-    ├── battle.add(args, kwArgs)
-    └── battle.update(request)
+  Protocol.parse(initialState)          (@pkmn/protocol)
+    ├── extractAnimationEvent(args, battle) for each event
+    └── push to pendingEventsRef queue
     │
     ▼
-  _BATTLE_INITIALIZED { battleId, logLines }
+  _BATTLE_INITIALIZED { battleId, logLines: [] }
+  setPendingVersion(v + 1)  → triggers processPendingEvents
 ```
 
 The `initialState` contains setup protocol: `|player|`, `|teamsize|`, `|gen|`, `|tier|`, initial `|switch|` events, and the first `|request|`.
+
+Only `BATTLE_RESTORED` uses the instant `processBattleProtocol` path (no animations).
 
 ### Battle Restoration (Reconnect)
 

@@ -78,6 +78,7 @@ interface BattleUIState {
   logFormatter: LogFormatter | null;  // @pkmn/view
   turnTimer: { totalSeconds: number; startedAt: number } | null;
   pendingChoice: string | null;
+  turnProcessing: boolean;           // true while processPendingEvents is playing animations
   opponentDisconnected: boolean;
   disconnectTimeout: number | null;
   winner: string | null;
@@ -204,36 +205,48 @@ This separation is critical: animation events must be extracted **before** `batt
 
 ### The Single Processing Loop
 
-`processPendingEvents(playAnimation?)` is the **only place** protocol events are consumed. It processes each event sequentially in a single `while` loop:
+`processPendingEvents(playAnimation?)` is the **only place** protocol events are consumed. It processes each event sequentially in a single `while` loop. All intermediate dispatches set `turnProcessing: true` (hides the action panel). The final dispatch sets `turnProcessing: false` so the action panel reappears.
+
+Events are processed with different log/animation timing depending on their type:
 
 ```
   processPendingEvents(playAnimation?)
           │
           ▼
-  ┌───────────────────────────────────────────────────┐
-  │  while (pending.length > 0) {                     │
-  │    event = pending.shift()                        │
-  │                                                   │
-  │    ┌─── Has animation & playAnimation provided?   │
-  │    │    YES → await playAnimation(event.animEvent) │
-  │    │          (UI shows PREVIOUS state during this)│
-  │    └─── NO  → skip                               │
-  │                                                   │
-  │    html = formatter.formatHTML(args, kwArgs)       │
-  │    battle.add(args, kwArgs)    ◀── state mutates  │
-  │                                                   │
-  │    ┌─── Is cmd state-changing?                    │
-  │    │    (-damage, faint, switch, -boost, etc.)    │
-  │    │    YES → rawDispatch(_BATTLE_UPDATED)        │
-  │    │          (React re-renders with new state)   │
-  │    └─── NO  → accumulate log lines               │
-  │  }                                                │
-  │                                                   │
-  │  finally {                                        │
-  │    battle.update(request)  ◀── sync request data  │
-  │    rawDispatch(_BATTLE_UPDATED, remaining lines)  │
-  │  }                                                │
-  └───────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────┐
+  │  while (pending.length > 0) {                                │
+  │    event = pending.shift()                                   │
+  │                                                              │
+  │    ┌── Move (action starter)?                                │
+  │    │   Log appears FIRST → dispatch(turnProcessing: true)    │
+  │    │   Wait LOG_READ (1s) for player to read                 │
+  │    │   Play move animation                                   │
+  │    │   battle.add()                                          │
+  │    │                                                         │
+  │    ├── Switch / drag?                                        │
+  │    │   Log appears FIRST → dispatch(turnProcessing: true)    │
+  │    │   Wait LOG_READ                                         │
+  │    │   Animate old Pokemon out (sprite exists before add)    │
+  │    │   battle.add() → dispatch (old sprite unmounts,         │
+  │    │                            new sprite mounts)           │
+  │    │   Animate new Pokemon in (sprite exists after add)      │
+  │    │                                                         │
+  │    └── Consequence (damage, faint, boost, status, etc.)?     │
+  │        Play animation FIRST (e.g. shake, flash)              │
+  │        battle.add() → dispatch (HP bar drops, status shows)  │
+  │        Wait LOG_READ                                         │
+  │        Log appears AFTER state change                        │
+  │                                                              │
+  │    ┌── Is |request| event?                                   │
+  │    │   YES → formatter.perspective = request.side.id         │
+  │    └── NO  → skip                                            │
+  │  }                                                           │
+  │                                                              │
+  │  finally {                                                   │
+  │    battle.update(request)  ◀── sync request data             │
+  │    dispatch(turnProcessing: false) ◀── action panel returns  │
+  │  }                                                           │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 **State-changing events** that trigger mid-loop re-renders:

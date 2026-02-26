@@ -281,7 +281,7 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
 
 ```
   Defender sprite flinches (rapid x-shake via keyframes):
-    x: [0, -3, 3, -2, 2, -1, 0]  over 300ms
+    x: [0, -6, 6, -4, 4, -2, 0]  over DURATION.DAMAGE
 
   Red damage popup floats up:
     "-{percent}%"  e.g. "-45%"
@@ -308,14 +308,17 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
 
 ```
   Switch out:
-    scale: 1 → 0.3
-    opacity: 1 → 0
-    duration: 250ms
+    Red flash overlay (rgba(239, 68, 68, 0.2))
+    Two-step shrink with upward lift:
+      step 1: scale: 1 → 0.6, opacity: 1 → 0.5, y: 0 → -10  (200ms)
+      step 2: scale: 0.6 → 0, opacity: 0.5 → 0, y: -10 → -20
 
   Switch in:
-    scale: 0.3 → 1
-    opacity: 0 → 1
-    duration: 400ms, ease: DECEL
+    Note: playSwitchIn waits 50ms for React to mount the sprite before animating
+    Starts invisible: scale: 0, opacity: 0, y: 20
+    White flash overlay (rgba(255, 255, 255, 0.25))
+    Overshoot: scale → 1.15, opacity → 1, y → -5  (300ms)
+    Settle: scale → 1.0, opacity → 1, y → 0
 ```
 
 ### Boost / Unboost
