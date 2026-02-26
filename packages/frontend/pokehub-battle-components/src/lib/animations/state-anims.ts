@@ -170,17 +170,30 @@ async function playSwitchIn(
   scene: AnimationScene,
   event: Extract<AnimationEvent, { type: 'switch-in' }>
 ) {
+  // The sprite is already mounted (state applied before animation).
+  // Wait a frame for React to render and register the sprite.
+  await scene.delay(50);
+
   const sprite = scene.getSprite(event.pokemon);
   if (!sprite) {
     await scene.delay(DURATION.SWITCH_IN);
     return;
   }
 
-  // Start from invisible/small, scale up to full
-  sprite.setTransform({ scale: 0.3, opacity: 0, y: 10 });
+  // Start invisible
+  sprite.setTransform({ scale: 0, opacity: 0, y: 20 });
   await scene.delay(50);
+
+  // White flash as Pokemon materializes
+  scene.flashOverlay('rgba(255, 255, 255, 0.25)', 200);
+
+  // Grow into position with slight overshoot
+  sprite.setTransform({ scale: 1.15, opacity: 1, y: -5 });
+  await scene.delay(300);
+
+  // Settle to resting position
   sprite.setTransform({ scale: 1, opacity: 1, y: 0 });
-  await scene.delay(DURATION.SWITCH_IN);
+  await scene.delay(DURATION.SWITCH_IN - 400);
 }
 
 // ── Switch out ──────────────────────────────────────────────────────────
@@ -195,8 +208,15 @@ async function playSwitchOut(
     return;
   }
 
-  sprite.setTransform({ scale: 0.3, opacity: 0 });
-  await scene.delay(DURATION.SWITCH_OUT);
+  // Red flash as Pokemon is recalled
+  scene.flashOverlay('rgba(239, 68, 68, 0.2)', 200);
+
+  // Shrink and fade out
+  sprite.setTransform({ scale: 0.6, opacity: 0.5, y: -10 });
+  await scene.delay(200);
+
+  sprite.setTransform({ scale: 0, opacity: 0, y: -20 });
+  await scene.delay(DURATION.SWITCH_OUT - 200);
 }
 
 // ── Boost / Unboost ─────────────────────────────────────────────────────

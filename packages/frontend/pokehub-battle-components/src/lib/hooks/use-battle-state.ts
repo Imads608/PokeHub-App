@@ -1,11 +1,11 @@
 'use client';
 
+import { DURATION } from '../animations/easing';
 import type { AnimationEvent } from '../types/animation.types';
 import {
   type BattleUIState,
   initialBattleUIState,
 } from '../types/battle-ui.types';
-import { DURATION } from '../animations/easing';
 import { extractAnimationEvent } from '../utils/animation-events';
 import { Battle } from '@pkmn/client';
 import { Generations } from '@pkmn/data';
@@ -260,75 +260,6 @@ function battleReducer(
   }
 }
 
-/**
- * Picks the serializable, human-readable fields from BattleUIState for logging.
- */
-function stateSnapshot(state: BattleUIState) {
-  return {
-    phase: state.phase,
-    battleId: state.battleId,
-    opponent: state.opponent,
-    pendingChoice: state.pendingChoice,
-    opponentDisconnected: state.opponentDisconnected,
-    winner: state.winner,
-    endReason: state.endReason,
-    turnTimer: state.turnTimer,
-    error: state.error,
-    logEntriesCount: state.logEntries.length,
-  };
-}
-
-/**
- * Extracts a human-readable snapshot from the @pkmn/client Battle instance.
- */
-function battleSnapshot(battle: Battle) {
-  const p1Active = battle.p1.active[0];
-  const p2Active = battle.p2.active[0];
-
-  const request = battle.request;
-  let requestInfo: { type: string; moves?: string[] } | null = null;
-  if (request) {
-    requestInfo = { type: request.requestType };
-    if (request.requestType === 'move' && request.active?.[0]) {
-      requestInfo.moves = request.active[0].moves.map((m) => m.name);
-    }
-  }
-
-  return {
-    turn: battle.turn,
-    perspective: request?.side?.id ?? null,
-    p1: {
-      name: battle.p1.name,
-      active: p1Active
-        ? {
-            species: p1Active.speciesForme,
-            hp: `${p1Active.hp}/${p1Active.maxhp}`,
-            status: p1Active.status,
-          }
-        : null,
-      teamSize: battle.p1.totalPokemon,
-      faints: battle.p1.faints,
-    },
-    p2: {
-      name: battle.p2.name,
-      active: p2Active
-        ? {
-            species: p2Active.speciesForme,
-            hp: `${p2Active.hp}/${p2Active.maxhp}`,
-            status: p2Active.status,
-          }
-        : null,
-      teamSize: battle.p2.totalPokemon,
-      faints: battle.p2.faints,
-    },
-    field: {
-      weather: battle.field.weather ?? null,
-      terrain: battle.field.terrain ?? null,
-    },
-    request: requestInfo,
-  };
-}
-
 /** Function signature for playing a single animation event */
 export type PlayAnimationFn = (event: AnimationEvent) => Promise<void>;
 
@@ -369,31 +300,31 @@ export function useBattleState() {
       case 'BATTLE_START': {
         const battle = new Battle(getGenerations());
         const formatter = new LogFormatter('p1', battle);
-        const logLines = processBattleProtocol(
-          battle,
-          formatter,
-          event.initialState
-        );
-
-        if (battle.request?.side?.id) {
-          formatter.perspective = battle.request.side.id;
-        }
 
         battleRef.current = battle;
         formatterRef.current = formatter;
-        pendingEventsRef.current = [];
+
+        // Queue all events for animated processing (same as BATTLE_UPDATE)
+        const newEvents: PendingProtocolEvent[] = [];
+        for (const { args, kwArgs } of Protocol.parse(event.initialState)) {
+          const animEvent = extractAnimationEvent(args, battle);
+          newEvents.push({ args, kwArgs, animEvent });
+        }
+        pendingEventsRef.current = newEvents;
 
         log.info('→ battle', {
           event: 'BATTLE_START',
           battleId: event.battleId,
         });
-        log.debug('Battle', battleSnapshot(battle));
 
         rawDispatch({
           type: '_BATTLE_INITIALIZED',
           battleId: event.battleId,
-          logLines,
+          logLines: [],
         });
+
+        // Trigger processing (same mechanism as BATTLE_UPDATE)
+        setPendingVersion((v) => v + 1);
         break;
       }
 
@@ -442,7 +373,7 @@ export function useBattleState() {
           event: 'BATTLE_RESTORED',
           battleId: event.battleId,
         });
-        log.debug('Battle', battleSnapshot(battle));
+        log.debug('Battle', battle);
 
         rawDispatch({
           type: '_BATTLE_RESTORED',
@@ -501,10 +432,11 @@ export function useBattleState() {
           const event = pending.shift()!;
           const cmd = String(event.args[0]);
 
-          // For action-starters (move, switch, drag), show the log line
-          // before the animation so the player reads what's happening first.
-          // For consequences (damage, faint, etc.), log appears after animation.
-          const isActionStarter = cmd === 'move' || cmd === 'switch' || cmd === 'drag';
+          // Moves: log appears before animation so the player reads what's happening.
+          // Switch/drag: handled separately (needs state before animation for sprite mount).
+          // Consequences (damage, faint, etc.): log appears after animation.
+          const isSwitchEvent = cmd === 'switch' || cmd === 'drag';
+          const isActionStarter = cmd === 'move';
 
           const html = formatter.formatHTML(event.args, event.kwArgs);
 
@@ -512,29 +444,91 @@ export function useBattleState() {
             if (html) logLines.push(html);
           }
 
-          if (event.animEvent && playAnimation && !skipRef.current) {
-            // Flush accumulated log lines before animation
+          // Switch/drag needs special ordering:
+          //   1. Animate old Pokemon out (sprite exists before battle.add)
+          //   2. battle.add() — old sprite unmounts, new sprite mounts
+          //   3. Animate new Pokemon in (sprite exists after battle.add)
+          if (isSwitchEvent && playAnimation && !skipRef.current) {
+            // Flush log (including switch log line) before animation
+            if (html) logLines.push(html);
             if (logLines.length > 0) {
-              rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
+              rawDispatch({
+                type: '_BATTLE_UPDATED',
+                logLines: [...logLines],
+                turnProcessing: true,
+              });
               logLines.length = 0;
               dispatched = true;
             }
 
-            if (isActionStarter) {
-              await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
+            await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
+
+            // Animate old Pokemon out (if one exists on this side)
+            const sideId = String(event.args[1]).startsWith('p1') ? 'p1' : 'p2';
+            const currentActive = battle[sideId]?.active[0];
+            if (currentActive && !currentActive.fainted) {
+              await playAnimation({
+                type: 'switch-out',
+                pokemon: `${sideId}a: ${currentActive.name}`,
+              });
             }
-            await playAnimation(event.animEvent);
-          }
 
-          // Apply state AFTER animation (so prevHp is still visible during anim)
-          battle.add(event.args, event.kwArgs);
-
-          // Re-render after state-changing events so the UI updates
-          // between animations (HP drops after damage anim, faint shows, etc.)
-          if (STATE_CHANGING_EVENTS.has(cmd)) {
-            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
+            // Apply state — old sprite unmounts, new sprite mounts
+            battle.add(event.args, event.kwArgs);
+            rawDispatch({
+              type: '_BATTLE_UPDATED',
+              logLines: [...logLines],
+              turnProcessing: true,
+            });
             logLines.length = 0;
             dispatched = true;
+
+            // Animate new Pokemon in
+            await playAnimation(event.animEvent!);
+          } else if (isSwitchEvent) {
+            // No animation (skipped or off-screen) — just apply state
+            if (html) logLines.push(html);
+            battle.add(event.args, event.kwArgs);
+            rawDispatch({
+              type: '_BATTLE_UPDATED',
+              logLines: [...logLines],
+              turnProcessing: true,
+            });
+            logLines.length = 0;
+            dispatched = true;
+          } else {
+            if (event.animEvent && playAnimation && !skipRef.current) {
+              if (logLines.length > 0) {
+                rawDispatch({
+                  type: '_BATTLE_UPDATED',
+                  logLines: [...logLines],
+                  turnProcessing: true,
+                });
+                logLines.length = 0;
+                dispatched = true;
+              }
+
+              if (isActionStarter) {
+                await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
+              }
+              await playAnimation(event.animEvent);
+            }
+
+            battle.add(event.args, event.kwArgs);
+
+            if (cmd === 'request' && battle.request?.side?.id) {
+              formatter.perspective = battle.request.side.id;
+            }
+
+            if (STATE_CHANGING_EVENTS.has(cmd)) {
+              rawDispatch({
+                type: '_BATTLE_UPDATED',
+                logLines: [...logLines],
+                turnProcessing: true,
+              });
+              logLines.length = 0;
+              dispatched = true;
+            }
           }
 
           // Consequence log lines (damage, heal, etc.) appear after the
@@ -544,7 +538,11 @@ export function useBattleState() {
             if (event.animEvent && playAnimation && !skipRef.current) {
               await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
             }
-            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
+            rawDispatch({
+              type: '_BATTLE_UPDATED',
+              logLines: [...logLines],
+              turnProcessing: true,
+            });
             logLines.length = 0;
             dispatched = true;
           }
@@ -552,7 +550,9 @@ export function useBattleState() {
       } finally {
         // Final dispatch — applies remaining log lines, processes the request,
         // and clears turnProcessing so the action panel reappears.
-        if (battle.request) battle.update(battle.request);
+        if (battle.request) {
+          battle.update(battle.request);
+        }
         rawDispatch({ type: '_BATTLE_UPDATED', logLines });
 
         processingRef.current = false;
