@@ -5,6 +5,7 @@ import {
   type BattleUIState,
   initialBattleUIState,
 } from '../types/battle-ui.types';
+import { DURATION } from '../animations/easing';
 import { extractAnimationEvent } from '../utils/animation-events';
 import { Battle } from '@pkmn/client';
 import { Generations } from '@pkmn/data';
@@ -108,7 +109,7 @@ function processBattleProtocol(
 
 type InternalEvent =
   | { type: '_BATTLE_INITIALIZED'; battleId: string; logLines: string[] }
-  | { type: '_BATTLE_UPDATED'; logLines: string[] }
+  | { type: '_BATTLE_UPDATED'; logLines: string[]; turnProcessing?: boolean }
   | { type: '_BATTLE_RESTORED'; battleId: string; logLines: string[] };
 
 type ReducerEvent = DirectServerEvent | LocalUIEvent | InternalEvent;
@@ -183,6 +184,7 @@ function battleReducer(
         ...state,
         pendingChoice: null,
         turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
+        turnProcessing: event.turnProcessing ?? false,
         logEntries: [...state.logEntries, ...event.logLines],
       };
 
@@ -497,38 +499,61 @@ export function useBattleState() {
       try {
         while (pending.length > 0) {
           const event = pending.shift()!;
+          const cmd = String(event.args[0]);
 
-          // Play animation before applying state (so prevHp is still visible)
+          // For action-starters (move, switch, drag), show the log line
+          // before the animation so the player reads what's happening first.
+          // For consequences (damage, faint, etc.), log appears after animation.
+          const isActionStarter = cmd === 'move' || cmd === 'switch' || cmd === 'drag';
+
+          const html = formatter.formatHTML(event.args, event.kwArgs);
+
+          if (isActionStarter) {
+            if (html) logLines.push(html);
+          }
+
           if (event.animEvent && playAnimation && !skipRef.current) {
+            // Flush accumulated log lines before animation
+            if (logLines.length > 0) {
+              rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
+              logLines.length = 0;
+              dispatched = true;
+            }
+
+            if (isActionStarter) {
+              await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
+            }
             await playAnimation(event.animEvent);
           }
 
-          // Apply the protocol event to battle state
-          const html = formatter.formatHTML(event.args, event.kwArgs);
-          if (html) logLines.push(html);
+          // Apply state AFTER animation (so prevHp is still visible during anim)
           battle.add(event.args, event.kwArgs);
 
           // Re-render after state-changing events so the UI updates
           // between animations (HP drops after damage anim, faint shows, etc.)
-          const cmd = String(event.args[0]);
           if (STATE_CHANGING_EVENTS.has(cmd)) {
-            // Do NOT call battle.update(request) here — the request still
-            // contains the previous turn's HP/status. update() overwrites
-            // pokemon.hp from the request, undoing the battle.add() mutation.
-            // We call update() only in the final dispatch after all events
-            // (including the new |request|) have been processed.
-            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines] });
+            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
+            logLines.length = 0;
+            dispatched = true;
+          }
+
+          // Consequence log lines (damage, heal, etc.) appear after the
+          // state change so the player sees the HP bar drop first
+          if (!isActionStarter && html) {
+            logLines.push(html);
+            if (event.animEvent && playAnimation && !skipRef.current) {
+              await new Promise((r) => setTimeout(r, DURATION.LOG_READ));
+            }
+            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines], turnProcessing: true });
             logLines.length = 0;
             dispatched = true;
           }
         }
       } finally {
-        // Final dispatch for remaining log lines and non-state-changing events
-        // (request, upkeep, turn, etc.)
+        // Final dispatch — applies remaining log lines, processes the request,
+        // and clears turnProcessing so the action panel reappears.
         if (battle.request) battle.update(battle.request);
-        if (logLines.length > 0 || !dispatched) {
-          rawDispatch({ type: '_BATTLE_UPDATED', logLines });
-        }
+        rawDispatch({ type: '_BATTLE_UPDATED', logLines });
 
         processingRef.current = false;
         skipRef.current = false;

@@ -54,6 +54,8 @@ export interface BattleUIState {
   turnTimer: { totalSeconds: number; startedAt: number } | null;
   /** The choice submitted this turn (null if none yet) */
   pendingChoice: string | null;
+  /** True while the turn's protocol events are being processed */
+  turnProcessing: boolean;
 
   /** Disconnection */
   opponentDisconnected: boolean;
@@ -81,6 +83,7 @@ export const initialBattleUIState: BattleUIState = {
   logFormatter: null,
   turnTimer: null,
   pendingChoice: null,
+  turnProcessing: false,
   opponentDisconnected: false,
   disconnectTimeout: null,
   winner: null,

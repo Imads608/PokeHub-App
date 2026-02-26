@@ -48,6 +48,8 @@ The animation system brings battles to life with move animations, damage effects
 
 Animations are tightly integrated with the protocol processing pipeline: animation events are extracted **before** battle state mutates, played in sequence, and the UI updates after each state-changing event. This ensures the user sees damage after the move animation plays, HP drops smoothly, and faints happen at the right moment.
 
+The system uses deliberate timing to keep the player informed: log entries for action-starters (moves, switches) appear **before** the animation with a readable pause, while consequence logs (damage numbers, status messages) appear **after** the corresponding state change (e.g., HP bar drop). The action panel is hidden during turn processing via `turnProcessing` and only reappears once all events and animations are complete.
+
 ## Architecture
 
 ### Animation Event Flow
@@ -79,7 +81,15 @@ Animations are tightly integrated with the protocol processing pipeline: animati
   ┌──────────────────────────────────────────────────────────┐
   │  processPendingEvents(playAnimation)                     │
   │                                                          │
+  │  All intermediate dispatches set turnProcessing: true    │
+  │  (hides action panel during turn playback)               │
+  │                                                          │
   │  For each pending event:                                 │
+  │                                                          │
+  │    ┌── Action starter? (move, switch, drag)              │
+  │    │   YES ──▶ format log + dispatch (log appears first) │
+  │    │           wait LOG_READ (1s) for player to read     │
+  │    └── NO  ──▶ (log deferred until after state change)   │
   │                                                          │
   │    ┌── Has animEvent?                                    │
   │    │   YES ──▶ await playAnimation(animEvent)            │
@@ -100,7 +110,16 @@ Animations are tightly integrated with the protocol processing pipeline: animati
   │    └── NO ──▶ (skip animation)                           │
   │                                                          │
   │    battle.add(args, kwArgs)  ◀── state mutates           │
-  │    if state-changing → dispatch re-render                │
+  │    if state-changing → dispatch re-render (HP drops)     │
+  │                                                          │
+  │    ┌── Consequence event? (not action starter)           │
+  │    │   YES ──▶ wait LOG_READ (if animated)               │
+  │    │           dispatch log line (e.g. "lost 17%")       │
+  │    └── NO  ──▶ (log was already shown before animation)  │
+  │                                                          │
+  │  Finally:                                                │
+  │    battle.update(request)                                │
+  │    dispatch (turnProcessing: false → action panel shows) │
   └──────────────────────────────────────────────────────────┘
 ```
 
@@ -246,11 +265,13 @@ Configuration for floating text overlays:
 interface PopupConfig {
   id: string;              // unique ID
   text: string;            // display text ("-45%", "+2 Atk", etc.)
-  targetIdent: string;     // Pokemon ident for positioning
+  sprite: SpriteHandle | null; // resolved sprite for positioning
   color?: string;          // text color
-  duration?: number;       // ms before auto-removal (default 800)
+  duration?: number;       // ms before auto-removal (default 1000)
 }
 ```
+
+Callers resolve the sprite handle via `scene.getSprite(ident)` and pass it directly. The `PopupLayer` uses `sprite.getRect()` to position the popup above the target Pokemon, with a centered fallback when `sprite` is `null`.
 
 ## State Transition Animations
 
@@ -467,21 +488,24 @@ Duration constants (milliseconds):
 
 ```typescript
 const DURATION = {
-  MOVE: 600,
-  DAMAGE: 400,
-  FAINT: 600,
-  SWITCH_OUT: 300,
-  SWITCH_IN: 500,
-  BOOST: 300,
-  STATUS: 300,
-  SUPER_EFFECTIVE: 200,
-  CRIT: 200,
-  WEATHER: 700,
-  SCREEN_SHAKE: 300,
-  FLASH: 200,
-  POPUP: 800,
+  MOVE: 800,
+  DAMAGE: 1000,
+  FAINT: 800,
+  SWITCH_OUT: 500,
+  SWITCH_IN: 700,
+  BOOST: 500,
+  STATUS: 500,
+  SUPER_EFFECTIVE: 400,
+  CRIT: 400,
+  WEATHER: 900,
+  SCREEN_SHAKE: 400,
+  FLASH: 250,
+  POPUP: 1000,
+  LOG_READ: 1000,   // pause after log line appears, before animation starts
 };
 ```
+
+`LOG_READ` controls the pause between a log entry appearing and its corresponding animation playing. This gives the player time to read "Charizard used Flamethrower!" before the move animation fires. For consequence events (damage, heal), `LOG_READ` is the pause between the HP bar updating and the log message appearing (e.g., "lost 17% of its health!"). These pauses only apply when animations are active — during non-animated processing (battle start, restore), events are applied instantly.
 
 ## Visual Layers
 
@@ -515,8 +539,8 @@ Renders `EffectSpriteConfig[]` as `motion.img` elements. Each sprite:
 ### PopupLayer (Damage Numbers)
 
 Renders `PopupConfig[]` as floating text positioned above the target Pokemon:
-- Positioned using `getSprite(targetIdent).getRect()` relative to the arena
-- Animates upward with fade-out over `duration` ms (default 800)
+- Positioned using `config.sprite?.getRect()` relative to the arena, with centered fallback
+- Animates upward with fade-out over `duration` ms (default 1000)
 - Auto-removed after duration via `setTimeout`
 
 ### Flash Overlay
@@ -673,6 +697,25 @@ Common sprite names used in move animations:
 | `rock1` / `rock2` | Brown rocks | Stealth Rock |
 | `feather` | White feather | Roost, Defog |
 | `fist` | Impact fist | Close Combat |
+
+## Turn Processing and Action Panel
+
+The `turnProcessing` flag in `BattleUIState` controls whether the action panel is visible:
+
+- **`turnProcessing: true`** — set on every intermediate `_BATTLE_UPDATED` dispatch during `processPendingEvents`. The action panel is hidden so the player cannot submit moves while the turn is animating.
+- **`turnProcessing: false`** — set on the final dispatch in `processPendingEvents`'s `finally` block, after all events are processed and `battle.update(request)` is called. The action panel reappears with the new request's available moves/switches.
+- **`_BATTLE_INITIALIZED` / `_BATTLE_RESTORED`** — do not set `turnProcessing`, so it keeps the default `false`. The action panel shows immediately for initial team selection.
+
+```
+  Turn lifecycle:
+    Server sends BATTLE_UPDATE
+      → events parsed, pushed to pending queue
+      → processPendingEvents() starts
+      → turnProcessing: true (action panel hidden)
+      → animations play, state changes apply
+      → finally: battle.update(request), turnProcessing: false
+      → action panel reappears with new moves
+```
 
 ## Related Documentation
 

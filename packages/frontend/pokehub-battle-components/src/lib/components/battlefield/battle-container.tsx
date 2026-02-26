@@ -198,7 +198,7 @@ function BattleContainerInner() {
           </motion.div>
 
           {/* Action panel — below battlefield */}
-          {state.phase === 'battle' && (
+          {state.phase === 'battle' && !state.turnProcessing && (
             <ActionPanel
               battle={battle}
               opponentPokemon={opponentActive}

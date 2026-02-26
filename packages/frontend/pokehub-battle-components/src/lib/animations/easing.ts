@@ -30,17 +30,19 @@ export const ELASTIC = [0.68, -0.55, 0.27, 1.55] as const;
 
 /** Standard durations for animation events (ms) */
 export const DURATION = {
-  MOVE: 600,
-  DAMAGE: 400,
-  FAINT: 600,
-  SWITCH_OUT: 300,
-  SWITCH_IN: 500,
-  BOOST: 300,
-  STATUS: 300,
-  SUPER_EFFECTIVE: 200,
-  CRIT: 200,
-  WEATHER: 700,
-  SCREEN_SHAKE: 300,
-  FLASH: 200,
-  POPUP: 800,
+  MOVE: 800,
+  DAMAGE: 1000,
+  FAINT: 800,
+  SWITCH_OUT: 500,
+  SWITCH_IN: 700,
+  BOOST: 500,
+  STATUS: 500,
+  SUPER_EFFECTIVE: 400,
+  CRIT: 400,
+  WEATHER: 900,
+  SCREEN_SHAKE: 400,
+  FLASH: 250,
+  POPUP: 1000,
+  /** Pause after log line appears, before animation starts */
+  LOG_READ: 1000,
 } as const;
