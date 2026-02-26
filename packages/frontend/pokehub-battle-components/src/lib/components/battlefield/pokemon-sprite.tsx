@@ -50,9 +50,11 @@ export function PokemonSprite({
     setTransformState((prev) => ({ ...prev, ...t }));
   }, []);
 
-  // Register with animation system
+  // Register with animation system and reset transform for new Pokemon
   useEffect(() => {
     if (!ident || !onRegister) return;
+
+    setTransformState(SPRITE_TRANSFORM_RESET);
 
     onRegister(ident, {
       ident,
@@ -63,14 +65,7 @@ export function PokemonSprite({
     return () => {
       onUnregister?.(ident);
     };
-  }, [ident, onRegister, onUnregister, setTransform]);
-
-  // Reset transform when fainted state changes (new Pokemon)
-  useEffect(() => {
-    if (!fainted) {
-      setTransformState(SPRITE_TRANSFORM_RESET);
-    }
-  }, [fainted, species]);
+  }, [ident, species, onRegister, onUnregister, setTransform]);
 
   return (
     <div

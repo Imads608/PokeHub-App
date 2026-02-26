@@ -2,16 +2,7 @@ import type { AnimationEvent, AnimationScene } from '../types/animation.types';
 import { DURATION } from './easing';
 import { getMoveAnimation } from './move-registry';
 import { genericPhysical, genericSpecial, genericStatus } from './generic-anims';
-
-let popupCounter = 0;
-function nextPopupId() {
-  return `popup-${++popupCounter}`;
-}
-
-let effectCounter = 0;
-function nextEffectId() {
-  return `fx-${++effectCounter}`;
-}
+import { Dex } from '@pkmn/dex';
 
 /**
  * Play a single animation event on the scene.
@@ -90,9 +81,16 @@ async function playMove(
     return;
   }
 
-  // Generic fallback — detect category from the move name
-  // Since we don't have the dex here, use the generic physical as default
-  await genericPhysical(scene, attacker, defender);
+  // Generic fallback — pick animation based on move category
+  const dexMove = Dex.moves.get(event.moveName);
+  const category = dexMove?.category;
+  if (category === 'Special') {
+    await genericSpecial(scene, attacker, defender);
+  } else if (category === 'Status') {
+    await genericStatus(scene, attacker, defender);
+  } else {
+    await genericPhysical(scene, attacker, defender);
+  }
 }
 
 // ── Damage ──────────────────────────────────────────────────────────────
@@ -120,9 +118,9 @@ async function playDamage(
   if (dmg > 0) {
     const pct = Math.round((dmg / event.maxHp) * 100);
     scene.showPopup({
-      id: nextPopupId(),
+      id: crypto.randomUUID(),
       text: `-${pct}%`,
-      targetIdent: event.pokemon,
+      sprite,
       color: '#ff4444',
       duration: DURATION.POPUP,
     });
@@ -139,9 +137,9 @@ async function playHeal(
   if (healed > 0) {
     const pct = Math.round((healed / event.maxHp) * 100);
     scene.showPopup({
-      id: nextPopupId(),
+      id: crypto.randomUUID(),
       text: `+${pct}%`,
-      targetIdent: event.pokemon,
+      sprite: scene.getSprite(event.pokemon),
       color: '#44cc44',
       duration: DURATION.POPUP,
     });
@@ -215,9 +213,9 @@ async function playBoost(
 
   const arrow = isPositive ? '\u2191' : '\u2193';
   scene.showPopup({
-    id: nextPopupId(),
+    id: crypto.randomUUID(),
     text: `${arrow}${event.stat.toUpperCase()}`,
-    targetIdent: event.pokemon,
+    sprite: scene.getSprite(event.pokemon),
     color: isPositive ? '#22c55e' : '#ef4444',
     duration: DURATION.POPUP,
   });

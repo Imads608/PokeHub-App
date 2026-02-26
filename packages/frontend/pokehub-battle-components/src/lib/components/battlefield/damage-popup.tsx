@@ -27,9 +27,6 @@ export function PopupLayer({ popups }: PopupLayerProps) {
 function DamagePopup({ config }: { config: PopupConfig }) {
   const { arenaRef } = useAnimationContext();
 
-  // We need to find the target sprite's position relative to the arena
-  // For now, use a centered approach — the sprite registration will provide exact positions
-  // Default to center if we can't resolve the target
   const style: React.CSSProperties = {
     position: 'absolute',
     left: '50%',
@@ -39,18 +36,12 @@ function DamagePopup({ config }: { config: PopupConfig }) {
     textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.4)',
   };
 
-  // Try to position above the target sprite
-  if (arenaRef.current) {
-    const sprites = arenaRef.current.querySelectorAll('[data-pokemon-ident]');
-    sprites.forEach((el) => {
-      if (el.getAttribute('data-pokemon-ident') === config.targetIdent) {
-        const arenaRect = arenaRef.current!.getBoundingClientRect();
-        const spriteRect = el.getBoundingClientRect();
-        style.left = `${spriteRect.x + spriteRect.width / 2 - arenaRect.x}px`;
-        style.top = `${spriteRect.y - arenaRect.y - 10}px`;
-        style.transform = 'translateX(-50%)';
-      }
-    });
+  // Position above the target sprite using its handle
+  const spriteRect = config.sprite?.getRect();
+  const arenaRect = arenaRef.current?.getBoundingClientRect();
+  if (spriteRect && arenaRect) {
+    style.left = `${spriteRect.x + spriteRect.width / 2 - arenaRect.x}px`;
+    style.top = `${spriteRect.y - arenaRect.y - 10}px`;
   }
 
   return (

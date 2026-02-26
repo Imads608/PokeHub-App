@@ -17,7 +17,9 @@ const flamethrower: MoveAnimFn = async (scene, attacker, defender) => {
   await scene.delay(80);
 
   // Fire stream
-  scene.showEffect({
+  attacker.setTransform({ scale: 1 });
+  scene.flashOverlay('rgba(255, 100, 0, 0.12)', 200);
+  await scene.showEffect({
     id: 'flamethrower-fx',
     sprite: 'fireball',
     startX, startY,
@@ -28,14 +30,9 @@ const flamethrower: MoveAnimFn = async (scene, attacker, defender) => {
     tint: '#ff6600',
   });
 
-  await scene.flashOverlay('rgba(255, 100, 0, 0.12)', 200);
-  attacker.setTransform({ scale: 1 });
-  await scene.delay(300);
-
   defender.setTransform({ x: startX > endX ? 6 : -6 });
   await scene.delay(100);
   defender.setTransform({ x: 0 });
-  scene.removeEffect('flamethrower-fx');
 };
 
 export default flamethrower;

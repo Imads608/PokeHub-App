@@ -1,5 +1,11 @@
 'use client';
 
+import type {
+  AnimationScene,
+  EffectSpriteConfig,
+  PopupConfig,
+  SpriteHandle,
+} from '../types/animation.types';
 import {
   createContext,
   useCallback,
@@ -8,13 +14,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import type {
-  AnimationEvent,
-  AnimationScene,
-  EffectSpriteConfig,
-  PopupConfig,
-  SpriteHandle,
-} from '../types/animation.types';
 
 // ── Context value ───────────────────────────────────────────────────────
 
@@ -44,7 +43,9 @@ const AnimationContext = createContext<AnimationContextValue | null>(null);
 export function useAnimationContext() {
   const ctx = useContext(AnimationContext);
   if (!ctx) {
-    throw new Error('useAnimationContext must be used within AnimationProvider');
+    throw new Error(
+      'useAnimationContext must be used within AnimationProvider'
+    );
   }
   return ctx;
 }
@@ -55,9 +56,7 @@ interface AnimationProviderProps {
   children: React.ReactNode;
 }
 
-export function AnimationProvider({
-  children,
-}: AnimationProviderProps) {
+export function AnimationProvider({ children }: AnimationProviderProps) {
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const spritesRef = useRef<Map<string, SpriteHandle>>(new Map());
   const [effects, setEffects] = useState<EffectSpriteConfig[]>([]);
@@ -97,12 +96,12 @@ export function AnimationProvider({
     return spritesRef.current.get(ident) ?? null;
   }, []);
 
-  const showEffect = useCallback((config: EffectSpriteConfig) => {
+  const showEffect = useCallback(async (config: EffectSpriteConfig) => {
     setEffects((prev) => [...prev, config]);
-  }, []);
-
-  const removeEffect = useCallback((id: string) => {
-    setEffects((prev) => prev.filter((e) => e.id !== id));
+    const durationMs =
+      ((config.transition as { duration?: number })?.duration ?? 0.4) * 1000;
+    await new Promise<void>((r) => setTimeout(r, durationMs));
+    setEffects((prev) => prev.filter((e) => e.id !== config.id));
   }, []);
 
   const showPopup = useCallback((config: PopupConfig) => {
@@ -113,30 +112,24 @@ export function AnimationProvider({
     }, config.duration ?? 800);
   }, []);
 
-  const shakeScreen = useCallback(
-    async (intensity = 4, duration = 300) => {
-      const steps = Math.floor(duration / 50);
-      for (let i = 0; i < steps; i++) {
-        const decay = 1 - i / steps;
-        setShakeOffset({
-          x: (Math.random() - 0.5) * intensity * 2 * decay,
-          y: (Math.random() - 0.5) * intensity * 2 * decay,
-        });
-        await new Promise((r) => setTimeout(r, 50));
-      }
-      setShakeOffset({ x: 0, y: 0 });
-    },
-    []
-  );
+  const shakeScreen = useCallback(async (intensity = 4, duration = 300) => {
+    const steps = Math.floor(duration / 50);
+    for (let i = 0; i < steps; i++) {
+      const decay = 1 - i / steps;
+      setShakeOffset({
+        x: (Math.random() - 0.5) * intensity * 2 * decay,
+        y: (Math.random() - 0.5) * intensity * 2 * decay,
+      });
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    setShakeOffset({ x: 0, y: 0 });
+  }, []);
 
-  const flashOverlay = useCallback(
-    async (color: string, duration = 200) => {
-      setFlashColor(color);
-      await new Promise((r) => setTimeout(r, duration));
-      setFlashColor(null);
-    },
-    []
-  );
+  const flashOverlay = useCallback(async (color: string, duration = 200) => {
+    setFlashColor(color);
+    await new Promise((r) => setTimeout(r, duration));
+    setFlashColor(null);
+  }, []);
 
   const delay = useCallback(
     (ms: number) => new Promise<void>((r) => setTimeout(r, ms)),
@@ -148,7 +141,6 @@ export function AnimationProvider({
     arenaRef,
     getSprite,
     showEffect,
-    removeEffect,
     showPopup,
     shakeScreen,
     flashOverlay,
@@ -160,7 +152,6 @@ export function AnimationProvider({
     arenaRef,
     getSprite: (...args) => sceneRef.current!.getSprite(...args),
     showEffect: (...args) => sceneRef.current!.showEffect(...args),
-    removeEffect: (...args) => sceneRef.current!.removeEffect(...args),
     showPopup: (...args) => sceneRef.current!.showPopup(...args),
     shakeScreen: (...args) => sceneRef.current!.shakeScreen(...args),
     flashOverlay: (...args) => sceneRef.current!.flashOverlay(...args),

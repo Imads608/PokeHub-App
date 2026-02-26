@@ -1,21 +1,19 @@
 'use client';
 
 import { PokeHubRouter } from '../../router';
-import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   BattleSocketProvider,
   useBattleSocketContext,
 } from '@pokehub/frontend/pokehub-battle-components';
+import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
 import { lazy, Suspense, useEffect } from 'react';
 
-const ActiveBattleBar = lazy(() =>
-  import(
-    /* webpackChunkName: "active-battle-bar" */
-    '@pokehub/frontend/pokehub-battle-components'
-  ).then((mod) => ({ default: mod.ActiveBattleBar }))
+const ActiveBattleBar = lazy(
+  () => import(/* webpackChunkName: "active-battle-bar" */ './lazy-battle')
 );
 
 function LazyBattleBar() {

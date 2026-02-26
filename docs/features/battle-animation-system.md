@@ -177,8 +177,7 @@ The `AnimationScene` interface is the bridge between animation logic and the DOM
 interface AnimationScene {
   arenaRef: React.RefObject<HTMLDivElement | null>;
   getSprite: (ident: string) => SpriteHandle | null;
-  showEffect: (config: EffectSpriteConfig) => void;
-  removeEffect: (id: string) => void;
+  showEffect: (config: EffectSpriteConfig) => Promise<void>;
   showPopup: (config: PopupConfig) => void;
   shakeScreen: (intensity?: number, duration?: number) => Promise<void>;
   flashOverlay: (color: string, duration?: number) => Promise<void>;
@@ -189,8 +188,7 @@ interface AnimationScene {
 | Method | Purpose | Async? |
 |--------|---------|--------|
 | `getSprite(ident)` | Get a Pokemon's position and transform handle | No |
-| `showEffect(config)` | Render a temporary projectile/explosion sprite | No |
-| `removeEffect(id)` | Remove an effect sprite | No |
+| `showEffect(config)` | Render a projectile/effect sprite; resolves when the transition completes and auto-removes the effect | Yes |
 | `showPopup(config)` | Show floating text (damage number, stat label) | No |
 | `shakeScreen(intensity, duration)` | Shake the entire arena | Yes |
 | `flashOverlay(color, duration)` | Flash a color overlay on the arena | Yes |
@@ -388,14 +386,18 @@ If the import fails (missing file, network error), `getMoveAnimation` returns `n
 
 ### Generic Fallbacks
 
-When no specific move animation is registered, `playAnimationEvent` uses a generic fallback based on the move's expected category:
+When no specific move animation is registered, `playMove` looks up the move's category from `@pkmn/dex` and selects the appropriate generic fallback:
 
 ```
   Move lookup
     │
     ├── Found in registry → play specific animation
     │
-    └── Not found → genericPhysical (default fallback)
+    └── Not found → Dex.moves.get(moveName).category
+                      │
+                      ├── 'Physical' → genericPhysical
+                      ├── 'Special'  → genericSpecial
+                      └── 'Status'   → genericStatus
 ```
 
 The three generic animations:
@@ -507,6 +509,7 @@ The arena stacks multiple visual layers using `z-index`:
 Renders `EffectSpriteConfig[]` as `motion.img` elements. Each sprite:
 - Animates from `(startX, startY)` to `(endX, endY)` using the configured transition
 - Uses `AnimatePresence` for exit animations (`fade` or `explode`)
+- Auto-removed when the transition completes (`showEffect` resolves)
 - Sprite images loaded from Showdown CDN (see [Effect Sprite CDN](#effect-sprite-cdn))
 
 ### PopupLayer (Damage Numbers)
@@ -583,10 +586,10 @@ const hydroPump: MoveAnimFn = async (scene, attacker, defender) => {
   await scene.delay(150);
   attacker.setTransform({ scale: 1 });
 
-  // Fire projectile
-  const id = `hydropump-${Date.now()}`;
-  scene.showEffect({
-    id,
+  // Fire projectile — resolves when transition completes, auto-removes
+  scene.flashOverlay('rgba(59, 130, 246, 0.2)', 400);
+  await scene.showEffect({
+    id: `hydropump-${crypto.randomUUID()}`,
     sprite: 'waterwisp',
     startX, startY, endX, endY,
     width: 50, height: 30,
@@ -594,11 +597,7 @@ const hydroPump: MoveAnimFn = async (scene, attacker, defender) => {
     exit: 'explode',
   });
 
-  await scene.delay(500);
-  scene.removeEffect(id);
-
-  // Impact
-  await scene.flashOverlay('rgba(59, 130, 246, 0.2)', 150);
+  // Impact recoil
   defender.setTransform({ x: -5 });
   await scene.delay(100);
   defender.setTransform({ x: 0 });
@@ -625,11 +624,9 @@ Common patterns used across move animations:
 ```
   1. Compute start/end from attacker/defender rects
   2. Attacker charge-up (brief scale pulse)
-  3. showEffect() with projectile sprite
-  4. delay() for travel time
-  5. removeEffect()
-  6. flashOverlay() at impact
-  7. Defender recoil (setTransform x-offset → reset)
+  3. Fire flashOverlay() (non-awaited, runs concurrently)
+  4. await showEffect() — projectile travels, auto-removes on completion
+  5. Defender recoil (setTransform x-offset → reset)
 ```
 
 **Screen/AoE move** (Earthquake, Surf):

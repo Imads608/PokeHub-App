@@ -78,10 +78,8 @@ export interface AnimationScene {
   arenaRef: React.RefObject<HTMLDivElement | null>;
   /** Get a sprite handle by pokemon ident */
   getSprite: (ident: string) => SpriteHandle | null;
-  /** Show a temporary effect sprite on the arena */
-  showEffect: (config: EffectSpriteConfig) => void;
-  /** Remove an effect sprite */
-  removeEffect: (id: string) => void;
+  /** Show a temporary effect sprite. Resolves when the transition completes and auto-removes the effect. */
+  showEffect: (config: EffectSpriteConfig) => Promise<void>;
   /** Show a floating text popup (e.g. damage number, "Critical hit!") */
   showPopup: (config: PopupConfig) => void;
   /** Shake the arena container */
@@ -95,8 +93,8 @@ export interface AnimationScene {
 export interface PopupConfig {
   id: string;
   text: string;
-  /** Target Pokemon ident — popup appears above this sprite */
-  targetIdent: string;
+  /** Sprite handle for positioning — caller resolves via scene.getSprite() */
+  sprite: SpriteHandle | null;
   color?: string;
   duration?: number;
 }

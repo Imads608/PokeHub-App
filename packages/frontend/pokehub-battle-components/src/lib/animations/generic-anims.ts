@@ -65,9 +65,8 @@ export async function genericSpecial(
   attacker.setTransform({ scale: 1 });
 
   // Fire energy ball
-  const id = `generic-special-${Date.now()}`;
-  scene.showEffect({
-    id,
+  await scene.showEffect({
+    id: `generic-special-${crypto.randomUUID()}`,
     sprite: 'energyball',
     startX,
     startY,
@@ -79,14 +78,10 @@ export async function genericSpecial(
     exit: 'explode',
   });
 
-  await scene.delay(400);
-
   // Impact on defender
   defender.setTransform({ x: startX > endX ? 6 : -6 });
   await scene.delay(100);
   defender.setTransform({ x: 0 });
-
-  scene.removeEffect(id);
 }
 
 /**

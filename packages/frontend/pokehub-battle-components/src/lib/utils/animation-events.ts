@@ -1,4 +1,5 @@
 import type { Battle } from '@pkmn/client';
+import type { ArgType } from '@pkmn/protocol';
 import type { AnimationEvent } from '../types/animation.types';
 
 /**
@@ -8,7 +9,7 @@ import type { AnimationEvent } from '../types/animation.types';
  * The args array follows @pkmn/protocol format: [command, ...params].
  */
 export function extractAnimationEvent(
-  args: readonly unknown[],
+  args: ArgType,
   battle: Battle
 ): AnimationEvent | null {
   const cmd = str(args[0]);

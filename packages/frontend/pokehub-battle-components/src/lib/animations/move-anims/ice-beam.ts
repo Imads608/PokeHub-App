@@ -8,7 +8,8 @@ const iceBeam: MoveAnimFn = async (scene, attacker, defender) => {
 
   const arenaRect = arena.getBoundingClientRect();
 
-  scene.showEffect({
+  scene.flashOverlay('rgba(130, 200, 255, 0.2)', 250);
+  await scene.showEffect({
     id: 'icebeam-fx',
     sprite: 'icicle',
     startX: atkRect.x + atkRect.width / 2 - arenaRect.x,
@@ -21,13 +22,9 @@ const iceBeam: MoveAnimFn = async (scene, attacker, defender) => {
     tint: '#88ccff',
   });
 
-  await scene.delay(250);
-  await scene.flashOverlay('rgba(130, 200, 255, 0.2)', 150);
-
   defender.setTransform({ x: -4 });
   await scene.delay(100);
   defender.setTransform({ x: 0 });
-  scene.removeEffect('icebeam-fx');
 };
 
 export default iceBeam;

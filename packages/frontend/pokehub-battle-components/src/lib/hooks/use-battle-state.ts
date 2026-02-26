@@ -1,22 +1,26 @@
 'use client';
 
-import { useCallback, useReducer, useRef, useMemo, useState } from 'react';
-import { Battle } from '@pkmn/client';
-import { Generations } from '@pkmn/data';
-import { Dex } from '@pkmn/dex';
-import { Protocol, type ArgType, type BattleArgsKWArgType } from '@pkmn/protocol';
-import { LogFormatter } from '@pkmn/view';
-import {
-  type ServerBattleEvent,
-  TURN_TIMEOUT_SECONDS,
-} from '@pokehub/shared/pokemon-battle-types';
-import { createClientLogger } from '@pokehub/frontend/shared-logger';
+import type { AnimationEvent } from '../types/animation.types';
 import {
   type BattleUIState,
   initialBattleUIState,
 } from '../types/battle-ui.types';
-import type { AnimationEvent } from '../types/animation.types';
-import { extractAnimationEvent } from './animation-events';
+import { extractAnimationEvent } from '../utils/animation-events';
+import { Battle } from '@pkmn/client';
+import { Generations } from '@pkmn/data';
+import { Dex } from '@pkmn/dex';
+import {
+  Protocol,
+  type ArgType,
+  type BattleArgsKWArgType,
+} from '@pkmn/protocol';
+import { LogFormatter } from '@pkmn/view';
+import { createClientLogger } from '@pokehub/frontend/shared-logger';
+import {
+  type ServerBattleEvent,
+  TURN_TIMEOUT_SECONDS,
+} from '@pokehub/shared/pokemon-battle-types';
+import { useCallback, useReducer, useRef, useMemo, useState } from 'react';
 
 /** Local UI actions that don't come from the server */
 type LocalUIEvent =
@@ -60,10 +64,20 @@ interface PendingProtocolEvent {
 
 /** Events that change visible state and should trigger a re-render */
 const STATE_CHANGING_EVENTS = new Set([
-  '-damage', '-heal', 'faint', 'switch', 'drag',
-  '-boost', '-unboost', '-status', '-curestatus',
-  '-weather', '-fieldstart', '-fieldend',
-  '-sidestart', '-sideend',
+  '-damage',
+  '-heal',
+  'faint',
+  'switch',
+  'drag',
+  '-boost',
+  '-unboost',
+  '-status',
+  '-curestatus',
+  '-weather',
+  '-fieldstart',
+  '-fieldend',
+  '-sidestart',
+  '-sideend',
 ]);
 
 /**
@@ -284,7 +298,11 @@ function battleSnapshot(battle: Battle) {
     p1: {
       name: battle.p1.name,
       active: p1Active
-        ? { species: p1Active.speciesForme, hp: `${p1Active.hp}/${p1Active.maxhp}`, status: p1Active.status }
+        ? {
+            species: p1Active.speciesForme,
+            hp: `${p1Active.hp}/${p1Active.maxhp}`,
+            status: p1Active.status,
+          }
         : null,
       teamSize: battle.p1.totalPokemon,
       faints: battle.p1.faints,
@@ -292,7 +310,11 @@ function battleSnapshot(battle: Battle) {
     p2: {
       name: battle.p2.name,
       active: p2Active
-        ? { species: p2Active.speciesForme, hp: `${p2Active.hp}/${p2Active.maxhp}`, status: p2Active.status }
+        ? {
+            species: p2Active.speciesForme,
+            hp: `${p2Active.hp}/${p2Active.maxhp}`,
+            status: p2Active.status,
+          }
         : null,
       teamSize: battle.p2.totalPokemon,
       faints: battle.p2.faints,
@@ -335,14 +357,21 @@ export function useBattleState() {
   /** Set to true to skip remaining animations (events still get applied) */
   const skipRef = useRef(false);
 
-  const [reducerState, rawDispatch] = useReducer(battleReducer, initialBattleUIState);
+  const [reducerState, rawDispatch] = useReducer(
+    battleReducer,
+    initialBattleUIState
+  );
 
   const dispatch = useCallback((event: BattleEvent) => {
     switch (event.type) {
       case 'BATTLE_START': {
         const battle = new Battle(getGenerations());
         const formatter = new LogFormatter('p1', battle);
-        const logLines = processBattleProtocol(battle, formatter, event.initialState);
+        const logLines = processBattleProtocol(
+          battle,
+          formatter,
+          event.initialState
+        );
 
         if (battle.request?.side?.id) {
           formatter.perspective = battle.request.side.id;
@@ -352,10 +381,17 @@ export function useBattleState() {
         formatterRef.current = formatter;
         pendingEventsRef.current = [];
 
-        log.info('→ battle', { event: 'BATTLE_START', battleId: event.battleId });
+        log.info('→ battle', {
+          event: 'BATTLE_START',
+          battleId: event.battleId,
+        });
         log.debug('Battle', battleSnapshot(battle));
 
-        rawDispatch({ type: '_BATTLE_INITIALIZED', battleId: event.battleId, logLines });
+        rawDispatch({
+          type: '_BATTLE_INITIALIZED',
+          battleId: event.battleId,
+          logLines,
+        });
         break;
       }
 
@@ -386,7 +422,11 @@ export function useBattleState() {
       case 'BATTLE_RESTORED': {
         const battle = new Battle(getGenerations());
         const formatter = new LogFormatter('p1', battle);
-        const logLines = processBattleProtocol(battle, formatter, event.currentState);
+        const logLines = processBattleProtocol(
+          battle,
+          formatter,
+          event.currentState
+        );
 
         if (battle.request?.side?.id) {
           formatter.perspective = battle.request.side.id;
@@ -396,10 +436,17 @@ export function useBattleState() {
         formatterRef.current = formatter;
         pendingEventsRef.current = [];
 
-        log.info('→ battle (restored)', { event: 'BATTLE_RESTORED', battleId: event.battleId });
+        log.info('→ battle (restored)', {
+          event: 'BATTLE_RESTORED',
+          battleId: event.battleId,
+        });
         log.debug('Battle', battleSnapshot(battle));
 
-        rawDispatch({ type: '_BATTLE_RESTORED', battleId: event.battleId, logLines });
+        rawDispatch({
+          type: '_BATTLE_RESTORED',
+          battleId: event.battleId,
+          logLines,
+        });
         break;
       }
 
@@ -432,67 +479,76 @@ export function useBattleState() {
    *
    * This is the ONLY place protocol events are consumed. No sync issues.
    */
-  const processPendingEvents = useCallback(async (playAnimation?: PlayAnimationFn) => {
-    if (processingRef.current) return;
+  const processPendingEvents = useCallback(
+    async (playAnimation?: PlayAnimationFn) => {
+      if (processingRef.current) return;
 
-    const battle = battleRef.current;
-    const formatter = formatterRef.current;
-    const pending = pendingEventsRef.current;
-    if (!battle || !formatter || pending.length === 0) return;
+      const battle = battleRef.current;
+      const formatter = formatterRef.current;
+      const pending = pendingEventsRef.current;
+      if (!battle || !formatter || pending.length === 0) return;
 
-    processingRef.current = true;
-    skipRef.current = false;
-
-    const logLines: string[] = [];
-    let dispatched = false;
-
-    try {
-      while (pending.length > 0) {
-        const event = pending.shift()!;
-
-        // Play animation before applying state (so prevHp is still visible)
-        if (event.animEvent && playAnimation && !skipRef.current) {
-          await playAnimation(event.animEvent);
-        }
-
-        // Apply the protocol event to battle state
-        const html = formatter.formatHTML(event.args, event.kwArgs);
-        if (html) logLines.push(html);
-        battle.add(event.args, event.kwArgs);
-
-        // Re-render after state-changing events so the UI updates
-        // between animations (HP drops after damage anim, faint shows, etc.)
-        const cmd = String(event.args[0]);
-        if (STATE_CHANGING_EVENTS.has(cmd)) {
-          // Do NOT call battle.update(request) here — the request still
-          // contains the previous turn's HP/status. update() overwrites
-          // pokemon.hp from the request, undoing the battle.add() mutation.
-          // We call update() only in the final dispatch after all events
-          // (including the new |request|) have been processed.
-          rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines] });
-          logLines.length = 0;
-          dispatched = true;
-        }
-      }
-    } finally {
-      // Final dispatch for remaining log lines and non-state-changing events
-      // (request, upkeep, turn, etc.)
-      if (battle.request) battle.update(battle.request);
-      if (logLines.length > 0 || !dispatched) {
-        rawDispatch({ type: '_BATTLE_UPDATED', logLines });
-      }
-
-      processingRef.current = false;
+      processingRef.current = true;
       skipRef.current = false;
-    }
-  }, []);
+
+      const logLines: string[] = [];
+      let dispatched = false;
+
+      try {
+        while (pending.length > 0) {
+          const event = pending.shift()!;
+
+          // Play animation before applying state (so prevHp is still visible)
+          if (event.animEvent && playAnimation && !skipRef.current) {
+            await playAnimation(event.animEvent);
+          }
+
+          // Apply the protocol event to battle state
+          const html = formatter.formatHTML(event.args, event.kwArgs);
+          if (html) logLines.push(html);
+          battle.add(event.args, event.kwArgs);
+
+          // Re-render after state-changing events so the UI updates
+          // between animations (HP drops after damage anim, faint shows, etc.)
+          const cmd = String(event.args[0]);
+          if (STATE_CHANGING_EVENTS.has(cmd)) {
+            // Do NOT call battle.update(request) here — the request still
+            // contains the previous turn's HP/status. update() overwrites
+            // pokemon.hp from the request, undoing the battle.add() mutation.
+            // We call update() only in the final dispatch after all events
+            // (including the new |request|) have been processed.
+            rawDispatch({ type: '_BATTLE_UPDATED', logLines: [...logLines] });
+            logLines.length = 0;
+            dispatched = true;
+          }
+        }
+      } finally {
+        // Final dispatch for remaining log lines and non-state-changing events
+        // (request, upkeep, turn, etc.)
+        if (battle.request) battle.update(battle.request);
+        if (logLines.length > 0 || !dispatched) {
+          rawDispatch({ type: '_BATTLE_UPDATED', logLines });
+        }
+
+        processingRef.current = false;
+        skipRef.current = false;
+      }
+    },
+    []
+  );
 
   /** Skip remaining animations (events still get applied immediately) */
   const skipAnimations = useCallback(() => {
     skipRef.current = true;
   }, []);
 
-  return [state, dispatch, processPendingEvents, pendingVersion, skipAnimations] as const;
+  return [
+    state,
+    dispatch,
+    processPendingEvents,
+    pendingVersion,
+    skipAnimations,
+  ] as const;
 }
 
 export { battleReducer };
