@@ -74,22 +74,3 @@ export interface BattleUIState {
   logEntries: string[];
 }
 
-export const initialBattleUIState: BattleUIState = {
-  phase: 'idle',
-  queuePosition: null,
-  battleId: null,
-  opponent: null,
-  battle: null,
-  logFormatter: null,
-  turnTimer: null,
-  pendingChoice: null,
-  turnProcessing: false,
-  opponentDisconnected: false,
-  disconnectTimeout: null,
-  winner: null,
-  endReason: null,
-  canSaveReplay: false,
-  replaySaved: false,
-  error: null,
-  logEntries: [],
-};

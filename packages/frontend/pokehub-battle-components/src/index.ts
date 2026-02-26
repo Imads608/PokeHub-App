@@ -6,7 +6,8 @@ export {
 } from './lib/context/battle-socket.context';
 
 // Types
-export { type BattleUIState, initialBattleUIState } from './lib/types/battle-ui.types';
+export type { BattleUIState } from './lib/types/battle-ui.types';
+export { initialBattleUIState } from './lib/state/battle-state-reducer';
 
 // Lobby
 export { BattleLobby } from './lib/components/lobby/battle-lobby';
