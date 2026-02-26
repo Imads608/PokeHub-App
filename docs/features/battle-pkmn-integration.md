@@ -322,9 +322,16 @@ The formatter's perspective determines how it refers to Pokemon — "your Chariz
 ```typescript
 const formatter = new LogFormatter('p1', battle);
 
-// After battle starts, adjust to the actual player side:
-if (battle.request?.side?.id) {
+// Perspective is set inside processPendingEvents when the |request| event
+// is processed — the request contains the player's side assignment:
+// (in processPendingEvents loop)
+if (cmd === 'request' && battle.request?.side?.id) {
   formatter.perspective = battle.request.side.id; // 'p1' or 'p2'
+}
+
+// For BATTLE_RESTORED (instant processing), it's set after processBattleProtocol:
+if (battle.request?.side?.id) {
+  formatter.perspective = battle.request.side.id;
 }
 ```
 
