@@ -1,54 +1,81 @@
 import type { MoveAnimFn } from '../types/animation.types';
+import { resolveTemplate } from './move-templates';
+import type { MoveAnimConfig } from '@pokehub/shared/pokemon-battle-types';
 
 /**
  * Move animation registry with lazy loading.
  *
- * Each move maps to a dynamic import that loads only when that move is first used.
- * This keeps the initial bundle small — only the registry map + generic fallbacks
- * are included. Individual move animations are code-split into separate chunks.
- *
- * Scales to 900+ moves without impacting bundle size.
+ * Lookup order:
+ *   1. Cache (previously resolved MoveAnimFn)
+ *   2. Lazy registry (code-split hand-written animations)
+ *   3. Server-delivered configs
+ *   4. null (generic fallback handles it)
  */
 
 type LazyMoveAnim = () => Promise<{ default: MoveAnimFn }>;
 
 const registry = new Map<string, LazyMoveAnim>();
 const cache = new Map<string, MoveAnimFn>();
+const serverConfigs = new Map<string, MoveAnimConfig>();
 
 function normalizeMoveName(name: string): string {
-  return name.toLowerCase().replace(/[\s\-]/g, '');
+  return name.toLowerCase().replace(/[\s-]/g, '');
 }
 
 export function registerMoveAnimation(moveId: string, loader: LazyMoveAnim) {
-  registry.set(normalizeMoveName(moveId), loader);
+  const key = normalizeMoveName(moveId);
+  if (registry.has(key)) return; // first registration wins
+  registry.set(key, loader);
+}
+
+/**
+ * Load move animation configs received from the server via BATTLE_START.
+ * Called once per battle — only includes moves for the player's own team.
+ */
+export function loadServerMoveConfigs(
+  configs: Record<string, MoveAnimConfig>
+): void {
+  serverConfigs.clear();
+  for (const [key, value] of Object.entries(configs)) {
+    serverConfigs.set(key, value);
+  }
 }
 
 /**
  * Get the animation for a move. Returns null if no specific animation exists.
- * Loads the animation chunk on first use and caches it for subsequent calls.
  */
-export async function getMoveAnimation(moveName: string): Promise<MoveAnimFn | null> {
+export async function getMoveAnimation(
+  moveName: string
+): Promise<MoveAnimFn | null> {
   const key = normalizeMoveName(moveName);
 
-  // Check cache first
+  // 1. Check cache (previously resolved animation)
   const cached = cache.get(key);
   if (cached) return cached;
 
-  // Check registry for a lazy loader
+  // 2. Check lazy registry (hand-written custom animations)
   const loader = registry.get(key);
-  if (!loader) return null;
-
-  try {
-    const mod = await loader();
-    cache.set(key, mod.default);
-    return mod.default;
-  } catch {
-    // If the chunk fails to load, fall back to generic
-    return null;
+  if (loader) {
+    try {
+      const mod = await loader();
+      cache.set(key, mod.default);
+      return mod.default;
+    } catch {
+      // If the chunk fails to load, fall through
+    }
   }
+
+  // 3. Check server-delivered configs (template resolved lazily)
+  const serverEntry = serverConfigs.get(key);
+  if (serverEntry) {
+    const anim = resolveTemplate(serverEntry);
+    return anim;
+  }
+
+  return null;
 }
 
-// ── Register move animations (lazy imports) ─────────────────────────────
+// ── Register hand-written move animations (lazy imports) ────────────────
 // Each entry adds ~50 bytes to the registry. The actual animation code
 // is only downloaded when that move is first used in battle.
 
@@ -59,7 +86,10 @@ registerMoveAnimation('uturn', () => import('./move-anims/u-turn'));
 registerMoveAnimation('knockoff', () => import('./move-anims/knock-off'));
 
 // Special moves
-registerMoveAnimation('flamethrower', () => import('./move-anims/flamethrower'));
+registerMoveAnimation(
+  'flamethrower',
+  () => import('./move-anims/flamethrower')
+);
 registerMoveAnimation('thunderbolt', () => import('./move-anims/thunderbolt'));
 registerMoveAnimation('icebeam', () => import('./move-anims/ice-beam'));
 registerMoveAnimation('scald', () => import('./move-anims/scald'));

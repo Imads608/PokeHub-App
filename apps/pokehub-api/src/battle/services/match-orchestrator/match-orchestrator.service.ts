@@ -29,6 +29,10 @@ import {
   BattleRooms,
 } from '@pokehub/shared/pokemon-battle-types';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import {
+  extractMoveNames,
+  getMoveAnimConfigs,
+} from '@pokehub/backend/pokehub-move-anim-catalog';
 import { randomUUID } from 'crypto';
 import type { Provider } from '@nestjs/common';
 
@@ -116,6 +120,14 @@ class MatchOrchestratorService implements IMatchOrchestratorService {
         }
       }
 
+      // Build per-player move animation configs (only own team's moves)
+      const p1MoveAnimConfigs = getMoveAnimConfigs(
+        extractMoveNames(player1.packedTeam)
+      );
+      const p2MoveAnimConfigs = getMoveAnimConfigs(
+        extractMoveNames(player2.packedTeam)
+      );
+
       // Send MATCH_FOUND then BATTLE_START to each player
       this.bridge.emitToUser(player1.userId, {
         type: 'MATCH_FOUND',
@@ -129,6 +141,7 @@ class MatchOrchestratorService implements IMatchOrchestratorService {
         type: 'BATTLE_START',
         battleId,
         initialState: battle.p1State,
+        moveAnimConfigs: p1MoveAnimConfigs,
       });
 
       this.bridge.emitToUser(player2.userId, {
@@ -143,6 +156,7 @@ class MatchOrchestratorService implements IMatchOrchestratorService {
         type: 'BATTLE_START',
         battleId,
         initialState: battle.p2State,
+        moveAnimConfigs: p2MoveAnimConfigs,
       });
 
       this.logger.log(

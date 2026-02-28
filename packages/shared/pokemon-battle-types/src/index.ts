@@ -58,3 +58,11 @@ export {
   BATTLE_EVENT,
   TURN_TIMEOUT_SECONDS,
 } from './lib/socket.constants';
+export {
+  type ProjectileConfig,
+  type LungeConfig,
+  type AoeConfig,
+  type SelfBuffConfig,
+  type StatusEffectConfig,
+  type MoveAnimConfig,
+} from './lib/move-anim-config';

@@ -2,6 +2,8 @@
  * Events sent from server to client via WebSocket
  */
 
+import type { MoveAnimConfig } from './move-anim-config';
+
 export interface QueueJoinedEvent {
   type: 'QUEUE_JOINED';
   position: number;
@@ -25,6 +27,8 @@ export interface BattleStartEvent {
   battleId: string;
   /** Initial battle state from @pkmn/sim */
   initialState: string;
+  /** Animation configs for moves in this battle (keyed by normalized move name) */
+  moveAnimConfigs: Record<string, MoveAnimConfig>;
 }
 
 export interface BattleUpdateEvent {
@@ -83,6 +87,8 @@ export interface BattleRestoredEvent {
   battleId: string;
   /** Current battle state for reconnection */
   currentState: string;
+  /** Animation configs for moves in this battle (keyed by normalized move name) */
+  moveAnimConfigs: Record<string, MoveAnimConfig>;
   /** Optional message about recovery */
   message?: string;
 }

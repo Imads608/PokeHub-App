@@ -2,6 +2,7 @@
 
 import type { BattleUIState } from '../types/battle-ui.types';
 import { extractAnimationEvent } from '../utils/animation-events';
+import { loadServerMoveConfigs } from '../animations/move-registry';
 import {
   battleReducer,
   initialBattleUIState,
@@ -96,6 +97,9 @@ export function useBattleState() {
         battleRef.current = battle;
         formatterRef.current = formatter;
 
+        // Load server-delivered move animation configs
+        loadServerMoveConfigs(event.moveAnimConfigs);
+
         // Queue all events for animated processing (same as BATTLE_UPDATE)
         const newEvents: PendingProtocolEvent[] = [];
         for (const { args, kwArgs } of Protocol.parse(event.initialState)) {
@@ -147,6 +151,10 @@ export function useBattleState() {
       case 'BATTLE_RESTORED': {
         const battle = new Battle(getGenerations());
         const formatter = new LogFormatter('p1', battle);
+
+        // Load server-delivered move animation configs
+        loadServerMoveConfigs(event.moveAnimConfigs);
+
         const logLines = processBattleProtocol(
           battle,
           formatter,

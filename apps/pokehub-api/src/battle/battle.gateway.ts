@@ -55,6 +55,10 @@ import {
   BATTLE_EVENT,
 } from '@pokehub/shared/pokemon-battle-types';
 import { packTeam } from '@pokehub/shared/pokemon-showdown-validation';
+import {
+  extractMoveNames,
+  getMoveAnimConfigs,
+} from '@pokehub/backend/pokehub-move-anim-catalog';
 import { Server } from 'socket.io';
 
 @WebSocketGateway({
@@ -122,6 +126,11 @@ export class BattleGateway
       const battle = this.battleManager.getBattle(activeBattleId);
       if (battle) {
         const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
+        const packedTeam = slot === 'p1'
+          ? battle.config.player1.packedTeam
+          : battle.config.player2.packedTeam;
+        const moveAnimConfigs = getMoveAnimConfigs(extractMoveNames(packedTeam));
+
         this.logger.log(
           `Sending BATTLE_RESTORED to user ${userId} — battle ${activeBattleId}, slot: ${slot}`
         );
@@ -129,6 +138,7 @@ export class BattleGateway
           type: 'BATTLE_RESTORED',
           battleId: activeBattleId,
           currentState: slot === 'p1' ? battle.p1State : battle.p2State,
+          moveAnimConfigs,
         } satisfies ServerBattleEvent);
       } else {
         this.logger.log(
@@ -138,6 +148,7 @@ export class BattleGateway
           type: 'BATTLE_RESTORED',
           battleId: activeBattleId,
           currentState: '',
+          moveAnimConfigs: {},
           message: 'Battle needs recovery - please rejoin',
         } satisfies ServerBattleEvent);
       }
@@ -378,6 +389,11 @@ export class BattleGateway
       this.bridge.subscribeBattle(battleId);
 
       const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
+      const packedTeam = slot === 'p1'
+        ? battle.config.player1.packedTeam
+        : battle.config.player2.packedTeam;
+      const moveAnimConfigs = getMoveAnimConfigs(extractMoveNames(packedTeam));
+
       this.logger.log(
         `Sending BATTLE_START (rejoin) to user ${userId} — battle ${battle.id}, slot: ${slot}`
       );
@@ -385,6 +401,7 @@ export class BattleGateway
         type: 'BATTLE_START',
         battleId: battle.id,
         initialState: slot === 'p1' ? battle.p1State : battle.p2State,
+        moveAnimConfigs,
       } satisfies ServerBattleEvent);
 
       this.logger.log(`User ${userId} rejoined battle ${battleId}`);
