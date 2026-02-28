@@ -106,6 +106,7 @@ PokeHub is a full-stack Pokemon application built as an Nx monorepo. It consists
 | Tool           | Purpose             |
 | -------------- | ------------------- |
 | **Nx**         | Monorepo management |
+| **@pokehub/workspace-plugin** | Nx inference plugin that automatically infers `typecheck` and `typecheck-spec` targets for all projects |
 | **Jest**       | Unit testing        |
 | **Playwright** | E2E testing         |
 | **ESLint**     | Code linting        |
@@ -151,7 +152,8 @@ pokehub-app/
 │   │   ├── dex-data-provider/     # Pokemon data hooks
 │   │   ├── pokehub-dex-components/# Pokemon UI components
 │   │   ├── pokehub-nav-components/# Navigation components
-│   │   └── pokehub-team-builder/  # Team builder components
+│   │   ├── pokehub-team-builder/  # Team builder components
+│   │   └── pokehub-battle-components/ # Battle UI and animations
 │   │
 │   ├── backend/                   # NestJS packages
 │   │   ├── shared-auth-utils/     # JWT, guards, decorators
@@ -161,12 +163,15 @@ pokehub-app/
 │   │   ├── pokehub-users-db/      # User DB operations
 │   │   ├── pokehub-teams-db/      # Team DB operations
 │   │   ├── pokehub-battles-db/    # Battle replay persistence
+│   │   ├── pokehub-move-anim-catalog/ # Move animation config catalog
 │   │   └── pokehub-redis/         # Redis (battle state, pub/sub, matchmaking)
 │   │
 │   └── shared/                    # Cross-platform packages
 │       ├── shared-auth-models/    # Auth types
 │       ├── shared-user-models/    # User types
 │       └── pokemon-battle-types/  # Battle events, DTOs, Zod schemas
+│           ├── ...               # Existing type files
+│           └── move-anim-config.ts # Move animation configuration types
 │
 ├── docs/                          # Documentation
 ├── drizzle/                       # Database migrations

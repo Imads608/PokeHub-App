@@ -23,9 +23,11 @@
   - [Weather and Terrain](#weather-and-terrain)
 - [Move Animations](#move-animations)
   - [Move Animation Registry](#move-animation-registry)
+  - [Server-Delivered Move Configs](#server-delivered-move-configs)
+  - [Template-Based Animation System](#template-based-animation-system)
   - [Lazy Loading](#lazy-loading)
   - [Generic Fallbacks](#generic-fallbacks)
-  - [Implemented Moves](#implemented-moves)
+  - [Hand-Written Move Animations](#hand-written-move-animations)
 - [Easing and Duration Constants](#easing-and-duration-constants)
 - [Visual Layers](#visual-layers)
   - [EffectLayer (Projectile Sprites)](#effectlayer-projectile-sprites)
@@ -371,7 +373,24 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
 
 ### Move Animation Registry
 
-Moves are registered in `move-registry.ts` as lazy-loaded dynamic imports:
+`move-registry.ts` provides `getMoveAnimation(moveName)` which resolves move names to animation functions using a 3-tier lookup:
+
+```
+  getMoveAnimation('Fire Blast')
+        │
+        ├── 1. Cache — previously resolved MoveAnimFn
+        │   → immediate return
+        │
+        ├── 2. Lazy registry — hand-written custom animations (20 moves)
+        │   → dynamic import('./move-anims/...')
+        │   → cache result
+        │
+        ├── 3. Server-delivered configs — template-based (172 moves in catalog)
+        │   → resolveTemplate(config) → MoveAnimFn
+        │   → no dynamic import needed
+        │
+        └── 4. Return null → generic fallback handles it
+```
 
 ```typescript
 type MoveAnimFn = (
@@ -380,22 +399,100 @@ type MoveAnimFn = (
   defender: SpriteHandle
 ) => Promise<void>;
 
-// Registration (at module load time):
-registerMoveAnimation('flamethrower', () => import('./move-anims/flamethrower'));
-registerMoveAnimation('earthquake',   () => import('./move-anims/earthquake'));
-// ...
-
 // Lookup (at animation time):
-const anim = await getMoveAnimation('Flamethrower');
-// → loads and caches the module, returns the default export
+const anim = await getMoveAnimation('Fire Blast');
+// → checks cache, then lazy registry, then server configs
+// → returns MoveAnimFn or null
 ```
+
+Move names are normalized for lookup: `toLowerCase().replace(/[\s\-]/g, '')`. So "Close Combat", "close-combat", and "closecombat" all resolve to the same animation.
+
+Hand-written animations in the lazy registry take priority over server-delivered configs. This allows custom animations to override a template config when a move needs more expressive choreography than a template can provide.
+
+### Server-Delivered Move Configs
+
+Move animation configs are **not** bundled on the client. They are delivered by the server via the `BATTLE_START` and `BATTLE_RESTORED` WebSocket events. The server maintains a catalog of 172 moves in `packages/backend/pokehub-move-anim-catalog/`.
+
+**Per-player filtering:** Only configs for the player's own team's moves are sent. The opponent's move configs are withheld to prevent moveset information from leaking before moves are revealed in battle.
+
+**Loading flow:**
+
+```
+  Server                                    Client
+  ──────                                    ──────
+  BATTLE_START / BATTLE_RESTORED
+    │  extractMoveNames(packedTeam)
+    │  getMoveAnimConfigs(moveNames)
+    │  → { "fireblast": { template: "projectile", config: {...} }, ... }
+    │
+    └──▶  useBattleState receives event
+          │
+          └──▶  loadServerMoveConfigs(configs)
+                │  serverConfigs.clear()
+                │  store configs in Map<string, MoveAnimConfig>
+                │
+                (configs available for lookup in getMoveAnimation)
+```
+
+`loadServerMoveConfigs()` is called by `useBattleState` when `BATTLE_START` or `BATTLE_RESTORED` arrives. It clears and repopulates the internal `serverConfigs` Map, ensuring a clean slate at the start of each battle.
+
+The server-side catalog (`move-anim-catalog.ts`) maps normalized move names to `MoveAnimConfig` entries:
+
+```typescript
+// Server: packages/backend/pokehub-move-anim-catalog/src/lib/move-anim-catalog.ts
+const catalog = new Map<string, MoveAnimConfig>([
+  ['fireblast', { template: 'projectile', config: { sprite: 'flareball', tint: '#ff3300', flash: 'rgba(255,80,0,0.18)', size: 56, speed: 0.28 } }],
+  ['hydropump', { template: 'projectile', config: { sprite: 'waterwisp', tint: '#2288ff', flash: 'rgba(50,130,255,0.18)', size: 52, speed: 0.25 } }],
+  // ... 172 entries total
+]);
+```
+
+### Template-Based Animation System
+
+Five template factory functions in `move-templates.ts` generate `MoveAnimFn` instances from config data:
+
+| Template | Factory | Description |
+|----------|---------|-------------|
+| `projectile` | `projectile(config)` | Sprite travels from attacker to defender with optional charge-up and recoil |
+| `lunge` | `lunge(config)` | Attacker dashes toward defender (multi-hit support) |
+| `aoe` | `aoe(config)` | Screen shake + flash overlay (earthquakes, blizzards) |
+| `selfBuff` | `selfBuff(config)` | Scale pulse on attacker with optional rotation |
+| `statusEffect` | `statusEffect(config)` | Flash overlay + defender shrink/dip |
+
+Server configs use a discriminated union `MoveAnimConfig` (defined in `@pokehub/shared/pokemon-battle-types`) that maps to these templates:
+
+```typescript
+// packages/shared/pokemon-battle-types/src/lib/move-anim-config.ts
+type MoveAnimConfig =
+  | { template: 'projectile'; config: ProjectileConfig }
+  | { template: 'lunge'; config?: LungeConfig }
+  | { template: 'aoe'; config?: AoeConfig }
+  | { template: 'selfBuff'; config?: SelfBuffConfig }
+  | { template: 'statusEffect'; config?: StatusEffectConfig };
+```
+
+The `resolveTemplate()` function narrows the discriminated union and calls the appropriate factory:
+
+```typescript
+function resolveTemplate(entry: MoveAnimConfig): MoveAnimFn {
+  switch (entry.template) {
+    case 'projectile':   return projectile(entry.config);
+    case 'lunge':        return lunge(entry.config);
+    case 'aoe':          return aoe(entry.config);
+    case 'selfBuff':     return selfBuff(entry.config);
+    case 'statusEffect': return statusEffect(entry.config);
+  }
+}
+```
+
+Config interfaces (`ProjectileConfig`, `LungeConfig`, `AoeConfig`, `SelfBuffConfig`, `StatusEffectConfig`) are defined in the shared package `@pokehub/shared/pokemon-battle-types`, not in `move-templates.ts`. This allows both the server catalog and the client templates to share the same types. The `ease` field on `ProjectileConfig` uses `readonly [number, number, number, number]` (a cubic bezier tuple) instead of Motion's `Transition['ease']` to keep the shared types framework-agnostic.
 
 ### Lazy Loading
 
-Move animations are code-split into individual chunks. Each move file is only downloaded when that move is first used in a battle:
+**Hand-written animations** (the 20 moves listed below) are code-split into individual chunks via dynamic imports. Each move file is only downloaded when that move is first used in a battle:
 
 ```
-  getMoveAnimation('Flamethrower')
+  getMoveAnimation('Flamethrower')  — hand-written move
         │
         ├── First call: dynamic import('./move-anims/flamethrower')
         │   → network request for chunk
@@ -404,9 +501,9 @@ Move animations are code-split into individual chunks. Each move file is only do
         └── Subsequent calls: return cached MoveAnimFn
 ```
 
-Move names are normalized for lookup: `toLowerCase().replace(/[\s\-]/g, '')`. So "Close Combat", "close-combat", and "closecombat" all resolve to the same animation.
+**Server-delivered configs** do not require dynamic imports. When a server config is matched, `resolveTemplate()` synchronously produces a `MoveAnimFn` from the template factory — no network request is needed because the config data was already delivered with the `BATTLE_START` event.
 
-If the import fails (missing file, network error), `getMoveAnimation` returns `null` and the system falls back to a generic animation.
+If a hand-written animation's dynamic import fails (missing file, network error), `getMoveAnimation` falls through to check server configs before returning `null`.
 
 ### Generic Fallbacks
 
@@ -446,9 +543,9 @@ The three generic animations:
   Blue flash overlay
 ```
 
-### Implemented Moves
+### Hand-Written Move Animations
 
-22 move animations are currently implemented:
+20 hand-written move animations are registered in the lazy registry. These are custom-choreographed animations that go beyond what templates can express:
 
 | Move | Category | Animation Style |
 |------|----------|----------------|
@@ -472,6 +569,8 @@ The three generic animations:
 | **Calm Mind** | Status | Gentle glow pulse |
 | **Defog** | Status | Wind sweep, screen shake |
 | **Roost** | Status | Feather particle + green heal flash |
+
+An additional **172 moves** are covered by server-delivered template configs (see [Server-Delivered Move Configs](#server-delivered-move-configs)).
 
 ## Easing and Duration Constants
 
@@ -587,7 +686,25 @@ The `fainted` state overrides with a drop+fade transform, taking priority over a
 
 ## Adding a New Move Animation
 
-### Step 1: Create the Animation File
+There are two ways to add a move animation: adding a **server catalog entry** (preferred for most moves) or writing a **hand-written animation** (for moves that need custom choreography).
+
+### Option A: Add a Server Catalog Entry (Recommended)
+
+For moves that fit one of the five templates (`projectile`, `lunge`, `aoe`, `selfBuff`, `statusEffect`), add an entry to the server catalog. This requires no client-side code changes and no additional JavaScript bundle size.
+
+Add the entry in `packages/backend/pokehub-move-anim-catalog/src/lib/move-anim-catalog.ts`:
+
+```typescript
+['hydropump', { template: 'projectile', config: { sprite: 'waterwisp', tint: '#2288ff', flash: 'rgba(50,130,255,0.18)', size: 52, speed: 0.25 } }],
+```
+
+The config will be delivered to the client via `BATTLE_START` and resolved to a `MoveAnimFn` at runtime using `resolveTemplate()`. No dynamic import or client-side registration is needed.
+
+### Option B: Write a Hand-Written Animation
+
+For moves that need choreography beyond what the templates support (multi-phase sequences, unique particle effects, conditional logic), create a hand-written animation file.
+
+#### Step 1: Create the Animation File
 
 Create a new file in `animations/move-anims/`:
 
@@ -633,7 +750,7 @@ const hydroPump: MoveAnimFn = async (scene, attacker, defender) => {
 export default hydroPump;
 ```
 
-### Step 2: Register It
+#### Step 2: Register It
 
 Add the registration in `move-registry.ts`:
 
@@ -642,6 +759,8 @@ registerMoveAnimation('hydropump', () => import('./move-anims/hydro-pump'));
 ```
 
 The normalized key removes spaces and hyphens, so "Hydro Pump" → `"hydropump"`.
+
+Hand-written animations take priority over server catalog entries for the same move. If a move has both a hand-written animation and a server catalog entry, the hand-written version is used.
 
 ### Animation Patterns
 

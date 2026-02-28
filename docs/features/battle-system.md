@@ -121,6 +121,7 @@ src/lib/
 ├── battle-config.ts      # BattleConfig, BattlePlayer, generateBattleSeed()
 ├── client-events.ts      # Client → Server WebSocket events
 ├── server-events.ts      # Server → Client WebSocket events
+├── move-anim-config.ts   # MoveAnimConfig discriminated union and config interfaces
 ├── socket.constants.ts   # BATTLE_NAMESPACE, BattleRooms, BATTLE_EVENT
 ├── errors.ts             # BattleErrorCode, isRecoverableError()
 └── dto/
@@ -165,7 +166,7 @@ type ServerBattleEvent =
       battleId: string;
       opponent: { id: string; name: string };
     }
-  | { type: 'BATTLE_START'; battleId: string; initialState: string }
+  | { type: 'BATTLE_START'; battleId: string; initialState: string; moveAnimConfigs: Record<string, MoveAnimConfig> }
   | {
       type: 'BATTLE_UPDATE';
       battleId: string;
@@ -187,6 +188,7 @@ type ServerBattleEvent =
       type: 'BATTLE_RESTORED';
       battleId: string;
       currentState: string;
+      moveAnimConfigs: Record<string, MoveAnimConfig>;
       message?: string;
     }
   | { type: 'MATCH_CANCELLED'; battleId: string; reason: string }
@@ -194,6 +196,17 @@ type ServerBattleEvent =
 ```
 
 ### Backend Packages
+
+#### `packages/backend/pokehub-move-anim-catalog/`
+
+Server-side catalog of 172 move animation configs. Provides utilities to extract move names from packed teams and look up their animation configurations. Only the player's own team's move configs are sent to prevent information leaking about the opponent's moves.
+
+**Key Exports:**
+
+| Function                        | Description                                                        |
+| ------------------------------- | ------------------------------------------------------------------ |
+| `extractMoveNames(packedTeam)`  | Parses a packed team string and returns all unique move names       |
+| `getMoveAnimConfigs(moveNames)` | Returns a `Record<string, MoveAnimConfig>` for the given move names |
 
 #### `packages/backend/pokehub-redis/`
 
@@ -432,14 +445,14 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `QUEUE_JOINED`          | `{ position: number }`                        | Confirmed in queue         |
 | `QUEUE_LEFT`            | `{}`                                          | Left queue                 |
 | `MATCH_FOUND`           | `{ battleId, opponent: { id, name } }`        | Match created              |
-| `BATTLE_START`          | `{ battleId, initialState }`                  | Battle beginning           |
+| `BATTLE_START`          | `{ battleId, initialState, moveAnimConfigs }`  | Battle beginning           |
 | `BATTLE_UPDATE`         | `{ battleId, data, autoMove? }`               | Turn result                |
 | `BATTLE_END`            | `{ battleId, winner, reason, canSaveReplay }` | Battle over                |
 | `REPLAY_SAVED`          | `{ battleId, replayCount }`                   | Replay saved               |
 | `TURN_WARNING`          | `{ battleId, secondsRemaining }`              | Timer warning (30s left)   |
 | `OPPONENT_DISCONNECTED` | `{ battleId, timeout }`                       | Player disconnected        |
 | `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected         |
-| `BATTLE_RESTORED`       | `{ battleId, currentState, message? }`        | Reconnection state         |
+| `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, message? }` | Reconnection state         |
 | `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
 | `ERROR`                 | `{ code, message, recoverable }`              | Error occurred             |
 
