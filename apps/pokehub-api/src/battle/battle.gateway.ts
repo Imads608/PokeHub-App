@@ -168,9 +168,14 @@ export class BattleGateway
       await this.battleManager.handleDisconnect(battleId, userId);
     }
 
+    const wasInQueue = await this.matchmaking.isInQueue(userId);
     await this.matchmaking.leaveQueue(userId);
 
     this.bridge.unregisterSocket(client.id, userId);
+
+    if (wasInQueue) {
+      await this.broadcastQueueCounts();
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -230,6 +235,7 @@ export class BattleGateway
       } satisfies ServerBattleEvent);
 
       await this.orchestrator.tryFindMatch(format);
+      await this.broadcastQueueCounts();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to join queue';
@@ -252,6 +258,8 @@ export class BattleGateway
     client.emit(BATTLE_EVENT, {
       type: 'QUEUE_LEFT',
     } satisfies ServerBattleEvent);
+
+    await this.broadcastQueueCounts();
   }
 
   @UseGuards(WsJwtGuard, WsThrottlerGuard)
@@ -479,7 +487,32 @@ export class BattleGateway
     }
   }
 
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(10, 60000)
+  @SubscribeMessage('GET_QUEUE_COUNTS')
+  async handleGetQueueCounts(
+    @ConnectedSocket() client: AuthenticatedSocket
+  ): Promise<void> {
+    await this.emitQueueCounts(client);
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────
+
+  private async emitQueueCounts(client: AuthenticatedSocket): Promise<void> {
+    const counts = await this.matchmaking.getQueueCounts();
+    client.emit(BATTLE_EVENT, {
+      type: 'QUEUE_COUNTS',
+      counts,
+    } satisfies ServerBattleEvent);
+  }
+
+  private async broadcastQueueCounts(): Promise<void> {
+    const counts = await this.matchmaking.getQueueCounts();
+    this.server.emit(BATTLE_EVENT, {
+      type: 'QUEUE_COUNTS',
+      counts,
+    } satisfies ServerBattleEvent);
+  }
 
   private emitError(
     client: AuthenticatedSocket,

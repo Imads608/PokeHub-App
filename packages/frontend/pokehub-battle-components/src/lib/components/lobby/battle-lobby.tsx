@@ -1,6 +1,7 @@
 'use client';
 
 import { useBattleSocketContext } from '../../context/battle-socket.context';
+import { QueueCounts } from './queue-counts';
 import { QueueStatus } from './queue-status';
 import { TeamSelector } from './team-selector';
 import { useUserTeams } from '@pokehub/frontend/pokehub-team-builder';
@@ -19,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 export function BattleLobby() {
-  const { state, connected, joinQueue, leaveQueue } =
+  const { state, connected, joinQueue, leaveQueue, queueCounts, requestQueueCounts } =
     useBattleSocketContext();
   const { data: teams, isLoading: teamsLoading } = useUserTeams();
   const router = useRouter();
@@ -31,6 +32,13 @@ export function BattleLobby() {
     () => teams?.find((t) => t.id === selectedTeamId),
     [teams, selectedTeamId]
   );
+
+  // Request queue counts when lobby mounts and connection is ready
+  useEffect(() => {
+    if (connected) {
+      requestQueueCounts();
+    }
+  }, [connected, requestQueueCounts]);
 
   // Navigate to battle page when match starts
   useEffect(() => {
@@ -91,6 +99,13 @@ export function BattleLobby() {
         <p className="text-muted-foreground">
           Select a team and find an opponent
         </p>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="text-sm font-medium text-muted-foreground mb-2">
+          Players in Queue
+        </h2>
+        <QueueCounts counts={queueCounts} />
       </div>
 
       <Card>

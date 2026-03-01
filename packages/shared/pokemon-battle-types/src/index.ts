@@ -11,6 +11,7 @@ export {
   type ForfeitEvent,
   type RejoinEvent,
   type SaveReplayEvent,
+  type GetQueueCountsEvent,
   type ClientBattleEvent,
   type ClientBattleEventType,
 } from './lib/client-events';
@@ -30,6 +31,7 @@ export {
   type BattleRestoredEvent,
   type BattleErrorEvent,
   type ServerStatusEvent,
+  type QueueCountsEvent,
   type ServerBattleEvent,
   type ServerBattleEventType,
 } from './lib/server-events';

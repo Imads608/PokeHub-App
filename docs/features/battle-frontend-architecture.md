@@ -379,6 +379,9 @@ Exposes action methods that emit typed `ClientBattleEvent` messages and optimist
 | `forfeit(battleId)` | `FORFEIT` | — |
 | `rejoin(battleId)` | `REJOIN` | — |
 | `saveReplay(battleId)` | `SAVE_REPLAY` | — |
+| `requestQueueCounts()` | `GET_QUEUE_COUNTS` | — |
+
+Additionally exposes `queueCounts: Record<string, number>` — a reactive map of format → player count, updated via `QUEUE_COUNTS` server events (intercepted before the battle state reducer, same as `SERVER_STATUS`).
 
 ### AnimationProvider
 
@@ -589,14 +592,31 @@ The `ActionPanel` renders one of four states depending on `battle.request.reques
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `BattleLobby` | `battle-lobby.tsx` | Queue entry, format/team selection, match-found transition |
+| `BattleLobby` | `battle-lobby.tsx` | Queue entry, format/team selection, queue counts, match-found transition |
+| `QueueCounts` | `queue-counts.tsx` | Collapsible display of player counts per format |
 | `QueueStatus` | `queue-status.tsx` | Animated queue position indicator |
 | `TeamSelector` | `team-selector.tsx` | Team dropdown before queuing |
 
 The lobby renders phase-dependent UI:
-- **`idle`** — team selection card + "Find Battle" button
+- **`idle`** — queue counts + team selection card + "Find Battle" button
 - **`queued`** — `QueueStatus` with cancel button
 - **`matched` / `battle`** — transition card: pulsing swords icon, "Match Found!" + opponent name, spinner + "Waiting for battle to start..." (handles the gap between match acceptance and `BATTLE_START` arrival)
+
+#### Queue Counts
+
+The `QueueCounts` component shows how many players are searching in each battle format:
+
+- **Collapsed (default)**: Summary line — "5 players searching across 3 formats" with a chevron toggle
+- **Expanded**: Per-format breakdown with format display name and player count badge
+- **Empty**: "No players currently in queue"
+
+Data flow:
+1. `BattleLobby` mounts → emits `GET_QUEUE_COUNTS` via `requestQueueCounts()` when connected
+2. Server responds with `QUEUE_COUNTS` event containing `counts: Record<string, number>`
+3. `BattleSocketProvider` intercepts the event (same pattern as `SERVER_STATUS`) and updates `queueCounts` state
+4. Real-time updates: server broadcasts `QUEUE_COUNTS` to all connected clients after any queue join, leave, disconnect, or match found
+
+Format IDs (e.g., `gen9ou`) are parsed via regex and converted to display names using `getFormatDisplayName()` (e.g., "[Gen 9] OU").
 
 ### Global Components
 

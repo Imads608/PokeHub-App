@@ -120,6 +120,11 @@ export interface ServerStatusEvent {
   status: 'unavailable' | 'restored';
 }
 
+export interface QueueCountsEvent {
+  type: 'QUEUE_COUNTS';
+  counts: Record<string, number>;
+}
+
 export type ServerBattleEvent =
   | QueueJoinedEvent
   | QueueLeftEvent
@@ -134,6 +139,7 @@ export type ServerBattleEvent =
   | OpponentReconnectedEvent
   | BattleRestoredEvent
   | BattleErrorEvent
-  | ServerStatusEvent;
+  | ServerStatusEvent
+  | QueueCountsEvent;
 
 export type ServerBattleEventType = ServerBattleEvent['type'];

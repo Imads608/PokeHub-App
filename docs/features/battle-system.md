@@ -285,6 +285,12 @@ user:{userId}:queue
 queue:{format}
   - JSON entries: { userId, teamId, packedTeam, joinedAt }
 
+# Active matchmaking formats (set)
+queue:active-formats
+  - Set of format strings currently with queued players (e.g., "gen9ou")
+  - Populated via SADD when a player joins a queue
+  - Lazily cleaned: formats with 0 queue length are removed when getQueueCounts() runs
+
 # Server heartbeat (string with 10s TTL)
 server:{serverId}:heartbeat
   - Timestamp, refreshed every 5s
@@ -437,6 +443,7 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `REJOIN`        | `{ battleId: string }`                 | Reconnect to active battle                                    |
 | `SAVE_REPLAY`   | `{ battleId: string }`                 | Save replay (within 1 hour of battle end)                     |
 | `DECLINE_MATCH` | `{ battleId: string }`                 | Decline match (client left queue before MATCH_FOUND received) |
+| `GET_QUEUE_COUNTS` | `{}`                                | Request current queue player counts per format                |
 
 **Server → Client:**
 
@@ -454,6 +461,7 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected         |
 | `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, message? }` | Reconnection state         |
 | `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
+| `QUEUE_COUNTS`          | `{ counts: Record<string, number> }`          | Queue player counts per format |
 | `ERROR`                 | `{ code, message, recoverable }`              | Error occurred             |
 
 ---
@@ -492,6 +500,9 @@ Client                      Gateway                      Redis
   |                           |                            |
   |<-- MATCH_FOUND -----------|                            |
   |<-- BATTLE_START ----------|                            |
+  |                           |                            |
+  |                           |-- Broadcast QUEUE_COUNTS   |
+  |                           |   to all connected clients |
 ```
 
 ### 2. Battle Turn Flow

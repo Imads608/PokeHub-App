@@ -19,6 +19,7 @@ export const RedisKeys = {
   // Matchmaking keys
   matchmaking: {
     queue: (format: string) => `queue:${format}` as const,
+    activeFormats: 'queue:active-formats' as const,
   },
 
   // Server keys (for horizontal scaling)

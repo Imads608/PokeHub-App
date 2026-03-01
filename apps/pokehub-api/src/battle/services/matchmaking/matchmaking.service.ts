@@ -178,6 +178,29 @@ class MatchmakingService implements IMatchmakingService {
       },
     };
   }
+
+  /**
+   * Get the number of players queued per format.
+   * Performs lazy cleanup of formats that have 0 players.
+   */
+  async getQueueCounts(): Promise<Record<string, number>> {
+    const formats = await this.redis.getActiveFormats();
+    const counts: Record<string, number> = {};
+
+    await Promise.all(
+      formats.map(async (format) => {
+        const length = await this.redis.getQueueLength(format);
+        if (length > 0) {
+          counts[format] = length;
+        } else {
+          // Lazy cleanup: remove format from active set
+          await this.redis.removeActiveFormat(format);
+        }
+      })
+    );
+
+    return counts;
+  }
 }
 
 export const MatchmakingServiceProvider: Provider = {

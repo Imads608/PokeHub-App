@@ -36,6 +36,10 @@ export interface BattleSocketContextValue {
   pendingVersion: number;
   /** Skip remaining animations (events still get applied) */
   skipAnimations: () => void;
+  /** Queue player counts per format, updated in real-time */
+  queueCounts: Record<string, number>;
+  /** Request the latest queue counts from the server */
+  requestQueueCounts: () => void;
 }
 
 const BattleSocketContext = createContext<BattleSocketContextValue | null>(
@@ -54,6 +58,7 @@ export function BattleSocketProvider({
   const [state, dispatch, processPendingEvents, pendingVersion, skipAnimations] = useBattleState();
   const [lastEvent, setLastEvent] = useState<ServerBattleEvent | null>(null);
   const [serverAvailable, setServerAvailable] = useState(true);
+  const [queueCounts, setQueueCounts] = useState<Record<string, number>>({});
 
   // Track the last event for notifications
   const onEvent = useCallback(
@@ -65,6 +70,12 @@ export function BattleSocketProvider({
           battleId: event.battleId,
         });
         emit({ type: 'DECLINE_MATCH', battleId: event.battleId });
+        return;
+      }
+
+      // Queue counts are connection-level, not battle state
+      if (event.type === 'QUEUE_COUNTS') {
+        setQueueCounts(event.counts);
         return;
       }
 
@@ -184,6 +195,10 @@ export function BattleSocketProvider({
     [emit]
   );
 
+  const requestQueueCounts = useCallback(() => {
+    emit({ type: 'GET_QUEUE_COUNTS' });
+  }, [emit]);
+
   const connected = isConnected && serverAvailable;
 
   const value: BattleSocketContextValue = {
@@ -201,6 +216,8 @@ export function BattleSocketProvider({
     processPendingEvents,
     pendingVersion,
     skipAnimations,
+    queueCounts,
+    requestQueueCounts,
   };
 
   return (

@@ -74,6 +74,7 @@ export class RedisBattleService {
   async joinQueue(format: string, entry: QueueEntry): Promise<number> {
     const key = RedisKeys.matchmaking.queue(format);
     const position = await this.client.lpush(key, JSON.stringify(entry));
+    await this.addActiveFormat(format);
     this.logger.debug(
       `User ${entry.userId} joined queue for ${format} at position ${position}`
     );
@@ -123,6 +124,20 @@ export class RedisBattleService {
   async clearUserQueueStatus(userId: string): Promise<void> {
     const key = RedisKeys.user.queueStatus(userId);
     await this.client.del(key);
+  }
+
+  // ==================== Active Formats Tracking ====================
+
+  async addActiveFormat(format: string): Promise<void> {
+    await this.client.sadd(RedisKeys.matchmaking.activeFormats, format);
+  }
+
+  async removeActiveFormat(format: string): Promise<void> {
+    await this.client.srem(RedisKeys.matchmaking.activeFormats, format);
+  }
+
+  async getActiveFormats(): Promise<string[]> {
+    return this.client.smembers(RedisKeys.matchmaking.activeFormats);
   }
 
   // ==================== User Battle State ====================
