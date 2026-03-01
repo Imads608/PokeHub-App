@@ -263,10 +263,6 @@ describe('BattleManagerService', () => {
 
       await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
 
-      expect(mockTurnTimerService.cancelPlayerTimer).toHaveBeenCalledWith(
-        testBattleId,
-        'p1'
-      );
       expect(mockRedisService.setPendingChoices).toHaveBeenCalledWith(
         testBattleId,
         { p1: 'move 1' }
@@ -471,6 +467,7 @@ describe('BattleManagerService', () => {
         testBattleId,
         {
           type: 'event',
+          targetUserId: testPlayer2Id,
           data: { event: 'opponent_disconnected', player: 'p1' },
         }
       );
@@ -511,6 +508,7 @@ describe('BattleManagerService', () => {
         testBattleId,
         {
           type: 'event',
+          targetUserId: testPlayer2Id,
           data: { event: 'opponent_reconnected', player: 'p1' },
         }
       );

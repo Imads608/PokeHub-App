@@ -9,6 +9,7 @@ import {
   log,
   type BattleEvent,
   type PendingProtocolEvent,
+  type ReducerEvent,
 } from '../state/battle-state-reducer';
 import {
   processPendingEvents,
@@ -83,7 +84,7 @@ export function useBattleState() {
   /** Set to true to skip remaining animations (events still get applied) */
   const skipRef = useRef(false);
   /** BATTLE_END deferred until animations finish */
-  const deferredEndRef = useRef<BattleEvent | null>(null);
+  const deferredEndRef = useRef<ReducerEvent | null>(null);
 
   const [reducerState, rawDispatch] = useReducer(
     battleReducer,
