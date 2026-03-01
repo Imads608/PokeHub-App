@@ -22,7 +22,7 @@ export interface BattleSocketContextValue {
   /** True when the socket is connected AND the server can process battles. */
   connected: boolean;
   userId: string;
-  joinQueue: (format: string, teamId: string) => void;
+  joinQueue: (format: string, teamId?: string) => void;
   leaveQueue: () => void;
   declineMatch: (battleId: string) => void;
   submitMove: (battleId: string, choice: string) => void;
@@ -133,9 +133,13 @@ export function BattleSocketProvider({
   // ── Action methods (typed ClientBattleEvent emissions) ──────────────
 
   const joinQueue = useCallback(
-    (format: string, teamId: string) => {
-      log.info('joinQueue', { format, teamId });
-      emit({ type: 'JOIN_QUEUE', format, teamId });
+    (format: string, teamId?: string) => {
+      log.info('joinQueue', { format, teamId: teamId ?? 'random' });
+      emit({
+        type: 'JOIN_QUEUE',
+        format,
+        ...(teamId ? { teamId } : {}),
+      });
     },
     [emit]
   );

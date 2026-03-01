@@ -24,6 +24,7 @@
     "@pkmn/data": "^0.10.3",
     "@pkmn/dex": "^0.10.3",
     "@pkmn/img": "^0.3.2",
+    "@pkmn/randoms": "^0.10.6",
     "@pkmn/sim": "^0.10.3",
     "@pkmn/view": "^0.7.2",
     "@radix-ui/react-accordion": "^1.2.4",

@@ -71,6 +71,10 @@ function formatIdToDisplayName(formatId: string): string {
     battlestadiumsingles: 'Battle Stadium Singles',
     battlestadiumdoubles: 'Battle Stadium Doubles',
     bdspou: 'BDSP OU',
+    randombattle: 'Random Battle',
+    randomdoublesbattle: 'Random Doubles Battle',
+    randombattleblitz: 'Random Battle Blitz',
+    freeforall: 'Free-For-All',
   };
 
   if (standardTiers[id]) {

@@ -280,6 +280,70 @@ export function getCategoryLabel(category: FormatCategory): string {
 }
 
 /**
+ * Checks if a format ID represents a random battle format.
+ * Lightweight check for frontend filtering (queue counts, UI tabs).
+ *
+ * @param formatId - Full Showdown format ID (e.g., 'gen9randombattle')
+ * @returns true if the format is a random battle format
+ */
+export function isRandomFormatId(formatId: string): boolean {
+  return formatId.includes('random');
+}
+
+/**
+ * Gets all supported random battle formats across all generations.
+ * Filters for formats where team === 'random' and excludes unsupported variants.
+ *
+ * @returns Array of random format info sorted by generation (desc) then name
+ */
+export function getRandomFormats(): BattleFormatInfo[] {
+  const formats: BattleFormatInfo[] = [];
+  const allFormats = Dex.formats.all();
+
+  // Exclude unsupported random format variants
+  const excludePatterns = [
+    'bssfactory',
+    'hackmonscup',
+    'challengecup',
+    'cap1v1',
+    'babyrandom',
+  ];
+
+  for (const format of allFormats) {
+    if (format.team !== 'random') continue;
+
+    const id = format.id.toLowerCase();
+    if (excludePatterns.some((p) => id.includes(p))) continue;
+
+    // Extract generation number
+    const genMatch = format.id.match(/^gen(\d+)/);
+    if (!genMatch) continue;
+    const generation = parseInt(genMatch[1], 10) as GenerationNum;
+
+    // Extract format suffix (remove gen prefix)
+    const formatSuffix = format.id.substring(`gen${generation}`.length);
+
+    // Determine category
+    const category: FormatCategory = id.includes('doubles') ? 'Doubles' : 'Singles';
+
+    formats.push({
+      id: formatSuffix,
+      name: format.name,
+      category,
+      generation,
+    });
+  }
+
+  // Sort by generation descending, then by name
+  formats.sort((a, b) => {
+    if (a.generation !== b.generation) return b.generation - a.generation;
+    return a.name.localeCompare(b.name);
+  });
+
+  return formats;
+}
+
+/**
  * Gets the full Showdown format ID from generation and format suffix
  *
  * @param generation - Pokemon generation

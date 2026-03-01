@@ -54,7 +54,7 @@ import {
   BattleRooms,
   BATTLE_EVENT,
 } from '@pokehub/shared/pokemon-battle-types';
-import { packTeam } from '@pokehub/shared/pokemon-showdown-validation';
+import { packTeam, isRandomFormat, generateRandomTeam } from '@pokehub/shared/pokemon-showdown-validation';
 import {
   extractMoveNames,
   getMoveAnimConfigs,
@@ -203,26 +203,47 @@ export class BattleGateway
 
     const { format, teamId } = parsed.data;
     this.logger.debug(
-      `JOIN_QUEUE details — user ${userId}, format: ${format}, teamId: ${teamId}`
+      `JOIN_QUEUE details — user ${userId}, format: ${format}, teamId: ${teamId ?? 'random'}`
     );
 
     try {
-      const team = await this.teamsDb.getTeam(teamId);
-      if (!team) {
-        this.emitError(client, 'TEAM_NOT_FOUND', 'Team not found');
-        return;
+      let resolvedTeamId: string;
+      let packedTeam: string;
+
+      if (teamId) {
+        // Competitive path: fetch and validate user's team
+        const team = await this.teamsDb.getTeam(teamId);
+        if (!team) {
+          this.emitError(client, 'TEAM_NOT_FOUND', 'Team not found');
+          return;
+        }
+
+        if (team.userId !== userId) {
+          this.emitError(client, 'INVALID_TEAM', 'You do not own this team');
+          return;
+        }
+
+        resolvedTeamId = teamId;
+        packedTeam = packTeam(team.pokemon);
+      } else {
+        // Random path: generate team server-side
+        if (!isRandomFormat(format)) {
+          this.emitError(
+            client,
+            'TEAM_REQUIRED',
+            'A team is required for this format'
+          );
+          return;
+        }
+
+        resolvedTeamId = 'random';
+        packedTeam = generateRandomTeam(format);
       }
 
-      if (team.userId !== userId) {
-        this.emitError(client, 'INVALID_TEAM', 'You do not own this team');
-        return;
-      }
-
-      const packedTeam = packTeam(team.pokemon);
       const position = await this.matchmaking.joinQueue(
         userId,
         format,
-        teamId,
+        resolvedTeamId,
         packedTeam
       );
 

@@ -6,7 +6,7 @@ export interface JoinQueueEvent {
   type: 'JOIN_QUEUE';
   /** Full Showdown format ID (e.g., 'gen9ou') */
   format: string;
-  teamId: string;
+  teamId?: string;
 }
 
 export interface LeaveQueueEvent {

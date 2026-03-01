@@ -372,7 +372,7 @@ Exposes action methods that emit typed `ClientBattleEvent` messages and optimist
 
 | Method | Socket Event | Local Effect |
 |--------|-------------|--------------|
-| `joinQueue(format, teamId)` | `JOIN_QUEUE` | — |
+| `joinQueue(format, teamId?)` | `JOIN_QUEUE` | — (teamId omitted for random battles) |
 | `leaveQueue()` | `LEAVE_QUEUE` | — |
 | `submitMove(battleId, choice)` | `MOVE` | dispatches `CHOICE_SUBMITTED` |
 | `cancelChoice()` | `CANCEL_CHOICE` | dispatches `CANCEL_CHOICE` |
@@ -592,15 +592,27 @@ The `ActionPanel` renders one of four states depending on `battle.request.reques
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `BattleLobby` | `battle-lobby.tsx` | Queue entry, format/team selection, queue counts, match-found transition |
+| `BattleLobby` | `battle-lobby.tsx` | Tabbed lobby (Random / Competitive), queue counts, match-found transition |
+| `RandomFormatSelector` | `random-format-selector.tsx` | Scrollable format picker for random battles, grouped by generation |
 | `QueueCounts` | `queue-counts.tsx` | Collapsible display of player counts per format |
 | `QueueStatus` | `queue-status.tsx` | Animated queue position indicator |
-| `TeamSelector` | `team-selector.tsx` | Team dropdown before queuing |
+| `TeamSelector` | `team-selector.tsx` | Team picker for competitive battles |
 
-The lobby renders phase-dependent UI:
-- **`idle`** — queue counts + team selection card + "Find Battle" button
+The lobby uses a **tabbed layout** to separate Random and Competitive battle modes:
+
+- **Random tab**: `QueueCounts` (filtered to random formats) + `RandomFormatSelector` + "Find Random Battle" button (calls `joinQueue(format)` without `teamId`)
+- **Competitive tab**: `QueueCounts` (filtered to competitive formats) + `TeamSelector` + "Find Battle" button (calls `joinQueue(format, teamId)`)
+
+Queue counts are split between tabs using `isRandomFormatId()` from `@pokehub/frontend/dex-data-provider`.
+
+Phase-dependent rendering (shown regardless of active tab):
+- **`idle`** — tabbed UI described above
 - **`queued`** — `QueueStatus` with cancel button
-- **`matched` / `battle`** — transition card: pulsing swords icon, "Match Found!" + opponent name, spinner + "Waiting for battle to start..." (handles the gap between match acceptance and `BATTLE_START` arrival)
+- **`matched` / `battle`** — transition card: pulsing swords icon, "Match Found!" + opponent name, spinner + "Waiting for battle to start..."
+
+#### Random Format Selector
+
+`RandomFormatSelector` displays all supported random battle formats grouped by generation (most recent first). It calls `getRandomFormats()` from `@pokehub/frontend/dex-data-provider` which filters `Dex.formats.all()` for formats with `team === 'random'`, excluding unsupported variants (BSS Factory, Hackmons Cup, Challenge Cup, CAP 1v1, Baby Random). Each format card shows the format display name with radio-style selection.
 
 #### Queue Counts
 
@@ -615,6 +627,7 @@ Data flow:
 2. Server responds with `QUEUE_COUNTS` event containing `counts: Record<string, number>`
 3. `BattleSocketProvider` intercepts the event (same pattern as `SERVER_STATUS`) and updates `queueCounts` state
 4. Real-time updates: server broadcasts `QUEUE_COUNTS` to all connected clients after any queue join, leave, disconnect, or match found
+5. `BattleLobby` splits counts into `randomCounts` and `competitiveCounts` via `useMemo` + `isRandomFormatId()`
 
 Format IDs (e.g., `gen9ou`) are parsed via regex and converted to display names using `getFormatDisplayName()` (e.g., "[Gen 9] OU").
 

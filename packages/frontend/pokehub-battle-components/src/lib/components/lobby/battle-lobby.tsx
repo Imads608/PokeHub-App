@@ -3,9 +3,13 @@
 import { useBattleSocketContext } from '../../context/battle-socket.context';
 import { QueueCounts } from './queue-counts';
 import { QueueStatus } from './queue-status';
+import { RandomFormatSelector } from './random-format-selector';
 import { TeamSelector } from './team-selector';
 import { useUserTeams } from '@pokehub/frontend/pokehub-team-builder';
-import { getShowdownFormatId } from '@pokehub/frontend/dex-data-provider';
+import {
+  getShowdownFormatId,
+  isRandomFormatId,
+} from '@pokehub/frontend/dex-data-provider';
 import {
   Button,
   Card,
@@ -14,8 +18,12 @@ import {
   CardHeader,
   CardTitle,
   Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@pokehub/frontend/shared-ui-components';
-import { Swords } from 'lucide-react';
+import { Dices, Swords } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -25,12 +33,31 @@ export function BattleLobby() {
   const { data: teams, isLoading: teamsLoading } = useUserTeams();
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState<'random' | 'competitive'>('random');
   const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [selectedRandomFormat, setSelectedRandomFormat] = useState('');
 
   // Derive the selected team object
   const selectedTeam = useMemo(
     () => teams?.find((t) => t.id === selectedTeamId),
     [teams, selectedTeamId]
+  );
+
+  // Split queue counts into random and competitive
+  const randomCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(queueCounts).filter(([id]) => isRandomFormatId(id))
+      ),
+    [queueCounts]
+  );
+
+  const competitiveCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(queueCounts).filter(([id]) => !isRandomFormatId(id))
+      ),
+    [queueCounts]
   );
 
   // Request queue counts when lobby mounts and connection is ready
@@ -54,6 +81,11 @@ export function BattleLobby() {
       selectedTeam.format
     );
     joinQueue(showdownFormat, selectedTeam.id!);
+  };
+
+  const handleFindRandomBattle = () => {
+    if (!selectedRandomFormat) return;
+    joinQueue(selectedRandomFormat);
   };
 
   // Show queue status when searching
@@ -97,55 +129,113 @@ export function BattleLobby() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Battle</h1>
         <p className="text-muted-foreground">
-          Select a team and find an opponent
+          Select a mode and find an opponent
         </p>
       </div>
 
-      <div className="mb-4">
-        <h2 className="text-sm font-medium text-muted-foreground mb-2">
-          Players in Queue
-        </h2>
-        <QueueCounts counts={queueCounts} />
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'random' | 'competitive')}
+      >
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="random" className="flex-1 gap-2">
+            <Dices className="h-4 w-4" />
+            Random
+          </TabsTrigger>
+          <TabsTrigger value="competitive" className="flex-1 gap-2">
+            <Swords className="h-4 w-4" />
+            Competitive
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Select a Team</CardTitle>
-          <CardDescription>
-            Choose one of your teams to battle with
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {teamsLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : (
-            <TeamSelector
-              teams={teams ?? []}
-              selectedTeamId={selectedTeamId}
-              onTeamSelect={setSelectedTeamId}
-            />
-          )}
+        <TabsContent value="random">
+          <div className="mb-4">
+            <h2 className="text-sm font-medium text-muted-foreground mb-2">
+              Players in Queue
+            </h2>
+            <QueueCounts counts={randomCounts} />
+          </div>
 
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleFindBattle}
-            disabled={!selectedTeamId || !connected}
-          >
-            <Swords className="mr-2 h-5 w-5" />
-            Find Battle
-          </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Select a Format</CardTitle>
+              <CardDescription>
+                Teams are randomly generated — just pick a format and go
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RandomFormatSelector
+                selectedFormat={selectedRandomFormat}
+                onFormatSelect={setSelectedRandomFormat}
+              />
 
-          {!connected && (
-            <p className="text-sm text-center text-muted-foreground">
-              Connecting to battle server...
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleFindRandomBattle}
+                disabled={!selectedRandomFormat || !connected}
+              >
+                <Dices className="mr-2 h-5 w-5" />
+                Find Random Battle
+              </Button>
+
+              {!connected && (
+                <p className="text-sm text-center text-muted-foreground">
+                  Connecting to battle server...
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="competitive">
+          <div className="mb-4">
+            <h2 className="text-sm font-medium text-muted-foreground mb-2">
+              Players in Queue
+            </h2>
+            <QueueCounts counts={competitiveCounts} />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Select a Team</CardTitle>
+              <CardDescription>
+                Choose one of your teams to battle with
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {teamsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (
+                <TeamSelector
+                  teams={teams ?? []}
+                  selectedTeamId={selectedTeamId}
+                  onTeamSelect={setSelectedTeamId}
+                />
+              )}
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleFindBattle}
+                disabled={!selectedTeamId || !connected}
+              >
+                <Swords className="mr-2 h-5 w-5" />
+                Find Battle
+              </Button>
+
+              {!connected && (
+                <p className="text-sm text-center text-muted-foreground">
+                  Connecting to battle server...
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

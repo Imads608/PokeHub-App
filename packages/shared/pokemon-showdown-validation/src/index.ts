@@ -10,3 +10,8 @@ export {
   type PokemonValidationResult,
   type TeamValidationResult,
 } from './lib/team-validator-showdown';
+
+export {
+  isRandomFormat,
+  generateRandomTeam,
+} from './lib/random-team-generator';

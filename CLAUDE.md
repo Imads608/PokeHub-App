@@ -129,6 +129,12 @@ PokeHub is a Next.js Pokemon application built with an Nx monorepo architecture.
 - Route guards for protected pages
 - Profile creation flow for new users
 
+### UI Components
+
+- **Always use `@pokehub/frontend/shared-ui-components`** for UI primitives (Button, Card, Tabs, ScrollArea, Dialog, etc.)
+- This package is built on **shadcn/ui** (Radix UI + Tailwind). If a component you need isn't exported yet, check [shadcn/ui](https://ui.shadcn.com/) and add it to the shared-ui-components package first
+- Never use raw HTML elements (e.g. `<button>`, `<input>`, `<dialog>`) when a shared component exists
+
 ### Styling Conventions
 
 - Tailwind CSS with custom design system
