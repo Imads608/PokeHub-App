@@ -7,6 +7,8 @@ import {
   AnimationProvider,
   useAnimationContext,
 } from '../../context/animation.context';
+import { AudioProvider, useAudio } from '../../audio/audio.context';
+import { BGM_TRACKS } from '../../audio/sound-catalog';
 import { playAnimationEvent } from '../../animations/state-anims';
 import { ActionPanel } from '../actions/action-panel';
 import { BattleEndOverlay } from '../end/battle-end-overlay';
@@ -22,7 +24,9 @@ import { TeamPanel } from './team-panel';
 export function BattleContainer() {
   return (
     <AnimationProvider>
-      <BattleContainerInner />
+      <AudioProvider>
+        <BattleContainerInner />
+      </AudioProvider>
     </AnimationProvider>
   );
 }
@@ -42,12 +46,26 @@ function BattleContainerInner() {
     scene,
     isMounted,
   } = useAnimationContext();
+  const { audio, unlock } = useAudio();
 
-  // Stable animation function bound to the current scene
+  // Stable animation function bound to the current scene + audio
   const playAnimation = useCallback(
-    (event: Parameters<typeof playAnimationEvent>[1]) => playAnimationEvent(scene, event),
-    [scene]
+    (event: Parameters<typeof playAnimationEvent>[1]) =>
+      playAnimationEvent(scene, event, audio),
+    [scene, audio]
   );
+
+  // Start/stop BGM based on battle phase
+  useEffect(() => {
+    if (state.phase === 'battle') {
+      const track = BGM_TRACKS[Math.floor(Math.random() * BGM_TRACKS.length)];
+      void audio.playBgm(track);
+    }
+    if (state.phase === 'ended') {
+      audio.stopBgm(1000);
+    }
+    return () => audio.stopBgm();
+  }, [state.phase, audio]);
 
   // Process pending protocol events when new ones arrive
   useEffect(() => {
@@ -71,14 +89,17 @@ function BattleContainerInner() {
   const opponentActive = opponentSide?.active[0] ?? null;
 
   const handleMoveSelect = (choice: string) => {
+    void unlock();
     submitMove(battleId, choice);
   };
 
   const handleSwitchSelect = (choice: string) => {
+    void unlock();
     submitMove(battleId, choice);
   };
 
   const handleTeamSelect = (choice: string) => {
+    void unlock();
     submitMove(battleId, choice);
   };
 

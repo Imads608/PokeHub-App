@@ -58,7 +58,7 @@ export function BattleEndOverlay({
           </>
         )}
 
-        {endReason && endReason !== 'draw' && (
+        {endReason && endReason !== 'draw' && endReason !== 'win' && (
           <p className="text-sm text-muted-foreground capitalize -mt-2">
             {endReason.replace(/_/g, ' ')}
           </p>

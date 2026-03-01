@@ -34,6 +34,10 @@
   - [PopupLayer (Damage Numbers)](#popuplayer-damage-numbers)
   - [Flash Overlay](#flash-overlay)
   - [Screen Shake](#screen-shake)
+- [Audio Integration](#audio-integration)
+  - [Move SFX Sequencing](#move-sfx-sequencing)
+  - [Effectiveness SFX and skipHitSfx](#effectiveness-sfx-and-skiphitsfx)
+  - [State Animation SFX Map](#state-animation-sfx-map)
 - [PokemonSprite — Animation Target](#pokemonsprite--animation-target)
 - [Adding a New Move Animation](#adding-a-new-move-animation)
   - [Step 1: Create the Animation File](#step-1-create-the-animation-file)
@@ -231,13 +235,16 @@ Move animations use `getRect()` to compute start/end coordinates for projectiles
 
 ```typescript
 interface SpriteTransform {
-  x?: number;       // horizontal offset from resting position
-  y?: number;       // vertical offset
-  scale?: number;   // scale multiplier (1.0 = normal)
-  rotate?: number;  // rotation in degrees
-  opacity?: number; // 0–1
+  x?: number;          // horizontal offset from resting position
+  y?: number;          // vertical offset
+  scale?: number;      // scale multiplier (1.0 = normal)
+  rotate?: number;     // rotation in degrees
+  opacity?: number;    // 0–1
+  brightness?: number; // CSS brightness filter multiplier (1.0 = normal, 5 = white flash)
 }
 ```
+
+The `brightness` property applies a CSS `filter: brightness(n)` to the sprite. It's used by the damage flinch animation to create a white-blink effect: brightness rapidly toggles between `5` (near-white flash) and `1` (normal) during each step of the x-oscillation.
 
 ### EffectSpriteConfig
 
@@ -282,8 +289,13 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
 ### Damage
 
 ```
-  Defender sprite flinches (rapid x-shake via keyframes):
-    x: [0, -6, 6, -4, 4, -2, 0]  over DURATION.DAMAGE
+  SFX: STATE_SFX.damage (normal hit)
+    └── skipped if event.skipHitSfx is set (super effective/resisted already played)
+
+  Defender sprite flinches (manual step-by-step setTransform):
+    x: [-6, 6, -4, 4, -2, 0]  with brightness toggling 5/1 per step (60–80ms each)
+    └── brightness: 5 = near-white flash, 1 = normal
+    └── creates a rapid white-blink flinch effect
 
   Red damage popup floats up:
     "-{percent}%"  e.g. "-45%"
@@ -347,20 +359,29 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
     default → rgba(156,163,175,0.15)
 ```
 
-### Effectiveness (Super Effective, Crit, Miss)
+### Effectiveness (Super Effective, Resisted, Crit, Miss)
 
 ```
   Super effective:
-    shakeScreen(intensity: 4, duration: 300ms)
-    flashOverlay(white, 150ms)
+    SFX: STATE_SFX.supereffective (heavy hit sound)
+    shakeScreen(intensity: 4, duration: DURATION.SUPER_EFFECTIVE)
+    flashOverlay(white rgba(255,255,255,0.25), 150ms)
+
+  Resisted:
+    SFX: STATE_SFX.resisted (weak hit sound)
+    delay(100ms)
 
   Critical hit:
-    shakeScreen(intensity: 6, duration: 300ms)
-    flashOverlay(gold, 150ms)
+    No sound
+    shakeScreen(intensity: 6, duration: DURATION.CRIT)
+    flashOverlay(gold rgba(255,200,0,0.25), 150ms)
 
   Miss:
-    flashOverlay(gray, 150ms)
+    No sound or visual
+    delay(100ms)
 ```
+
+Both super effective and resisted events set `effectivenessPlayed` in the processing loop, which causes the following damage event's hit sound to be skipped via `skipHitSfx` (see [Audio Integration](#audio-integration)).
 
 ### Weather and Terrain
 
@@ -659,6 +680,71 @@ The arena `motion.div` has its `x` and `y` animated by `shakeOffset`:
 - Each step waits 50ms, with decreasing intensity
 - Resets to `{x: 0, y: 0}` when complete
 
+## Audio Integration
+
+The animation system integrates with the [Battle Audio System](./battle-audio-system.md). The `BattleAudioManager` instance is passed as an optional third parameter to `playAnimationEvent()`:
+
+```typescript
+async function playAnimationEvent(
+  scene: AnimationScene,
+  event: AnimationEvent,
+  audio?: BattleAudioManager
+): Promise<void>
+```
+
+When `audio` is `undefined` (e.g., during skip mode or restore), all SFX calls are silently skipped.
+
+### Move SFX Sequencing
+
+Move sound effects play concurrently with the visual animation using `Promise.all`:
+
+```
+  playMove(scene, event, audio)
+      │
+      ├──▶ audio.playSfx(getMoveSfxUrl(moveName))  ─┐
+      │                                               ├── Promise.all
+      └──▶ moveAnimation(scene, attacker, defender)  ─┘
+      │
+      ▼
+  250ms pause after move animation
+```
+
+`playSfx()` returns a promise that resolves when the audio buffer finishes playing. If the move's SFX file doesn't exist (404), the promise resolves silently without blocking the visual animation.
+
+### Effectiveness SFX and skipHitSfx
+
+The `processPendingEvents` loop in `process-pending-events.ts` tracks whether a super-effective or resisted SFX has already played. When it has, the following `damage` event gets `skipHitSfx = true` on its `AnimationEvent`, preventing a double hit sound:
+
+```
+  Event sequence:            Audio behavior:
+  ──────────────             ───────────────
+  |move|...                  effectivenessPlayed = false
+  |-supereffective|...       playSfx(supereffective) → effectivenessPlayed = true
+  |-damage|...|120/270       skipHitSfx = true → NO normal hit SFX
+                             (flinch animation still plays)
+
+  Without super/resisted:
+  |move|...                  effectivenessPlayed = false
+  |-damage|...|120/270       skipHitSfx = false → plays normal hit SFX
+```
+
+### State Animation SFX Map
+
+| Handler | SFX Played | Notes |
+|---------|-----------|-------|
+| `playMove` | `getMoveSfxUrl(moveName)` | Concurrent with visual animation |
+| `playDamage` | `STATE_SFX.damage` | Skipped when `skipHitSfx` is set |
+| `playFaint` | `STATE_SFX.faint` | Before drop animation |
+| `playSwitchIn` | `STATE_SFX.switchIn` + `getCryUrl(species)` | Pokeball sound + species cry |
+| `playSwitchOut` | `STATE_SFX.switchOut` | Pokeball sound |
+| `playBoost` | `STATE_SFX.boost` | — |
+| `playUnboost` | `STATE_SFX.unboost` | — |
+| `playStatus` | `STATE_SFX.status` | — |
+| `playSuperEffective` | `STATE_SFX.supereffective` | With screen shake |
+| `playResisted` | `STATE_SFX.resisted` | — |
+| `playCrit` | — | No sound |
+| `playMiss` | — | No sound |
+
 ## PokemonSprite — Animation Target
 
 The `PokemonSprite` component wraps its sprite image in a `motion.div` and registers a `SpriteHandle` with the animation context:
@@ -841,6 +927,7 @@ The `turnProcessing` flag in `BattleUIState` controls whether the action panel i
 
 ## Related Documentation
 
+- [Battle Audio System](./battle-audio-system.md) — audio architecture, CORS proxy, volume controls, asset pipeline
 - [Battle Frontend Architecture](./battle-frontend-architecture.md) — state management, protocol pipeline, component structure
 - [@pkmn Integration Guide](./battle-pkmn-integration.md) — how @pkmn packages power the frontend
 - [Battle System (Backend)](./battle-system.md) — server architecture, @pkmn/sim usage

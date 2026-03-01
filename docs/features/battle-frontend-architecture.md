@@ -18,6 +18,7 @@
 - [Context Providers](#context-providers)
   - [BattleSocketProvider](#battlesocketprovider)
   - [AnimationProvider](#animationprovider)
+  - [AudioProvider](#audioprovider)
 - [Socket Communication](#socket-communication)
   - [Connection Lifecycle](#connection-lifecycle)
   - [Auth Refresh Flow](#auth-refresh-flow)
@@ -279,6 +280,55 @@ The `@pkmn/client` `Battle.update()` method overwrites `pokemon.hp` from the req
      reads the NEW |request| event, hp values match
 ```
 
+### Deferred BATTLE_END
+
+`BATTLE_END` can arrive from the server while animations are still processing (e.g., the final faint animation is playing). Applying it immediately would show the victory/defeat overlay before the player sees the knockout.
+
+The dispatch wrapper defers the end event using `deferredEndRef`:
+
+```
+  BATTLE_END arrives
+      │
+      ├── processingRef.current === true OR pending.length > 0?
+      │   YES → stash in deferredEndRef (do nothing now)
+      │   NO  → dispatch immediately (phase → 'ended')
+      │
+      ...animations finish...
+      │
+  processEvents finally block:
+      │
+      ├── deferredEndRef.current !== null?
+      │   YES → dispatch(deferredEndRef.current), clear ref
+      └── NO  → (nothing to flush)
+```
+
+This ensures the end overlay appears only after all animations have completed and the final state is visible.
+
+### Reconnection and BATTLE_RESTORED
+
+When a player reconnects (page refresh, network drop), the server sends `BATTLE_RESTORED` instead of replaying `BATTLE_START` + all `BATTLE_UPDATE` events. This prevents the client from replaying every animation from the start of the battle.
+
+```
+  Player disconnects → reconnects
+      │
+      ▼
+  Server: handleConnection / handleRejoin
+      │
+      ├── Sends BATTLE_RESTORED (not BATTLE_START)
+      │   { protocol: <full battle state>, moveAnimConfigs: {...} }
+      │
+      ▼
+  Client: dispatch(BATTLE_RESTORED)
+      │
+      ├── Creates fresh Battle + LogFormatter
+      ├── Calls processBattleProtocol() — applies ALL events instantly
+      │   (no animations, no delays — just battle.add() in a loop)
+      ├── Dispatches _BATTLE_RESTORED → phase: 'battle'
+      └── Player sees current battle state immediately
+```
+
+`processBattleProtocol()` iterates `Protocol.parse(text)`, calls `formatter.formatHTML()` and `battle.add()` for each event, then calls `battle.update(battle.request)` at the end. Log entries are collected and displayed immediately.
+
 ### Off-Screen and Background Tab Handling
 
 When the browser tab is hidden or the arena component is unmounted:
@@ -369,6 +419,23 @@ const stableScene = useRef<AnimationScene>({
 ```
 
 Animation functions receive `stableScene` and always invoke the latest implementations, regardless of when they were captured.
+
+### AudioProvider
+
+Mounted inside `BattleContainer` alongside `AnimationProvider`. Manages battle audio (BGM, SFX, cries) via the Web Audio API.
+
+```
+  AudioProvider
+  ├── BattleAudioManager (singleton, useRef)
+  │   ├── AudioContext + gain chain (master/bgm/sfx)
+  │   └── AudioBuffer cache (Map<string, AudioBuffer>)
+  │
+  ├── Reactive state mirrors (isMuted, volumes, isUnlocked)
+  │
+  └── useAudio() hook → { audio, setMasterVolume, toggleMute, ... }
+```
+
+The `audio` instance is passed to `playAnimationEvent()` so animation handlers can play SFX concurrently with visuals. See [Battle Audio System](./battle-audio-system.md) for full details.
 
 ## Socket Communication
 
@@ -489,6 +556,7 @@ On mobile, team panels collapse into a 2-column grid below the action panel.
 | `WeatherBar` | `field-effects.tsx` | Top-edge badges for weather, terrain, pseudo-weather |
 | `SideConditions` | `field-effects.tsx` | Entry hazard and screen badges per side |
 | `TeamPanel` | `team-panel.tsx` | Team roster — full data for player, revealed-only for opponent |
+| `AudioControls` | `audio-controls.tsx` | Volume popover: mute toggle + master/BGM/SFX sliders |
 
 ### Action Components
 
@@ -521,9 +589,14 @@ The `ActionPanel` renders one of four states depending on `battle.request.reques
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `BattleLobby` | `battle-lobby.tsx` | Queue entry, format/team selection |
+| `BattleLobby` | `battle-lobby.tsx` | Queue entry, format/team selection, match-found transition |
 | `QueueStatus` | `queue-status.tsx` | Animated queue position indicator |
 | `TeamSelector` | `team-selector.tsx` | Team dropdown before queuing |
+
+The lobby renders phase-dependent UI:
+- **`idle`** — team selection card + "Find Battle" button
+- **`queued`** — `QueueStatus` with cancel button
+- **`matched` / `battle`** — transition card: pulsing swords icon, "Match Found!" + opponent name, spinner + "Waiting for battle to start..." (handles the gap between match acceptance and `BATTLE_START` arrival)
 
 ### Global Components
 
@@ -550,6 +623,7 @@ The `ActionPanel` renders one of four states depending on `battle.request.reques
 
 ## Related Documentation
 
+- [Battle Audio System](./battle-audio-system.md) — audio architecture, CORS proxy, volume controls, asset pipeline
 - [Battle System (Backend)](./battle-system.md) — server architecture, Redis model, matchmaking flows
 - [@pkmn Integration Guide](./battle-pkmn-integration.md) — how @pkmn packages power the frontend
 - [Animation System](./battle-animation-system.md) — animation architecture, move registry, extending animations

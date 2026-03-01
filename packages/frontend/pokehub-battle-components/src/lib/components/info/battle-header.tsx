@@ -12,6 +12,7 @@ import {
 } from '@pokehub/frontend/shared-ui-components';
 import { Flag } from 'lucide-react';
 import { useState } from 'react';
+import { AudioControls } from '../battlefield/audio-controls';
 import { TurnTimer } from './turn-timer';
 
 interface BattleHeaderProps {
@@ -48,6 +49,8 @@ export function BattleHeader({
             startedAt={timer.startedAt}
           />
         )}
+        <AudioControls />
+        <div className="h-4 w-px bg-border/60" />
         <Button
           variant="ghost"
           size="sm"

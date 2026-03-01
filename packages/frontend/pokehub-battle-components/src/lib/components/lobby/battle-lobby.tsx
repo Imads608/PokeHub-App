@@ -4,7 +4,6 @@ import { useBattleSocketContext } from '../../context/battle-socket.context';
 import { QueueStatus } from './queue-status';
 import { TeamSelector } from './team-selector';
 import { useUserTeams } from '@pokehub/frontend/pokehub-team-builder';
-import type { GenerationNum } from '@pkmn/dex';
 import { getShowdownFormatId } from '@pokehub/frontend/dex-data-provider';
 import {
   Button,
@@ -62,8 +61,8 @@ export function BattleLobby() {
     );
   }
 
-  // Show match found transition
-  if (state.phase === 'matched') {
+  // Show transition when matched or battle is starting
+  if (state.phase === 'matched' || state.phase === 'battle') {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-8">
         <Card>
@@ -75,6 +74,10 @@ export function BattleLobby() {
                 vs {state.opponent.name}
               </p>
             )}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              Waiting for battle to start...
+            </div>
           </CardContent>
         </Card>
       </div>

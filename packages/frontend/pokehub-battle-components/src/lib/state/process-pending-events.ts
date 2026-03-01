@@ -36,10 +36,24 @@ export async function processPendingEvents(
 ): Promise<void> {
   const { battle, formatter, pending, skipRef, rawDispatch } = deps;
   const logLines: string[] = [];
+  let effectivenessPlayed = false;
 
   while (pending.length > 0) {
     const event = pending.shift()!;
     const cmd = String(event.args[0]);
+
+    // Track effectiveness events so the next damage event skips its hit SFX
+    // (super effective / not very effective already played the hit sound).
+    if (event.animEvent?.type === 'supereffective' || event.animEvent?.type === 'resisted') {
+      effectivenessPlayed = true;
+    } else if (event.animEvent?.type === 'damage') {
+      if (effectivenessPlayed) {
+        event.animEvent.skipHitSfx = true;
+      }
+      effectivenessPlayed = false;
+    } else if (event.animEvent?.type === 'move') {
+      effectivenessPlayed = false;
+    }
 
     // Moves: log appears before animation so the player reads what's happening.
     // Switch/drag: handled separately (needs state before animation for sprite mount).

@@ -1,4 +1,10 @@
 import type { AnimationEvent, AnimationScene } from '../types/animation.types';
+import type { BattleAudioManager } from '../audio/battle-audio-manager';
+import {
+  STATE_SFX,
+  getMoveSfxUrl,
+  getCryUrl,
+} from '../audio/sound-catalog';
 import { DURATION } from './easing';
 import { getMoveAnimation } from './move-registry';
 import { genericPhysical, genericSpecial, genericStatus } from './generic-anims';
@@ -10,45 +16,46 @@ import { Dex } from '@pkmn/dex';
  */
 export async function playAnimationEvent(
   scene: AnimationScene,
-  event: AnimationEvent
+  event: AnimationEvent,
+  audio?: BattleAudioManager
 ): Promise<void> {
   switch (event.type) {
     case 'move':
-      return playMove(scene, event);
+      return playMove(scene, event, audio);
 
     case 'damage':
-      return playDamage(scene, event);
+      return playDamage(scene, event, audio);
 
     case 'heal':
       return playHeal(scene, event);
 
     case 'faint':
-      return playFaint(scene, event);
+      return playFaint(scene, event, audio);
 
     case 'switch-in':
-      return playSwitchIn(scene, event);
+      return playSwitchIn(scene, event, audio);
 
     case 'switch-out':
-      return playSwitchOut(scene, event);
+      return playSwitchOut(scene, event, audio);
 
     case 'boost':
     case 'unboost':
-      return playBoost(scene, event);
+      return playBoost(scene, event, audio);
 
     case 'status':
-      return playStatus(scene, event);
+      return playStatus(scene, event, audio);
 
     case 'supereffective':
-      return playSuperEffective(scene);
+      return playSuperEffective(scene, audio);
 
     case 'crit':
       return playCrit(scene);
 
     case 'miss':
-      return playMiss(scene);
+      return scene.delay(100);
 
     case 'resisted':
-      // Subtle — no big visual, just a brief dim
+      void audio?.playSfx(STATE_SFX.resisted);
       return scene.delay(100);
 
     case 'weather':
@@ -65,7 +72,8 @@ export async function playAnimationEvent(
 
 async function playMove(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'move' }>
+  event: Extract<AnimationEvent, { type: 'move' }>,
+  audio?: BattleAudioManager
 ) {
   const attacker = scene.getSprite(event.attacker);
   const defender = scene.getSprite(event.defender);
@@ -74,30 +82,36 @@ async function playMove(
     return;
   }
 
-  // Check for a registered move animation (lazy-loaded)
+  // Run move SFX and visual animation in parallel, wait for both to finish
+  const sfxPromise = audio?.playSfx(getMoveSfxUrl(event.moveName)) ?? Promise.resolve();
+
   const moveAnim = await getMoveAnimation(event.moveName);
+  let animPromise: Promise<void>;
   if (moveAnim) {
-    await moveAnim(scene, attacker, defender);
-    return;
+    animPromise = moveAnim(scene, attacker, defender);
+  } else {
+    const category = Dex.moves.get(event.moveName)?.category;
+    if (category === 'Special') {
+      animPromise = genericSpecial(scene, attacker, defender);
+    } else if (category === 'Status') {
+      animPromise = genericStatus(scene, attacker, defender);
+    } else {
+      animPromise = genericPhysical(scene, attacker, defender);
+    }
   }
 
-  // Generic fallback — pick animation based on move category
-  const dexMove = Dex.moves.get(event.moveName);
-  const category = dexMove?.category;
-  if (category === 'Special') {
-    await genericSpecial(scene, attacker, defender);
-  } else if (category === 'Status') {
-    await genericStatus(scene, attacker, defender);
-  } else {
-    await genericPhysical(scene, attacker, defender);
-  }
+  await Promise.all([sfxPromise, animPromise]);
+
+  // Brief pause after move animation before the hit sound / damage plays
+  await scene.delay(250);
 }
 
 // ── Damage ──────────────────────────────────────────────────────────────
 
 async function playDamage(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'damage' }>
+  event: Extract<AnimationEvent, { type: 'damage' }>,
+  audio?: BattleAudioManager
 ) {
   const sprite = scene.getSprite(event.pokemon);
   if (!sprite) {
@@ -105,13 +119,23 @@ async function playDamage(
     return;
   }
 
-  // Flinch shake
-  const shakeKeyframes = [0, -6, 6, -4, 4, -2, 0];
-  for (const x of shakeKeyframes) {
-    sprite.setTransform({ x });
-    await scene.delay(DURATION.DAMAGE / shakeKeyframes.length);
+  if (!event.skipHitSfx) {
+    void audio?.playSfx(STATE_SFX.damage);
   }
-  sprite.setTransform({ x: 0 });
+
+  // Flinch: blink white and shake
+  sprite.setTransform({ x: -6, brightness: 5 });
+  await scene.delay(80);
+  sprite.setTransform({ x: 6, brightness: 1 });
+  await scene.delay(80);
+  sprite.setTransform({ x: -4, brightness: 5 });
+  await scene.delay(80);
+  sprite.setTransform({ x: 4, brightness: 1 });
+  await scene.delay(80);
+  sprite.setTransform({ x: -2, brightness: 3 });
+  await scene.delay(60);
+  sprite.setTransform({ x: 0, brightness: 1 });
+  await scene.delay(200);
 
   // Damage popup
   const dmg = event.prevHp - event.newHp;
@@ -151,13 +175,16 @@ async function playHeal(
 
 async function playFaint(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'faint' }>
+  event: Extract<AnimationEvent, { type: 'faint' }>,
+  audio?: BattleAudioManager
 ) {
   const sprite = scene.getSprite(event.pokemon);
   if (!sprite) {
     await scene.delay(DURATION.FAINT);
     return;
   }
+
+  void audio?.playSfx(STATE_SFX.faint);
 
   // Drop downward + fade out
   sprite.setTransform({ y: 40, opacity: 0, scale: 0.8 });
@@ -168,7 +195,8 @@ async function playFaint(
 
 async function playSwitchIn(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'switch-in' }>
+  event: Extract<AnimationEvent, { type: 'switch-in' }>,
+  audio?: BattleAudioManager
 ) {
   // The sprite is already mounted (state applied before animation).
   // Wait a frame for React to render and register the sprite.
@@ -180,12 +208,20 @@ async function playSwitchIn(
     return;
   }
 
+  void audio?.playSfx(STATE_SFX.switchIn);
+
   // Start invisible
   sprite.setTransform({ scale: 0, opacity: 0, y: 20 });
   await scene.delay(50);
 
   // White flash as Pokemon materializes
   scene.flashOverlay('rgba(255, 255, 255, 0.25)', 200);
+
+  // Play the Pokemon's cry — resolve base species so regional forms
+  // (e.g. "Weezing-Galar") map to the base cry file ("weezing")
+  const species = Dex.species.get(event.species);
+  const cryId = Dex.species.get(species.baseSpecies).id || species.id;
+  void audio?.playSfx(getCryUrl(cryId));
 
   // Grow into position with slight overshoot
   sprite.setTransform({ scale: 1.15, opacity: 1, y: -5 });
@@ -200,13 +236,16 @@ async function playSwitchIn(
 
 async function playSwitchOut(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'switch-out' }>
+  event: Extract<AnimationEvent, { type: 'switch-out' }>,
+  audio?: BattleAudioManager
 ) {
   const sprite = scene.getSprite(event.pokemon);
   if (!sprite) {
     await scene.delay(DURATION.SWITCH_OUT);
     return;
   }
+
+  void audio?.playSfx(STATE_SFX.switchOut);
 
   // Red flash as Pokemon is recalled
   scene.flashOverlay('rgba(239, 68, 68, 0.2)', 200);
@@ -223,10 +262,13 @@ async function playSwitchOut(
 
 async function playBoost(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'boost' | 'unboost' }>
+  event: Extract<AnimationEvent, { type: 'boost' | 'unboost' }>,
+  audio?: BattleAudioManager
 ) {
   const isPositive = event.type === 'boost';
   const color = isPositive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+
+  void audio?.playSfx(isPositive ? STATE_SFX.boost : STATE_SFX.unboost);
 
   // Flash the overlay
   await scene.flashOverlay(color, DURATION.BOOST);
@@ -254,29 +296,31 @@ const statusColors: Record<string, string> = {
 
 async function playStatus(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'status' }>
+  event: Extract<AnimationEvent, { type: 'status' }>,
+  audio?: BattleAudioManager
 ) {
+  void audio?.playSfx(STATE_SFX.status);
   const color = statusColors[event.status] ?? 'rgba(148, 163, 184, 0.3)';
   await scene.flashOverlay(color, DURATION.STATUS);
 }
 
 // ── Super effective ─────────────────────────────────────────────────────
 
-async function playSuperEffective(scene: AnimationScene) {
+async function playSuperEffective(
+  scene: AnimationScene,
+  audio?: BattleAudioManager
+) {
+  void audio?.playSfx(STATE_SFX.supereffective);
   await scene.shakeScreen(4, DURATION.SUPER_EFFECTIVE);
   await scene.flashOverlay('rgba(255, 255, 255, 0.2)', 100);
 }
 
 // ── Critical hit ────────────────────────────────────────────────────────
 
-async function playCrit(scene: AnimationScene) {
+async function playCrit(
+  scene: AnimationScene,
+) {
   await scene.shakeScreen(6, DURATION.CRIT);
   await scene.flashOverlay('rgba(255, 200, 0, 0.25)', 100);
 }
 
-// ── Miss ────────────────────────────────────────────────────────────────
-
-async function playMiss(scene: AnimationScene) {
-  // Brief flash indicating nothing happened
-  await scene.flashOverlay('rgba(128, 128, 128, 0.15)', 150);
-}

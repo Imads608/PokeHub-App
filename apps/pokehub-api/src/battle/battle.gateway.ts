@@ -395,12 +395,12 @@ export class BattleGateway
       const moveAnimConfigs = getMoveAnimConfigs(extractMoveNames(packedTeam));
 
       this.logger.log(
-        `Sending BATTLE_START (rejoin) to user ${userId} — battle ${battle.id}, slot: ${slot}`
+        `Sending BATTLE_RESTORED (rejoin) to user ${userId} — battle ${battle.id}, slot: ${slot}`
       );
       client.emit(BATTLE_EVENT, {
-        type: 'BATTLE_START',
+        type: 'BATTLE_RESTORED',
         battleId: battle.id,
-        initialState: slot === 'p1' ? battle.p1State : battle.p2State,
+        currentState: slot === 'p1' ? battle.p1State : battle.p2State,
         moveAnimConfigs,
       } satisfies ServerBattleEvent);
 

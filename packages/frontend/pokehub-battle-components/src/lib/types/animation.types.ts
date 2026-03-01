@@ -4,7 +4,7 @@ import type { Transition } from 'motion/react';
 
 export type AnimationEvent =
   | { type: 'move'; attacker: string; defender: string; moveName: string }
-  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
+  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number; skipHitSfx?: boolean }
   | { type: 'heal'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
   | { type: 'faint'; pokemon: string }
   | { type: 'switch-out'; pokemon: string }
@@ -27,6 +27,8 @@ export interface SpriteTransform {
   scale?: number;
   rotate?: number;
   opacity?: number;
+  /** CSS brightness filter (1 = normal, 0 = black, 5+ = white flash) */
+  brightness?: number;
 }
 
 export const SPRITE_TRANSFORM_RESET: SpriteTransform = {
@@ -35,6 +37,7 @@ export const SPRITE_TRANSFORM_RESET: SpriteTransform = {
   scale: 1,
   rotate: 0,
   opacity: 1,
+  brightness: 1,
 };
 
 /** Reference to a Pokemon sprite for animation targeting */

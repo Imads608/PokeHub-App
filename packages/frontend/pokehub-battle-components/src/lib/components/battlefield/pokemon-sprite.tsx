@@ -81,6 +81,7 @@ export function PokemonSprite({
           scale: fainted ? 0.9 : (transform.scale ?? 1),
           rotate: transform.rotate ?? 0,
           opacity: fainted ? 0 : (transform.opacity ?? 1),
+          filter: `brightness(${transform.brightness ?? 1})`,
         }}
         transition={{
           duration: 0.4,

@@ -82,6 +82,8 @@ export function useBattleState() {
   const processingRef = useRef(false);
   /** Set to true to skip remaining animations (events still get applied) */
   const skipRef = useRef(false);
+  /** BATTLE_END deferred until animations finish */
+  const deferredEndRef = useRef<BattleEvent | null>(null);
 
   const [reducerState, rawDispatch] = useReducer(
     battleReducer,
@@ -183,6 +185,16 @@ export function useBattleState() {
         break;
       }
 
+      case 'BATTLE_END': {
+        if (processingRef.current || pendingEventsRef.current.length > 0) {
+          log.info('Deferring BATTLE_END until animations finish');
+          deferredEndRef.current = event;
+        } else {
+          rawDispatch(event);
+        }
+        break;
+      }
+
       default: {
         log.debug(event.type);
         rawDispatch(event);
@@ -229,6 +241,13 @@ export function useBattleState() {
 
         processingRef.current = false;
         skipRef.current = false;
+
+        // Flush deferred BATTLE_END now that animations are done
+        const deferred = deferredEndRef.current;
+        if (deferred) {
+          deferredEndRef.current = null;
+          rawDispatch(deferred);
+        }
       }
     },
     []
