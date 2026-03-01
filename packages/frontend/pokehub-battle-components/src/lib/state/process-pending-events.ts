@@ -136,8 +136,9 @@ export async function processPendingEvents(
     }
 
     // Consequence log lines (damage, heal, etc.) appear after the
-    // state change so the player sees the HP bar drop first
-    if (!isActionStarter && html) {
+    // state change so the player sees the HP bar drop first.
+    // Switch events handle their own log lines above — skip them here.
+    if (!isActionStarter && !isSwitchEvent && html) {
       logLines.push(html);
       if (event.animEvent && playAnimation && !skipRef.current) {
         await new Promise((r) => setTimeout(r, DURATION.LOG_READ));

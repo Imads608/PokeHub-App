@@ -31,10 +31,13 @@ export function registerMoveAnimation(moveId: string, loader: LazyMoveAnim) {
 /**
  * Load move animation configs received from the server via BATTLE_START.
  * Called once per battle — only includes moves for the player's own team.
+ * Clears both the resolved animation cache and server configs so animations
+ * from previous battles don't accumulate in memory.
  */
 export function loadServerMoveConfigs(
   configs: Record<string, MoveAnimConfig>
 ): void {
+  cache.clear();
   serverConfigs.clear();
   for (const [key, value] of Object.entries(configs)) {
     serverConfigs.set(key, value);
