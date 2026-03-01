@@ -1,36 +1,15 @@
 'use client';
 
 import { PokeHubRouter } from '../../router';
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import {
-  BattleSocketProvider,
-  useBattleSocketContext,
-} from '@pokehub/frontend/pokehub-battle-components';
 import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
 import { lazy, Suspense, useEffect } from 'react';
 
-const ActiveBattleBar = lazy(
-  () => import(/* webpackChunkName: "active-battle-bar" */ './lazy-battle')
+const LazyBattleShell = lazy(
+  () => import(/* webpackChunkName: "battle-shell" */ './battle-shell')
 );
-
-function LazyBattleBar() {
-  const { state } = useBattleSocketContext();
-  const isActive = state.phase === 'battle' || state.phase === 'ended';
-  if (!isActive) return null;
-  return <ActiveBattleBar />;
-}
-
-function BattleAwareNav() {
-  const { state } = useBattleSocketContext();
-  const activeBattleId =
-    state.phase === 'battle' || state.phase === 'ended'
-      ? state.battleId ?? undefined
-      : undefined;
-  return <AppNav activeBattleId={activeBattleId} />;
-}
 
 export const App = ({
   children,
@@ -49,13 +28,16 @@ export const App = ({
         redirectOnLogin={PokeHubRouter.redirectOnLogin}
         privilegedRoutes={PokeHubRouter.privilegedRoutes}
       >
-        <BattleSocketProvider>
-          <BattleAwareNav />
-          {children}
-          <Suspense fallback={null}>
-            <LazyBattleBar />
-          </Suspense>
-        </BattleSocketProvider>
+        <Suspense
+          fallback={
+            <>
+              <AppNav />
+              {children}
+            </>
+          }
+        >
+          <LazyBattleShell>{children}</LazyBattleShell>
+        </Suspense>
         <Toaster
           position="top-center"
           toastOptions={{
