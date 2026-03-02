@@ -16,19 +16,6 @@ const ALLOWED_PREFIXES = [
   'xd-',
 ];
 
-const cache = new Map<string, ArrayBuffer>();
-
-function audioResponse(body: ArrayBuffer, filePath: string) {
-  const contentType = filePath.endsWith('.ogg') ? 'audio/ogg' : 'audio/mpeg';
-  return new Response(body, {
-    headers: {
-      'Content-Type': contentType,
-      'Content-Length': String(body.byteLength),
-      'Cache-Control': 'public, max-age=604800, immutable',
-    },
-  });
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ path: string[] }> }
@@ -44,13 +31,7 @@ export async function GET(
     return new NextResponse(null, { status: 400 });
   }
 
-  // Check cache
-  const cached = cache.get(filePath);
-  if (cached) {
-    return audioResponse(cached, filePath);
-  }
-
-  // Fetch from Showdown
+  // Fetch from Showdown and stream through — browser caches via Cache-Control header
   const url = `${SHOWDOWN_AUDIO_BASE}/${filePath}`;
   try {
     const response = await fetch(url);
@@ -58,10 +39,13 @@ export async function GET(
       return new NextResponse(null, { status: 404 });
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    cache.set(filePath, arrayBuffer);
-
-    return audioResponse(arrayBuffer, filePath);
+    const contentType = filePath.endsWith('.ogg') ? 'audio/ogg' : 'audio/mpeg';
+    return new Response(response.body, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=604800, immutable',
+      },
+    });
   } catch {
     return new NextResponse(null, { status: 502 });
   }
