@@ -3,14 +3,11 @@ module.exports = {
     plugins: ['@statoscope/webpack'],
     reporters: ['@statoscope/console'],
     rules: {
-      // First Load JS limits (gzipped, initial chunks only)
-      // maxInitialSize = initial chunks only (what Next.js reports as "First Load JS")
-      '@statoscope/webpack/entry-download-size-limits': [
-        'error',
-        { global: { maxInitialSize: 550 * 1024 } }, // 550KB limit
-      ],
+      // Absolute per-route size limits are validated by tools/validate-bundle-size.ts
+      // instead of Statoscope's entry-download-size-limits rule, which inflates sizes
+      // for Next.js App Router (see https://github.com/statoscope/statoscope/issues/256).
 
-      // Fail PR if First Load JS increases by more than 10KB vs main
+      // Fail PR if initial size increases by more than 10KB vs main (directional guard)
       '@statoscope/webpack/diff-entry-download-size-limits': [
         'error',
         { global: { maxInitialSizeDiff: 10 * 1024 } },

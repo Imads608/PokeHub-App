@@ -404,12 +404,33 @@ jobs:
               --reference ./main-stats/apps/pokehub-app/statoscope-stats-client.json 2>&1); then
               VALIDATION_FAILED="true"
             fi
+
+            # Accurate per-route size validation (Statoscope inflates sizes for App Router)
+            echo ""
+            echo "--- Per-route bundle size validation ---"
+            if ! ROUTE_OUTPUT=$(npx tsx tools/validate-bundle-size.ts \
+              apps/pokehub-app/statoscope-stats-client.json \
+              --reference ./main-stats/apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+            echo "$ROUTE_OUTPUT"
+            OUTPUT="$OUTPUT"$'\n'"$ROUTE_OUTPUT"
           else
             echo "No main branch reference, validating absolute limits only..."
             if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json 2>&1); then
               VALIDATION_FAILED="true"
             fi
+
+            # Accurate per-route size validation (absolute limits only)
+            echo ""
+            echo "--- Per-route bundle size validation ---"
+            if ! ROUTE_OUTPUT=$(npx tsx tools/validate-bundle-size.ts \
+              apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+            echo "$ROUTE_OUTPUT"
+            OUTPUT="$OUTPUT"$'\n'"$ROUTE_OUTPUT"
           fi
 
           echo "$OUTPUT"

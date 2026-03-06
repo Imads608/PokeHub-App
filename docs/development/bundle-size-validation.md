@@ -24,9 +24,11 @@ When validation fails, authorized reviewers can approve the increase via a PR co
 
 1. For PRs, the main branch stats are downloaded for comparison
 2. Statoscope CLI validates:
-   - First Load JS is under the absolute limit (550KB)
-   - First Load JS increase vs main is under the diff limit (10KB)
-3. If validation fails, a comment is posted with instructions
+   - Initial bundle increase vs main is under the diff limit (10KB)
+3. `tools/validate-bundle-size.ts` validates:
+   - Accurate per-route initial bundle is under the absolute limit (550KB)
+   - Per-route increase vs main is under 10KB
+4. If either validation fails, a comment is posted with instructions
 
 ### Approval Phase
 
@@ -45,13 +47,9 @@ module.exports = {
     plugins: ['@statoscope/webpack'],
     reporters: ['@statoscope/console'],
     rules: {
-      // First Load JS absolute limit (gzipped)
-      '@statoscope/webpack/entry-download-size-limits': [
-        'error',
-        { global: { maxInitialSize: 550 * 1024 } }, // 550KB
-      ],
+      // Absolute per-route limits are in tools/validate-bundle-size.ts
 
-      // First Load JS diff limit vs main branch
+      // Initial bundle diff limit vs main branch
       '@statoscope/webpack/diff-entry-download-size-limits': [
         'error',
         { global: { maxInitialSizeDiff: 10 * 1024 } }, // 10KB
@@ -67,15 +65,13 @@ module.exports = {
 };
 ```
 
-### Understanding the Metrics
+### Why Two Validation Steps
 
-| Metric        | Statoscope Option | What It Measures                          |
-| ------------- | ----------------- | ----------------------------------------- |
-| First Load JS | `maxInitialSize`  | Initial chunks loaded on first page visit |
-| Total Size    | `maxSize`         | All chunks (initial + lazy-loaded)        |
-| Async Size    | `maxAsyncSize`    | Only lazy-loaded chunks                   |
+Statoscope's `entry-download-size-limits` rule recursively walks chunk children and uses webpack's global `initial` flag per-chunk (not per-entrypoint). In Next.js App Router, the root layout is parent to all page chunks in webpack's graph, so statoscope rolls up every page's chunks into `app/layout`'s "initial size" — producing inflated numbers ([statoscope#256](https://github.com/statoscope/statoscope/issues/256)).
 
-**First Load JS** is what Next.js reports in its build output and is the most important metric for initial page load performance.
+**Statoscope diff rule** (`diff-entry-download-size-limits`) is kept because relative comparisons are still directionally correct — both sides use the same methodology.
+
+**`tools/validate-bundle-size.ts`** computes accurate per-route sizes by summing the deduplicated gzipped assets from `main` + `main-app` + layout chain + page entrypoint. Routes and layout chains are auto-discovered from the stats JSON.
 
 ## Approving Bundle Size Increases
 
@@ -189,11 +185,16 @@ Test bundle validation locally before pushing:
 # Build with analysis enabled
 ANALYZE=true nx build pokehub-app
 
-# Validate against absolute limits only
-npx @statoscope/cli validate \
-  --input apps/pokehub-app/statoscope-stats-client.json
+# Validate per-route sizes (absolute limits)
+npx tsx tools/validate-bundle-size.ts \
+  apps/pokehub-app/statoscope-stats-client.json
 
-# Compare against a reference (e.g., previous build)
+# Compare per-route sizes against a reference
+npx tsx tools/validate-bundle-size.ts \
+  apps/pokehub-app/statoscope-stats-client.json \
+  --reference path/to/reference-stats.json
+
+# Run statoscope diff validation (requires reference)
 npx @statoscope/cli validate \
   --input apps/pokehub-app/statoscope-stats-client.json \
   --reference path/to/reference-stats.json
@@ -220,12 +221,13 @@ These reports show:
 
 ## Configuration Files
 
-| File                                    | Purpose                                |
-| --------------------------------------- | -------------------------------------- |
-| `statoscope.config.js`                  | Validation rules and thresholds        |
-| `.github/bundle-reviewers.yml`          | Authorized approvers list              |
-| `.github/workflows/ci.yml`              | Main CI workflow with validation steps |
-| `.github/workflows/bundle-approval.yml` | Handles approval comments              |
+| File                                    | Purpose                                        |
+| --------------------------------------- | ---------------------------------------------- |
+| `statoscope.config.js`                  | Statoscope diff rules and thresholds           |
+| `tools/validate-bundle-size.ts`         | Accurate per-route size validation              |
+| `.github/bundle-reviewers.yml`          | Authorized approvers list                      |
+| `.github/workflows/ci.yml`              | Main CI workflow with validation steps         |
+| `.github/workflows/bundle-approval.yml` | Handles approval comments                      |
 
 ## Troubleshooting
 
