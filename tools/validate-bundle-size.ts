@@ -217,7 +217,12 @@ function main(): void {
     const size = computeRouteSize(stats, gzipMap, sharedAssets, route.layers);
     let refSize: number | null = null;
     if (refStats && refGzipMap && refSharedAssets) {
-      refSize = computeRouteSize(refStats, refGzipMap, refSharedAssets, route.layers);
+      // Only compare if the page entrypoint exists in the reference stats.
+      // New routes won't have a baseline — skip diff check for those.
+      const pageEntry = route.layers[route.layers.length - 1];
+      if (refStats.entrypoints[pageEntry]) {
+        refSize = computeRouteSize(refStats, refGzipMap, refSharedAssets, route.layers);
+      }
     }
     results.push({ ...route, size, refSize });
   }
@@ -283,6 +288,17 @@ function main(): void {
           formatKB(r.size).padStart(10) +
           formatKB(r.refSize).padStart(10) +
           diffStr.padStart(10) +
+          '  ' +
+          statusIcon
+      );
+    } else if (refStats) {
+      // Route exists in PR but not in reference — new route
+      console.log(
+        '  ' +
+          r.path.padEnd(28) +
+          formatKB(r.size).padStart(10) +
+          '-'.padStart(10) +
+          'new'.padStart(10) +
           '  ' +
           statusIcon
       );

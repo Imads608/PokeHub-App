@@ -4,7 +4,7 @@ import type { Transition } from 'motion/react';
 
 export type AnimationEvent =
   | { type: 'move'; attacker: string; defender: string; moveName: string }
-  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number; skipHitSfx?: boolean }
+  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number; skipHitSfx?: boolean; modifier?: 'supereffective' | 'resisted' }
   | { type: 'heal'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
   | { type: 'faint'; pokemon: string }
   | { type: 'switch-out'; pokemon: string }

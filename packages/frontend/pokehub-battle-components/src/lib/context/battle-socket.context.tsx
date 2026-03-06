@@ -240,3 +240,8 @@ export function useBattleSocketContext(): BattleSocketContextValue {
   }
   return context;
 }
+
+/** Returns the battle socket context, or null if outside the provider (e.g. during Suspense fallback). */
+export function useBattleSocketContextOptional(): BattleSocketContextValue | null {
+  return useContext(BattleSocketContext);
+}

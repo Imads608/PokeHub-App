@@ -123,19 +123,32 @@ async function playDamage(
     void audio?.playSfx(STATE_SFX.damage);
   }
 
+  // Play modifier effect (super effective / resisted) in parallel with hit flash
+  let modifierPromise: Promise<void> | undefined;
+  if (event.modifier === 'supereffective') {
+    void audio?.playSfx(STATE_SFX.supereffective);
+    modifierPromise = scene.shakeScreen(4, DURATION.SUPER_EFFECTIVE);
+  } else if (event.modifier === 'resisted') {
+    void audio?.playSfx(STATE_SFX.resisted);
+  }
+
   // Flinch: blink white and shake
-  sprite.setTransform({ x: -6, brightness: 5 });
-  await scene.delay(80);
-  sprite.setTransform({ x: 6, brightness: 1 });
-  await scene.delay(80);
-  sprite.setTransform({ x: -4, brightness: 5 });
-  await scene.delay(80);
-  sprite.setTransform({ x: 4, brightness: 1 });
-  await scene.delay(80);
-  sprite.setTransform({ x: -2, brightness: 3 });
-  await scene.delay(60);
-  sprite.setTransform({ x: 0, brightness: 1 });
-  await scene.delay(200);
+  const flinchPromise = (async () => {
+    sprite.setTransform({ x: -6, brightness: 5 });
+    await scene.delay(80);
+    sprite.setTransform({ x: 6, brightness: 1 });
+    await scene.delay(80);
+    sprite.setTransform({ x: -4, brightness: 5 });
+    await scene.delay(80);
+    sprite.setTransform({ x: 4, brightness: 1 });
+    await scene.delay(80);
+    sprite.setTransform({ x: -2, brightness: 3 });
+    await scene.delay(60);
+    sprite.setTransform({ x: 0, brightness: 1 });
+    await scene.delay(200);
+  })();
+
+  await Promise.all([flinchPromise, modifierPromise].filter(Boolean));
 
   // Damage popup
   const dmg = event.prevHp - event.newHp;

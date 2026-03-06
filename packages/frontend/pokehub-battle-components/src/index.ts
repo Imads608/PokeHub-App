@@ -2,6 +2,7 @@
 export {
   BattleSocketProvider,
   useBattleSocketContext,
+  useBattleSocketContextOptional,
   type BattleSocketContextValue,
 } from './lib/context/battle-socket.context';
 

@@ -36,23 +36,27 @@ export async function processPendingEvents(
 ): Promise<void> {
   const { battle, formatter, pending, skipRef, rawDispatch } = deps;
   const logLines: string[] = [];
-  let effectivenessPlayed = false;
 
   while (pending.length > 0) {
     const event = pending.shift()!;
     const cmd = String(event.args[0]);
 
-    // Track effectiveness events so the next damage event skips its hit SFX
-    // (super effective / not very effective already played the hit sound).
-    if (event.animEvent?.type === 'supereffective' || event.animEvent?.type === 'resisted') {
-      effectivenessPlayed = true;
-    } else if (event.animEvent?.type === 'damage') {
-      if (effectivenessPlayed) {
-        event.animEvent.skipHitSfx = true;
-      }
-      effectivenessPlayed = false;
-    } else if (event.animEvent?.type === 'move') {
-      effectivenessPlayed = false;
+    // When an effectiveness event (supereffective/resisted) is followed by a
+    // damage event, merge them so the SFX + screen shake play in parallel with
+    // the hit flash instead of sequentially.
+    if (
+      (event.animEvent?.type === 'supereffective' || event.animEvent?.type === 'resisted') &&
+      pending[0]?.animEvent?.type === 'damage'
+    ) {
+      const damageEvent = pending[0].animEvent;
+      damageEvent.modifier = event.animEvent.type;
+      damageEvent.skipHitSfx = true;
+
+      // Apply state for this effectiveness event but skip its standalone animation
+      battle.add(event.args, event.kwArgs);
+      const html = formatter.formatHTML(event.args, event.kwArgs);
+      if (html) logLines.push(html);
+      continue;
     }
 
     // Moves: log appears before animation so the player reads what's happening.
