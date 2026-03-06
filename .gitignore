@@ -62,3 +62,9 @@ tags
 # Bundle analysis
 **/statoscope-report-*.html
 **/statoscope-stats-*.json
+
+# Build artifacts
+*.tsbuildinfo
+
+# Claude Code plans
+.claude/plans/

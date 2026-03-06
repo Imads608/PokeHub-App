@@ -28,7 +28,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 export function BattleLobby() {
-  const { state, connected, joinQueue, leaveQueue, queueCounts, requestQueueCounts } =
+  const { state, connected, joinQueue, leaveQueue, queueCounts, observeQueue, unobserveQueue } =
     useBattleSocketContext();
   const { data: teams, isLoading: teamsLoading } = useUserTeams();
   const router = useRouter();
@@ -60,12 +60,13 @@ export function BattleLobby() {
     [queueCounts]
   );
 
-  // Request queue counts when lobby mounts and connection is ready
+  // Observe queue counts while the lobby is mounted
   useEffect(() => {
     if (connected) {
-      requestQueueCounts();
+      observeQueue();
+      return () => unobserveQueue();
     }
-  }, [connected, requestQueueCounts]);
+  }, [connected, observeQueue, unobserveQueue]);
 
   // Navigate to battle page when match starts
   useEffect(() => {

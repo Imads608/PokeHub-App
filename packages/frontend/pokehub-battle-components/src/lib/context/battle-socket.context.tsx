@@ -36,10 +36,12 @@ export interface BattleSocketContextValue {
   pendingVersion: number;
   /** Skip remaining animations (events still get applied) */
   skipAnimations: () => void;
-  /** Queue player counts per format, updated in real-time */
+  /** Queue player counts per format, updated in real-time while observing */
   queueCounts: Record<string, number>;
-  /** Request the latest queue counts from the server */
-  requestQueueCounts: () => void;
+  /** Join the lobby room to receive real-time queue count updates */
+  observeQueue: () => void;
+  /** Leave the lobby room to stop receiving queue count updates */
+  unobserveQueue: () => void;
 }
 
 const BattleSocketContext = createContext<BattleSocketContextValue | null>(
@@ -199,8 +201,12 @@ export function BattleSocketProvider({
     [emit]
   );
 
-  const requestQueueCounts = useCallback(() => {
-    emit({ type: 'GET_QUEUE_COUNTS' });
+  const observeQueue = useCallback(() => {
+    emit({ type: 'OBSERVE_QUEUE' });
+  }, [emit]);
+
+  const unobserveQueue = useCallback(() => {
+    emit({ type: 'UNOBSERVE_QUEUE' });
   }, [emit]);
 
   const connected = isConnected && serverAvailable;
@@ -221,7 +227,8 @@ export function BattleSocketProvider({
     pendingVersion,
     skipAnimations,
     queueCounts,
-    requestQueueCounts,
+    observeQueue,
+    unobserveQueue,
   };
 
   return (

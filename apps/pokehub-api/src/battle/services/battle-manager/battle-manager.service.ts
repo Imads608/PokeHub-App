@@ -141,10 +141,11 @@ class BattleManagerService implements IBattleManagerService {
       false // p2 hasn't chosen
     );
 
-    // Read deltas to advance cursors — the initial state IS the first delta.
-    // Subsequent reads of p1Delta/p2Delta will only return new data.
-    const p1Initial = instance.p1Delta;
-    const p2Initial = instance.p2Delta;
+    // The initial state IS the first delta — read full state and advance
+    // cursors so subsequent reads only return new data.
+    const p1Initial = instance.p1State;
+    const p2Initial = instance.p2State;
+    instance.advanceCursors();
 
     return {
       id: config.id,
@@ -379,9 +380,7 @@ class BattleManagerService implements IBattleManagerService {
     // so subsequent executeTurn calls only send deltas.
     const p1Full = instance.p1State;
     const p2Full = instance.p2State;
-    // Advance cursors past the full state
-    instance.p1Delta;
-    instance.p2Delta;
+    instance.advanceCursors();
 
     return {
       id: battleId,
@@ -519,8 +518,7 @@ class BattleManagerService implements IBattleManagerService {
     });
 
     // Advance cursors so subsequent executeTurn calls only send deltas
-    instance.p1Delta;
-    instance.p2Delta;
+    instance.advanceCursors();
 
     return {
       id: battleId,
@@ -644,6 +642,10 @@ class BattleManagerService implements IBattleManagerService {
         const delta = p2State.slice(p2Cursor);
         p2Cursor = p2State.length;
         return delta;
+      },
+      advanceCursors() {
+        p1Cursor = p1State.length;
+        p2Cursor = p2State.length;
       },
       ended: false,
       winnerId: null,
@@ -959,10 +961,12 @@ interface BattleInstance {
   p1State: string;
   /** Player 2 perspective — full accumulated output (for BATTLE_START / rejoin) */
   p2State: string;
-  /** Player 1 delta — new data since last call (for BATTLE_UPDATE) */
+  /** Player 1 delta — new data since last call (for BATTLE_UPDATE). Advances cursor on read. */
   p1Delta: string;
-  /** Player 2 delta — new data since last call (for BATTLE_UPDATE) */
+  /** Player 2 delta — new data since last call (for BATTLE_UPDATE). Advances cursor on read. */
   p2Delta: string;
+  /** Advance both cursors to current position without reading. Use after sending full state. */
+  advanceCursors(): void;
   ended: boolean;
   winnerId: string | null;
   /** Whether the sim is waiting for player choices. False while a turn is being processed. */

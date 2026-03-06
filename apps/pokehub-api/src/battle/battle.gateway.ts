@@ -510,16 +510,12 @@ export class BattleGateway
 
   @UseGuards(WsJwtGuard, WsThrottlerGuard)
   @WsThrottle(10, 60000)
-  @SubscribeMessage('GET_QUEUE_COUNTS')
-  async handleGetQueueCounts(
+  @SubscribeMessage('OBSERVE_QUEUE')
+  async handleObserveQueue(
     @ConnectedSocket() client: AuthenticatedSocket
   ): Promise<void> {
-    await this.emitQueueCounts(client);
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────
-
-  private async emitQueueCounts(client: AuthenticatedSocket): Promise<void> {
+    await client.join(BattleRooms.lobby);
+    // Send current counts immediately so the client doesn't start empty
     const counts = await this.matchmaking.getQueueCounts();
     client.emit(BATTLE_EVENT, {
       type: 'QUEUE_COUNTS',
@@ -527,9 +523,20 @@ export class BattleGateway
     } satisfies ServerBattleEvent);
   }
 
+  @UseGuards(WsJwtGuard, WsThrottlerGuard)
+  @WsThrottle(10, 60000)
+  @SubscribeMessage('UNOBSERVE_QUEUE')
+  handleUnobserveQueue(
+    @ConnectedSocket() client: AuthenticatedSocket
+  ): void {
+    client.leave(BattleRooms.lobby);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+
   private async broadcastQueueCounts(): Promise<void> {
     const counts = await this.matchmaking.getQueueCounts();
-    this.server.emit(BATTLE_EVENT, {
+    this.server.to(BattleRooms.lobby).emit(BATTLE_EVENT, {
       type: 'QUEUE_COUNTS',
       counts,
     } satisfies ServerBattleEvent);
