@@ -26,10 +26,8 @@ interface AnimationContextValue {
   effects: EffectSpriteConfig[];
   /** Active popups to render */
   popups: PopupConfig[];
-  /** Flash overlay state */
-  flashColor: string | null;
-  /** Screen shake offset */
-  shakeOffset: { x: number; y: number };
+  /** Ref for the flash overlay element — mutated imperatively to avoid re-renders */
+  flashRef: React.RefObject<HTMLDivElement | null>;
   /** The animation scene — used by processPendingEvents to play animations */
   scene: AnimationScene;
   /** The arena ref — components read this for positioning */
@@ -61,8 +59,7 @@ export function AnimationProvider({ children }: AnimationProviderProps) {
   const spritesRef = useRef<Map<string, SpriteHandle>>(new Map());
   const [effects, setEffects] = useState<EffectSpriteConfig[]>([]);
   const [popups, setPopups] = useState<PopupConfig[]>([]);
-  const [flashColor, setFlashColor] = useState<string | null>(null);
-  const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 });
+  const flashRef = useRef<HTMLDivElement | null>(null);
   const [isMounted, setIsMounted] = useState(true);
 
   // Track page visibility for off-screen handling
@@ -113,22 +110,32 @@ export function AnimationProvider({ children }: AnimationProviderProps) {
   }, []);
 
   const shakeScreen = useCallback(async (intensity = 4, duration = 300) => {
+    const el = arenaRef.current;
+    if (!el) {
+      await new Promise((r) => setTimeout(r, duration));
+      return;
+    }
     const steps = Math.floor(duration / 50);
     for (let i = 0; i < steps; i++) {
       const decay = 1 - i / steps;
-      setShakeOffset({
-        x: (Math.random() - 0.5) * intensity * 2 * decay,
-        y: (Math.random() - 0.5) * intensity * 2 * decay,
-      });
+      const x = (Math.random() - 0.5) * intensity * 2 * decay;
+      const y = (Math.random() - 0.5) * intensity * 2 * decay;
+      el.style.transform = `translate(${x}px, ${y}px)`;
       await new Promise((r) => setTimeout(r, 50));
     }
-    setShakeOffset({ x: 0, y: 0 });
+    el.style.transform = '';
   }, []);
 
   const flashOverlay = useCallback(async (color: string, duration = 200) => {
-    setFlashColor(color);
+    const el = flashRef.current;
+    if (!el) {
+      await new Promise((r) => setTimeout(r, duration));
+      return;
+    }
+    el.style.backgroundColor = color;
+    el.style.opacity = '1';
     await new Promise((r) => setTimeout(r, duration));
-    setFlashColor(null);
+    el.style.opacity = '0';
   }, []);
 
   const delay = useCallback(
@@ -163,8 +170,7 @@ export function AnimationProvider({ children }: AnimationProviderProps) {
     unregisterSprite,
     effects,
     popups,
-    flashColor,
-    shakeOffset,
+    flashRef,
     scene: stableScene,
     arenaRef,
     isMounted,

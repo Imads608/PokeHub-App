@@ -1,4 +1,4 @@
-import { BattleLobby } from '@pokehub/frontend/pokehub-battle-components';
+import { BattleGuard, BattleLobby } from '@pokehub/frontend/pokehub-battle-components';
 import {
   getUserTeams,
   teamsKeys,
@@ -20,8 +20,10 @@ export default async function BattlePage() {
   }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <BattleLobby />
-    </HydrationBoundary>
+    <BattleGuard>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <BattleLobby />
+      </HydrationBoundary>
+    </BattleGuard>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { useBattleSocketContext } from '../../context/battle-socket.context';
 import {
   AnimationProvider,
@@ -41,8 +40,7 @@ function BattleContainerInner() {
     unregisterSprite,
     effects,
     popups,
-    flashColor,
-    shakeOffset,
+    flashRef,
     scene,
     isMounted,
   } = useAnimationContext();
@@ -125,14 +123,9 @@ function BattleContainerInner() {
 
         {/* Center column: Battlefield + Actions */}
         <div className="space-y-3">
-          {/* Arena — wrapped in motion.div for screen shake */}
-          <motion.div
-            ref={arenaRef as React.RefObject<HTMLDivElement>}
-            animate={{
-              x: shakeOffset.x,
-              y: shakeOffset.y,
-            }}
-            transition={{ duration: 0.05, ease: 'linear' }}
+          {/* Arena — transform is mutated imperatively by shakeScreen */}
+          <div
+            ref={arenaRef}
             className="relative rounded-2xl border border-border/30 overflow-hidden p-8 min-h-[400px] flex flex-col justify-between"
           >
             {/* Battlefield background */}
@@ -150,13 +143,12 @@ function BattleContainerInner() {
             {/* Damage/text popup layer */}
             <PopupLayer popups={popups} />
 
-            {/* Flash overlay */}
-            {flashColor && (
-              <div
-                className="pointer-events-none absolute inset-0 z-50 transition-opacity duration-100"
-                style={{ backgroundColor: flashColor }}
-              />
-            )}
+            {/* Flash overlay — opacity is mutated imperatively by flashOverlay */}
+            <div
+              ref={flashRef}
+              className="pointer-events-none absolute inset-0 z-50 transition-opacity duration-100"
+              style={{ opacity: 0 }}
+            />
 
             {/* Opponent side — top right */}
             <div className="relative z-10 flex flex-col items-end gap-1.5">
@@ -216,7 +208,7 @@ function BattleContainerInner() {
                 onSaveReplay={() => saveReplay(battleId)}
               />
             )}
-          </motion.div>
+          </div>
 
           {/* Action panel — below battlefield */}
           {state.phase === 'battle' && !state.turnProcessing && (
