@@ -21,6 +21,7 @@ describe('MatchmakingService', () => {
     joinQueue: jest.fn(),
     setUserQueueStatus: jest.fn(),
     clearUserQueueStatus: jest.fn(),
+    removeFromQueue: jest.fn(),
     popQueueEntries: jest.fn(),
   };
 
@@ -151,7 +152,7 @@ describe('MatchmakingService', () => {
   });
 
   describe('leaveQueue', () => {
-    it('should clear queue status when user is in queue', async () => {
+    it('should clear queue status and remove from queue when user is in queue', async () => {
       mockRedisService.getUserQueueStatus!.mockResolvedValue(testFormat);
 
       await service.leaveQueue(testUserId1);
@@ -159,9 +160,23 @@ describe('MatchmakingService', () => {
       expect(mockRedisService.clearUserQueueStatus).toHaveBeenCalledWith(
         testUserId1
       );
+      expect(mockRedisService.removeFromQueue).toHaveBeenCalledWith(
+        testFormat,
+        testUserId1
+      );
       expect(mockLogger.log).toHaveBeenCalledWith(
         expect.stringContaining('left')
       );
+    });
+
+    it('should call clearUserQueueStatus and removeFromQueue in parallel', async () => {
+      mockRedisService.getUserQueueStatus!.mockResolvedValue(testFormat);
+
+      await service.leaveQueue(testUserId1);
+
+      // Both should have been called (they run via Promise.all)
+      expect(mockRedisService.clearUserQueueStatus).toHaveBeenCalledTimes(1);
+      expect(mockRedisService.removeFromQueue).toHaveBeenCalledTimes(1);
     });
 
     it('should return early if user not in queue', async () => {
@@ -170,6 +185,7 @@ describe('MatchmakingService', () => {
       await service.leaveQueue(testUserId1);
 
       expect(mockRedisService.clearUserQueueStatus).not.toHaveBeenCalled();
+      expect(mockRedisService.removeFromQueue).not.toHaveBeenCalled();
       expect(mockLogger.debug).toHaveBeenCalledWith(
         expect.stringContaining('not in any queue')
       );

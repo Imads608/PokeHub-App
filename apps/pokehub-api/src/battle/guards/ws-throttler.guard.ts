@@ -93,6 +93,7 @@ export class WsThrottlerGuard
 
     const effectiveLimit = handlerConfig?.limit ?? limit;
     const effectiveTtl = handlerConfig?.ttl ?? ttl;
+    const effectiveBlockDuration = handlerConfig?.ttl ?? blockDuration;
 
     // Use user ID as tracker (requires authentication via WsJwtGuard)
     // Falls back to socket remote address if user is not authenticated
@@ -108,7 +109,7 @@ export class WsThrottlerGuard
         key,
         effectiveTtl,
         effectiveLimit,
-        blockDuration,
+        effectiveBlockDuration,
         throttlerName
       );
 

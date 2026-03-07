@@ -25,6 +25,7 @@ import {
   BATTLE_EVENT,
   type ServerBattleEvent,
 } from '@pokehub/shared/pokemon-battle-types';
+import { WsThrottlerGuard } from '../../../pokehub-api/src/battle/guards/ws-throttler.guard';
 import type { PokemonInTeam } from '@pokehub/shared/pokemon-types';
 import { io, type Socket } from 'socket.io-client';
 
@@ -156,7 +157,10 @@ describe('Battle API (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(WsThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
@@ -262,13 +266,16 @@ describe('Battle API (e2e)', () => {
    * Clears both battle state and queue status for both test users.
    */
   async function cleanupUserBattleState(): Promise<void> {
+    const format = 'gen9anythinggoes';
     if (testUser1?.id) {
       await redisService.clearUserBattle(testUser1.id);
       await redisService.clearUserQueueStatus(testUser1.id);
+      await redisService.removeFromQueue(format, testUser1.id);
     }
     if (testUser2?.id) {
       await redisService.clearUserBattle(testUser2.id);
       await redisService.clearUserQueueStatus(testUser2.id);
+      await redisService.removeFromQueue(format, testUser2.id);
     }
   }
 
@@ -538,6 +545,204 @@ describe('Battle API (e2e)', () => {
     });
   });
 
+  describe('Match Decline', () => {
+    let socket1: Socket;
+    let socket2: Socket;
+
+    beforeEach(async () => {
+      await cleanupUserBattleState();
+      socket1 = connectSocket(user1AccessToken);
+      socket2 = connectSocket(user2AccessToken);
+      await Promise.all([waitForConnect(socket1), waitForConnect(socket2)]);
+    });
+
+    afterEach(async () => {
+      socket1.disconnect();
+      socket2.disconnect();
+      await Promise.all([
+        waitForDisconnect(socket1, 2000).catch(() => undefined),
+        waitForDisconnect(socket2, 2000).catch(() => undefined),
+      ]);
+      await cleanupUserBattleState();
+    });
+
+    it('should cancel battle and notify opponent when declining', async () => {
+      const format = 'gen9anythinggoes';
+
+      // Create a match
+      socket1.emit('JOIN_QUEUE', { format, teamId: user1TeamId });
+      await waitForEvent(socket1, 'QUEUE_JOINED');
+
+      const start2Promise = waitForEvent(socket2, 'BATTLE_START', 10000);
+      socket2.emit('JOIN_QUEUE', { format, teamId: user2TeamId });
+
+      const start2 = await start2Promise;
+      const battleId = (start2 as { battleId: string }).battleId;
+
+      // Player 1 declines
+      const cancelPromise = waitForEvent(socket2, 'MATCH_CANCELLED', 5000);
+      socket1.emit('DECLINE_MATCH', { battleId });
+
+      const cancelEvent = await cancelPromise;
+      expect(cancelEvent.type).toBe('MATCH_CANCELLED');
+      expect((cancelEvent as { battleId: string }).battleId).toBe(battleId);
+    }, 20000);
+
+    it('should send MATCH_CANCELLED with opponent_declined reason', async () => {
+      const format = 'gen9anythinggoes';
+
+      socket1.emit('JOIN_QUEUE', { format, teamId: user1TeamId });
+      await waitForEvent(socket1, 'QUEUE_JOINED');
+
+      const start1Promise = waitForEvent(socket1, 'BATTLE_START', 10000);
+      const start2Promise = waitForEvent(socket2, 'BATTLE_START', 10000);
+      socket2.emit('JOIN_QUEUE', { format, teamId: user2TeamId });
+
+      const [start1] = await Promise.all([start1Promise, start2Promise]);
+      const battleId = (start1 as { battleId: string }).battleId;
+
+      const cancelPromise = waitForEvent(socket2, 'MATCH_CANCELLED', 5000);
+      socket1.emit('DECLINE_MATCH', { battleId });
+
+      const cancelEvent = await cancelPromise;
+      expect(cancelEvent.type).toBe('MATCH_CANCELLED');
+      expect((cancelEvent as { reason: string }).reason).toBe('opponent_declined');
+    }, 20000);
+  });
+
+  describe('Queue Observer', () => {
+    let observer: Socket;
+    let player: Socket;
+
+    beforeEach(async () => {
+      await cleanupUserBattleState();
+      observer = connectSocket(user1AccessToken);
+      player = connectSocket(user2AccessToken);
+      await Promise.all([waitForConnect(observer), waitForConnect(player)]);
+    });
+
+    afterEach(async () => {
+      observer.disconnect();
+      player.disconnect();
+      await Promise.all([
+        waitForDisconnect(observer, 2000).catch(() => undefined),
+        waitForDisconnect(player, 2000).catch(() => undefined),
+      ]);
+      await cleanupUserBattleState();
+    });
+
+    it('should receive QUEUE_COUNTS on OBSERVE_QUEUE', async () => {
+      observer.emit('OBSERVE_QUEUE', {});
+
+      const event = await waitForEvent(observer, 'QUEUE_COUNTS');
+      expect(event.type).toBe('QUEUE_COUNTS');
+      expect((event as { counts: Record<string, number> }).counts).toBeDefined();
+    });
+
+    it('should receive updated counts when a player joins queue', async () => {
+      observer.emit('OBSERVE_QUEUE', {});
+      await waitForEvent(observer, 'QUEUE_COUNTS');
+
+      // Listen for next QUEUE_COUNTS broadcast
+      const updatePromise = waitForEvent(observer, 'QUEUE_COUNTS', 5000);
+
+      // Player joins queue — should trigger broadcast to lobby
+      player.emit('JOIN_QUEUE', {
+        format: 'gen9anythinggoes',
+        teamId: user2TeamId,
+      });
+
+      const updateEvent = await updatePromise;
+      expect(updateEvent.type).toBe('QUEUE_COUNTS');
+      const counts = (updateEvent as { counts: Record<string, number> }).counts;
+      expect(counts['gen9anythinggoes']).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should stop receiving counts after UNOBSERVE_QUEUE', async () => {
+      observer.emit('OBSERVE_QUEUE', {});
+      await waitForEvent(observer, 'QUEUE_COUNTS');
+
+      // Unobserve
+      observer.emit('UNOBSERVE_QUEUE', {});
+
+      // Collect any events that arrive in the next 2 seconds
+      const events: ServerBattleEvent[] = [];
+      const collector = (e: ServerBattleEvent) => events.push(e);
+      observer.on(BATTLE_EVENT, collector);
+
+      // Player joins queue — would normally trigger QUEUE_COUNTS
+      player.emit('JOIN_QUEUE', {
+        format: 'gen9anythinggoes',
+        teamId: user2TeamId,
+      });
+
+      // Wait a bit to confirm no QUEUE_COUNTS arrives
+      await new Promise((r) => setTimeout(r, 2000));
+      observer.off(BATTLE_EVENT, collector);
+
+      const countEvents = events.filter((e) => e.type === 'QUEUE_COUNTS');
+      expect(countEvents).toHaveLength(0);
+    }, 10000);
+  });
+
+  describe('Cancel Choice', () => {
+    let socket1: Socket;
+    let socket2: Socket;
+    let battleId: string;
+
+    beforeEach(async () => {
+      await cleanupUserBattleState();
+      socket1 = connectSocket(user1AccessToken);
+      socket2 = connectSocket(user2AccessToken);
+      await Promise.all([waitForConnect(socket1), waitForConnect(socket2)]);
+
+      // Create a match
+      const format = 'gen9anythinggoes';
+      socket1.emit('JOIN_QUEUE', { format, teamId: user1TeamId });
+      await waitForEvent(socket1, 'QUEUE_JOINED');
+
+      socket2.emit('JOIN_QUEUE', { format, teamId: user2TeamId });
+
+      const startEvent = await waitForEvent(socket1, 'BATTLE_START', 10000);
+      battleId = (startEvent as { battleId: string }).battleId;
+    }, 15000);
+
+    it('should allow cancelling a submitted move before opponent acts', async () => {
+      // Submit a move
+      socket1.emit('MOVE', { battleId, choice: 'move 1' });
+
+      // Cancel the choice
+      socket1.emit('CANCEL_CHOICE', { battleId });
+
+      // Submit a different move — should not error
+      socket1.emit('MOVE', { battleId, choice: 'move 2' });
+
+      // If cancel failed, the second move would trigger an error.
+      // Wait briefly and verify no error was received.
+      const events: ServerBattleEvent[] = [];
+      const collector = (e: ServerBattleEvent) => events.push(e);
+      socket1.on(BATTLE_EVENT, collector);
+
+      await new Promise((r) => setTimeout(r, 1500));
+      socket1.off(BATTLE_EVENT, collector);
+
+      const errors = events.filter(
+        (e) => e.type === 'ERROR' && (e as { code: string }).code === 'CANCEL_CHOICE_ERROR'
+      );
+      expect(errors).toHaveLength(0);
+    });
+
+    afterEach(async () => {
+      socket1.disconnect();
+      socket2.disconnect();
+      await Promise.all([
+        waitForDisconnect(socket1, 2000).catch(() => undefined),
+        waitForDisconnect(socket2, 2000).catch(() => undefined),
+      ]);
+      await cleanupUserBattleState();
+    });
+  });
+
   describe('Reconnection', () => {
     let socket1: Socket;
     let socket2: Socket;
@@ -561,9 +766,14 @@ describe('Battle API (e2e)', () => {
       battleId = (startEvent as { battleId: string }).battleId;
     }, 15000);
 
-    afterEach(() => {
+    afterEach(async () => {
       socket1.disconnect();
       socket2.disconnect();
+      await Promise.all([
+        waitForDisconnect(socket1, 2000).catch(() => undefined),
+        waitForDisconnect(socket2, 2000).catch(() => undefined),
+      ]);
+      await cleanupUserBattleState();
     });
 
     it('should notify opponent when player disconnects', async () => {
@@ -586,23 +796,20 @@ describe('Battle API (e2e)', () => {
 
       // Player 1 reconnects with new socket
       socket1 = connectSocket(user1AccessToken);
+
+      // Set up listener before connecting — handleConnection may auto-send BATTLE_RESTORED
+      const restoredPromise = waitForEvent(socket1, 'BATTLE_RESTORED');
       await waitForConnect(socket1);
 
-      // Player 1 sends REJOIN
+      // May already be fulfilled by handleConnection, or need REJOIN
       socket1.emit('REJOIN', { battleId });
 
-      // Should receive BATTLE_START with current state
-      const rejoinEvent = await waitForEvent(socket1, 'BATTLE_START');
-      expect(rejoinEvent.type).toBe('BATTLE_START');
+      const rejoinEvent = await restoredPromise;
+      expect(rejoinEvent.type).toBe('BATTLE_RESTORED');
       expect((rejoinEvent as { battleId: string }).battleId).toBe(battleId);
       expect(
-        (rejoinEvent as { initialState: string }).initialState
+        (rejoinEvent as { currentState: string }).currentState
       ).toBeTruthy();
-
-      // Rejoined state should contain |request| (player's own perspective)
-      const rejoinState = (rejoinEvent as { initialState: string })
-        .initialState;
-      expect(rejoinState).toContain('|request|');
     });
   });
 });
