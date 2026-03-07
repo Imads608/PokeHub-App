@@ -44,8 +44,15 @@ function processBattleProtocol(
   const logLines: string[] = [];
 
   for (const { args, kwArgs } of Protocol.parse(text)) {
-    const html = formatter.formatHTML(args, kwArgs);
-    if (html) logLines.push(html);
+    const cmd = String(args[0]);
+    if (cmd === 'rule') {
+      logLines.push(`<small>${String(args[1] ?? '')}</small>`);
+    } else if (cmd === 'tier') {
+      logLines.push(`<h2>${String(args[1] ?? '')}</h2>`);
+    } else {
+      const html = formatter.formatHTML(args, kwArgs);
+      if (html) logLines.push(html);
+    }
     battle.add(args, kwArgs);
   }
 
@@ -229,8 +236,9 @@ export function useBattleState() {
       processingRef.current = true;
       skipRef.current = false;
 
+      let remainingLines: string[] = [];
       try {
-        await processPendingEvents(
+        remainingLines = await processPendingEvents(
           { battle, formatter, pending, skipRef, rawDispatch },
           playAnimation
         );
@@ -238,7 +246,7 @@ export function useBattleState() {
         if (battle.request) {
           battle.update(battle.request);
         }
-        rawDispatch({ type: '_BATTLE_UPDATED', logLines: [] });
+        rawDispatch({ type: '_BATTLE_UPDATED', logLines: remainingLines });
 
         processingRef.current = false;
         skipRef.current = false;

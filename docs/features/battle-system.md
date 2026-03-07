@@ -468,11 +468,13 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 
 ## Core Flows
 
-### Matchmaking: Lazy Queue Removal
+### Matchmaking: Queue Removal
 
-When a player leaves the queue, only their `user:{userId}:queue` status key is cleared — the entry is **not** removed from the Redis list. This avoids the complexity of `LREM` which requires an exact serialized JSON string match.
+When a player leaves the queue, `leaveQueue()` clears their `user:{userId}:queue` status key **and** removes their entry from the Redis list via `LRANGE` + `LREM`. This ensures `LLEN`-based queue counts are immediately accurate for lobby observers.
 
-Stale entries are cleaned up lazily: when `findMatch()` pops entries and validates them, any entry whose user has already left (status key missing) is discarded. If only one of two popped entries is valid, the valid entry is pushed back into the queue.
+`LREM` is O(n) but queue sizes are small, so this is negligible. The operation is also safe across multiple server instances — concurrent `LREM` calls for the same entry are idempotent (the second returns 0).
+
+As a fallback, `findMatch()` still validates popped entries against their status key, discarding any stale entries that weren't cleaned up (e.g. due to a partial failure where `clearUserQueueStatus` succeeded but `removeFromQueue` failed).
 
 ### 1. Matchmaking Flow
 
@@ -506,7 +508,7 @@ Client                      Gateway                      Redis
   |<-- BATTLE_START ----------|                            |
   |                           |                            |
   |                           |-- Broadcast QUEUE_COUNTS   |
-  |                           |   to all connected clients |
+  |                           |   to lobby room observers  |
 ```
 
 ### 2. Battle Turn Flow

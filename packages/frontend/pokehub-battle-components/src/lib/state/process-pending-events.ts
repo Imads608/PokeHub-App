@@ -33,7 +33,7 @@ export interface ProcessPendingDeps {
 export async function processPendingEvents(
   deps: ProcessPendingDeps,
   playAnimation?: PlayAnimationFn
-): Promise<void> {
+): Promise<string[]> {
   const { battle, formatter, pending, skipRef, rawDispatch } = deps;
   const logLines: string[] = [];
 
@@ -56,6 +56,21 @@ export async function processPendingEvents(
       battle.add(event.args, event.kwArgs);
       const html = formatter.formatHTML(event.args, event.kwArgs);
       if (html) logLines.push(html);
+      continue;
+    }
+
+    // Rule and tier lines aren't formatted by @pkmn/view's LogFormatter —
+    // generate log HTML for them directly.
+    if (cmd === 'rule') {
+      const ruleText = String(event.args[1] ?? '');
+      logLines.push(`<small>${ruleText}</small>`);
+      battle.add(event.args, event.kwArgs);
+      continue;
+    }
+    if (cmd === 'tier') {
+      const tierText = String(event.args[1] ?? '');
+      logLines.push(`<h2>${tierText}</h2>`);
+      battle.add(event.args, event.kwArgs);
       continue;
     }
 
@@ -172,4 +187,5 @@ export async function processPendingEvents(
 
   // Return any remaining log lines to the caller
   // (final dispatch with turnProcessing: false is handled by the hook wrapper)
+  return logLines;
 }

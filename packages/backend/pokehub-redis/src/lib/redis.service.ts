@@ -86,6 +86,17 @@ export class RedisBattleService {
     return this.client.llen(key);
   }
 
+  async removeFromQueue(format: string, userId: string): Promise<void> {
+    const key = RedisKeys.matchmaking.queue(format);
+    const entries = await this.client.lrange(key, 0, -1);
+    for (const raw of entries) {
+      if (parseQueueEntry(raw).userId === userId) {
+        await this.client.lrem(key, 1, raw);
+        return;
+      }
+    }
+  }
+
   async popQueueEntries(
     format: string,
     count: number

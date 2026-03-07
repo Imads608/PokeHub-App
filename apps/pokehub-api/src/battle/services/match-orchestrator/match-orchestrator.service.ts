@@ -1,20 +1,25 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-  MATCH_ORCHESTRATOR_SERVICE,
-  type IMatchOrchestratorService,
-} from './match-orchestrator.service.interface';
-import {
-  BATTLE_SOCKET_BRIDGE_SERVICE,
-  type IBattleSocketBridgeService,
-} from '../battle-socket-bridge/battle-socket-bridge.service.interface';
 import {
   BATTLE_MANAGER_SERVICE,
   type IBattleManagerService,
 } from '../battle-manager/battle-manager.service.interface';
 import {
+  BATTLE_SOCKET_BRIDGE_SERVICE,
+  type IBattleSocketBridgeService,
+} from '../battle-socket-bridge/battle-socket-bridge.service.interface';
+import {
   MATCHMAKING_SERVICE,
   type IMatchmakingService,
 } from '../matchmaking/matchmaking.service.interface';
+import {
+  MATCH_ORCHESTRATOR_SERVICE,
+  type IMatchOrchestratorService,
+} from './match-orchestrator.service.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Provider } from '@nestjs/common';
+import {
+  extractMoveNames,
+  getMoveAnimConfigs,
+} from '@pokehub/backend/pokehub-move-anim-catalog';
 import {
   REDIS_SERVICE,
   type RedisService,
@@ -23,18 +28,13 @@ import {
   USERS_DB_SERVICE,
   type IUsersDBService,
 } from '@pokehub/backend/pokehub-users-db';
+import { AppLogger } from '@pokehub/backend/shared-logger';
 import {
   type BattleConfig,
   generateBattleSeed,
   BattleRooms,
 } from '@pokehub/shared/pokemon-battle-types';
-import { AppLogger } from '@pokehub/backend/shared-logger';
-import {
-  extractMoveNames,
-  getMoveAnimConfigs,
-} from '@pokehub/backend/pokehub-move-anim-catalog';
 import { randomUUID } from 'crypto';
-import type { Provider } from '@nestjs/common';
 
 @Injectable()
 class MatchOrchestratorService implements IMatchOrchestratorService {
@@ -110,13 +110,13 @@ class MatchOrchestratorService implements IMatchOrchestratorService {
       if (socket1) {
         const sockets1 = await server.in(socket1).fetchSockets();
         if (sockets1.length > 0) {
-          await sockets1[0].join(battleRoom);
+          sockets1[0].join(battleRoom);
         }
       }
       if (socket2) {
         const sockets2 = await server.in(socket2).fetchSockets();
         if (sockets2.length > 0) {
-          await sockets2[0].join(battleRoom);
+          sockets2[0].join(battleRoom);
         }
       }
 

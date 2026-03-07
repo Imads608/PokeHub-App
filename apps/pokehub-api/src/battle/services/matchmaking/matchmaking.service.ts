@@ -75,12 +75,8 @@ class MatchmakingService implements IMatchmakingService {
   }
 
   /**
-   * Remove a player from the matchmaking queue
-   *
-   * Note: This removes the user's queue status tracking, but doesn't remove
-   * them from the actual list (which would be O(n)). When we pop entries
-   * from the queue in findMatch(), we skip any entries whose user has
-   * left (by checking their queue status).
+   * Remove a player from the matchmaking queue.
+   * Clears their status key and removes their entry from the list.
    */
   async leaveQueue(userId: string): Promise<void> {
     const format = await this.redis.getUserQueueStatus(userId);
@@ -89,7 +85,10 @@ class MatchmakingService implements IMatchmakingService {
       return;
     }
 
-    await this.redis.clearUserQueueStatus(userId);
+    await Promise.all([
+      this.redis.clearUserQueueStatus(userId),
+      this.redis.removeFromQueue(format, userId),
+    ]);
     this.logger.log(`User ${userId} left ${format} queue`);
   }
 

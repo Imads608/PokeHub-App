@@ -43,7 +43,7 @@ export async function playAnimationEvent(
       return playBoost(scene, event, audio);
 
     case 'status':
-      return playStatus(scene, event, audio);
+      return playStatus(scene, event);
 
     case 'supereffective':
       return playSuperEffective(scene, audio);
@@ -309,10 +309,8 @@ const statusColors: Record<string, string> = {
 
 async function playStatus(
   scene: AnimationScene,
-  event: Extract<AnimationEvent, { type: 'status' }>,
-  audio?: BattleAudioManager
+  event: Extract<AnimationEvent, { type: 'status' }>
 ) {
-  void audio?.playSfx(STATE_SFX.status);
   const color = statusColors[event.status] ?? 'rgba(148, 163, 184, 0.3)';
   await scene.flashOverlay(color, DURATION.STATUS);
 }

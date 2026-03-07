@@ -13,7 +13,6 @@ export const STATE_SFX = {
   switchOut: `${SHOWDOWN_AUDIO}/cries/pokeball.mp3`,
   switchIn: `${SHOWDOWN_AUDIO}/cries/pokeball.mp3`,
   damage: `${AZURE_AUDIO}/sfx/normal-hit.wav`,
-  status: `${AZURE_AUDIO}/sfx/hit-weak-not-very-effective.mp3`,
 } as const;
 
 // ── BGM tracks (from Showdown CDN via proxy) ────────────────────────────
