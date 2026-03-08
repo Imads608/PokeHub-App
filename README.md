@@ -165,11 +165,11 @@ Comprehensive documentation is available in the `docs/` directory:
   - [Troubleshooting](./docs/deployment/container-apps/troubleshooting.md)
   - [Database Configuration](./docs/deployment/database.md)
 - **[Development Setup](./docs/development/environment-setup.md)** - Environment configuration
-- **[Testing](./docs/development/)** - Testing documentation
+- **[Testing](./docs/development/testing/README.md)** - Testing documentation
   - [Unit & Integration Testing](./docs/development/unit-integration-testing.md)
-  - [Frontend E2E Testing](./docs/development/frontend-e2e-testing.md)
-  - [Backend E2E Testing](./docs/development/backend-e2e-testing.md)
-  - [E2E Test Reliability Fixes](./docs/development/e2e-test-reliability-fixes.md) - CI/CD reliability improvements
+  - [Frontend E2E Testing](./docs/development/testing/frontend-e2e-testing.md)
+  - [Backend E2E Testing](./docs/development/testing/backend-e2e-testing.md)
+  - [E2E Test Reliability Fixes](./docs/development/testing/e2e-test-reliability-fixes.md) - CI/CD reliability improvements
 - **[Features](./docs/features/)** - Feature documentation
   - [Authentication](./docs/features/authentication.md)
   - [Pokedex](./docs/features/pokedex.md)

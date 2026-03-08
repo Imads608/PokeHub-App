@@ -198,13 +198,12 @@ app.get('/mock-avatars/:userId/:filename', (_req, res) => {
 
 // Forward ALL other requests to the real backend (auth, etc.)
 // IMPORTANT: Don't parse body before this - let proxy handle raw stream
-app.use(
-  '/',
-  createProxyMiddleware({
-    target: REAL_BACKEND_URL,
-    changeOrigin: true,
-  })
-);
+const apiProxy = createProxyMiddleware({
+  target: REAL_BACKEND_URL,
+  changeOrigin: true,
+  ws: true,
+});
+app.use('/', apiProxy);
 
 // Start the proxy server
 const server = app.listen(port, () => {
@@ -212,6 +211,12 @@ const server = app.listen(port, () => {
   console.log(`📡 Forwarding non-mocked requests to ${REAL_BACKEND_URL}`);
   console.log(`✅ Mocking /api/teams/* endpoints`);
   console.log(`✅ Mocking /mock-azure-upload and /mock-avatars/* endpoints`);
+  console.log(`✅ WebSocket proxying enabled`);
+});
+
+// Proxy WebSocket upgrade requests
+server.on('upgrade', (req, socket, head) => {
+  apiProxy.upgrade(req, socket as never, head);
 });
 
 // Graceful shutdown

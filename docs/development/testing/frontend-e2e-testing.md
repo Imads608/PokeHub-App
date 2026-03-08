@@ -84,6 +84,8 @@ We use an Express-based proxy server that:
 │         │                                                        │
 │         ├─→ /mock-azure-upload ──→ Mocked blob storage         │
 │         │                                                        │
+│         ├─→ /socket.io/* ──→ Real Backend (WebSocket proxy)    │
+│         │                                                        │
 │         └─→ /api/auth/*   ──→ Real Backend (port 3000)         │
 │             /api/test/*        (authentication)                 │
 │                                                                  │
@@ -385,6 +387,7 @@ async function createAndAuthenticateUser(page: Page): Promise<string> {
 - Mocks team CRUD endpoints
 - Mocks profile update endpoint (`POST /api/users/:userId/profile`)
 - Mocks Azure blob upload (`/mock-azure-upload`) with CORS support
+- Proxies WebSocket connections (`socket.io`) to the real backend for battle tests
 - Forwards auth/test endpoints to real backend
 - Health check for Playwright startup verification
 
@@ -412,9 +415,11 @@ async function createAndAuthenticateUser(page: Page): Promise<string> {
 - Waits for backend health (30 retries, 2s intervals)
 - Waits for frontend readiness
 - Authenticates via test-credentials provider
-- Creates two auth states:
+- Cleans stale battle/queue state from Redis (SCAN + DEL for `user:*:battle`, `user:*:queue`, `battle:*`)
+- Creates three auth states:
   - `.auth/user.json` - Existing user with username (for team tests)
   - `.auth/new-user.json` - New user without username (for create-profile tests)
+  - `.auth/battle-user.json` - Battle opponent user (for battle E2E tests)
 
 **`apps/pokehub-app-e2e/playwright.config.ts`**
 
@@ -436,6 +441,14 @@ async function createAndAuthenticateUser(page: Page): Promise<string> {
   - Read-only tests share `new-user.json` auth state
   - Submission tests create unique users via `createAndAuthenticateUser()` helper
 - Tests route guards, validation, availability checks, avatar upload, and form submission
+
+**`apps/pokehub-app-e2e/src/battle.spec.ts`**
+
+- Battle system E2E tests requiring two authenticated browser contexts
+- Uses `battle-user.json` auth state for the second player
+- Battle Lobby tests: page load, tabs, format selection, queue status, cancel queue
+- Battle Flow tests (serial): matchmaking, forfeit dialog, forfeit outcome, lobby navigation, opponent disconnect
+- `afterEach` cleanup forfeits active battles to prevent state leaking between tests
 
 ### Backend Support
 
@@ -471,6 +484,7 @@ npx nx e2e pokehub-app-e2e -- --project=chromium
 npx nx e2e pokehub-app-e2e -- --grep "team-editor"
 npx nx e2e pokehub-app-e2e -- --grep "create-profile"
 npx nx e2e pokehub-app-e2e -- --grep "Settings"
+npx nx e2e pokehub-app-e2e -- --grep "Battle"
 
 # Run with specific test name filter
 npx nx e2e pokehub-app-e2e -- --grep "should load existing team"
@@ -709,6 +723,27 @@ The create-profile tests use a **parallel-safe approach** with two auth strategi
 
 - ✅ Show export button
 - ✅ Show import button
+
+#### Battle System Tests
+
+##### Battle Lobby
+
+- Loads battle lobby page with heading
+- Shows Random and Competitive tabs
+- Displays random format options (e.g. [Gen 9] Random Battle)
+- Disables Find Random Battle when no format selected
+- Enables Find Random Battle after selecting a format
+- Switches to Competitive tab and shows team selector
+- Shows queue status ("Searching for opponent...") when searching
+- Returns to lobby when cancelling queue
+
+##### Battle Flow (Serial — Two Players)
+
+- Matches two players and starts a battle
+- Shows forfeit confirmation dialog, cancel stays in battle
+- Ends battle when a player forfeits (correct overlays for both)
+- Navigates back to lobby from end overlay via "Find New Battle"
+- Shows opponent disconnected overlay when second player's context closes
 
 #### Settings Page Tests (18 tests)
 
@@ -1105,9 +1140,10 @@ jobs:
 ## Related Documentation
 
 - [Backend E2E Testing Architecture](./backend-e2e-testing.md)
-- [Team Builder Testing Plan](../plans/team-editor-testing.md)
-- [Authentication Documentation](../features/authentication.md)
-- [Environment Setup](./environment-setup.md)
+- [Battle System Tests](./battle-system-tests.md)
+- [Team Builder Testing Plan](../../plans/team-editor-testing.md)
+- [Authentication Documentation](../../features/authentication.md)
+- [Environment Setup](../environment-setup.md)
 - [MSW Documentation](https://mswjs.io/)
 - [Playwright Authentication](https://playwright.dev/docs/auth)
 - [Next.js Testing](https://nextjs.org/docs/testing)

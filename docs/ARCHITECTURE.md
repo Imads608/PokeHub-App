@@ -583,8 +583,8 @@ See [Battle System Design](./features/battle-system.md) for detailed architectur
 | Document                                                                | Description      |
 | ----------------------------------------------------------------------- | ---------------- |
 | [Unit & Integration Testing](./development/unit-integration-testing.md) | Jest testing     |
-| [Frontend E2E Testing](./development/frontend-e2e-testing.md)           | Playwright tests |
-| [Backend E2E Testing](./development/backend-e2e-testing.md)             | API testing      |
+| [Frontend E2E Testing](./development/testing/frontend-e2e-testing.md)   | Playwright tests |
+| [Backend E2E Testing](./development/testing/backend-e2e-testing.md)     | API testing      |
 
 ---
 
