@@ -1,5 +1,5 @@
 {
-  "name": "pokehub-battle-components",
+  "name": "frontend-pokehub-battle-components",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/frontend/pokehub-battle-components/src",
   "projectType": "library",
@@ -10,9 +10,7 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/frontend/pokehub-battle-components/jest.config.ts"
       }

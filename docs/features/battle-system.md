@@ -398,9 +398,10 @@ apps/pokehub-api/src/battle/
 
 1. Client connects to `/battle` namespace with JWT token
 2. `WsJwtGuard.validateClient()` extracts and validates JWT
-3. User is added to socket-to-user mapping
-4. Gateway subscribes to Redis `match:user:{userId}` channel
-5. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+3. Single-socket-per-user enforcement: if the user already has an active socket, the server emits `SESSION_REPLACED` to the old socket and disconnects it (last-connection-wins)
+4. User is added to socket-to-user mapping
+5. Gateway subscribes to Redis `user:{userId}:battle-events` channel
+6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
 
 ### Authentication Security
 
@@ -439,11 +440,13 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `JOIN_QUEUE`    | `{ format: string, teamId?: string }`  | Join matchmaking queue (teamId required for competitive, omitted for random) |
 | `LEAVE_QUEUE`   | `{}`                                   | Leave queue                                                   |
 | `MOVE`          | `{ battleId: string, choice: string }` | Submit move (e.g., "move 1", "switch 2")                      |
+| `CANCEL_CHOICE` | `{ battleId: string }`                 | Cancel submitted move before turn resolves                    |
 | `FORFEIT`       | `{ battleId: string }`                 | Forfeit battle                                                |
 | `REJOIN`        | `{ battleId: string }`                 | Reconnect to active battle                                    |
 | `SAVE_REPLAY`   | `{ battleId: string }`                 | Save replay (within 1 hour of battle end)                     |
 | `DECLINE_MATCH` | `{ battleId: string }`                 | Decline match (client left queue before MATCH_FOUND received) |
-| `GET_QUEUE_COUNTS` | `{}`                                | Request current queue player counts per format                |
+| `OBSERVE_QUEUE`    | `{}`                                | Subscribe to real-time queue player counts per format         |
+| `UNOBSERVE_QUEUE`  | `{}`                                | Unsubscribe from queue player count updates                   |
 
 **Server → Client:**
 
@@ -462,6 +465,8 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, message? }` | Reconnection state         |
 | `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
 | `QUEUE_COUNTS`          | `{ counts: Record<string, number> }`          | Queue player counts per format |
+| `SERVER_STATUS`         | `{ status: 'unavailable' \| 'restored' }`     | Redis/server health change |
+| `SESSION_REPLACED`      | (no payload)                                  | Another tab connected, this socket is disconnected |
 | `ERROR`                 | `{ code, message, recoverable }`              | Error occurred             |
 
 ---

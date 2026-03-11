@@ -1,7 +1,7 @@
 'use client';
 
 import { useBattleNotifications } from '../hooks/use-battle-notifications';
-import { useBattleSocket } from '../hooks/use-battle-socket';
+import { useBattleSocket, type BattleSocketStatus } from '../hooks/use-battle-socket';
 import { useBattleState, type PlayAnimationFn } from '../hooks/use-battle-state';
 import type { BattleUIState } from '../types/battle-ui.types';
 import { useAuthSession, getAuthSession } from '@pokehub/frontend/shared-auth';
@@ -19,6 +19,8 @@ const log = createClientLogger('BattleContext');
 
 export interface BattleSocketContextValue {
   state: BattleUIState;
+  /** Socket connection status: 'connecting', 'connected', or 'disconnected'. */
+  socketStatus: BattleSocketStatus;
   /** True when the socket is connected AND the server can process battles. */
   connected: boolean;
   userId: string;
@@ -115,11 +117,13 @@ export function BattleSocketProvider({
     void getAuthSession();
   }, []);
 
-  const { isConnected, emit } = useBattleSocket({
+  const { status: socketStatus, emit } = useBattleSocket({
     accessToken,
     onEvent,
     onAuthError,
   });
+
+  const isConnected = socketStatus === 'connected';
 
   // Reset server availability on reconnect (optimistic — server will
   // notify us via SERVER_STATUS if Redis is still down).
@@ -213,6 +217,7 @@ export function BattleSocketProvider({
 
   const value: BattleSocketContextValue = {
     state,
+    socketStatus,
     connected,
     userId,
     joinQueue,

@@ -27,11 +27,11 @@ interface AnimationContextValue {
   /** Active popups to render */
   popups: PopupConfig[];
   /** Ref for the flash overlay element — mutated imperatively to avoid re-renders */
-  flashRef: React.RefObject<HTMLDivElement | null>;
+  flashRef: React.RefObject<HTMLDivElement>;
   /** The animation scene — used by processPendingEvents to play animations */
   scene: AnimationScene;
   /** The arena ref — components read this for positioning */
-  arenaRef: React.RefObject<HTMLDivElement | null>;
+  arenaRef: React.RefObject<HTMLDivElement>;
   /** Whether the arena is mounted and visible */
   isMounted: boolean;
 }
@@ -55,11 +55,11 @@ interface AnimationProviderProps {
 }
 
 export function AnimationProvider({ children }: AnimationProviderProps) {
-  const arenaRef = useRef<HTMLDivElement | null>(null);
+  const arenaRef = useRef<HTMLDivElement>(null);
   const spritesRef = useRef<Map<string, SpriteHandle>>(new Map());
   const [effects, setEffects] = useState<EffectSpriteConfig[]>([]);
   const [popups, setPopups] = useState<PopupConfig[]>([]);
-  const flashRef = useRef<HTMLDivElement | null>(null);
+  const flashRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(true);
 
   // Track page visibility for off-screen handling

@@ -19,7 +19,7 @@ interface MockSubscriber extends EventEmitter {
 describe('BattleSocketBridgeService', () => {
   let service: IBattleSocketBridgeService;
   let mockSubscriber: MockSubscriber;
-  let mockServer: { to: jest.Mock; emit: jest.Mock };
+  let mockServer: { to: jest.Mock; in: jest.Mock; emit: jest.Mock };
   let mockRedis: {
     createSubscriberClient: jest.Mock;
     refreshHeartbeat: jest.Mock;
@@ -27,6 +27,7 @@ describe('BattleSocketBridgeService', () => {
   };
   let mockEmit: jest.Mock;
   let mockToEmit: jest.Mock;
+  let mockDisconnectSockets: jest.Mock;
 
   const mockLogger = {
     log: jest.fn(),
@@ -47,8 +48,10 @@ describe('BattleSocketBridgeService', () => {
 
     mockToEmit = jest.fn();
     mockEmit = jest.fn();
+    mockDisconnectSockets = jest.fn();
     mockServer = {
       to: jest.fn().mockReturnValue({ emit: mockToEmit }),
+      in: jest.fn().mockReturnValue({ disconnectSockets: mockDisconnectSockets }),
       emit: mockEmit,
     };
 
@@ -87,6 +90,35 @@ describe('BattleSocketBridgeService', () => {
       service.registerSocket('s1', 'u1');
       service.unregisterSocket('s1', 'u1');
       expect(service.getSocketId('u1')).toBeUndefined();
+    });
+
+    it('registerSocket with existing socket → emits SESSION_REPLACED and disconnects old socket', () => {
+      service.registerSocket('s1', 'u1');
+
+      mockServer.to.mockClear();
+      mockToEmit.mockClear();
+
+      service.registerSocket('s2', 'u1');
+
+      // Should emit SESSION_REPLACED to old socket and disconnect it
+      expect(mockServer.to).toHaveBeenCalledWith('s1');
+      expect(mockToEmit).toHaveBeenCalledWith('SESSION_REPLACED');
+      expect(mockServer.in).toHaveBeenCalledWith('s1');
+      expect(mockDisconnectSockets).toHaveBeenCalledWith(true);
+
+      // New socket should be the active one
+      expect(service.getSocketId('u1')).toBe('s2');
+    });
+
+    it('unregisterSocket with stale socketId → does not remove active mapping', () => {
+      service.registerSocket('s1', 'u1');
+      service.registerSocket('s2', 'u1');
+
+      // Unregister the old socket (e.g. disconnect event fires after replacement)
+      service.unregisterSocket('s1', 'u1');
+
+      // Active socket should still be mapped
+      expect(service.getSocketId('u1')).toBe('s2');
     });
 
     it('registerSocket when redisDown → emits SERVER_STATUS unavailable', () => {

@@ -68,7 +68,7 @@ Covers the event processing loop ordering and dispatch behavior:
 
 **File:** `apps/pokehub-api/src/battle/services/battle-socket-bridge/battle-socket-bridge.service.spec.ts`
 
-**Socket mapping** — register, unregister, getSocketId, SERVER_STATUS on redis-down registration
+**Socket mapping** — register, unregister, getSocketId, SERVER_STATUS on redis-down registration, SESSION_REPLACED on duplicate socket (last-connection-wins), stale unregister doesn't remove active mapping
 
 **Event emission** — direct emit for local sockets, Redis publish for remote
 

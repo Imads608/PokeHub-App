@@ -51,6 +51,18 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
   }
 
   registerSocket(socketId: string, userId: string): void {
+    // If this user already has an active socket (e.g. another tab),
+    // disconnect it so only one socket per user is active at a time.
+    const previousSocketId = this.userToSocket.get(userId);
+    if (previousSocketId && previousSocketId !== socketId) {
+      this.logger.log(
+        `Replacing socket for user ${userId}: ${previousSocketId} → ${socketId}`
+      );
+      this.server.to(previousSocketId).emit('SESSION_REPLACED');
+      this.server.in(previousSocketId).disconnectSockets(true);
+      this.socketToUser.delete(previousSocketId);
+    }
+
     this.socketToUser.set(socketId, userId);
     this.userToSocket.set(userId, socketId);
 
@@ -66,7 +78,11 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
   unregisterSocket(socketId: string, userId: string): void {
     this.socketToUser.delete(socketId);
-    this.userToSocket.delete(userId);
+    // Only remove the user mapping if this was the active socket.
+    // A newer socket may have already replaced this one.
+    if (this.userToSocket.get(userId) === socketId) {
+      this.userToSocket.delete(userId);
+    }
   }
 
   subscribeUser(userId: string): void {

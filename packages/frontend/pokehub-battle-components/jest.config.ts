@@ -1,5 +1,5 @@
 export default {
-  displayName: 'pokehub-battle-components',
+  displayName: 'frontend-pokehub-battle-components',
   preset: '../../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',

@@ -56,12 +56,13 @@ export { BattleSocketProvider, useBattleSocketContext, type BattleSocketContextV
 export { type BattleUIState, initialBattleUIState }
 
 // Components
+export { BattleGuard }        // connection status gate (loading, connecting, disconnected)
 export { BattleLobby }       // queue entry UI
 export { BattleContainer }    // full battlefield UI
 export { ActiveBattleBar }    // fixed bar for non-battle pages during active battles
 ```
 
-Consumers mount `<BattleSocketProvider>` at the battle page layout level, then render `<BattleLobby>` or `<BattleContainer>` based on the phase from `useBattleSocketContext()`.
+Consumers mount `<BattleSocketProvider>` at the battle page layout level. `<BattleGuard>` wraps children and renders them only when connected — showing a spinner while connecting and a "Connection lost" overlay with a refresh button when disconnected. Inside the guard, render `<BattleLobby>` or `<BattleContainer>` based on the phase from `useBattleSocketContext()`.
 
 ## State Management
 
@@ -364,9 +365,11 @@ The outermost context, mounted at the battle page layout. Composes three hooks:
   BattleSocketProvider
   ├── useBattleState()          → [state, dispatch, processPendingEvents,
   │                                 pendingVersion, skipAnimations]
-  ├── useBattleSocket()         → { isConnected, emit }
+  ├── useBattleSocket()         → { status, emit }
   └── useBattleNotifications()  → (side effects only)
 ```
+
+The `status` field is a `BattleSocketStatus` (`'connecting' | 'connected' | 'disconnected'`). The context also exposes `socketStatus` directly and derives a `connected` boolean (`socketStatus === 'connected' && serverAvailable`).
 
 Exposes action methods that emit typed `ClientBattleEvent` messages and optimistically update local state:
 
@@ -379,7 +382,8 @@ Exposes action methods that emit typed `ClientBattleEvent` messages and optimist
 | `forfeit(battleId)` | `FORFEIT` | — |
 | `rejoin(battleId)` | `REJOIN` | — |
 | `saveReplay(battleId)` | `SAVE_REPLAY` | — |
-| `requestQueueCounts()` | `GET_QUEUE_COUNTS` | — |
+| `observeQueue()` | `OBSERVE_QUEUE` | — |
+| `unobserveQueue()` | `UNOBSERVE_QUEUE` | — |
 
 Additionally exposes `queueCounts: Record<string, number>` — a reactive map of format → player count, updated via `QUEUE_COUNTS` server events (intercepted before the battle state reducer, same as `SERVER_STATUS`).
 
@@ -451,9 +455,20 @@ The `audio` instance is passed to `playAnimationEvent()` so animation handlers c
     │                           │                         │
     ▼                           ▼                         ▼
   Create socket          socket.connect()           onEvent(event)
-  (autoConnect: false)   (auth callback reads       → dispatch(event)
+  (autoConnect: false)   + start 15s timeout        → dispatch(event)
+                         (auth callback reads
                           tokenRef.current)
 ```
+
+**Status lifecycle** (`BattleSocketStatus`):
+
+- `connecting` — initial connection or auto-reconnecting after a transient failure
+- `connected` — socket is live and ready
+- `disconnected` — terminal state, requires page refresh (session replaced, auth retries exhausted, or connection timeout)
+
+**Connection timeout:** If the socket doesn't connect within 15 seconds (`CONNECTION_TIMEOUT_MS`), the hook gives up and transitions to `disconnected`.
+
+**Single socket per user:** The server enforces one socket per user (last-connection-wins). When a second tab connects, the server emits `SESSION_REPLACED` to the old socket and disconnects it. The old tab transitions to `disconnected` and shows a "Connection lost" overlay via `BattleGuard`.
 
 ### Auth Refresh Flow
 
@@ -477,6 +492,8 @@ The `audio` instance is passed to `playAnimationEvent()` so animation handlers c
 ```
 
 No socket reconstruction needed — the same socket instance reconnects with the new token.
+
+After 3 consecutive auth failures (`MAX_AUTH_RETRIES`), the hook gives up and transitions to `disconnected` to prevent infinite retry loops.
 
 ### Event Buffering
 
@@ -623,7 +640,7 @@ The `QueueCounts` component shows how many players are searching in each battle 
 - **Empty**: "No players currently in queue"
 
 Data flow:
-1. `BattleLobby` mounts → emits `GET_QUEUE_COUNTS` via `requestQueueCounts()` when connected
+1. `BattleLobby` mounts → emits `OBSERVE_QUEUE` via `observeQueue()` when connected (and `UNOBSERVE_QUEUE` via `unobserveQueue()` on unmount)
 2. Server responds with `QUEUE_COUNTS` event containing `counts: Record<string, number>`
 3. `BattleSocketProvider` intercepts the event (same pattern as `SERVER_STATUS`) and updates `queueCounts` state
 4. Real-time updates: server broadcasts `QUEUE_COUNTS` to all connected clients after any queue join, leave, disconnect, or match found

@@ -11,7 +11,8 @@ export {
   type ForfeitEvent,
   type RejoinEvent,
   type SaveReplayEvent,
-  type GetQueueCountsEvent,
+  type ObserveQueueEvent,
+  type UnobserveQueueEvent,
   type ClientBattleEvent,
   type ClientBattleEventType,
 } from './lib/client-events';

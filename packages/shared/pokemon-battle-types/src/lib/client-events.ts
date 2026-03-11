@@ -49,8 +49,12 @@ export interface SaveReplayEvent {
   battleId: string;
 }
 
-export interface GetQueueCountsEvent {
-  type: 'GET_QUEUE_COUNTS';
+export interface ObserveQueueEvent {
+  type: 'OBSERVE_QUEUE';
+}
+
+export interface UnobserveQueueEvent {
+  type: 'UNOBSERVE_QUEUE';
 }
 
 export type ClientBattleEvent =
@@ -62,6 +66,7 @@ export type ClientBattleEvent =
   | ForfeitEvent
   | RejoinEvent
   | SaveReplayEvent
-  | GetQueueCountsEvent;
+  | ObserveQueueEvent
+  | UnobserveQueueEvent;
 
 export type ClientBattleEventType = ClientBattleEvent['type'];
