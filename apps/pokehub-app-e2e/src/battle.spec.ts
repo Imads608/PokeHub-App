@@ -62,7 +62,7 @@ async function forfeitBattle(page: Page) {
       await dialog.getByRole('button', { name: 'Forfeit' }).click();
     }
     // Wait for end overlay
-    await page.getByText(/Victory!|Defeat|Draw!/).waitFor({ timeout: 5000 }).catch(() => {});
+    await page.getByText(/Victory!|Defeat|Draw!/).waitFor({ timeout: 5000 }).catch(() => { /* best-effort cleanup */ });
   }
 }
 
@@ -147,9 +147,9 @@ test.describe('Battle Flow', () => {
   test.afterEach(async ({ page }) => {
     // Forfeit any active battles to avoid leaking state
     await forfeitBattle(page);
-    await forfeitBattle(player2Page).catch(() => {});
-    await player2Page?.close().catch(() => {});
-    await player2Context?.close().catch(() => {});
+    await forfeitBattle(player2Page).catch(() => { /* best-effort cleanup */ });
+    await player2Page?.close().catch(() => { /* best-effort cleanup */ });
+    await player2Context?.close().catch(() => { /* best-effort cleanup */ });
   });
 
   test('should match two players and start a battle', async ({ page }) => {

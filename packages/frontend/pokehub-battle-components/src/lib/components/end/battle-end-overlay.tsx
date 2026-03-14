@@ -65,6 +65,7 @@ export function BattleEndOverlay({
         )}
 
         <div className="flex flex-col gap-2 w-full mt-2">
+          {/* TODO: Re-enable when replay viewer is implemented
           {canSaveReplay && (
             <Button
               variant="outline"
@@ -76,6 +77,15 @@ export function BattleEndOverlay({
               {replaySaved ? 'Replay Saved' : 'Save Replay'}
             </Button>
           )}
+          */}
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Save Replay (Coming Soon)
+          </Button>
           <Button className="w-full" onClick={() => router.push('/battle')}>
             <Swords className="mr-2 h-4 w-4" />
             Find New Battle
