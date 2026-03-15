@@ -231,7 +231,7 @@ src/lib/
 | Battle Log      | `appendBattleLog()`, `getBattleLog()`, `setBattleLogTTL()`, `deleteBattleLog()`                          |
 | Pending Choices | `setPendingChoices()`, `getPendingChoices()`                                                             |
 | Server Health   | `refreshHeartbeat()`, `isServerAlive()`, `addServerBattle()`, `getServerBattles()`                       |
-| Pub/Sub         | `publishMatchFound()`, `publishBattleMove()`, `publishBattleUpdate()`, `createSubscriberClient()`        |
+| Pub/Sub         | `publishMatchFound()`, `publishBattleAction()`, `publishBattleUpdate()`, `createSubscriberClient()`      |
 | Cleanup         | `cleanupBattle()`, `ping()`                                                                              |
 
 #### `packages/backend/pokehub-battles-db/`
@@ -402,6 +402,24 @@ apps/pokehub-api/src/battle/
 4. User is added to socket-to-user mapping
 5. Gateway subscribes to Redis `user:{userId}:battle-events` channel
 6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+
+### Cross-Server Action Forwarding
+
+Battles are hosted on a single server, but players may be connected to different servers. When a gateway receives a player action (MOVE, FORFEIT, CANCEL_CHOICE) for a battle not hosted locally, it publishes the action to a Redis `battle:{battleId}:action` channel instead of calling the battle manager directly. The host server's socket bridge subscribes to this channel and dispatches the action to its local battle manager.
+
+```
+  Player 2 (Server B)        Redis            Server A (host)
+       │                       │                    │
+       │── MOVE ──►            │                    │
+       │   isHostedLocally?    │                    │
+       │   NO → publish ──────►│                    │
+       │                       │──── action ───────►│
+       │                       │                    │── processChoice()
+       │                       │◄── update ────────│
+       │◄── BATTLE_UPDATE ─────│                    │
+```
+
+The same pattern applies to disconnect events — ensuring the host server starts the disconnect timeout regardless of which server the player was connected to.
 
 ### Authentication Security
 

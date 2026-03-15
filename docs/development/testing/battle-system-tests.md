@@ -76,6 +76,8 @@ Covers the event processing loop ordering and dispatch behavior:
 
 **Redis status** — restored/unavailable broadcasts on status transitions, no broadcast when already healthy
 
+**Cross-server action forwarding** — move/forfeit/cancel_choice/disconnect actions dispatched to battleManager, ignored when not hosted locally, error feedback published back to player
+
 **Lifecycle** — heartbeat interval, destroy cleanup
 
 ### Matchmaking Service (Updated)
@@ -94,10 +96,10 @@ Pre-existing tests updated, plus new coverage for:
 
 Covers the WebSocket gateway as a thin validation/delegation layer:
 - `handleConnection` — auth rejection, socket registration, active battle restoration
-- `handleDisconnect` — cleanup, battle disconnect handling, conditional queue count broadcast
+- `handleDisconnect` — cleanup, battle disconnect handling, cross-server disconnect forwarding, conditional queue count broadcast
 - `handleJoinQueue` — payload validation, error cases (team not found, not owned)
 - `handleLeaveQueue` — queue leave + QUEUE_LEFT emission
-- `handleMove` / `handleForfeit` — validation + delegation to battleManager
+- `handleMove` / `handleForfeit` — validation, local delegation to battleManager, cross-server forwarding via Redis when not hosted locally
 - `handleRejoin` — reconnect, room join, BATTLE_RESTORED emission
 - `handleObserveQueue` / `handleUnobserveQueue` — lobby room join/leave
 

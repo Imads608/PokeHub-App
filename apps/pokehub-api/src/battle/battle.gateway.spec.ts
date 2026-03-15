@@ -31,7 +31,7 @@ describe('BattleGateway', () => {
   let battleManager: jest.Mocked<IBattleManagerService>;
   let bridge: jest.Mocked<IBattleSocketBridgeService>;
   let orchestrator: jest.Mocked<IMatchOrchestratorService>;
-  let redis: jest.Mocked<Pick<RedisService, 'getUserBattle' | 'getBattleMetadata' | 'getBattleLog'>>;
+  let redis: jest.Mocked<Pick<RedisService, 'getUserBattle' | 'getBattleMetadata' | 'getBattleLog' | 'publishBattleAction'>>;
   let teamsDb: jest.Mocked<Pick<ITeamsDBService, 'getTeam'>>;
   let persistence: jest.Mocked<Pick<IBattlePersistenceService, 'canSaveReplay' | 'saveReplay'>>;
   let wsJwtGuard: { validateClient: jest.Mock; canActivate: jest.Mock };
@@ -71,7 +71,7 @@ describe('BattleGateway', () => {
       forfeit: jest.fn().mockResolvedValue(undefined),
       recoverBattle: jest.fn(),
       getBattle: jest.fn().mockReturnValue(undefined),
-      isHostedLocally: jest.fn().mockReturnValue(false),
+      isHostedLocally: jest.fn().mockReturnValue(true),
       handleDisconnect: jest.fn().mockResolvedValue(undefined),
       handleReconnect: jest.fn(),
       cancelBattle: jest.fn().mockResolvedValue(undefined),
@@ -99,6 +99,7 @@ describe('BattleGateway', () => {
       getUserBattle: jest.fn().mockResolvedValue(null),
       getBattleMetadata: jest.fn().mockResolvedValue(null),
       getBattleLog: jest.fn().mockResolvedValue(''),
+      publishBattleAction: jest.fn().mockResolvedValue(undefined),
     };
 
     teamsDb = {
@@ -203,6 +204,20 @@ describe('BattleGateway', () => {
       expect(battleManager.handleDisconnect).toHaveBeenCalledWith('b1', 'u1');
     });
 
+    it('should forward disconnect via Redis when battle is not hosted locally', async () => {
+      battleManager.isHostedLocally.mockReturnValue(false);
+      const client = mockSocket('u1');
+      redis.getUserBattle.mockResolvedValue('b1');
+
+      await gateway.handleDisconnect(client);
+
+      expect(battleManager.handleDisconnect).not.toHaveBeenCalled();
+      expect(redis.publishBattleAction).toHaveBeenCalledWith('b1', {
+        action: 'disconnect',
+        playerId: 'u1',
+      });
+    });
+
     it('should broadcast queue counts only when was in queue', async () => {
       const client = mockSocket('u1');
       matchmaking.isInQueue.mockResolvedValue(true);
@@ -297,6 +312,20 @@ describe('BattleGateway', () => {
 
       expect(battleManager.processChoice).toHaveBeenCalledWith('b1', 'u1', 'move 1');
     });
+
+    it('should forward via Redis when battle is not hosted locally', async () => {
+      battleManager.isHostedLocally.mockReturnValue(false);
+      const client = mockSocket('u1');
+
+      await gateway.handleMove(client, { battleId: 'b1', choice: 'move 1' });
+
+      expect(battleManager.processChoice).not.toHaveBeenCalled();
+      expect(redis.publishBattleAction).toHaveBeenCalledWith('b1', {
+        action: 'move',
+        playerId: 'u1',
+        choice: 'move 1',
+      });
+    });
   });
 
   // ── handleForfeit ────────────────────────────────────────────────
@@ -319,6 +348,19 @@ describe('BattleGateway', () => {
       await gateway.handleForfeit(client, { battleId: 'b1' });
 
       expect(battleManager.forfeit).toHaveBeenCalledWith('b1', 'u1');
+    });
+
+    it('should forward via Redis when battle is not hosted locally', async () => {
+      battleManager.isHostedLocally.mockReturnValue(false);
+      const client = mockSocket('u1');
+
+      await gateway.handleForfeit(client, { battleId: 'b1' });
+
+      expect(battleManager.forfeit).not.toHaveBeenCalled();
+      expect(redis.publishBattleAction).toHaveBeenCalledWith('b1', {
+        action: 'forfeit',
+        playerId: 'u1',
+      });
     });
   });
 

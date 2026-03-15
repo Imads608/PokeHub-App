@@ -6,6 +6,7 @@ import {
   IBattleSocketBridgeService,
 } from './battle-socket-bridge.service.interface';
 import { REDIS_SERVICE } from '@pokehub/backend/pokehub-redis';
+import { BATTLE_MANAGER_SERVICE } from '../battle-manager/battle-manager.service.interface';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import { BATTLE_EVENT } from '@pokehub/shared/pokemon-battle-types';
 
@@ -24,6 +25,13 @@ describe('BattleSocketBridgeService', () => {
     createSubscriberClient: jest.Mock;
     refreshHeartbeat: jest.Mock;
     publishUserBattleEvent: jest.Mock;
+  };
+  let mockBattleManager: {
+    isHostedLocally: jest.Mock;
+    processChoice: jest.Mock;
+    forfeit: jest.Mock;
+    cancelChoice: jest.Mock;
+    handleDisconnect: jest.Mock;
   };
   let mockEmit: jest.Mock;
   let mockToEmit: jest.Mock;
@@ -61,10 +69,19 @@ describe('BattleSocketBridgeService', () => {
       publishUserBattleEvent: jest.fn().mockResolvedValue(undefined),
     };
 
+    mockBattleManager = {
+      isHostedLocally: jest.fn().mockReturnValue(true),
+      processChoice: jest.fn().mockResolvedValue(undefined),
+      forfeit: jest.fn().mockResolvedValue(undefined),
+      cancelChoice: jest.fn().mockResolvedValue(undefined),
+      handleDisconnect: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module = await Test.createTestingModule({
       providers: [
         BattleSocketBridgeServiceProvider,
         { provide: REDIS_SERVICE, useValue: mockRedis },
+        { provide: BATTLE_MANAGER_SERVICE, useValue: mockBattleManager },
         { provide: AppLogger, useValue: mockLogger },
       ],
     }).compile();
@@ -275,6 +292,7 @@ describe('BattleSocketBridgeService', () => {
       }));
 
       expect(mockSubscriber.unsubscribe).toHaveBeenCalledWith('battle:b1:update');
+      expect(mockSubscriber.unsubscribe).toHaveBeenCalledWith('battle:b1:action');
     });
 
     it('malformed JSON → logs error, no crash', () => {
@@ -326,6 +344,87 @@ describe('BattleSocketBridgeService', () => {
         type: 'SERVER_STATUS',
         status: 'restored',
       });
+    });
+  });
+
+  // ── Battle action forwarding ─────────────────────────────────────
+
+  describe('battle action forwarding', () => {
+    it('subscribeBattle subscribes to both update and action channels', () => {
+      service.subscribeBattle('b1');
+
+      expect(mockSubscriber.subscribe).toHaveBeenCalledWith('battle:b1:update');
+      expect(mockSubscriber.subscribe).toHaveBeenCalledWith('battle:b1:action');
+    });
+
+    it('move action → calls processChoice on battleManager', async () => {
+      const message = { action: 'move', playerId: 'u1', choice: 'move 1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+      await Promise.resolve(); // flush microtasks
+
+      expect(mockBattleManager.processChoice).toHaveBeenCalledWith('b1', 'u1', 'move 1');
+    });
+
+    it('forfeit action → calls forfeit on battleManager', async () => {
+      const message = { action: 'forfeit', playerId: 'u1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+      await Promise.resolve();
+
+      expect(mockBattleManager.forfeit).toHaveBeenCalledWith('b1', 'u1');
+    });
+
+    it('cancel_choice action → calls cancelChoice on battleManager', async () => {
+      const message = { action: 'cancel_choice', playerId: 'u1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+      await Promise.resolve();
+
+      expect(mockBattleManager.cancelChoice).toHaveBeenCalledWith('b1', 'u1');
+    });
+
+    it('disconnect action → calls handleDisconnect on battleManager', async () => {
+      const message = { action: 'disconnect', playerId: 'u1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+      await Promise.resolve();
+
+      expect(mockBattleManager.handleDisconnect).toHaveBeenCalledWith('b1', 'u1');
+    });
+
+    it('ignores action for battle not hosted locally', async () => {
+      mockBattleManager.isHostedLocally.mockReturnValue(false);
+      const message = { action: 'move', playerId: 'u1', choice: 'move 1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+      await Promise.resolve();
+
+      expect(mockBattleManager.processChoice).not.toHaveBeenCalled();
+    });
+
+    it('action error → publishes error event back to player', async () => {
+      // Use real timers for this test — fake timers block microtask flushing
+      jest.useRealTimers();
+
+      mockBattleManager.processChoice.mockRejectedValue(new Error('Battle ended'));
+      service.registerSocket('s1', 'u1');
+      const message = { action: 'move', playerId: 'u1', choice: 'move 1' };
+
+      mockSubscriber.emit('message', 'battle:b1:action', JSON.stringify(message));
+
+      // Flush the void async handler
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(mockToEmit).toHaveBeenCalledWith(
+        BATTLE_EVENT,
+        expect.objectContaining({
+          type: 'ERROR',
+          code: 'MOVE_ERROR',
+          message: 'Battle ended',
+          recoverable: true,
+        })
+      );
     });
   });
 

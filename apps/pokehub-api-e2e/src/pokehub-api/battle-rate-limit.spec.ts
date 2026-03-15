@@ -191,10 +191,20 @@ describe('Battle Rate Limiting (e2e)', () => {
       teamId,
     });
 
-    // Wait for first to be processed, then leave and rejoin
-    await new Promise((r) => setTimeout(r, 100));
+    // Wait for QUEUE_JOINED before leaving
+    await new Promise<void>((resolve) => {
+      socket.once(BATTLE_EVENT, (e: ServerBattleEvent) => {
+        if (e.type === 'QUEUE_JOINED') resolve();
+      });
+    });
+
+    // Leave and wait for QUEUE_LEFT before rejoining
     socket.emit('LEAVE_QUEUE', {});
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise<void>((resolve) => {
+      socket.once(BATTLE_EVENT, (e: ServerBattleEvent) => {
+        if (e.type === 'QUEUE_LEFT') resolve();
+      });
+    });
 
     socket.emit('JOIN_QUEUE', {
       format: 'gen9anythinggoes',

@@ -32,7 +32,8 @@ export const RedisKeys = {
   channels: {
     /** Per-user channel for delivering battle events when the user is on another server */
     userBattleEvent: (userId: string) => `user:${userId}:battle-events` as const,
-    battleMove: (battleId: string) => `battle:${battleId}:move` as const,
+    /** Per-battle channel for forwarding player actions to the host server */
+    battleAction: (battleId: string) => `battle:${battleId}:action` as const,
     battleUpdate: (battleId: string) => `battle:${battleId}:update` as const,
 
     // Prefixes for parsing incoming channel names
@@ -57,6 +58,14 @@ export const RedisKeys = {
     parseBattleUpdateId: (channel: string): string | null => {
       if (channel.endsWith(':update') && channel.startsWith('battle:')) {
         return channel.slice('battle:'.length, -':update'.length);
+      }
+      return null;
+    },
+
+    // Parse battleId from battle:{battleId}:action channel
+    parseBattleActionId: (channel: string): string | null => {
+      if (channel.endsWith(':action') && channel.startsWith('battle:')) {
+        return channel.slice('battle:'.length, -':action'.length);
       }
       return null;
     },

@@ -196,12 +196,14 @@ export function parsePendingChoices(json: string): PendingChoices {
 }
 
 /**
- * Pub/Sub message for battle move (cross-server)
+ * Pub/Sub message for forwarding player actions to the host server.
+ * Used when a player is connected to a different server than the one hosting the battle.
  */
-export interface BattleMoveMessage {
-  player: 'p1' | 'p2';
-  choice: string;
-}
+export type BattleActionMessage =
+  | { action: 'move'; playerId: string; choice: string }
+  | { action: 'forfeit'; playerId: string }
+  | { action: 'cancel_choice'; playerId: string }
+  | { action: 'disconnect'; playerId: string };
 
 /**
  * Battle update event payloads (structured events, not raw battle state)

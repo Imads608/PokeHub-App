@@ -7,7 +7,7 @@ import {
 } from './redis.types';
 import type {
   BattleMetadata,
-  BattleMoveMessage,
+  BattleActionMessage,
   BattleUpdateMessage,
   PendingChoices,
   QueueEntry,
@@ -330,14 +330,14 @@ export class RedisBattleService {
     );
   }
 
-  async publishBattleMove(
+  async publishBattleAction(
     battleId: string,
-    message: BattleMoveMessage
+    message: BattleActionMessage
   ): Promise<void> {
-    const channel = RedisKeys.channels.battleMove(battleId);
+    const channel = RedisKeys.channels.battleAction(battleId);
     await this.client.publish(channel, JSON.stringify(message));
     this.logger.debug(
-      `Published move for battle ${battleId}: ${message.player} -> ${message.choice}`
+      `Published ${message.action} for battle ${battleId} (player: ${message.playerId})`
     );
   }
 

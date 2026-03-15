@@ -6,10 +6,15 @@ import {
 import {
   REDIS_SERVICE,
   type RedisService,
+  type BattleActionMessage,
   type BattleUpdateMessage,
   type BattleEventPayload,
   RedisKeys,
 } from '@pokehub/backend/pokehub-redis';
+import {
+  BATTLE_MANAGER_SERVICE,
+  type IBattleManagerService,
+} from '../battle-manager/battle-manager.service.interface';
 import {
   type ServerBattleEvent,
   BattleRooms,
@@ -33,7 +38,9 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
 
   constructor(
     private readonly logger: AppLogger,
-    @Inject(REDIS_SERVICE) private readonly redis: RedisService
+    @Inject(REDIS_SERVICE) private readonly redis: RedisService,
+    @Inject(BATTLE_MANAGER_SERVICE)
+    private readonly battleManager: IBattleManagerService
   ) {
     this.logger.setContext(BattleSocketBridgeService.name);
     this.subscriberClient = this.redis.createSubscriberClient();
@@ -105,6 +112,9 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
     if (this.subscriberClient) {
       void this.subscriberClient.subscribe(
         RedisKeys.channels.battleUpdate(battleId)
+      );
+      void this.subscriberClient.subscribe(
+        RedisKeys.channels.battleAction(battleId)
       );
     }
   }
@@ -212,6 +222,17 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
         this.handleBattleUpdateMessage(battleId, JSON.parse(message));
         return;
       }
+
+      // Handle forwarded player actions: battle:{battleId}:action
+      const actionBattleId =
+        RedisKeys.channels.parseBattleActionId(channel);
+      if (actionBattleId) {
+        void this.handleBattleActionMessage(
+          actionBattleId,
+          JSON.parse(message)
+        );
+        return;
+      }
     } catch (error) {
       this.logger.error(`Error handling Redis message: ${error}`);
     }
@@ -271,6 +292,9 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
           void this.subscriberClient.unsubscribe(
             RedisKeys.channels.battleUpdate(battleId)
           );
+          void this.subscriberClient.unsubscribe(
+            RedisKeys.channels.battleAction(battleId)
+          );
         }
         break;
     }
@@ -309,6 +333,59 @@ class BattleSocketBridgeService implements IBattleSocketBridgeService {
           secondsRemaining: event.secondsRemaining,
         });
         break;
+    }
+  }
+
+  private async handleBattleActionMessage(
+    battleId: string,
+    message: BattleActionMessage
+  ): Promise<void> {
+    // Only process actions for battles hosted on this server
+    if (!this.battleManager.isHostedLocally(battleId)) {
+      return;
+    }
+
+    this.logger.debug(
+      `Received forwarded ${message.action} — battle ${battleId}, player: ${message.playerId}`
+    );
+
+    try {
+      switch (message.action) {
+        case 'move':
+          await this.battleManager.processChoice(
+            battleId,
+            message.playerId,
+            message.choice
+          );
+          break;
+
+        case 'forfeit':
+          await this.battleManager.forfeit(battleId, message.playerId);
+          break;
+
+        case 'cancel_choice':
+          await this.battleManager.cancelChoice(battleId, message.playerId);
+          break;
+
+        case 'disconnect':
+          await this.battleManager.handleDisconnect(
+            battleId,
+            message.playerId
+          );
+          break;
+      }
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : 'Action failed';
+      this.logger.error(
+        `Failed to process forwarded ${message.action} — battle ${battleId}: ${errorMsg}`
+      );
+      this.emitToUser(message.playerId, {
+        type: 'ERROR',
+        code: `${message.action.toUpperCase()}_ERROR`,
+        message: errorMsg,
+        recoverable: true,
+      });
     }
   }
 

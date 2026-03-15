@@ -165,7 +165,14 @@ export class BattleGateway
 
     const battleId = await this.redis.getUserBattle(userId);
     if (battleId) {
-      await this.battleManager.handleDisconnect(battleId, userId);
+      if (this.battleManager.isHostedLocally(battleId)) {
+        await this.battleManager.handleDisconnect(battleId, userId);
+      } else {
+        await this.redis.publishBattleAction(battleId, {
+          action: 'disconnect',
+          playerId: userId,
+        });
+      }
     }
 
     const wasInQueue = await this.matchmaking.isInQueue(userId);
@@ -330,7 +337,15 @@ export class BattleGateway
     );
 
     try {
-      await this.battleManager.processChoice(battleId, userId, choice);
+      if (this.battleManager.isHostedLocally(battleId)) {
+        await this.battleManager.processChoice(battleId, userId, choice);
+      } else {
+        await this.redis.publishBattleAction(battleId, {
+          action: 'move',
+          playerId: userId,
+          choice,
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to process move';
@@ -355,7 +370,15 @@ export class BattleGateway
     }
 
     try {
-      await this.battleManager.cancelChoice(parsed.data.battleId, userId);
+      const { battleId } = parsed.data;
+      if (this.battleManager.isHostedLocally(battleId)) {
+        await this.battleManager.cancelChoice(battleId, userId);
+      } else {
+        await this.redis.publishBattleAction(battleId, {
+          action: 'cancel_choice',
+          playerId: userId,
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to cancel choice';
@@ -384,8 +407,18 @@ export class BattleGateway
     );
 
     try {
-      await this.battleManager.forfeit(battleId, userId);
-      this.logger.log(`User ${userId} forfeited battle ${battleId}`);
+      if (this.battleManager.isHostedLocally(battleId)) {
+        await this.battleManager.forfeit(battleId, userId);
+        this.logger.log(`User ${userId} forfeited battle ${battleId}`);
+      } else {
+        await this.redis.publishBattleAction(battleId, {
+          action: 'forfeit',
+          playerId: userId,
+        });
+        this.logger.log(
+          `Forwarded FORFEIT for user ${userId} — battle ${battleId}`
+        );
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to forfeit';
