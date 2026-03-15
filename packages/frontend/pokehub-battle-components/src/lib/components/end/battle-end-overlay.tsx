@@ -20,9 +20,10 @@ export function BattleEndOverlay({
   winner,
   myUserId,
   endReason,
-  canSaveReplay,
-  replaySaved,
-  onSaveReplay,
+  // TODO: Re-enable when replay viewer is implemented
+  // canSaveReplay,
+  // replaySaved,
+  // onSaveReplay,
 }: BattleEndOverlayProps) {
   const router = useRouter();
   const isWinner = winner !== null && winner === myUserId;

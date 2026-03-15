@@ -37,6 +37,16 @@ describe('BattleEndOverlay', () => {
     expect(screen.getByText('Draw!')).toBeTruthy();
   });
 
+  it('shows disabled "Save Replay (Coming Soon)" button', () => {
+    render(
+      <BattleEndOverlay {...defaultProps} winner="u1" endReason="win" />
+    );
+    const btn = screen.getByText('Save Replay (Coming Soon)').closest('button');
+    expect(btn).toBeTruthy();
+    expect(btn?.disabled).toBe(true);
+  });
+
+  /* TODO: Re-enable when replay viewer is implemented
   it('shows Save Replay button when canSaveReplay is true', () => {
     render(
       <BattleEndOverlay
@@ -78,6 +88,7 @@ describe('BattleEndOverlay', () => {
     await userEvent.click(screen.getByText('Save Replay'));
     expect(onSaveReplay).toHaveBeenCalledTimes(1);
   });
+  */
 
   it('navigates to /battle when "Find New Battle" is clicked', async () => {
     render(<BattleEndOverlay {...defaultProps} winner="u1" endReason="win" />);
