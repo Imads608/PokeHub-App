@@ -66,7 +66,12 @@ async function forfeitBattle(page: Page) {
   }
 }
 
+// All battle tests run serially — they share the same authenticated user,
+// and the single-socket-per-user policy would disconnect parallel tabs.
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Battle Lobby', () => {
+
   test('should load the battle lobby page', async ({ page }) => {
     await page.goto('/battle', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Battle' })).toBeVisible({
@@ -130,8 +135,6 @@ test.describe('Battle Lobby', () => {
 });
 
 test.describe('Battle Flow', () => {
-  // Run serially — battles involve shared server state
-  test.describe.configure({ mode: 'serial' });
   test.setTimeout(90000);
 
   let player2Context: BrowserContext;
