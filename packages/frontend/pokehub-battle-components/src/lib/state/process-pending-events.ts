@@ -59,6 +59,13 @@ export async function processPendingEvents(
       continue;
     }
 
+    // Suppress the move SFX when the move doesn't connect (missed, failed,
+    // immune, no target) — playing the launch sound feels off when nothing
+    // happened.
+    if (event.animEvent?.type === 'move' && pending[0]?.animEvent?.type === 'move-failed') {
+      event.animEvent.skipSfx = true;
+    }
+
     // Rule and tier lines aren't formatted by @pkmn/view's LogFormatter —
     // generate log HTML for them directly.
     if (cmd === 'rule') {

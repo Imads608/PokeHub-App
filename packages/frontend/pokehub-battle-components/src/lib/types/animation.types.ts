@@ -3,7 +3,7 @@ import type { Transition } from 'motion/react';
 // ── Animation Events (extracted from protocol) ─────────────────────────
 
 export type AnimationEvent =
-  | { type: 'move'; attacker: string; defender: string; moveName: string }
+  | { type: 'move'; attacker: string; defender: string; moveName: string; skipSfx?: boolean }
   | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number; skipHitSfx?: boolean; modifier?: 'supereffective' | 'resisted' }
   | { type: 'heal'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
   | { type: 'faint'; pokemon: string }
@@ -17,7 +17,7 @@ export type AnimationEvent =
   | { type: 'supereffective' }
   | { type: 'resisted' }
   | { type: 'crit' }
-  | { type: 'miss' };
+  | { type: 'move-failed' };
 
 // ── Sprite handles (for positioning and transforms) ─────────────────────
 

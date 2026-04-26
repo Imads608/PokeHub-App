@@ -294,7 +294,7 @@ The Showdown protocol has dozens of event types. Key categories:
 | **Status** | `-status`, `-curestatus`, `-cureteam` | Status conditions |
 | **Field** | `-weather`, `-fieldstart`, `-fieldend` | Field-wide conditions |
 | **Side** | `-sidestart`, `-sideend` | Side-specific conditions (hazards, screens) |
-| **Effectiveness** | `-supereffective`, `-resisted`, `-crit`, `-miss` | Damage modifiers |
+| **Effectiveness** | `-supereffective`, `-resisted`, `-crit`, `-miss`, `-fail`, `-immune`, `-notarget` | Damage modifiers; the four "move didn't connect" events collapse into one `move-failed` animation event |
 | **Abilities** | `-ability`, `-endability` | Ability activations |
 | **Items** | `-item`, `-enditem` | Item activations/consumption |
 | **Meta** | `player`, `teamsize`, `gametype`, `gen`, `tier` | Battle setup |

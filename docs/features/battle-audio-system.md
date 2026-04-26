@@ -298,7 +298,7 @@ Move sound effects play concurrently with the move's visual animation:
 ```
   playMove(scene, event, audio)
       │
-      ├──▶ audio.playSfx(getMoveSfxUrl(moveName))  ─┐
+      ├──▶ audio.playSfx(getMoveSfxUrl(moveName))  ─┐  (skipped when event.skipSfx)
       │                                               ├── Promise.all
       └──▶ moveAnimation(scene, attacker, defender)  ─┘
       │
@@ -307,6 +307,8 @@ Move sound effects play concurrently with the move's visual animation:
 ```
 
 `playSfx()` resolves when the audio buffer finishes playing (`onended` event). If the SFX file doesn't exist (404), the promise resolves silently without blocking the animation.
+
+When the move doesn't connect, the launch SFX is suppressed — see [Move Failure Tracking](#move-failure-tracking).
 
 ### Effectiveness Tracking
 
@@ -328,13 +330,39 @@ Move sound effects play concurrently with the move's visual animation:
 
 The `effectivenessPlayed` boolean resets on each new `move` event, ensuring only the immediately following damage event is affected.
 
+### Move Failure Tracking
+
+The same `process-pending-events.ts` peek-ahead also catches the inverse case: a move that doesn't connect. Four protocol events all signal "the move didn't land":
+
+| Protocol command | Meaning                                                  |
+|------------------|----------------------------------------------------------|
+| `-miss`          | Accuracy roll failed                                     |
+| `-fail`          | Move failed by its own mechanics (e.g. Substitute up)    |
+| `-immune`        | Type or ability immunity                                 |
+| `-notarget`      | No valid target (Gen 1–4 only; Gen 9+ uses `-fail`)      |
+
+`extractAnimationEvent` collapses all four into a single `{ type: 'move-failed' }` animation event, so there is one handler instead of four.
+
+```
+  Protocol sequence:
+    |move|p1a: X|Tackle|p2a: Y  → next event peeked
+    |-miss|...                  → move event gets skipSfx = true
+                                  playMove skips audio.playSfx(getMoveSfxUrl)
+                                  visual animation still plays
+                                  move-failed handler runs a 100ms beat
+```
+
+The original protocol args still flow into the log formatter, so the in-game log keeps the distinct text from each event ("missed!", "But it failed!", "It doesn't affect …").
+
+`|cant|` (paralysis, sleep, flinch) is a separate case: it *replaces* the `|move|` event entirely, so `playMove` never runs — nothing to suppress.
+
 ### State Animation SFX
 
 Each state animation handler plays its corresponding SFX:
 
 | Animation | SFX | Notes |
 |-----------|-----|-------|
-| `playMove` | `getMoveSfxUrl(moveName)` | Concurrent with visual animation |
+| `playMove` | `getMoveSfxUrl(moveName)` | Concurrent with visual animation; skipped when `event.skipSfx` is set (a `move-failed` event follows) |
 | `playDamage` | `STATE_SFX.damage` | Skipped when `event.skipHitSfx` is set |
 | `playFaint` | `STATE_SFX.faint` | Plays before drop animation |
 | `playSwitchIn` | `STATE_SFX.switchIn` + `getCryUrl(cryId)` | Pokeball sound + species cry |
@@ -345,7 +373,7 @@ Each state animation handler plays its corresponding SFX:
 | `playSuperEffective` | `STATE_SFX.supereffective` | Heavy hit + screen shake |
 | `playResisted` | `STATE_SFX.resisted` | Weak hit sound |
 | `playCrit` | — | No sound (screen shake + gold flash only) |
-| `playMiss` | — | No sound or visual (100ms delay only) |
+| `move-failed` handler | — | No sound or visual (100ms delay only). Also sets `skipSfx` on the preceding move event so its launch SFX is suppressed |
 
 ## Asset Upload Tool
 

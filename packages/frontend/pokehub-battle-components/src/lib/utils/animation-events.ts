@@ -94,8 +94,15 @@ export function extractAnimationEvent(
     case '-crit':
       return { type: 'crit' };
 
+    // A move that failed to connect: missed (accuracy), failed (own
+    // mechanics, e.g. Substitute already up), immune (type/ability), or
+    // notarget (Gen 1-4 only — Gen 9+ uses -fail). All share one handler
+    // so the move SFX is suppressed and a brief beat plays.
     case '-miss':
-      return { type: 'miss' };
+    case '-fail':
+    case '-immune':
+    case '-notarget':
+      return { type: 'move-failed' };
 
     default:
       return null;

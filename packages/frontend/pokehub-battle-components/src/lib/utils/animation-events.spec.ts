@@ -214,9 +214,27 @@ describe('extractAnimationEvent', () => {
     });
   });
 
-  it('-miss → { type: miss }', () => {
+  it('-miss → { type: move-failed }', () => {
     expect(extractAnimationEvent(['-miss', 'p1a: Charizard'], battle)).toEqual({
-      type: 'miss',
+      type: 'move-failed',
+    });
+  });
+
+  it('-fail → { type: move-failed }', () => {
+    expect(extractAnimationEvent(['-fail', 'p1a: Charizard', 'move: Substitute'], battle)).toEqual({
+      type: 'move-failed',
+    });
+  });
+
+  it('-immune → { type: move-failed }', () => {
+    expect(extractAnimationEvent(['-immune', 'p2a: Blastoise'], battle)).toEqual({
+      type: 'move-failed',
+    });
+  });
+
+  it('-notarget → { type: move-failed }', () => {
+    expect(extractAnimationEvent(['-notarget', 'p1a: Charizard'], battle)).toEqual({
+      type: 'move-failed',
     });
   });
 

@@ -19,7 +19,7 @@
   - [Switch In / Switch Out](#switch-in--switch-out)
   - [Boost / Unboost](#boost--unboost)
   - [Status](#status)
-  - [Effectiveness (Super Effective, Crit, Miss)](#effectiveness-super-effective-crit-miss)
+  - [Effectiveness (Super Effective, Crit, Move Failed)](#effectiveness-super-effective-resisted-crit-move-failed)
   - [Weather and Terrain](#weather-and-terrain)
 - [Move Animations](#move-animations)
   - [Move Animation Registry](#move-animation-registry)
@@ -37,6 +37,7 @@
 - [Audio Integration](#audio-integration)
   - [Move SFX Sequencing](#move-sfx-sequencing)
   - [Effectiveness SFX and skipHitSfx](#effectiveness-sfx-and-skiphitsfx)
+  - [Suppressing the move SFX on failure](#suppressing-the-move-sfx-on-failure)
   - [State Animation SFX Map](#state-animation-sfx-map)
 - [PokemonSprite — Animation Target](#pokemonsprite--animation-target)
 - [Adding a New Move Animation](#adding-a-new-move-animation)
@@ -155,8 +156,8 @@ The system uses deliberate timing to keep the player informed: log entries for a
 
 ```typescript
 type AnimationEvent =
-  | { type: 'move'; attacker: string; defender: string; moveName: string }
-  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
+  | { type: 'move'; attacker: string; defender: string; moveName: string; skipSfx?: boolean }
+  | { type: 'damage'; pokemon: string; prevHp: number; newHp: number; maxHp: number; skipHitSfx?: boolean; modifier?: 'supereffective' | 'resisted' }
   | { type: 'heal'; pokemon: string; prevHp: number; newHp: number; maxHp: number }
   | { type: 'faint'; pokemon: string }
   | { type: 'switch-out'; pokemon: string }
@@ -169,7 +170,7 @@ type AnimationEvent =
   | { type: 'supereffective' }
   | { type: 'resisted' }
   | { type: 'crit' }
-  | { type: 'miss' };
+  | { type: 'move-failed' };
 ```
 
 ### Event Extraction
@@ -189,8 +190,13 @@ type AnimationEvent =
   |-weather|Sun            { type: 'weather', weather: 'Sun' }
   |-supereffective|...     { type: 'supereffective' }
   |-crit|...               { type: 'crit' }
-  |-miss|...               { type: 'miss' }
+  |-miss|...               { type: 'move-failed' }
+  |-fail|...               { type: 'move-failed' }
+  |-immune|...             { type: 'move-failed' }
+  |-notarget|...           { type: 'move-failed' }
 ```
+
+The four "move didn't connect" protocol events (`-miss`, `-fail`, `-immune`, `-notarget`) collapse into a single `move-failed` animation event. They share one handler and all suppress the prior move's launch SFX (see [Suppressing the move SFX on failure](#suppressing-the-move-sfx-on-failure)). The original protocol args are still passed to the log formatter, so the in-game log keeps the distinct text ("missed!" vs. "But it failed!" vs. "It doesn't affect …").
 
 Events like `|upkeep|`, `|turn|`, `|request|` produce `null` (no animation needed).
 
@@ -359,7 +365,7 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
     default → rgba(156,163,175,0.15)
 ```
 
-### Effectiveness (Super Effective, Resisted, Crit, Miss)
+### Effectiveness (Super Effective, Resisted, Crit, Move Failed)
 
 ```
   Super effective:
@@ -376,9 +382,11 @@ These are the "always-on" animations handled by `playAnimationEvent()` in `state
     shakeScreen(intensity: 6, duration: DURATION.CRIT)
     flashOverlay(gold rgba(255,200,0,0.25), 150ms)
 
-  Miss:
+  Move failed (covers -miss, -fail, -immune, -notarget):
     No sound or visual
     delay(100ms)
+    The preceding move event also has its launch SFX suppressed
+    (see "Suppressing the move SFX on failure" below)
 ```
 
 Both super effective and resisted events set `effectivenessPlayed` in the processing loop, which causes the following damage event's hit sound to be skipped via `skipHitSfx` (see [Audio Integration](#audio-integration)).
@@ -728,11 +736,31 @@ The `processPendingEvents` loop in `process-pending-events.ts` tracks whether a 
   |-damage|...|120/270       skipHitSfx = false → plays normal hit SFX
 ```
 
+### Suppressing the move SFX on failure
+
+When a move doesn't connect — missed, failed by its own mechanics, was no-effect, or had no target — playing the launch SFX feels off. The same `processPendingEvents` loop handles this with the symmetric `skipSfx` flag on the `move` event.
+
+The peek is one event ahead: if a `move` event is followed by a `move-failed` event (the unified type for `-miss`, `-fail`, `-immune`, `-notarget`), the move's `skipSfx` is set to `true` and `playMove` skips the audio while still running the visual animation.
+
+```
+  Event sequence:            Audio behavior:
+  ──────────────             ───────────────
+  |move|...                  next event is move-failed → skipSfx = true
+  |-miss|... / |-fail|...    NO move launch SFX, visual animation still plays
+                             (player sees the lunge/projectile but hears nothing)
+
+  Move that lands:
+  |move|...                  next event is damage → skipSfx unset
+  |-damage|...|120/270       move SFX plays as normal alongside the animation
+```
+
+The original protocol args are unchanged, so the in-game log still shows the distinct text from each event ("missed!", "But it failed!", "It doesn't affect …").
+
 ### State Animation SFX Map
 
 | Handler | SFX Played | Notes |
 |---------|-----------|-------|
-| `playMove` | `getMoveSfxUrl(moveName)` | Concurrent with visual animation |
+| `playMove` | `getMoveSfxUrl(moveName)` | Concurrent with visual animation; skipped when `event.skipSfx` is set (move-failed follows) |
 | `playDamage` | `STATE_SFX.damage` | Skipped when `skipHitSfx` is set |
 | `playFaint` | `STATE_SFX.faint` | Before drop animation |
 | `playSwitchIn` | `STATE_SFX.switchIn` + `getCryUrl(species)` | Pokeball sound + species cry |
@@ -743,7 +771,7 @@ The `processPendingEvents` loop in `process-pending-events.ts` tracks whether a 
 | `playSuperEffective` | `STATE_SFX.supereffective` | With screen shake |
 | `playResisted` | `STATE_SFX.resisted` | — |
 | `playCrit` | — | No sound |
-| `playMiss` | — | No sound |
+| `move-failed` handler | — | No sound; 100ms beat. Also sets `skipSfx` on the preceding move event |
 
 ## PokemonSprite — Animation Target
 

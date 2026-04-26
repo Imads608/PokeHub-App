@@ -213,6 +213,54 @@ describe('processPendingEvents', () => {
     expect(animCall[0].skipHitSfx).toBe(true);
   });
 
+  it.each([
+    ['-miss', '-miss'],
+    ['-fail', '-fail'],
+    ['-immune', '-immune'],
+    ['-notarget', '-notarget'],
+  ])('move followed by %s → sets skipSfx on the move event', async (_label, cmd) => {
+    const moveAnim = {
+      type: 'move',
+      attacker: 'p1a: Charizard',
+      defender: 'p2a: Blastoise',
+      moveName: 'Flamethrower',
+    };
+
+    const deps = createDeps({
+      pending: [
+        makePending('move', moveAnim, ['move', 'p1a: Charizard', 'Flamethrower', 'p2a: Blastoise']),
+        makePending(cmd, { type: 'move-failed' }, [cmd, 'p1a: Charizard']),
+      ],
+    });
+
+    await processPendingEvents(deps, playAnimation);
+
+    const animCall = playAnimation.mock.calls.find((c) => c[0].type === 'move');
+    expect(animCall).toBeDefined();
+    expect(animCall[0].skipSfx).toBe(true);
+  });
+
+  it('move with no failure event after → leaves skipSfx unset', async () => {
+    const moveAnim = {
+      type: 'move',
+      attacker: 'p1a: Charizard',
+      defender: 'p2a: Blastoise',
+      moveName: 'Flamethrower',
+    };
+
+    const deps = createDeps({
+      pending: [
+        makePending('move', moveAnim, ['move', 'p1a: Charizard', 'Flamethrower', 'p2a: Blastoise']),
+      ],
+    });
+
+    await processPendingEvents(deps, playAnimation);
+
+    const animCall = playAnimation.mock.calls.find((c) => c[0].type === 'move');
+    expect(animCall).toBeDefined();
+    expect(animCall[0].skipSfx).toBeUndefined();
+  });
+
   it('resisted followed by damage → merges modifier onto damage event', async () => {
     const damageAnim = {
       type: 'damage',

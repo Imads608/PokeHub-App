@@ -51,7 +51,7 @@ export async function playAnimationEvent(
     case 'crit':
       return playCrit(scene);
 
-    case 'miss':
+    case 'move-failed':
       return scene.delay(100);
 
     case 'resisted':
@@ -82,8 +82,11 @@ async function playMove(
     return;
   }
 
-  // Run move SFX and visual animation in parallel, wait for both to finish
-  const sfxPromise = audio?.playSfx(getMoveSfxUrl(event.moveName)) ?? Promise.resolve();
+  // Run move SFX and visual animation in parallel, wait for both to finish.
+  // Skip the SFX when the move misses — see process-pending-events.ts.
+  const sfxPromise = event.skipSfx
+    ? Promise.resolve()
+    : audio?.playSfx(getMoveSfxUrl(event.moveName)) ?? Promise.resolve();
 
   const moveAnim = await getMoveAnimation(event.moveName);
   let animPromise: Promise<void>;
