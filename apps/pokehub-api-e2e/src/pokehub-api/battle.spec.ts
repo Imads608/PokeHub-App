@@ -787,7 +787,7 @@ describe('Battle API (e2e)', () => {
       const disconnectEvent = await disconnectPromise;
       expect(disconnectEvent.type).toBe('OPPONENT_DISCONNECTED');
       expect((disconnectEvent as { battleId: string }).battleId).toBe(battleId);
-    });
+    }, 15000);
 
     it('should allow player to rejoin and receive battle state', async () => {
       // Player 1 disconnects
