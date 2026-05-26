@@ -777,8 +777,11 @@ describe('Battle API (e2e)', () => {
     });
 
     it('should notify opponent when player disconnects', async () => {
-      // Set up listener for disconnect event before disconnecting
-      const disconnectPromise = waitForEvent(socket2, 'OPPONENT_DISCONNECTED');
+      // Set up listener for disconnect event before disconnecting.
+      // Use a 10s helper timeout (vs. the 5s default) — CI runners can lag
+      // when prior tests' afterEach cascades a backlog of disconnect/cleanup
+      // work through the gateway and Redis pub/sub round-trip.
+      const disconnectPromise = waitForEvent(socket2, 'OPPONENT_DISCONNECTED', 10000);
 
       // Player 1 disconnects
       socket1.disconnect();
