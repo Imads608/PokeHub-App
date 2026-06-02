@@ -430,6 +430,19 @@ class BattleManagerService implements IBattleManagerService {
       return;
     }
 
+    // Idempotency: if a disconnect timeout is already armed for this
+    // (battleId, playerId), the player has been marked disconnected and
+    // OPPONENT_DISCONNECTED already published. A duplicate call here
+    // (e.g. socket.io churn under CI load triggering handleDisconnect for
+    // the same user repeatedly) would otherwise re-publish, amplify the
+    // bridge subscriber's queue, and starve other battles' events.
+    // handleReconnect clears the timeout, so a genuine reconnect →
+    // disconnect cycle still goes through.
+    const timeoutKey = `${battleId}:${playerId}`;
+    if (this.disconnectTimeouts.has(timeoutKey)) {
+      return;
+    }
+
     this.logger.log(`Battle ${battleId}: ${player} disconnected`);
 
     const now = Date.now().toString();
