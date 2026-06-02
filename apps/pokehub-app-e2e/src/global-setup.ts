@@ -217,47 +217,6 @@ async function globalSetup(config: FullConfig) {
       );
     }
 
-    // Warm up lazy-loaded routes so the dev server pays the first-hit
-    // compile cost here instead of inside the first test that visits each
-    // route. Without this, the Pokemon selector (@pkmn/dex) and the battle
-    // shell (@pkmn/sim) routinely exceed their per-element timeouts on
-    // their first cold request in CI. The Next dev server compiles each
-    // route once and serves the result to every worker, so warming once
-    // here benefits the whole suite.
-    try {
-      console.log('Warming up lazy-loaded routes...');
-      const warmupStart = Date.now();
-
-      // /team-builder/new + Pokemon selector lazy chunk
-      await verifyPage.goto(`${baseURL}/team-builder/new`, {
-        waitUntil: 'domcontentloaded',
-      });
-      await verifyPage
-        .getByTestId('add-pokemon-slot-0')
-        .click({ timeout: 30000 });
-      await verifyPage
-        .getByTestId('pokemon-search-input')
-        .waitFor({ timeout: 60000 });
-
-      // /battle (BattleShell + @pkmn/sim async chunks)
-      await verifyPage.goto(`${baseURL}/battle`, {
-        waitUntil: 'domcontentloaded',
-      });
-      await verifyPage
-        .getByRole('heading', { name: 'Battle' })
-        .waitFor({ timeout: 60000 });
-
-      console.log(
-        `✓ Routes warmed up in ${Math.round(
-          (Date.now() - warmupStart) / 1000
-        )}s`
-      );
-    } catch (warmupError) {
-      // Warmup is best-effort — failures shouldn't break the whole suite.
-      // The tests will still run, just paying the compile cost on first hit.
-      console.warn(`Warning: route warmup failed: ${warmupError}`);
-    }
-
     await existingUserContext.close();
 
     // Authenticate new user (without username) for create-profile tests

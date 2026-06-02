@@ -42,6 +42,12 @@
         }
       }
     },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "next start dist/apps/pokehub-app -p 4200"
+      }
+    },
     "export": {
       "executor": "@nx/next:export",
       "options": {

@@ -54,8 +54,17 @@ export default defineConfig({
       ignoreHTTPSErrors: true,
     },
     {
-      command:
-        'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
+      // In CI, use a production build (compiled once at build time) instead
+      // of `next dev` (JIT compilation on first request). The dev server's
+      // per-route compile cost on the runner regularly exceeds element
+      // timeouts and produces flaky failures, especially on heavy lazy
+      // chunks (@pkmn/dex on /team-builder, @pkmn/sim on /battle).
+      // Locally we keep `nx serve` for fast iteration with HMR.
+      // CI must run `nx build pokehub-app` before invoking the suite — see
+      // the E2E job in .github/workflows/ci.yml.
+      command: process.env.CI
+        ? 'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx start pokehub-app'
+        : 'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
       url: 'http://127.0.0.1:4200',
       reuseExistingServer: false, // Always start fresh to get latest code
       cwd: workspaceRoot,
