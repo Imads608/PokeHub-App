@@ -777,20 +777,25 @@ describe('Battle API (e2e)', () => {
     });
 
     it('should notify opponent when player disconnects', async () => {
-      // Set up listener for disconnect event before disconnecting.
-      // Use a 10s helper timeout (vs. the 5s default) — CI runners can lag
-      // when prior tests' afterEach cascades a backlog of disconnect/cleanup
-      // work through the gateway and Redis pub/sub round-trip.
-      const disconnectPromise = waitForEvent(socket2, 'OPPONENT_DISCONNECTED', 10000);
+      // Set up listener BEFORE disconnecting so we don't miss the event.
+      // 20s helper timeout: under CI load the gateway → publishBattleUpdate
+      // → bridge subscriber → emitToUser → socket2 round-trip occasionally
+      // sits behind a backlog of other tests' disconnect work; we observed
+      // 10s isn't enough headroom. 25s outer leaves room for the rejection
+      // to actually propagate.
+      const disconnectPromise = waitForEvent(socket2, 'OPPONENT_DISCONNECTED', 20000);
 
-      // Player 1 disconnects
+      // Player 1 disconnects, then wait for the client to actually be
+      // closed before we start blocking on the helper. Avoids the
+      // disconnect being held in socket.io's outbound queue while the
+      // wait timer is already running.
       socket1.disconnect();
+      await waitForDisconnect(socket1).catch(() => { /* best-effort */ });
 
-      // Player 2 should receive OPPONENT_DISCONNECTED
       const disconnectEvent = await disconnectPromise;
       expect(disconnectEvent.type).toBe('OPPONENT_DISCONNECTED');
       expect((disconnectEvent as { battleId: string }).battleId).toBe(battleId);
-    }, 15000);
+    }, 25000);
 
     it('should allow player to rejoin and receive battle state', async () => {
       // Player 1 disconnects
