@@ -62,8 +62,19 @@ export default defineConfig({
       // Locally we keep `nx serve` for fast iteration with HMR.
       // CI must run `nx build pokehub-app` before invoking the suite — see
       // the E2E job in .github/workflows/ci.yml.
+      //
+      // HOSTNAME pins Next's bind address and is the value Auth.js uses to
+      // construct its canonical URL (post-sign-in redirect, callback-url
+      // cookie value, etc.). Without it, `next start` defaults HOSTNAME
+      // to `localhost`, so Auth.js redirects after sign-in to
+      // `http://localhost:4200/...` even though the test client hit
+      // `http://127.0.0.1:4200`. The redirect follow-up sets duplicate
+      // `authjs.csrf-token` cookies on the second domain, and the next
+      // sign-in's CSRF check fails with MissingCSRF. (AUTH_URL is not
+      // sufficient here — Auth.js v5 with trustHost still constructs
+      // redirect URLs from the bound HOSTNAME.)
       command: process.env.CI
-        ? 'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx start pokehub-app'
+        ? 'E2E_TESTING=true HOSTNAME=127.0.0.1 API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx start pokehub-app'
         : 'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
       url: 'http://127.0.0.1:4200',
       reuseExistingServer: false, // Always start fresh to get latest code
