@@ -33,7 +33,19 @@ interface TestUser {
 }
 
 /**
- * Authenticates a test user via NextAuth test-credentials provider
+ * Authenticates a test user via NextAuth test-credentials provider.
+ *
+ * Done entirely through context.request — no page navigation. A prior
+ * implementation opened the homepage with `page.goto(baseURL)` first, which
+ * mounted Auth.js's client SessionProvider and fired a background
+ * `fetch('/api/auth/session')`. Immediately navigating to `/api/auth/csrf`
+ * aborted that fetch but still left its partial Set-Cookie response in the
+ * jar — yielding two `authjs.csrf-token` cookies with different attributes.
+ * The POST then sent both, Auth.js read the wrong one, and the action
+ * callback failed with MissingCSRF. The first user happened to win the race
+ * (server cold-start was slow enough for the session fetch to settle); the
+ * second and third lost it. Skipping the browser page eliminates the
+ * SessionProvider entirely.
  */
 async function authenticateUser(
   context: BrowserContext,
@@ -41,25 +53,16 @@ async function authenticateUser(
   user: TestUser,
   authFile: string
 ): Promise<void> {
-  const page = await context.newPage();
-
-  // Listen to console messages from the browser
-  page.on('console', (msg) => console.log(`[Browser Console] ${msg.text()}`));
-
-  // Navigate to the app first
-  await page.goto(baseURL);
-  await page.waitForLoadState('domcontentloaded');
-
-  // Get CSRF token
-  const csrfRes = await page.goto(`${baseURL}/api/auth/csrf`);
-  const csrfData = await csrfRes?.json();
+  const csrfRes = await context.request.get(`${baseURL}/api/auth/csrf`);
+  const csrfData = await csrfRes.json();
   const csrfToken = csrfData?.csrfToken;
 
   if (!csrfToken) {
-    throw new Error('Failed to get CSRF token');
+    throw new Error(
+      `Failed to get CSRF token for ${user.email}: status ${csrfRes.status()}`
+    );
   }
 
-  // Build form data - include username only if provided
   const formData: Record<string, string> = {
     csrfToken,
     email: user.email,
@@ -68,7 +71,6 @@ async function authenticateUser(
     formData.username = user.username;
   }
 
-  // POST to signin callback endpoint
   const response = await context.request.post(
     `${baseURL}/api/auth/callback/test-credentials`,
     { form: formData }
@@ -84,21 +86,19 @@ async function authenticateUser(
     );
   }
 
-  // Verify session cookie was set
   const cookies = await context.cookies();
-  const sessionCookie = cookies.find(c => c.name === 'authjs.session-token');
+  const sessionCookie = cookies.find((c) => c.name === 'authjs.session-token');
   if (!sessionCookie) {
     throw new Error(
       `Authentication failed for ${user.email}: no session cookie set. ` +
-      `POST status: ${response.status()}, cookies: ${cookies.map(c => c.name).join(', ')}`
+        `POST status: ${response.status()}, cookies: ${cookies
+          .map((c) => c.name)
+          .join(', ')}`
     );
   }
 
-  // Save the storage state
   await context.storageState({ path: authFile });
   console.log(`✓ Authentication state saved to ${authFile}`);
-
-  await page.close();
 }
 
 async function globalSetup(config: FullConfig) {
