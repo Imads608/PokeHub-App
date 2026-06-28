@@ -6,6 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PokeHub is a Next.js Pokemon application built with an Nx monorepo architecture. It features a frontend Pokemon explorer app and a NestJS backend API, with extensive shared libraries for reusable components and utilities.
 
+## Agent Harness
+
+This repo ships a Claude Code harness in `.claude/` that encodes how we build here. Use it:
+
+- **Skills** (`.claude/skills/`) — invoke with `/<name>`:
+  - `/new-package` — scaffold a shared Nx library (naming, project.json, tsconfig trio, path alias, `fix-path-aliases`).
+  - `/new-component` — build a frontend component/hook (shadcn UI rule, `cn()`, TanStack Query keys, `'use client'` boundaries, theming).
+  - `/db-migrate` — Drizzle migrations via the required `tsx --tsconfig tsconfig.base.json` invocation.
+  - `/ci-check` — run the CI gate locally (typecheck → lint → typecheck-spec → test → build on affected) before a PR.
+- **Reviewer subagent** (`.claude/agents/pokehub-reviewer.md`) — run after implementing a feature / before a PR to check the diff against project conventions. Spawn it via the Agent tool (`subagent_type: pokehub-reviewer`).
+- **Hooks** (`.claude/settings.json`) — every edited `.ts/.tsx` under `apps|packages|tools` is auto-formatted (Prettier) and auto-linted (ESLint `--fix`); remaining lint errors are surfaced so they get fixed immediately.
+- **Permissions** (`.claude/settings.json`) — safe `nx`, read-only `git`, and `gh` commands are pre-approved; force-push and hard-reset are denied.
+
+**Discovery layer — graphify.** A persistent knowledge graph lives in `graphify-out/`. To locate code, understand architecture, or trace the impact of a change (what depends on X), query graphify *first* rather than guessing or grepping blindly. The harness delegates locational facts to graphify and keeps only prescriptive rules in the skills — so if a skill and the graph disagree on where something lives, trust the graph. The graph is a snapshot: rebuild it with `/graphify` after structural changes (new/moved packages) or queries will mislead.
+
+When making changes, default to these workflows so design, testing, and pipeline conventions stay consistent. The CI gate is the source of truth (`.github/workflows/ci.yml`).
+
 ## Common Commands
 
 ### Development

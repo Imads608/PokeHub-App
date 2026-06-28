@@ -68,3 +68,9 @@ tags
 
 # Claude Code plans
 .claude/plans/
+
+# graphify knowledge graph (regenerable build artifact; contains machine-specific paths)
+graphify-out/
+
+# test output
+test-results/
