@@ -70,9 +70,10 @@ class BattleManagerService implements IBattleManagerService {
         const instance = this.battles.get(battleId);
         if (!instance) return;
 
-        const targetUserId = player === 'p1'
-          ? instance.config.player1.id
-          : instance.config.player2.id;
+        const targetUserId =
+          player === 'p1'
+            ? instance.config.player1.id
+            : instance.config.player2.id;
 
         await this.redis.publishBattleUpdate(battleId, {
           type: 'event',
@@ -183,7 +184,9 @@ class BattleManagerService implements IBattleManagerService {
     }
 
     if (instance.ended) {
-      this.logger.warn(`Battle ${battleId}: choice rejected — battle has ended`);
+      this.logger.warn(
+        `Battle ${battleId}: choice rejected — battle has ended`
+      );
       return;
     }
 
@@ -222,12 +225,11 @@ class BattleManagerService implements IBattleManagerService {
     // The timer is cleared when the turn executes (both players ready)
     // or when the timeout fires (handleTurnTimeout checks for pending choice).
 
-    // Store the choice (overwrites previous if opponent hasn't chosen yet)
+    // Store the choice (overwrites previous if opponent hasn't chosen yet).
+    // The replay log is appended only when the turn actually executes
+    // (see executeTurn), so overridden choices never reach the log.
     pending[player] = choice;
     await this.redis.setPendingChoices(battleId, pending);
-
-    // Log the command for replay
-    await this.redis.appendBattleLog(battleId, `>${player} ${choice}`);
 
     // Check if we have all needed choices to execute
     // The sim's requestState tells us who needs to act:
@@ -248,7 +250,7 @@ class BattleManagerService implements IBattleManagerService {
         battleId,
         instance,
         pending.p1 || 'pass',
-        pending.p2 || 'pass',
+        pending.p2 || 'pass'
       );
     }
   }
@@ -280,7 +282,9 @@ class BattleManagerService implements IBattleManagerService {
       const opponent = player === 'p1' ? 'p2' : 'p1';
 
       if (!pending[player]) {
-        this.logger.debug(`Battle ${battleId}: ${player} cancel — no pending choice`);
+        this.logger.debug(
+          `Battle ${battleId}: ${player} cancel — no pending choice`
+        );
         return;
       }
 
@@ -374,6 +378,23 @@ class BattleManagerService implements IBattleManagerService {
     // Track battle on this server
     await this.redis.addServerBattle(battleId);
 
+    // Restart turn timers — they live in process memory, so the previous host's
+    // timers died with it. Without this, recovered battles have no turn clock
+    // and both players could stall the game indefinitely.
+    // Treat a player as "already chosen" if they have a pending choice in Redis
+    // (submitted before the crash) or the sim no longer needs their input.
+    const pending = await this.redis.getPendingChoices(battleId);
+    const simBattle = instance.stream.battle;
+    const p1NeedsChoice = !!simBattle?.p1.requestState;
+    const p2NeedsChoice = !!simBattle?.p2.requestState;
+    this.turnTimer.startTimers(
+      battleId,
+      config.player1.id,
+      config.player2.id,
+      !!pending.p1 || !p1NeedsChoice,
+      !!pending.p2 || !p2NeedsChoice
+    );
+
     this.logger.log(`Battle ${battleId} recovered successfully`);
 
     // Read full state for the rejoin response, and advance cursors
@@ -454,9 +475,8 @@ class BattleManagerService implements IBattleManagerService {
     await this.redis.updateBattleMetadata(battleId, updates);
 
     // Notify opponent via pub/sub
-    const opponentId = player === 'p1'
-      ? instance.config.player2.id
-      : instance.config.player1.id;
+    const opponentId =
+      player === 'p1' ? instance.config.player2.id : instance.config.player1.id;
 
     await this.redis.publishBattleUpdate(battleId, {
       type: 'event',
@@ -520,9 +540,8 @@ class BattleManagerService implements IBattleManagerService {
     await this.redis.updateBattleMetadata(battleId, updates);
 
     // Notify opponent
-    const opponentId = player === 'p1'
-      ? instance.config.player2.id
-      : instance.config.player1.id;
+    const opponentId =
+      player === 'p1' ? instance.config.player2.id : instance.config.player1.id;
 
     await this.redis.publishBattleUpdate(battleId, {
       type: 'event',
@@ -699,10 +718,16 @@ class BattleManagerService implements IBattleManagerService {
     );
 
     // Send choices to the battle stream (only for players who have an active request)
+    // and append the executed choice to the replay log. Logging here — not in
+    // processChoiceInternal — guarantees the log only contains choices that
+    // were actually executed, so recoverBattle's replay matches reality even
+    // when a player changed their choice before the turn locked.
     if (p1Choice !== 'pass') {
+      await this.redis.appendBattleLog(battleId, `>p1 ${p1Choice}`);
       await this.writeToStream(instance, `>p1 ${p1Choice}`);
     }
     if (p2Choice !== 'pass') {
+      await this.redis.appendBattleLog(battleId, `>p2 ${p2Choice}`);
       await this.writeToStream(instance, `>p2 ${p2Choice}`);
     }
 
@@ -752,7 +777,7 @@ class BattleManagerService implements IBattleManagerService {
         instance.config.player1.id,
         instance.config.player2.id,
         !p1NeedsChoice, // treat as "already chosen" if no request
-        !p2NeedsChoice  // treat as "already chosen" if no request
+        !p2NeedsChoice // treat as "already chosen" if no request
       );
     }
   }
@@ -802,11 +827,14 @@ class BattleManagerService implements IBattleManagerService {
     ]);
 
     // Set TTL on all battle keys — keeps data for 1 hour (replay save window)
-    // then Redis auto-deletes everything.
+    // then Redis auto-deletes everything. Also drop the battle from this
+    // server's tracking set: set members don't honor key TTLs, so without
+    // this call the set accumulates dead battle IDs indefinitely.
     await Promise.all([
       this.redis.setBattleLogTTL(battleId, 3600),
       this.redis.setBattleMetadataTTL(battleId, 3600),
       this.redis.setBattleSeedTTL(battleId, 3600),
+      this.redis.removeServerBattle(battleId),
     ]);
 
     // Remove from local map

@@ -9,10 +9,6 @@ import {
   type IBattlePersistenceService,
 } from './services/battle-persistence/battle-persistence.service.interface';
 import {
-  MATCHMAKING_SERVICE,
-  type IMatchmakingService,
-} from './services/matchmaking/matchmaking.service.interface';
-import {
   BATTLE_SOCKET_BRIDGE_SERVICE,
   type IBattleSocketBridgeService,
 } from './services/battle-socket-bridge/battle-socket-bridge.service.interface';
@@ -20,6 +16,10 @@ import {
   MATCH_ORCHESTRATOR_SERVICE,
   type IMatchOrchestratorService,
 } from './services/match-orchestrator/match-orchestrator.service.interface';
+import {
+  MATCHMAKING_SERVICE,
+  type IMatchmakingService,
+} from './services/matchmaking/matchmaking.service.interface';
 import { Inject, OnModuleDestroy, UseGuards } from '@nestjs/common';
 import {
   WebSocketGateway,
@@ -31,6 +31,10 @@ import {
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
+import {
+  extractMoveNames,
+  getMoveAnimConfigs,
+} from '@pokehub/backend/pokehub-move-anim-catalog';
 import {
   REDIS_SERVICE,
   type RedisService,
@@ -54,11 +58,11 @@ import {
   BattleRooms,
   BATTLE_EVENT,
 } from '@pokehub/shared/pokemon-battle-types';
-import { packTeam, isRandomFormat, generateRandomTeam } from '@pokehub/shared/pokemon-showdown-validation';
 import {
-  extractMoveNames,
-  getMoveAnimConfigs,
-} from '@pokehub/backend/pokehub-move-anim-catalog';
+  packTeam,
+  isRandomFormat,
+  generateRandomTeam,
+} from '@pokehub/shared/pokemon-showdown-validation';
 import { Server } from 'socket.io';
 
 @WebSocketGateway({
@@ -126,10 +130,13 @@ export class BattleGateway
       const battle = this.battleManager.getBattle(activeBattleId);
       if (battle) {
         const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
-        const packedTeam = slot === 'p1'
-          ? battle.config.player1.packedTeam
-          : battle.config.player2.packedTeam;
-        const moveAnimConfigs = getMoveAnimConfigs(extractMoveNames(packedTeam));
+        const packedTeam =
+          slot === 'p1'
+            ? battle.config.player1.packedTeam
+            : battle.config.player2.packedTeam;
+        const moveAnimConfigs = getMoveAnimConfigs(
+          extractMoveNames(packedTeam)
+        );
 
         this.logger.log(
           `Sending BATTLE_RESTORED to user ${userId} — battle ${activeBattleId}, slot: ${slot}`
@@ -210,7 +217,9 @@ export class BattleGateway
 
     const { format, teamId } = parsed.data;
     this.logger.debug(
-      `JOIN_QUEUE details — user ${userId}, format: ${format}, teamId: ${teamId ?? 'random'}`
+      `JOIN_QUEUE details — user ${userId}, format: ${format}, teamId: ${
+        teamId ?? 'random'
+      }`
     );
 
     try {
@@ -445,15 +454,31 @@ export class BattleGateway
     this.logger.log(`Received REJOIN from user ${userId} — battle ${battleId}`);
 
     try {
-      const battle = await this.battleManager.handleReconnect(battleId, userId);
-
+      // Join the room and subscribe before mutating reconnect state.
+      // handleReconnect clears the forfeit timeout, flips the disconnect
+      // flag in Redis, and notifies the opponent via OPPONENT_RECONNECTED.
+      // If we joined the room afterwards and the socket dropped in that
+      // gap, the opponent would observe RECONNECTED followed by
+      // DISCONNECTED while handleDisconnect re-armed the forfeit clock
+      // from zero. Joining first eliminates that window.
       await client.join(BattleRooms.battle(battleId));
       this.bridge.subscribeBattle(battleId);
 
+      let battle;
+      try {
+        battle = await this.battleManager.handleReconnect(battleId, userId);
+      } catch (error) {
+        // Roll back the room join so a failed reconnect doesn't leave the
+        // socket subscribed to a battle it isn't actually part of.
+        await client.leave(BattleRooms.battle(battleId));
+        throw error;
+      }
+
       const slot = battle.config.player1.id === userId ? 'p1' : 'p2';
-      const packedTeam = slot === 'p1'
-        ? battle.config.player1.packedTeam
-        : battle.config.player2.packedTeam;
+      const packedTeam =
+        slot === 'p1'
+          ? battle.config.player1.packedTeam
+          : battle.config.player2.packedTeam;
       const moveAnimConfigs = getMoveAnimConfigs(extractMoveNames(packedTeam));
 
       this.logger.log(
@@ -559,9 +584,7 @@ export class BattleGateway
   @UseGuards(WsJwtGuard, WsThrottlerGuard)
   @WsThrottle(10, 60000)
   @SubscribeMessage('UNOBSERVE_QUEUE')
-  handleUnobserveQueue(
-    @ConnectedSocket() client: AuthenticatedSocket
-  ): void {
+  handleUnobserveQueue(@ConnectedSocket() client: AuthenticatedSocket): void {
     client.leave(BattleRooms.lobby);
   }
 

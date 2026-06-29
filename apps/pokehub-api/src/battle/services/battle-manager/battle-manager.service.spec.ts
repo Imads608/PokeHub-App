@@ -267,10 +267,29 @@ describe('BattleManagerService', () => {
         testBattleId,
         { p1: 'move 1' }
       );
-      expect(mockRedisService.appendBattleLog).toHaveBeenCalledWith(
-        testBattleId,
-        '>p1 move 1'
-      );
+      // The choice should NOT be logged yet — only executed choices reach
+      // the replay log, so overrides don't pollute it before the turn locks.
+      expect(mockRedisService.appendBattleLog).not.toHaveBeenCalled();
+    });
+
+    it('should log both choices to the replay log only when the turn executes', async () => {
+      // p1 submits, then changes their choice — neither submission writes the log
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
+
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 1' });
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 2');
+
+      expect(mockRedisService.appendBattleLog).not.toHaveBeenCalled();
+
+      // p2 submits — turn locks, executeTurn logs the final choices
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 2' });
+      await service.processChoice(testBattleId, testPlayer2Id, 'move 1');
+
+      const logged = (
+        mockRedisService.appendBattleLog as jest.Mock
+      ).mock.calls.map((call) => call[1]);
+      expect(logged).toEqual(['>p1 move 2', '>p2 move 1']);
     });
 
     it('should throw when battle not found', async () => {
@@ -358,6 +377,7 @@ describe('BattleManagerService', () => {
       });
       mockRedisService.getBattleSeed!.mockResolvedValue(testSeed);
       mockRedisService.getBattleLog!.mockResolvedValue(battleLog);
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
 
       const result = await service.recoverBattle(testBattleId);
 
@@ -378,6 +398,42 @@ describe('BattleManagerService', () => {
       // Should track battle on this server
       expect(mockRedisService.addServerBattle).toHaveBeenCalledWith(
         testBattleId
+      );
+
+      // Should restart turn timers — they live in process memory and died
+      // with the previous host, so recovery has to re-arm them.
+      expect(mockTurnTimerService.startTimers).toHaveBeenCalledWith(
+        testBattleId,
+        testPlayer1Id,
+        testPlayer2Id,
+        false,
+        false
+      );
+    });
+
+    it('should treat players with pending Redis choices as already chosen on recovery', async () => {
+      const config = createMockBattleConfig();
+      mockRedisService.getBattleMetadata!.mockResolvedValue({
+        config: JSON.stringify(config),
+        status: 'active',
+        hostServer: 'old-server',
+        pending: '{}',
+        p1Disconnected: 'false',
+        p2Disconnected: 'false',
+      });
+      mockRedisService.getBattleSeed!.mockResolvedValue(testSeed);
+      mockRedisService.getBattleLog!.mockResolvedValue([]);
+      // p1 submitted before the crash; the turn never executed.
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 1' });
+
+      await service.recoverBattle(testBattleId);
+
+      expect(mockTurnTimerService.startTimers).toHaveBeenCalledWith(
+        testBattleId,
+        testPlayer1Id,
+        testPlayer2Id,
+        true,
+        false
       );
     });
 
@@ -568,6 +624,12 @@ describe('BattleManagerService', () => {
         3600
       );
 
+      // Drop the battle from the server's tracking set — set members don't
+      // honor key TTLs, so otherwise the set leaks dead IDs forever.
+      expect(mockRedisService.removeServerBattle).toHaveBeenCalledWith(
+        testBattleId
+      );
+
       // Battle should no longer be hosted locally
       expect(service.isHostedLocally(testBattleId)).toBe(false);
     });
@@ -684,10 +746,7 @@ describe('BattleManagerService', () => {
       const config = createMockBattleConfig();
       await service.createBattle(config);
 
-      const result = await service.handleReconnect(
-        testBattleId,
-        testPlayer1Id
-      );
+      const result = await service.handleReconnect(testBattleId, testPlayer1Id);
 
       expect(result.p1State).toBeTruthy();
       expect(result.p2State).toBeTruthy();
