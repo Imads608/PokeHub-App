@@ -18,8 +18,12 @@ export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './src' }),
   /* Global setup - runs once before all tests */
   globalSetup: require.resolve('./src/global-setup.ts'),
-  /* Configure parallel workers - use 2 in CI for faster execution */
-  workers: process.env.CI ? 2 : undefined,
+  /* Serialise workers in CI. With the build-time NEXT_PUBLIC_POKEHUB_API_URL
+   * fix in place (so mutations actually hit the MSW proxy), workers=2 still
+   * shows 60s click/hover timeouts on heavier specs (team-editor, team-viewer)
+   * — pure CPU saturation on the GitHub-hosted 2 vCPU / 7 GB runner. Adds
+   * ~4-5 min wall-clock vs workers=2 but eliminates the contention flake. */
+  workers: process.env.CI ? 1 : undefined,
   /* Increase timeouts for CI environment */
   timeout: process.env.CI ? 60000 : 30000, // Test timeout: 60s in CI, 30s locally
   expect: {
