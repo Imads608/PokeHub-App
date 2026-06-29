@@ -18,8 +18,11 @@ export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './src' }),
   /* Global setup - runs once before all tests */
   globalSetup: require.resolve('./src/global-setup.ts'),
-  /* Configure parallel workers - use 2 in CI for faster execution */
-  workers: process.env.CI ? 2 : undefined,
+  /* Serialise workers in CI. GitHub-hosted ubuntu-latest (2 vCPU / 7 GB) saturates
+   * under 2 Playwright workers + Next.js prod server + Postgres + Redis, causing
+   * flake on long-timeout assertions for tests that pass locally in <1 s. Adds
+   * ~4-5 min wall-clock but eliminates CPU-contention flake. */
+  workers: process.env.CI ? 1 : undefined,
   /* Increase timeouts for CI environment */
   timeout: process.env.CI ? 60000 : 30000, // Test timeout: 60s in CI, 30s locally
   expect: {
