@@ -1,5 +1,6 @@
 import type { AppRouter } from '@pokehub/frontend/shared-app-router';
 
+// no-op: trigger nx affected to exercise Blacksmith E2E runner (PR #133)
 export const PokeHubRouter: AppRouter = {
   publicRoutes: [
     {
