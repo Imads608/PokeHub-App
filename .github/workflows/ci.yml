@@ -543,7 +543,11 @@ jobs:
   e2e:
     name: E2E Tests
     needs: [setup, build]
-    runs-on: ubuntu-latest
+    # Blacksmith 4 vCPU / 8 GB runner. The default GitHub-hosted ubuntu-latest
+    # (2 vCPU / 7 GB) saturates under Playwright + Next.js prod server + Postgres
+    # + Redis, causing flake on long-timeout assertions. Other jobs stay on
+    # ubuntu-latest — only the E2E job is CPU-bound.
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     if: needs.setup.outputs.has-api-changes == 'true' || needs.setup.outputs.has-app-changes == 'true'
     services:
       postgres:
