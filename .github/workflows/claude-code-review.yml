@@ -40,16 +40,21 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            You are reviewing a pull request for PokeHub. Follow the project's OWN review process,
+            not generic defaults:
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            1. Read `AGENTS.md` → the "Conventions that always apply" section. These are the review
+               criteria (shadcn UI rule, `cn()` + semantic colors, `'use client'` boundary, TanStack
+               Query key shape + `enabled`, `@pokehub/*` structure + `fix-path-aliases`, NestJS DI +
+               Zod DTOs + committed Drizzle migrations, co-located tests, the CI gate, bundle size).
+            2. Read `.agents/skills/code-review/SKILL.md` and follow its process and output format.
+            3. Get the diff with `gh pr diff`.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            Review for correctness and adherence to those conventions. Group findings as
+            Blocker / Should-fix / Nit and cite `file:line`. Be constructive; do not restate generic
+            best practices the conventions already cover.
+
+            Post your review with `gh pr comment`.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options

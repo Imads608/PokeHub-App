@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-export function AppNav() {
+export function AppNav({ activeBattleId }: { activeBattleId?: string } = {}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   //const [isChatOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -53,7 +53,7 @@ export function AppNav() {
         </Link>
 
         {/* Desktop Navigation */}
-        <DesktopNavItems user={session?.user} activePath={pathname} />
+        <DesktopNavItems user={session?.user} activePath={pathname} activeBattleId={activeBattleId} />
 
         {/* Mobile Menu Button */}
         <div className="flex items-center">
@@ -76,7 +76,7 @@ export function AppNav() {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && <MobileMenuItems user={session?.user} />}
+      {isMenuOpen && <MobileMenuItems user={session?.user} activeBattleId={activeBattleId} />}
     </nav>
   );
 }

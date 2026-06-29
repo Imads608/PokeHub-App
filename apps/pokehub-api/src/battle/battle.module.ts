@@ -4,6 +4,8 @@ import { WsJwtGuard } from './guards/ws-jwt.guard';
 import { WsThrottlerGuard } from './guards/ws-throttler.guard';
 import { BattleManagerServiceProvider } from './services/battle-manager/battle-manager.service';
 import { BattlePersistenceServiceProvider } from './services/battle-persistence/battle-persistence.service';
+import { BattleSocketBridgeServiceProvider } from './services/battle-socket-bridge/battle-socket-bridge.service';
+import { MatchOrchestratorServiceProvider } from './services/match-orchestrator/match-orchestrator.service';
 import { MatchmakingServiceProvider } from './services/matchmaking/matchmaking.service';
 import { TurnTimerServiceProvider } from './services/turn-timer/turn-timer.service';
 import { Module } from '@nestjs/common';
@@ -50,6 +52,8 @@ import { SharedAuthUtilsModule } from '@pokehub/backend/shared-auth-utils';
     MatchmakingServiceProvider,
     BattleManagerServiceProvider,
     BattlePersistenceServiceProvider,
+    BattleSocketBridgeServiceProvider,
+    MatchOrchestratorServiceProvider,
     BattleGateway,
   ],
   exports: [],

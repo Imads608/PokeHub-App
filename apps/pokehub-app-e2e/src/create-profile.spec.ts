@@ -463,8 +463,12 @@ test.describe('Create Profile Flow - Form Submission', () => {
 
     // Check that the user avatar is visible in navigation
     // The nav-user-avatar-image testid was added to user-dropdown.tsx
+    // 15s timeout — under CI load the chain
+    // profile mutation → /team-builder navigation → session refresh →
+    // user-dropdown render → image fetch can exceed the 5s assertion
+    // budget. Locally well under a second.
     await expect(page.getByTestId('nav-user-avatar-image')).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     });
   });
 });

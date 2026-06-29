@@ -78,6 +78,7 @@
     }
   },
   "nxCloudAccessToken": "NzM5ZTI1YjktMmZhZC00Y2VmLWEyM2MtOWY0NTdhNmQyZTEzfHJlYWQtd3JpdGU=",
+  "plugins": ["@pokehub/workspace-plugin"],
   "useInferencePlugins": false,
   "defaultBase": "main",
   "nxCloudId": "66e7650934bf987a3982712f"

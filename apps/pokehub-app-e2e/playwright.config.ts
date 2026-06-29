@@ -18,8 +18,12 @@ export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './src' }),
   /* Global setup - runs once before all tests */
   globalSetup: require.resolve('./src/global-setup.ts'),
-  /* Configure parallel workers - use 2 in CI for faster execution */
-  workers: process.env.CI ? 2 : undefined,
+  /* Serialise workers in CI. With the build-time NEXT_PUBLIC_POKEHUB_API_URL
+   * fix in place (so mutations actually hit the MSW proxy), workers=2 still
+   * shows 60s click/hover timeouts on heavier specs (team-editor, team-viewer)
+   * — pure CPU saturation on the GitHub-hosted 2 vCPU / 7 GB runner. Adds
+   * ~4-5 min wall-clock vs workers=2 but eliminates the contention flake. */
+  workers: process.env.CI ? 1 : undefined,
   /* Increase timeouts for CI environment */
   timeout: process.env.CI ? 60000 : 30000, // Test timeout: 60s in CI, 30s locally
   expect: {
@@ -54,8 +58,28 @@ export default defineConfig({
       ignoreHTTPSErrors: true,
     },
     {
-      command:
-        'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
+      // In CI, use a production build (compiled once at build time) instead
+      // of `next dev` (JIT compilation on first request). The dev server's
+      // per-route compile cost on the runner regularly exceeds element
+      // timeouts and produces flaky failures, especially on heavy lazy
+      // chunks (@pkmn/dex on /team-builder, @pkmn/sim on /battle).
+      // Locally we keep `nx serve` for fast iteration with HMR.
+      // CI must run `nx build pokehub-app` before invoking the suite — see
+      // the E2E job in .github/workflows/ci.yml.
+      //
+      // HOSTNAME pins Next's bind address and is the value Auth.js uses to
+      // construct its canonical URL (post-sign-in redirect, callback-url
+      // cookie value, etc.). Without it, `next start` defaults HOSTNAME
+      // to `localhost`, so Auth.js redirects after sign-in to
+      // `http://localhost:4200/...` even though the test client hit
+      // `http://127.0.0.1:4200`. The redirect follow-up sets duplicate
+      // `authjs.csrf-token` cookies on the second domain, and the next
+      // sign-in's CSRF check fails with MissingCSRF. (AUTH_URL is not
+      // sufficient here — Auth.js v5 with trustHost still constructs
+      // redirect URLs from the bound HOSTNAME.)
+      command: process.env.CI
+        ? 'E2E_TESTING=true HOSTNAME=127.0.0.1 API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx start pokehub-app'
+        : 'E2E_TESTING=true API_URL=http://localhost:9876/api NEXT_PUBLIC_POKEHUB_API_URL=http://localhost:9876/api npx nx serve pokehub-app',
       url: 'http://127.0.0.1:4200',
       reuseExistingServer: false, // Always start fresh to get latest code
       cwd: workspaceRoot,

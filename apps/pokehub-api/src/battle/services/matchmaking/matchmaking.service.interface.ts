@@ -111,4 +111,10 @@ export interface IMatchmakingService {
    * Phase 3: Rating + region/ping
    */
   findMatch(format: string): Promise<MatchResult | null>;
+
+  /**
+   * Get the number of players queued per format
+   * @returns Map of format → player count (excludes zero-count formats)
+   */
+  getQueueCounts(): Promise<Record<string, number>>;
 }

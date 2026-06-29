@@ -5,7 +5,11 @@ import { AppNav } from '@pokehub/frontend/pokehub-nav-components';
 import { ClientRouteGuard } from '@pokehub/frontend/shared-app-router';
 import { createFetchClient } from '@pokehub/frontend/shared-data-provider';
 import { Toaster } from '@pokehub/frontend/shared-ui-components';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+
+const LazyBattleShell = lazy(
+  () => import(/* webpackChunkName: "battle-shell" */ './battle-shell')
+);
 
 export const App = ({
   children,
@@ -24,8 +28,16 @@ export const App = ({
         redirectOnLogin={PokeHubRouter.redirectOnLogin}
         privilegedRoutes={PokeHubRouter.privilegedRoutes}
       >
-        <AppNav />
-        {children}
+        <Suspense
+          fallback={
+            <>
+              <AppNav />
+              {children}
+            </>
+          }
+        >
+          <LazyBattleShell>{children}</LazyBattleShell>
+        </Suspense>
         <Toaster
           position="top-center"
           toastOptions={{

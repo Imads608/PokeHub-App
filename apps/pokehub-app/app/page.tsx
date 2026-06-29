@@ -44,7 +44,6 @@ const features = [
       'Test your skills against other trainers. Climb the ranks and prove your mastery.',
     icon: Swords,
     href: '/battle',
-    comingSoon: true,
   },
 ];
 
@@ -162,28 +161,14 @@ export default function Page() {
           {features.map((feature) => (
             <Link
               key={feature.title}
-              href={feature.comingSoon ? '#' : feature.href}
-              className={feature.comingSoon ? 'cursor-not-allowed' : ''}
+              href={feature.href}
             >
-              <Card
-                className={`h-full transition-all duration-300 ${
-                  feature.comingSoon
-                    ? 'opacity-60'
-                    : 'hover:scale-105 hover:shadow-xl'
-                }`}
-              >
+              <Card className="h-full transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <CardHeader>
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <feature.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="flex items-center gap-2">
-                    {feature.title}
-                    {feature.comingSoon && (
-                      <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                        Coming Soon
-                      </span>
-                    )}
-                  </CardTitle>
+                  <CardTitle>{feature.title}</CardTitle>
                   <CardDescription>{feature.description}</CardDescription>
                 </CardHeader>
               </Card>

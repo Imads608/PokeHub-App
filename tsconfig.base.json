@@ -156,6 +156,12 @@
       ],
       "@pokehub/backend/pokehub-battles-db": [
         "packages/backend/pokehub-battles-db/src/index.ts"
+      ],
+      "@pokehub/frontend/pokehub-battle-components": [
+        "packages/frontend/pokehub-battle-components/src/index.ts"
+      ],
+      "@pokehub/backend/pokehub-move-anim-catalog": [
+        "packages/backend/pokehub-move-anim-catalog/src/index.ts"
       ]
     }
   },

@@ -321,7 +321,7 @@ const handleDelete = async (teamId: string) => {
 
 ### Test IDs
 
-For reliable E2E testing (see [E2E Test Reliability](../development/e2e-test-reliability-fixes.md)):
+For reliable E2E testing (see [E2E Test Reliability](../development/testing/e2e-test-reliability-fixes.md)):
 
 ```typescript
 // Containers

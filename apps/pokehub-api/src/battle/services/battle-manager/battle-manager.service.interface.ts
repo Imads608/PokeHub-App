@@ -5,8 +5,12 @@ export const BATTLE_MANAGER_SERVICE = 'BATTLE_MANAGER_SERVICE';
 export interface ActiveBattle {
   id: string;
   config: BattleConfig;
-  /** Current battle state for client display */
+  /** Omniscient battle state (for internal use / replay) */
   currentState: string;
+  /** Player 1 perspective (opponent info redacted) */
+  p1State: string;
+  /** Player 2 perspective (opponent info redacted) */
+  p2State: string;
 }
 
 export interface IBattleManagerService {
@@ -23,6 +27,11 @@ export interface IBattleManagerService {
     playerId: string,
     choice: string
   ): Promise<void>;
+
+  /**
+   * Cancel a player's pending choice (undo before the turn executes)
+   */
+  cancelChoice(battleId: string, playerId: string): Promise<void>;
 
   /**
    * Forfeit a battle

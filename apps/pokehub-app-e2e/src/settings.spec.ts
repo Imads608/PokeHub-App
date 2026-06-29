@@ -207,8 +207,10 @@ test.describe('Settings Page - Avatar Upload', () => {
     );
     await fileInput.setInputFiles(testAvatarPath);
 
+    // 15s — setInputFiles → React state update → re-render under CI
+    // load can exceed 5s even though the work is fully client-side.
     await expect(page.getByTestId('avatar-save-button')).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     });
     await expect(page.getByTestId('avatar-cancel-button')).toBeVisible();
   });

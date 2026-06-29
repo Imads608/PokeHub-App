@@ -7,6 +7,11 @@ import {
 } from './turn-timer.service.interface';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import { TURN_TIMEOUT_SECONDS } from '@pokehub/shared/pokemon-battle-types';
+
+const TIMEOUT_MS = TURN_TIMEOUT_SECONDS * 1000;
+const WARNING_MS = TIMEOUT_MS / 2;
+const WARNING_SECONDS = TURN_TIMEOUT_SECONDS / 2;
 
 describe('TurnTimerService', () => {
   let service: ITurnTimerService;
@@ -104,8 +109,8 @@ describe('TurnTimerService', () => {
       // Should not have fired callbacks yet (timer was reset)
       expect(mockWarningCallback).not.toHaveBeenCalled();
 
-      // Advance to 30s from new start
-      jest.advanceTimersByTime(30_000);
+      // Advance to warning time from new start
+      jest.advanceTimersByTime(WARNING_MS);
 
       // Now warning should fire
       expect(mockWarningCallback).toHaveBeenCalled();
@@ -113,40 +118,40 @@ describe('TurnTimerService', () => {
   });
 
   describe('warning callback', () => {
-    it('should fire warning callback at 30 seconds with correct args', () => {
+    it('should fire warning callback at half timeout with correct args', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, false, false);
 
-      // Advance to just before 30s
-      jest.advanceTimersByTime(29_999);
+      // Advance to just before warning time
+      jest.advanceTimersByTime(WARNING_MS - 1);
       expect(mockWarningCallback).not.toHaveBeenCalled();
 
-      // Advance to 30s
+      // Advance to warning time
       jest.advanceTimersByTime(1);
       expect(mockWarningCallback).toHaveBeenCalledTimes(2); // Both p1 and p2
 
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p1', 30);
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', 30);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p1', WARNING_SECONDS);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', WARNING_SECONDS);
     });
 
     it('should only fire warning for player who has not chosen', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, true, false);
 
-      jest.advanceTimersByTime(30_000);
+      jest.advanceTimersByTime(WARNING_MS);
 
       expect(mockWarningCallback).toHaveBeenCalledTimes(1);
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', 30);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', WARNING_SECONDS);
     });
   });
 
   describe('timeout callback', () => {
-    it('should fire timeout callback at 60 seconds with correct args', () => {
+    it('should fire timeout callback at full timeout with correct args', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, false, false);
 
-      // Advance to just before 60s
-      jest.advanceTimersByTime(59_999);
+      // Advance to just before timeout
+      jest.advanceTimersByTime(TIMEOUT_MS - 1);
       expect(mockTimeoutCallback).not.toHaveBeenCalled();
 
-      // Advance to 60s
+      // Advance to timeout
       jest.advanceTimersByTime(1);
       expect(mockTimeoutCallback).toHaveBeenCalledTimes(2); // Both p1 and p2
 
@@ -165,7 +170,7 @@ describe('TurnTimerService', () => {
     it('should only fire timeout for player who has not chosen', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, false, true);
 
-      jest.advanceTimersByTime(60_000);
+      jest.advanceTimersByTime(TIMEOUT_MS);
 
       expect(mockTimeoutCallback).toHaveBeenCalledTimes(1);
       expect(mockTimeoutCallback).toHaveBeenCalledWith(
@@ -191,11 +196,11 @@ describe('TurnTimerService', () => {
 
       service.cancelPlayerTimer(testBattleId, 'p1');
 
-      jest.advanceTimersByTime(60_000);
+      jest.advanceTimersByTime(TIMEOUT_MS);
 
       // Only p2 callbacks should have fired
       expect(mockWarningCallback).toHaveBeenCalledTimes(1);
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', 30);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p2', WARNING_SECONDS);
 
       expect(mockTimeoutCallback).toHaveBeenCalledTimes(1);
       expect(mockTimeoutCallback).toHaveBeenCalledWith(
@@ -239,7 +244,7 @@ describe('TurnTimerService', () => {
 
       service.cancelBattleTimers(testBattleId);
 
-      jest.advanceTimersByTime(60_000);
+      jest.advanceTimersByTime(TIMEOUT_MS);
 
       expect(mockWarningCallback).not.toHaveBeenCalled();
       expect(mockTimeoutCallback).not.toHaveBeenCalled();
@@ -265,7 +270,7 @@ describe('TurnTimerService', () => {
     it('should return false after timer fires', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, false, true);
 
-      jest.advanceTimersByTime(60_000);
+      jest.advanceTimersByTime(TIMEOUT_MS);
 
       expect(service.hasActiveTimer(testBattleId, 'p1')).toBe(false);
     });
@@ -290,11 +295,11 @@ describe('TurnTimerService', () => {
       service.startTimers(testBattleId, testP1Id, testP2Id, false, true);
       service.startTimers(testBattleId2, 'player-3', 'player-4', true, false);
 
-      jest.advanceTimersByTime(30_000);
+      jest.advanceTimersByTime(WARNING_MS);
 
       expect(mockWarningCallback).toHaveBeenCalledTimes(2);
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p1', 30);
-      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId2, 'p2', 30);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId, 'p1', WARNING_SECONDS);
+      expect(mockWarningCallback).toHaveBeenCalledWith(testBattleId2, 'p2', WARNING_SECONDS);
     });
   });
 
@@ -306,7 +311,7 @@ describe('TurnTimerService', () => {
       freshService.startTimers(testBattleId, testP1Id, testP2Id, false, false);
 
       // Should not throw when timers fire
-      expect(() => jest.advanceTimersByTime(60_000)).not.toThrow();
+      expect(() => jest.advanceTimersByTime(TIMEOUT_MS)).not.toThrow();
     });
 
     it('should allow updating callbacks', () => {
@@ -316,7 +321,7 @@ describe('TurnTimerService', () => {
       service.setCallbacks(newWarningCallback, newTimeoutCallback);
       service.startTimers(testBattleId, testP1Id, testP2Id, false, true);
 
-      jest.advanceTimersByTime(60_000);
+      jest.advanceTimersByTime(TIMEOUT_MS);
 
       expect(newWarningCallback).toHaveBeenCalled();
       expect(newTimeoutCallback).toHaveBeenCalled();

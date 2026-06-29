@@ -22,6 +22,7 @@ const traceFormat = winston.format((info) => {
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
+        level: configService.get<string>('LOG_LEVEL', 'info'),
         transports: [
           new winston.transports.Console({
             format: winston.format.combine(

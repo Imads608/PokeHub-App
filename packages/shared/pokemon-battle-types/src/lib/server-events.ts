@@ -2,6 +2,8 @@
  * Events sent from server to client via WebSocket
  */
 
+import type { MoveAnimConfig } from './move-anim-config';
+
 export interface QueueJoinedEvent {
   type: 'QUEUE_JOINED';
   position: number;
@@ -25,6 +27,8 @@ export interface BattleStartEvent {
   battleId: string;
   /** Initial battle state from @pkmn/sim */
   initialState: string;
+  /** Animation configs for moves in this battle (keyed by normalized move name) */
+  moveAnimConfigs: Record<string, MoveAnimConfig>;
 }
 
 export interface BattleUpdateEvent {
@@ -83,6 +87,8 @@ export interface BattleRestoredEvent {
   battleId: string;
   /** Current battle state for reconnection */
   currentState: string;
+  /** Animation configs for moves in this battle (keyed by normalized move name) */
+  moveAnimConfigs: Record<string, MoveAnimConfig>;
   /** Optional message about recovery */
   message?: string;
 }
@@ -105,6 +111,20 @@ export interface BattleErrorEvent {
   recoverable: boolean;
 }
 
+/**
+ * Sent when the server's ability to process battle operations changes.
+ * Battles cannot proceed when status is 'unavailable' — the frontend should block actions.
+ */
+export interface ServerStatusEvent {
+  type: 'SERVER_STATUS';
+  status: 'unavailable' | 'restored';
+}
+
+export interface QueueCountsEvent {
+  type: 'QUEUE_COUNTS';
+  counts: Record<string, number>;
+}
+
 export type ServerBattleEvent =
   | QueueJoinedEvent
   | QueueLeftEvent
@@ -118,6 +138,8 @@ export type ServerBattleEvent =
   | OpponentDisconnectedEvent
   | OpponentReconnectedEvent
   | BattleRestoredEvent
-  | BattleErrorEvent;
+  | BattleErrorEvent
+  | ServerStatusEvent
+  | QueueCountsEvent;
 
 export type ServerBattleEventType = ServerBattleEvent['type'];

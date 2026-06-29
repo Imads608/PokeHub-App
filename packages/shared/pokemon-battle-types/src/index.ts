@@ -11,6 +11,8 @@ export {
   type ForfeitEvent,
   type RejoinEvent,
   type SaveReplayEvent,
+  type ObserveQueueEvent,
+  type UnobserveQueueEvent,
   type ClientBattleEvent,
   type ClientBattleEventType,
 } from './lib/client-events';
@@ -29,6 +31,8 @@ export {
   type OpponentReconnectedEvent,
   type BattleRestoredEvent,
   type BattleErrorEvent,
+  type ServerStatusEvent,
+  type QueueCountsEvent,
   type ServerBattleEvent,
   type ServerBattleEventType,
 } from './lib/server-events';
@@ -46,6 +50,8 @@ export {
   type SaveReplayDTO,
   RejoinDTOSchema,
   type RejoinDTO,
+  CancelChoiceDTOSchema,
+  type CancelChoiceDTO,
   DeclineMatchDTOSchema,
   type DeclineMatchDTO,
 } from './lib/dto/battle-move.dto';
@@ -53,4 +59,13 @@ export {
   BATTLE_NAMESPACE,
   BattleRooms,
   BATTLE_EVENT,
+  TURN_TIMEOUT_SECONDS,
 } from './lib/socket.constants';
+export {
+  type ProjectileConfig,
+  type LungeConfig,
+  type AoeConfig,
+  type SelfBuffConfig,
+  type StatusEffectConfig,
+  type MoveAnimConfig,
+} from './lib/move-anim-config';

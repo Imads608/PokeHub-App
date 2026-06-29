@@ -97,7 +97,7 @@ This document describes the real-time Pokemon battle system implementation for P
 | Decision           | Choice                               | Rationale                                     |
 | ------------------ | ------------------------------------ | --------------------------------------------- |
 | Crash Recovery     | Full recovery via input log replay   | @pkmn/sim is deterministic with same seed     |
-| Team Requirement   | Always require teamId                | Simplifies MVP, no random team generation     |
+| Team Requirement   | Optional teamId (random or bring-your-own) | Random formats auto-generate teams server-side |
 | Turn Timer         | Warning at 30s, auto-move at 60s     | Prevents stalling without harsh forfeit       |
 | Redis Unavailable  | Fail queue joins                     | Don't allow degraded battles                  |
 | Battle Formats     | Support multiple formats             | gen9ou, gen9uu, etc. from start               |
@@ -121,6 +121,7 @@ src/lib/
 ├── battle-config.ts      # BattleConfig, BattlePlayer, generateBattleSeed()
 ├── client-events.ts      # Client → Server WebSocket events
 ├── server-events.ts      # Server → Client WebSocket events
+├── move-anim-config.ts   # MoveAnimConfig discriminated union and config interfaces
 ├── socket.constants.ts   # BATTLE_NAMESPACE, BattleRooms, BATTLE_EVENT
 ├── errors.ts             # BattleErrorCode, isRecoverableError()
 └── dto/
@@ -142,13 +143,13 @@ interface BattleConfig {
 interface BattlePlayer {
   id: string;
   name: string;
-  teamId: string;
+  teamId: string; // UUID for competitive, 'random' sentinel for random battles
   packedTeam: string; // Pokemon Showdown packed format
 }
 
 // Client events
 type ClientBattleEvent =
-  | { type: 'JOIN_QUEUE'; format: string; teamId: string }
+  | { type: 'JOIN_QUEUE'; format: string; teamId?: string }
   | { type: 'LEAVE_QUEUE' }
   | { type: 'MOVE'; battleId: string; choice: string }
   | { type: 'FORFEIT'; battleId: string }
@@ -165,7 +166,7 @@ type ServerBattleEvent =
       battleId: string;
       opponent: { id: string; name: string };
     }
-  | { type: 'BATTLE_START'; battleId: string; initialState: string }
+  | { type: 'BATTLE_START'; battleId: string; initialState: string; moveAnimConfigs: Record<string, MoveAnimConfig> }
   | {
       type: 'BATTLE_UPDATE';
       battleId: string;
@@ -187,6 +188,7 @@ type ServerBattleEvent =
       type: 'BATTLE_RESTORED';
       battleId: string;
       currentState: string;
+      moveAnimConfigs: Record<string, MoveAnimConfig>;
       message?: string;
     }
   | { type: 'MATCH_CANCELLED'; battleId: string; reason: string }
@@ -194,6 +196,17 @@ type ServerBattleEvent =
 ```
 
 ### Backend Packages
+
+#### `packages/backend/pokehub-move-anim-catalog/`
+
+Server-side catalog of 172 move animation configs. Provides utilities to extract move names from packed teams and look up their animation configurations. Only the player's own team's move configs are sent to prevent information leaking about the opponent's moves.
+
+**Key Exports:**
+
+| Function                        | Description                                                        |
+| ------------------------------- | ------------------------------------------------------------------ |
+| `extractMoveNames(packedTeam)`  | Parses a packed team string and returns all unique move names       |
+| `getMoveAnimConfigs(moveNames)` | Returns a `Record<string, MoveAnimConfig>` for the given move names |
 
 #### `packages/backend/pokehub-redis/`
 
@@ -218,7 +231,7 @@ src/lib/
 | Battle Log      | `appendBattleLog()`, `getBattleLog()`, `setBattleLogTTL()`, `deleteBattleLog()`                          |
 | Pending Choices | `setPendingChoices()`, `getPendingChoices()`                                                             |
 | Server Health   | `refreshHeartbeat()`, `isServerAlive()`, `addServerBattle()`, `getServerBattles()`                       |
-| Pub/Sub         | `publishMatchFound()`, `publishBattleMove()`, `publishBattleUpdate()`, `createSubscriberClient()`        |
+| Pub/Sub         | `publishMatchFound()`, `publishBattleAction()`, `publishBattleUpdate()`, `createSubscriberClient()`      |
 | Cleanup         | `cleanupBattle()`, `ping()`                                                                              |
 
 #### `packages/backend/pokehub-battles-db/`
@@ -271,6 +284,12 @@ user:{userId}:queue
 # Matchmaking queue (list per format)
 queue:{format}
   - JSON entries: { userId, teamId, packedTeam, joinedAt }
+
+# Active matchmaking formats (set)
+queue:active-formats
+  - Set of format strings currently with queued players (e.g., "gen9ou")
+  - Populated via SADD when a player joins a queue
+  - Lazily cleaned: formats with 0 queue length are removed when getQueueCounts() runs
 
 # Server heartbeat (string with 10s TTL)
 server:{serverId}:heartbeat
@@ -379,9 +398,28 @@ apps/pokehub-api/src/battle/
 
 1. Client connects to `/battle` namespace with JWT token
 2. `WsJwtGuard.validateClient()` extracts and validates JWT
-3. User is added to socket-to-user mapping
-4. Gateway subscribes to Redis `match:user:{userId}` channel
-5. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+3. Single-socket-per-user enforcement: if the user already has an active socket, the server emits `SESSION_REPLACED` to the old socket and disconnects it (last-connection-wins)
+4. User is added to socket-to-user mapping
+5. Gateway subscribes to Redis `user:{userId}:battle-events` channel
+6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+
+### Cross-Server Action Forwarding
+
+Battles are hosted on a single server, but players may be connected to different servers. When a gateway receives a player action (MOVE, FORFEIT, CANCEL_CHOICE) for a battle not hosted locally, it publishes the action to a Redis `battle:{battleId}:action` channel instead of calling the battle manager directly. The host server's socket bridge subscribes to this channel and dispatches the action to its local battle manager.
+
+```
+  Player 2 (Server B)        Redis            Server A (host)
+       │                       │                    │
+       │── MOVE ──►            │                    │
+       │   isHostedLocally?    │                    │
+       │   NO → publish ──────►│                    │
+       │                       │──── action ───────►│
+       │                       │                    │── processChoice()
+       │                       │◄── update ────────│
+       │◄── BATTLE_UPDATE ─────│                    │
+```
+
+The same pattern applies to disconnect events — ensuring the host server starts the disconnect timeout regardless of which server the player was connected to.
 
 ### Authentication Security
 
@@ -417,13 +455,16 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 
 | Event           | Payload                                | Description                                                   |
 | --------------- | -------------------------------------- | ------------------------------------------------------------- |
-| `JOIN_QUEUE`    | `{ format: string, teamId: string }`   | Join matchmaking queue                                        |
+| `JOIN_QUEUE`    | `{ format: string, teamId?: string }`  | Join matchmaking queue (teamId required for competitive, omitted for random) |
 | `LEAVE_QUEUE`   | `{}`                                   | Leave queue                                                   |
 | `MOVE`          | `{ battleId: string, choice: string }` | Submit move (e.g., "move 1", "switch 2")                      |
+| `CANCEL_CHOICE` | `{ battleId: string }`                 | Cancel submitted move before turn resolves                    |
 | `FORFEIT`       | `{ battleId: string }`                 | Forfeit battle                                                |
 | `REJOIN`        | `{ battleId: string }`                 | Reconnect to active battle                                    |
 | `SAVE_REPLAY`   | `{ battleId: string }`                 | Save replay (within 1 hour of battle end)                     |
 | `DECLINE_MATCH` | `{ battleId: string }`                 | Decline match (client left queue before MATCH_FOUND received) |
+| `OBSERVE_QUEUE`    | `{}`                                | Subscribe to real-time queue player counts per format         |
+| `UNOBSERVE_QUEUE`  | `{}`                                | Unsubscribe from queue player count updates                   |
 
 **Server → Client:**
 
@@ -432,26 +473,31 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `QUEUE_JOINED`          | `{ position: number }`                        | Confirmed in queue         |
 | `QUEUE_LEFT`            | `{}`                                          | Left queue                 |
 | `MATCH_FOUND`           | `{ battleId, opponent: { id, name } }`        | Match created              |
-| `BATTLE_START`          | `{ battleId, initialState }`                  | Battle beginning           |
+| `BATTLE_START`          | `{ battleId, initialState, moveAnimConfigs }`  | Battle beginning           |
 | `BATTLE_UPDATE`         | `{ battleId, data, autoMove? }`               | Turn result                |
 | `BATTLE_END`            | `{ battleId, winner, reason, canSaveReplay }` | Battle over                |
 | `REPLAY_SAVED`          | `{ battleId, replayCount }`                   | Replay saved               |
 | `TURN_WARNING`          | `{ battleId, secondsRemaining }`              | Timer warning (30s left)   |
 | `OPPONENT_DISCONNECTED` | `{ battleId, timeout }`                       | Player disconnected        |
 | `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected         |
-| `BATTLE_RESTORED`       | `{ battleId, currentState, message? }`        | Reconnection state         |
+| `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, message? }` | Reconnection state         |
 | `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
+| `QUEUE_COUNTS`          | `{ counts: Record<string, number> }`          | Queue player counts per format |
+| `SERVER_STATUS`         | `{ status: 'unavailable' \| 'restored' }`     | Redis/server health change |
+| `SESSION_REPLACED`      | (no payload)                                  | Another tab connected, this socket is disconnected |
 | `ERROR`                 | `{ code, message, recoverable }`              | Error occurred             |
 
 ---
 
 ## Core Flows
 
-### Matchmaking: Lazy Queue Removal
+### Matchmaking: Queue Removal
 
-When a player leaves the queue, only their `user:{userId}:queue` status key is cleared — the entry is **not** removed from the Redis list. This avoids the complexity of `LREM` which requires an exact serialized JSON string match.
+When a player leaves the queue, `leaveQueue()` clears their `user:{userId}:queue` status key **and** removes their entry from the Redis list via `LRANGE` + `LREM`. This ensures `LLEN`-based queue counts are immediately accurate for lobby observers.
 
-Stale entries are cleaned up lazily: when `findMatch()` pops entries and validates them, any entry whose user has already left (status key missing) is discarded. If only one of two popped entries is valid, the valid entry is pushed back into the queue.
+`LREM` is O(n) but queue sizes are small, so this is negligible. The operation is also safe across multiple server instances — concurrent `LREM` calls for the same entry are idempotent (the second returns 0).
+
+As a fallback, `findMatch()` still validates popped entries against their status key, discarding any stale entries that weren't cleaned up (e.g. due to a partial failure where `clearUserQueueStatus` succeeded but `removeFromQueue` failed).
 
 ### 1. Matchmaking Flow
 
@@ -459,8 +505,12 @@ Stale entries are cleaned up lazily: when `findMatch()` pops entries and validat
 Client                      Gateway                      Redis
   |                           |                            |
   |-- JOIN_QUEUE ------------>|                            |
-  |   {format, teamId}        |                            |
-  |                           |-- Fetch & pack team        |
+  |   {format, teamId?}       |                            |
+  |                           |                            |
+  |                           |-- if teamId: fetch & pack team from DB
+  |                           |-- if !teamId: validate isRandomFormat(),
+  |                           |   generate team via @pkmn/randoms,
+  |                           |   use teamId='random' sentinel
   |                           |                            |
   |                           |-- LPUSH queue:{format} --->|
   |                           |-- SET user:{id}:queue ---->|
@@ -479,6 +529,9 @@ Client                      Gateway                      Redis
   |                           |                            |
   |<-- MATCH_FOUND -----------|                            |
   |<-- BATTLE_START ----------|                            |
+  |                           |                            |
+  |                           |-- Broadcast QUEUE_COUNTS   |
+  |                           |   to lobby room observers  |
 ```
 
 ### 2. Battle Turn Flow
@@ -699,6 +752,25 @@ const packedTeam = packTeam(team.pokemon);
 // e.g., "Pikachu||lightball|static|thunderbolt,voltswitch,...|..."
 ```
 
+### Random Team Generation
+
+Random battle formats use `@pkmn/randoms` to generate teams server-side. This logic is isolated in `random-team-generator.ts` (separate from `team-validator-showdown.ts`) to avoid pulling `@pkmn/randoms` into the team builder bundle.
+
+```typescript
+import { isRandomFormat, generateRandomTeam } from '@pokehub/shared/pokemon-showdown-validation';
+
+if (isRandomFormat('gen9randombattle')) {
+  const packedTeam = generateRandomTeam('gen9randombattle');
+  // Team generated and packed in one step
+}
+```
+
+The gateway branches on `teamId` presence:
+- **With `teamId`** (competitive): fetch team from DB, validate ownership, pack
+- **Without `teamId`** (random): validate `isRandomFormat()`, generate via `@pkmn/randoms`, use `teamId = 'random'` sentinel
+
+Random teams are generated at **queue join time**, so the generated team persists through requeue-on-decline without any additional handling.
+
 ### Auto-Move on Timeout
 
 When a player times out, the system uses Pokemon Showdown's built-in auto-choice:
@@ -721,6 +793,7 @@ const choice = side.getChoice();
 | `INVALID_INPUT`     | Malformed request       | Display validation errors |
 | `TEAM_NOT_FOUND`    | Team doesn't exist      | Prompt team selection     |
 | `INVALID_TEAM`      | Team ownership mismatch | Prompt team selection     |
+| `TEAM_REQUIRED`     | Non-random format without teamId | Prompt team selection  |
 | `QUEUE_ERROR`       | Queue join failed       | Retry or show error       |
 | `ALREADY_IN_BATTLE` | User in another battle  | Show rejoin option        |
 | `ALREADY_IN_QUEUE`  | User already queued     | Show queue status         |
@@ -798,6 +871,7 @@ services:
 | Zod validation                 | Done    | Runtime validation for all WS handlers     |
 | WebSocket rate limiting        | Done    | Per-event throttling via @nestjs/throttler |
 | Match decline flow             | Done    | TOCTOU race condition fix                  |
+| Random battles                 | Done    | Random team gen, tabbed lobby UI           |
 | Frontend battle UI             | Pending | Socket.io client, battle UI                |
 | Rating system                  | Future  | See `rating-matchmaking-system.md`         |
 

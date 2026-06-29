@@ -18,20 +18,25 @@ import type { BattleConfig } from '@pokehub/shared/pokemon-battle-types';
 // Mock @pkmn/sim module
 jest.mock('@pkmn/sim', () => {
   // Mock battle instance
+  const mockP1Side = {
+    autoChoose: jest.fn(),
+    getChoice: jest.fn().mockReturnValue('move 1'),
+    requestState: 'move' as string,
+  };
+  const mockP2Side = {
+    autoChoose: jest.fn(),
+    getChoice: jest.fn().mockReturnValue('move 2'),
+    requestState: 'move' as string,
+  };
   const mockBattle = {
-    sides: [
-      {
-        autoChoose: jest.fn(),
-        getChoice: jest.fn().mockReturnValue('move 1'),
-      },
-      {
-        autoChoose: jest.fn(),
-        getChoice: jest.fn().mockReturnValue('move 2'),
-      },
-    ],
+    sides: [mockP1Side, mockP2Side],
+    p1: mockP1Side,
+    p2: mockP2Side,
+    ended: false,
+    winner: '' as string,
   };
 
-  // Mock omniscient stream
+  // Mock omniscient stream (full info for win/tie detection + replay)
   const mockOmniscientStream = {
     write: jest.fn().mockResolvedValue(undefined),
     [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
@@ -41,11 +46,30 @@ jest.mock('@pkmn/sim', () => {
     }),
   };
 
+  // Mock per-player perspective streams (opponent info redacted)
+  const mockP1Stream = {
+    write: jest.fn(),
+    [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
+      yield '|start';
+      yield '|turn|1';
+      yield '|request|{"active":[]}';
+    }),
+  };
+
+  const mockP2Stream = {
+    write: jest.fn(),
+    [Symbol.asyncIterator]: jest.fn().mockImplementation(function* () {
+      yield '|start';
+      yield '|turn|1';
+      yield '|request|{"active":[]}';
+    }),
+  };
+
   // Mock streams object
   const mockStreams = {
     omniscient: mockOmniscientStream,
-    p1: { write: jest.fn() },
-    p2: { write: jest.fn() },
+    p1: mockP1Stream,
+    p2: mockP2Stream,
   };
 
   // Mock BattleStream class
@@ -81,6 +105,8 @@ describe('BattleManagerService', () => {
     getBattleLog: jest.fn().mockResolvedValue([]),
     publishBattleUpdate: jest.fn().mockResolvedValue(undefined),
     setBattleLogTTL: jest.fn().mockResolvedValue(undefined),
+    setBattleMetadataTTL: jest.fn().mockResolvedValue(undefined),
+    setBattleSeedTTL: jest.fn().mockResolvedValue(undefined),
     removeServerBattle: jest.fn().mockResolvedValue(undefined),
     isServerAlive: jest.fn(),
     cleanupBattle: jest.fn().mockResolvedValue(undefined),
@@ -176,11 +202,13 @@ describe('BattleManagerService', () => {
 
       const result = await service.createBattle(config);
 
-      // Returns ActiveBattle
+      // Returns ActiveBattle with per-player perspectives
       expect(result).toEqual({
         id: config.id,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Stores metadata in Redis
@@ -235,18 +263,33 @@ describe('BattleManagerService', () => {
 
       await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
 
-      expect(mockTurnTimerService.cancelPlayerTimer).toHaveBeenCalledWith(
-        testBattleId,
-        'p1'
-      );
       expect(mockRedisService.setPendingChoices).toHaveBeenCalledWith(
         testBattleId,
         { p1: 'move 1' }
       );
-      expect(mockRedisService.appendBattleLog).toHaveBeenCalledWith(
-        testBattleId,
-        '>p1 move 1'
-      );
+      // The choice should NOT be logged yet — only executed choices reach
+      // the replay log, so overrides don't pollute it before the turn locks.
+      expect(mockRedisService.appendBattleLog).not.toHaveBeenCalled();
+    });
+
+    it('should log both choices to the replay log only when the turn executes', async () => {
+      // p1 submits, then changes their choice — neither submission writes the log
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
+
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 1' });
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 2');
+
+      expect(mockRedisService.appendBattleLog).not.toHaveBeenCalled();
+
+      // p2 submits — turn locks, executeTurn logs the final choices
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 2' });
+      await service.processChoice(testBattleId, testPlayer2Id, 'move 1');
+
+      const logged = (
+        mockRedisService.appendBattleLog as jest.Mock
+      ).mock.calls.map((call) => call[1]);
+      expect(logged).toEqual(['>p1 move 2', '>p2 move 1']);
     });
 
     it('should throw when battle not found', async () => {
@@ -334,6 +377,7 @@ describe('BattleManagerService', () => {
       });
       mockRedisService.getBattleSeed!.mockResolvedValue(testSeed);
       mockRedisService.getBattleLog!.mockResolvedValue(battleLog);
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
 
       const result = await service.recoverBattle(testBattleId);
 
@@ -341,6 +385,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Should update host server
@@ -352,6 +398,42 @@ describe('BattleManagerService', () => {
       // Should track battle on this server
       expect(mockRedisService.addServerBattle).toHaveBeenCalledWith(
         testBattleId
+      );
+
+      // Should restart turn timers — they live in process memory and died
+      // with the previous host, so recovery has to re-arm them.
+      expect(mockTurnTimerService.startTimers).toHaveBeenCalledWith(
+        testBattleId,
+        testPlayer1Id,
+        testPlayer2Id,
+        false,
+        false
+      );
+    });
+
+    it('should treat players with pending Redis choices as already chosen on recovery', async () => {
+      const config = createMockBattleConfig();
+      mockRedisService.getBattleMetadata!.mockResolvedValue({
+        config: JSON.stringify(config),
+        status: 'active',
+        hostServer: 'old-server',
+        pending: '{}',
+        p1Disconnected: 'false',
+        p2Disconnected: 'false',
+      });
+      mockRedisService.getBattleSeed!.mockResolvedValue(testSeed);
+      mockRedisService.getBattleLog!.mockResolvedValue([]);
+      // p1 submitted before the crash; the turn never executed.
+      mockRedisService.getPendingChoices!.mockResolvedValue({ p1: 'move 1' });
+
+      await service.recoverBattle(testBattleId);
+
+      expect(mockTurnTimerService.startTimers).toHaveBeenCalledWith(
+        testBattleId,
+        testPlayer1Id,
+        testPlayer2Id,
+        true,
+        false
       );
     });
 
@@ -393,6 +475,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config,
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
     });
 
@@ -439,6 +523,7 @@ describe('BattleManagerService', () => {
         testBattleId,
         {
           type: 'event',
+          targetUserId: testPlayer2Id,
           data: { event: 'opponent_disconnected', player: 'p1' },
         }
       );
@@ -464,6 +549,8 @@ describe('BattleManagerService', () => {
         id: testBattleId,
         config: expect.any(Object),
         currentState: expect.any(String),
+        p1State: expect.any(String),
+        p2State: expect.any(String),
       });
 
       // Should clear disconnect flag
@@ -477,6 +564,7 @@ describe('BattleManagerService', () => {
         testBattleId,
         {
           type: 'event',
+          targetUserId: testPlayer2Id,
           data: { event: 'opponent_reconnected', player: 'p1' },
         }
       );
@@ -522,10 +610,24 @@ describe('BattleManagerService', () => {
       // Clear user battles
       expect(mockRedisService.clearUserBattle).toHaveBeenCalledTimes(2);
 
-      // Set log TTL
+      // Set TTLs on all battle keys
       expect(mockRedisService.setBattleLogTTL).toHaveBeenCalledWith(
         testBattleId,
         3600
+      );
+      expect(mockRedisService.setBattleMetadataTTL).toHaveBeenCalledWith(
+        testBattleId,
+        3600
+      );
+      expect(mockRedisService.setBattleSeedTTL).toHaveBeenCalledWith(
+        testBattleId,
+        3600
+      );
+
+      // Drop the battle from the server's tracking set — set members don't
+      // honor key TTLs, so otherwise the set leaks dead IDs forever.
+      expect(mockRedisService.removeServerBattle).toHaveBeenCalledWith(
+        testBattleId
       );
 
       // Battle should no longer be hosted locally
@@ -587,6 +689,68 @@ describe('BattleManagerService', () => {
 
       // No replay possible for cancelled battles
       expect(mockRedisService.setBattleLogTTL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('per-player stream perspectives', () => {
+    it('should return distinct p1State and p2State from createBattle', async () => {
+      const config = createMockBattleConfig();
+      const result = await service.createBattle(config);
+
+      // Both perspective states should be populated
+      expect(result.p1State).toBeTruthy();
+      expect(result.p2State).toBeTruthy();
+      // Omniscient state should also be populated
+      expect(result.currentState).toBeTruthy();
+    });
+
+    it('should publish per-player data via Redis on executeTurn', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      // Both players choose
+      mockRedisService.getPendingChoices!.mockResolvedValue({});
+      await service.processChoice(testBattleId, testPlayer1Id, 'move 1');
+
+      mockRedisService.getPendingChoices!.mockResolvedValue({
+        p1: 'move 1',
+      });
+      await service.processChoice(testBattleId, testPlayer2Id, 'move 2');
+
+      // Should publish per-player perspective data
+      expect(mockRedisService.publishBattleUpdate).toHaveBeenCalledWith(
+        testBattleId,
+        expect.objectContaining({
+          type: 'state',
+          p1Id: testPlayer1Id,
+          p2Id: testPlayer2Id,
+          p1Data: expect.any(String),
+          p2Data: expect.any(String),
+        })
+      );
+    });
+
+    it('should include p1State and p2State in getBattle result', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      const result = service.getBattle(testBattleId);
+
+      expect(result).toBeDefined();
+      expect(result!.p1State).toBeTruthy();
+      expect(result!.p2State).toBeTruthy();
+      expect(result!.currentState).toBeTruthy();
+    });
+
+    it('should include p1State and p2State in handleReconnect result', async () => {
+      const config = createMockBattleConfig();
+      await service.createBattle(config);
+
+      const result = await service.handleReconnect(testBattleId, testPlayer1Id);
+
+      expect(result.p1State).toBeTruthy();
+      expect(result.p2State).toBeTruthy();
+      expect(result.currentState).toBeTruthy();
     });
   });
 });

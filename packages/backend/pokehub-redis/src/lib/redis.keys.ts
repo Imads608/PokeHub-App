@@ -19,6 +19,7 @@ export const RedisKeys = {
   // Matchmaking keys
   matchmaking: {
     queue: (format: string) => `queue:${format}` as const,
+    activeFormats: 'queue:active-formats' as const,
   },
 
   // Server keys (for horizontal scaling)
@@ -29,20 +30,26 @@ export const RedisKeys = {
 
   // Pub/Sub channels
   channels: {
-    matchFound: (userId: string) => `match:user:${userId}` as const,
-    battleMove: (battleId: string) => `battle:${battleId}:move` as const,
+    /** Per-user channel for delivering battle events when the user is on another server */
+    userBattleEvent: (userId: string) => `user:${userId}:battle-events` as const,
+    /** Per-battle channel for forwarding player actions to the host server */
+    battleAction: (battleId: string) => `battle:${battleId}:action` as const,
     battleUpdate: (battleId: string) => `battle:${battleId}:update` as const,
 
     // Prefixes for parsing incoming channel names
     prefixes: {
-      matchFound: 'match:user:' as const,
+      userBattleEvent: 'user:' as const,
+      userBattleEventSuffix: ':battle-events' as const,
       battleUpdate: ':update' as const,
     },
 
-    // Parse userId from match:user:{userId} channel
-    parseMatchFoundUserId: (channel: string): string | null => {
-      if (channel.startsWith('match:user:')) {
-        return channel.slice('match:user:'.length);
+    // Parse userId from user:{userId}:battle-events channel
+    parseUserBattleEventUserId: (channel: string): string | null => {
+      if (
+        channel.startsWith('user:') &&
+        channel.endsWith(':battle-events')
+      ) {
+        return channel.slice('user:'.length, -':battle-events'.length);
       }
       return null;
     },
@@ -51,6 +58,14 @@ export const RedisKeys = {
     parseBattleUpdateId: (channel: string): string | null => {
       if (channel.endsWith(':update') && channel.startsWith('battle:')) {
         return channel.slice('battle:'.length, -':update'.length);
+      }
+      return null;
+    },
+
+    // Parse battleId from battle:{battleId}:action channel
+    parseBattleActionId: (channel: string): string | null => {
+      if (channel.endsWith(':action') && channel.startsWith('battle:')) {
+        return channel.slice('battle:'.length, -':action'.length);
       }
       return null;
     },

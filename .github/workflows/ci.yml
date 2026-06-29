@@ -73,8 +73,8 @@ jobs:
             echo "has-app=false" >> $GITHUB_OUTPUT
           fi
 
-  check-typecheck-targets:
-    name: Check typecheck-spec Targets
+  check-path-aliases:
+    name: Check Path Aliases
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -101,26 +101,57 @@ jobs:
       - name: Build workspace-plugin
         run: npx nx build workspace-plugin
 
-      - name: Check for missing typecheck-spec targets
-        run: npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all
-
       - name: Check for incorrect path aliases
         run: npx nx g @pokehub/workspace-plugin:fix-path-aliases
 
       - name: Check for uncommitted changes
         run: |
           if [[ -n $(git status --porcelain) ]]; then
-            echo "::error::Workspace configuration issues detected!"
+            echo "::error::Incorrect path aliases detected in tsconfig.base.json!"
             echo ""
             echo "The following files need updates:"
             git diff --name-only
             echo ""
-            echo "Run these commands locally and commit the changes:"
-            echo "  npx nx g @pokehub/workspace-plugin:add-typecheck-spec --all"
+            echo "Run this command locally and commit the changes:"
             echo "  npx nx g @pokehub/workspace-plugin:fix-path-aliases"
             exit 1
           fi
-          echo "All workspace configurations are correct"
+          echo "All path aliases are correct"
+
+  typecheck:
+    name: Typecheck
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Derive SHAs for affected commands
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: 'main'
+
+      - name: Typecheck affected projects
+        run: npx nx affected -t typecheck --parallel=3
 
   lint:
     name: Lint
@@ -373,12 +404,33 @@ jobs:
               --reference ./main-stats/apps/pokehub-app/statoscope-stats-client.json 2>&1); then
               VALIDATION_FAILED="true"
             fi
+
+            # Accurate per-route size validation (Statoscope inflates sizes for App Router)
+            echo ""
+            echo "--- Per-route bundle size validation ---"
+            if ! ROUTE_OUTPUT=$(npx tsx tools/validate-bundle-size.ts \
+              apps/pokehub-app/statoscope-stats-client.json \
+              --reference ./main-stats/apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+            echo "$ROUTE_OUTPUT"
+            OUTPUT="$OUTPUT"$'\n'"$ROUTE_OUTPUT"
           else
             echo "No main branch reference, validating absolute limits only..."
             if ! OUTPUT=$(npx @statoscope/cli validate \
               --input apps/pokehub-app/statoscope-stats-client.json 2>&1); then
               VALIDATION_FAILED="true"
             fi
+
+            # Accurate per-route size validation (absolute limits only)
+            echo ""
+            echo "--- Per-route bundle size validation ---"
+            if ! ROUTE_OUTPUT=$(npx tsx tools/validate-bundle-size.ts \
+              apps/pokehub-app/statoscope-stats-client.json 2>&1); then
+              VALIDATION_FAILED="true"
+            fi
+            echo "$ROUTE_OUTPUT"
+            OUTPUT="$OUTPUT"$'\n'"$ROUTE_OUTPUT"
           fi
 
           echo "$OUTPUT"
@@ -623,6 +675,27 @@ jobs:
         if: needs.setup.outputs.has-api-changes == 'true'
         run: npx nx e2e pokehub-api-e2e
 
+      - name: Build pokehub-app for Playwright
+        # Playwright runs against a production build in CI (see
+        # apps/pokehub-app-e2e/playwright.config.ts) — `next start` needs
+        # the build output in dist/apps/pokehub-app before the webServer
+        # can come up. The separate top-level Build job runs on a
+        # different runner, so its artifacts aren't visible here; rebuild
+        # in-job. Nx caches keep this cheap on warm runs.
+        #
+        # NEXT_PUBLIC_POKEHUB_API_URL must point at the MSW proxy here.
+        # Next.js inlines NEXT_PUBLIC_* into the client bundle at BUILD
+        # time, so the runtime override in playwright.config.ts's
+        # webServer command does not reach client-side fetches under
+        # `next start`. Without this, TanStack Query mutations (delete
+        # team, duplicate team, battle queue join, etc.) hit the real
+        # NestJS backend on :3000 instead of the mock proxy on :9876
+        # and fail with 404.
+        if: needs.setup.outputs.has-app-changes == 'true'
+        run: npx nx build pokehub-app
+        env:
+          NEXT_PUBLIC_POKEHUB_API_URL: http://localhost:9876/api
+
       - name: Run frontend Playwright E2E tests
         id: e2e-frontend
         if: needs.setup.outputs.has-app-changes == 'true'
@@ -641,13 +714,14 @@ jobs:
 
   ci-success:
     name: CI Success
-    needs: [check-typecheck-targets, lint, typecheck-spec, test, build, e2e]
+    needs: [check-path-aliases, typecheck, lint, typecheck-spec, test, build, e2e]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check CI status
         run: |
-          if [[ "${{ needs.check-typecheck-targets.result }}" == "failure" ]] || \
+          if [[ "${{ needs.check-path-aliases.result }}" == "failure" ]] || \
+             [[ "${{ needs.typecheck.result }}" == "failure" ]] || \
              [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.typecheck-spec.result }}" == "failure" ]] || \
              [[ "${{ needs.test.result }}" == "failure" ]] || \

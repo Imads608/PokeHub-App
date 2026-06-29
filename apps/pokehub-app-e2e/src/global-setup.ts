@@ -4,6 +4,7 @@ import {
   type BrowserContext,
 } from '@playwright/test';
 import path from 'path';
+import Redis from 'ioredis';
 
 /**
  * Global setup for Playwright E2E tests
@@ -32,7 +33,19 @@ interface TestUser {
 }
 
 /**
- * Authenticates a test user via NextAuth test-credentials provider
+ * Authenticates a test user via NextAuth test-credentials provider.
+ *
+ * Done entirely through context.request — no page navigation. A prior
+ * implementation opened the homepage with `page.goto(baseURL)` first, which
+ * mounted Auth.js's client SessionProvider and fired a background
+ * `fetch('/api/auth/session')`. Immediately navigating to `/api/auth/csrf`
+ * aborted that fetch but still left its partial Set-Cookie response in the
+ * jar — yielding two `authjs.csrf-token` cookies with different attributes.
+ * The POST then sent both, Auth.js read the wrong one, and the action
+ * callback failed with MissingCSRF. The first user happened to win the race
+ * (server cold-start was slow enough for the session fetch to settle); the
+ * second and third lost it. Skipping the browser page eliminates the
+ * SessionProvider entirely.
  */
 async function authenticateUser(
   context: BrowserContext,
@@ -40,25 +53,16 @@ async function authenticateUser(
   user: TestUser,
   authFile: string
 ): Promise<void> {
-  const page = await context.newPage();
-
-  // Listen to console messages from the browser
-  page.on('console', (msg) => console.log(`[Browser Console] ${msg.text()}`));
-
-  // Navigate to the app first
-  await page.goto(baseURL);
-  await page.waitForLoadState('domcontentloaded');
-
-  // Get CSRF token
-  const csrfRes = await page.goto(`${baseURL}/api/auth/csrf`);
-  const csrfData = await csrfRes?.json();
+  const csrfRes = await context.request.get(`${baseURL}/api/auth/csrf`);
+  const csrfData = await csrfRes.json();
   const csrfToken = csrfData?.csrfToken;
 
   if (!csrfToken) {
-    throw new Error('Failed to get CSRF token');
+    throw new Error(
+      `Failed to get CSRF token for ${user.email}: status ${csrfRes.status()}`
+    );
   }
 
-  // Build form data - include username only if provided
   const formData: Record<string, string> = {
     csrfToken,
     email: user.email,
@@ -67,7 +71,6 @@ async function authenticateUser(
     formData.username = user.username;
   }
 
-  // POST to signin callback endpoint
   const response = await context.request.post(
     `${baseURL}/api/auth/callback/test-credentials`,
     { form: formData }
@@ -83,17 +86,26 @@ async function authenticateUser(
     );
   }
 
-  // Save the storage state
+  const cookies = await context.cookies();
+  const sessionCookie = cookies.find((c) => c.name === 'authjs.session-token');
+  if (!sessionCookie) {
+    throw new Error(
+      `Authentication failed for ${user.email}: no session cookie set. ` +
+        `POST status: ${response.status()}, cookies: ${cookies
+          .map((c) => c.name)
+          .join(', ')}`
+    );
+  }
+
   await context.storageState({ path: authFile });
   console.log(`✓ Authentication state saved to ${authFile}`);
-
-  await page.close();
 }
 
 async function globalSetup(config: FullConfig) {
   const { baseURL } = config.projects[0].use;
   const authFile = path.join(__dirname, '../.auth/user.json');
   const newUserAuthFile = path.join(__dirname, '../.auth/new-user.json');
+  const battleUserAuthFile = path.join(__dirname, '../.auth/battle-user.json');
   const apiURL = process.env.API_URL || 'http://localhost:3000';
 
   // Check if we should skip auth setup
@@ -115,6 +127,11 @@ async function globalSetup(config: FullConfig) {
   const newUser: TestUser = {
     email: 'newuser@example.com',
     // No username - this user needs to create profile
+  };
+
+  const battleUser: TestUser = {
+    email: process.env.TEST_BATTLE_USER_EMAIL || 'e2e-battle-opponent@example.com',
+    username: process.env.TEST_BATTLE_USER_USERNAME || 'e2ebattleopponent',
   };
 
   try {
@@ -148,7 +165,30 @@ async function globalSetup(config: FullConfig) {
       );
     }
 
-    // Step 2: Set up browser and authenticate both users
+    // Step 2: Clean stale battle/queue state from previous test runs
+    console.log('Cleaning stale battle state from Redis...');
+    const redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+    });
+
+    for (const pattern of ['user:*:battle', 'user:*:queue', 'battle:*']) {
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          console.log(`  Deleted ${keys.length} keys matching ${pattern}`);
+        }
+      } while (cursor !== '0');
+    }
+    await redis.del('queue:active-formats');
+    await redis.quit();
+    console.log('✓ Redis state cleaned');
+
+    // Step 3: Set up browser and authenticate both users
     const browser = await chromium.launch();
 
     // Authenticate existing user (with username)
@@ -176,6 +216,7 @@ async function globalSetup(config: FullConfig) {
         `✓ Existing user authentication verified - reached team-builder`
       );
     }
+
     await existingUserContext.close();
 
     // Authenticate new user (without username) for create-profile tests
@@ -218,6 +259,17 @@ async function globalSetup(config: FullConfig) {
       console.log(`✓ New user authentication completed - URL: ${newUserUrl}`);
     }
     await newUserContext.close();
+
+    // Authenticate battle opponent user (for battle E2E tests)
+    console.log(`\nAuthenticating battle user: ${battleUser.email}`);
+    const battleUserContext = await browser.newContext();
+    await authenticateUser(
+      battleUserContext,
+      baseURL || 'http://localhost:4200',
+      battleUser,
+      battleUserAuthFile
+    );
+    await battleUserContext.close();
 
     await browser.close();
     console.log('\n✓ All authentication states saved successfully');

@@ -196,21 +196,14 @@ export function parsePendingChoices(json: string): PendingChoices {
 }
 
 /**
- * Pub/Sub message for match found
+ * Pub/Sub message for forwarding player actions to the host server.
+ * Used when a player is connected to a different server than the one hosting the battle.
  */
-export interface MatchFoundMessage {
-  battleId: string;
-  opponentId: string;
-  opponentName: string;
-}
-
-/**
- * Pub/Sub message for battle move (cross-server)
- */
-export interface BattleMoveMessage {
-  player: 'p1' | 'p2';
-  choice: string;
-}
+export type BattleActionMessage =
+  | { action: 'move'; playerId: string; choice: string }
+  | { action: 'forfeit'; playerId: string }
+  | { action: 'cancel_choice'; playerId: string }
+  | { action: 'disconnect'; playerId: string };
 
 /**
  * Battle update event payloads (structured events, not raw battle state)
@@ -237,18 +230,26 @@ export type BattleEventPayload =
   | TurnWarningPayload;
 
 /**
- * Pub/Sub message for battle state update (raw @pkmn/sim output)
+ * Pub/Sub message for battle state update (raw @pkmn/sim output).
+ * Contains per-player perspective data so each player only sees
+ * information they should have access to (opponent info redacted).
+ * Player IDs are included for cross-server routing.
  */
 export interface BattleStateUpdateMessage {
   type: 'state';
-  data: string;
+  p1Id: string;
+  p2Id: string;
+  p1Data: string;
+  p2Data: string;
 }
 
 /**
- * Pub/Sub message for battle events (structured)
+ * Pub/Sub message for battle events (structured).
+ * targetUserId is the user who should receive this event.
  */
 export interface BattleEventUpdateMessage {
   type: 'event';
+  targetUserId: string;
   data: BattleEventPayload;
 }
 

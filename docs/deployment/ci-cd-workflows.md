@@ -19,10 +19,24 @@ Runs on every pull request and push to `main`. Uses Nx affected commands to only
 **Jobs:**
 
 1. **Setup & Detect Changes** - Identifies which apps are affected by the changes
-2. **Lint** - ESLint checks on affected projects
-3. **Test** - Jest unit tests with coverage reporting
-4. **Build** - Production builds of affected projects with bundle size validation
-5. **E2E** - Playwright tests across Chromium, Firefox, and WebKit
+2. **Check Path Aliases** - Validates that `tsconfig.base.json` path aliases are correct by running `npx nx g @pokehub/workspace-plugin:fix-path-aliases` and failing if there are uncommitted changes
+3. **Typecheck** - Typechecks affected project source code using `npx nx affected -t typecheck --parallel=3`
+4. **Lint** - ESLint checks on affected projects
+5. **Typecheck Spec Files** - Typechecks affected spec files (via `tsconfig.spec.json`) using `npx nx affected -t typecheck-spec --parallel=3`
+6. **Test** - Jest unit tests with coverage reporting
+7. **Build** - Production builds of affected projects with bundle size validation
+8. **E2E** - Playwright tests across Chromium, Firefox, and WebKit
+
+#### Typecheck Targets
+
+Both `typecheck` and `typecheck-spec` targets are **inferred automatically** by an Nx inference plugin (`@pokehub/workspace-plugin` using `createNodesV2`). There is no need to manually add these targets to `project.json` files:
+
+- Libraries with `tsconfig.lib.json` automatically get a `typecheck` target
+- NestJS apps with `tsconfig.app.json` automatically get a `typecheck` target
+- Next.js apps (`projectType: 'application'`) fall back to `tsconfig.json` for `typecheck`
+- Any project with `tsconfig.spec.json` automatically gets a `typecheck-spec` target
+
+This ensures all projects (libraries and apps) are typechecked in CI without per-project configuration.
 
 #### Bundle Size Validation
 

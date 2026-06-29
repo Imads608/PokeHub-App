@@ -6,7 +6,7 @@ export interface JoinQueueEvent {
   type: 'JOIN_QUEUE';
   /** Full Showdown format ID (e.g., 'gen9ou') */
   format: string;
-  teamId: string;
+  teamId?: string;
 }
 
 export interface LeaveQueueEvent {
@@ -29,6 +29,11 @@ export interface MoveEvent {
   choice: string;
 }
 
+export interface CancelChoiceEvent {
+  type: 'CANCEL_CHOICE';
+  battleId: string;
+}
+
 export interface ForfeitEvent {
   type: 'FORFEIT';
   battleId: string;
@@ -44,13 +49,24 @@ export interface SaveReplayEvent {
   battleId: string;
 }
 
+export interface ObserveQueueEvent {
+  type: 'OBSERVE_QUEUE';
+}
+
+export interface UnobserveQueueEvent {
+  type: 'UNOBSERVE_QUEUE';
+}
+
 export type ClientBattleEvent =
   | JoinQueueEvent
   | LeaveQueueEvent
   | DeclineMatchEvent
   | MoveEvent
+  | CancelChoiceEvent
   | ForfeitEvent
   | RejoinEvent
-  | SaveReplayEvent;
+  | SaveReplayEvent
+  | ObserveQueueEvent
+  | UnobserveQueueEvent;
 
 export type ClientBattleEventType = ClientBattleEvent['type'];

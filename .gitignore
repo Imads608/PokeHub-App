@@ -62,3 +62,15 @@ tags
 # Bundle analysis
 **/statoscope-report-*.html
 **/statoscope-stats-*.json
+
+# Build artifacts
+*.tsbuildinfo
+
+# Claude Code plans
+.claude/plans/
+
+# graphify knowledge graph (regenerable build artifact; contains machine-specific paths)
+graphify-out/
+
+# test output
+test-results/

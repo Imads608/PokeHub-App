@@ -7,13 +7,13 @@ import {
 } from './redis.types';
 import type {
   BattleMetadata,
-  BattleMoveMessage,
+  BattleActionMessage,
   BattleUpdateMessage,
-  MatchFoundMessage,
   PendingChoices,
   QueueEntry,
   RedisBattleMetadata,
 } from './redis.types';
+import type { ServerBattleEvent } from '@pokehub/shared/pokemon-battle-types';
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '@pokehub/backend/shared-logger';
 import Redis from 'ioredis';
@@ -74,6 +74,7 @@ export class RedisBattleService {
   async joinQueue(format: string, entry: QueueEntry): Promise<number> {
     const key = RedisKeys.matchmaking.queue(format);
     const position = await this.client.lpush(key, JSON.stringify(entry));
+    await this.addActiveFormat(format);
     this.logger.debug(
       `User ${entry.userId} joined queue for ${format} at position ${position}`
     );
@@ -83,6 +84,17 @@ export class RedisBattleService {
   async getQueueLength(format: string): Promise<number> {
     const key = RedisKeys.matchmaking.queue(format);
     return this.client.llen(key);
+  }
+
+  async removeFromQueue(format: string, userId: string): Promise<void> {
+    const key = RedisKeys.matchmaking.queue(format);
+    const entries = await this.client.lrange(key, 0, -1);
+    for (const raw of entries) {
+      if (parseQueueEntry(raw).userId === userId) {
+        await this.client.lrem(key, 1, raw);
+        return;
+      }
+    }
   }
 
   async popQueueEntries(
@@ -123,6 +135,20 @@ export class RedisBattleService {
   async clearUserQueueStatus(userId: string): Promise<void> {
     const key = RedisKeys.user.queueStatus(userId);
     await this.client.del(key);
+  }
+
+  // ==================== Active Formats Tracking ====================
+
+  async addActiveFormat(format: string): Promise<void> {
+    await this.client.sadd(RedisKeys.matchmaking.activeFormats, format);
+  }
+
+  async removeActiveFormat(format: string): Promise<void> {
+    await this.client.srem(RedisKeys.matchmaking.activeFormats, format);
+  }
+
+  async getActiveFormats(): Promise<string[]> {
+    return this.client.smembers(RedisKeys.matchmaking.activeFormats);
   }
 
   // ==================== User Battle State ====================
@@ -219,6 +245,16 @@ export class RedisBattleService {
     await this.client.expire(key, seconds);
   }
 
+  async setBattleMetadataTTL(battleId: string, seconds: number): Promise<void> {
+    const key = RedisKeys.battle.metadata(battleId);
+    await this.client.expire(key, seconds);
+  }
+
+  async setBattleSeedTTL(battleId: string, seconds: number): Promise<void> {
+    const key = RedisKeys.battle.seed(battleId);
+    await this.client.expire(key, seconds);
+  }
+
   async deleteBattleLog(battleId: string): Promise<void> {
     const key = RedisKeys.battle.log(battleId);
     await this.client.del(key);
@@ -283,25 +319,25 @@ export class RedisBattleService {
 
   // ==================== Pub/Sub ====================
 
-  async publishMatchFound(
+  async publishUserBattleEvent(
     userId: string,
-    message: MatchFoundMessage
+    event: ServerBattleEvent
   ): Promise<void> {
-    const channel = RedisKeys.channels.matchFound(userId);
-    await this.client.publish(channel, JSON.stringify(message));
+    const channel = RedisKeys.channels.userBattleEvent(userId);
+    await this.client.publish(channel, JSON.stringify(event));
     this.logger.debug(
-      `Published match found to user ${userId}: battle ${message.battleId}`
+      `Published ${event.type} to user ${userId} via Redis`
     );
   }
 
-  async publishBattleMove(
+  async publishBattleAction(
     battleId: string,
-    message: BattleMoveMessage
+    message: BattleActionMessage
   ): Promise<void> {
-    const channel = RedisKeys.channels.battleMove(battleId);
+    const channel = RedisKeys.channels.battleAction(battleId);
     await this.client.publish(channel, JSON.stringify(message));
     this.logger.debug(
-      `Published move for battle ${battleId}: ${message.player} -> ${message.choice}`
+      `Published ${message.action} for battle ${battleId} (player: ${message.playerId})`
     );
   }
 

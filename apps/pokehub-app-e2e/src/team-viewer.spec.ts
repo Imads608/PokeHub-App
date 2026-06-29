@@ -227,8 +227,10 @@ test.describe('Team Viewer - Delete Team', () => {
     // Wait for dialog to close (indicates mutation completed)
     await expect(page.getByTestId('delete-team-dialog')).toBeHidden({ timeout: 10000 });
 
-    // Verify success toast appears
-    await expect(page.getByText('Team deleted')).toBeVisible({ timeout: 5000 });
+    // Verify success toast appears. 15s — toast renders after the
+    // delete mutation resolves; under CI load that round-trip
+    // occasionally pushes the toast past the 5s window.
+    await expect(page.getByText('Team deleted')).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -251,9 +253,10 @@ test.describe('Team Viewer - Duplicate Team', () => {
       page.getByRole('heading', { name: 'Team Builder' })
     ).toBeVisible({ timeout: 10000 });
 
-    // Should show success toast
+    // Should show success toast. 15s — same reasoning as the delete
+    // toast above: post-mutation toast renders later under CI load.
     await expect(page.getByText('Team duplicated')).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     });
   });
 });

@@ -7,10 +7,9 @@ import {
 import type { Provider } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { AppLogger } from '@pokehub/backend/shared-logger';
+import { TURN_TIMEOUT_SECONDS } from '@pokehub/shared/pokemon-battle-types';
 
-// Turn timer constants
-const TURN_WARNING_MS = 30 * 1000; // Warning at 30 seconds
-const TURN_TIMEOUT_MS = 60 * 1000; // Auto-move at 60 seconds
+const TURN_TIMEOUT_MS = TURN_TIMEOUT_SECONDS * 1000;
 
 interface PlayerTimers {
   warningTimer: ReturnType<typeof setTimeout> | null;
@@ -27,8 +26,8 @@ interface BattleTimers {
  * Turn Timer Service
  *
  * Manages turn timers for all active battles.
- * - Warning callback at 30 seconds
- * - Timeout callback at 60 seconds for auto-move
+ * - Warning callback at the halfway point of the turn
+ * - Timeout callback at TURN_TIMEOUT_SECONDS for auto-move
  */
 @Injectable()
 class TurnTimerService implements ITurnTimerService {
@@ -119,18 +118,25 @@ class TurnTimerService implements ITurnTimerService {
 
     const playerId = playerTimers.playerId;
 
-    // Warning timer at 30 seconds
+    const warningMs = TURN_TIMEOUT_MS / 2;
+    const warningSecondsRemaining = TURN_TIMEOUT_SECONDS / 2;
+
+    // Warning timer — fires at the halfway point of the turn
     playerTimers.warningTimer = setTimeout(() => {
-      this.logger.debug(`Battle ${battleId}: ${player} turn warning (30s)`);
+      this.logger.debug(
+        `Battle ${battleId}: ${player} turn warning (${warningSecondsRemaining}s remaining)`
+      );
 
       if (this.onWarning) {
-        void this.onWarning(battleId, player, 30);
+        void this.onWarning(battleId, player, warningSecondsRemaining);
       }
-    }, TURN_WARNING_MS);
+    }, warningMs);
 
-    // Timeout timer at 60 seconds
+    // Timeout timer — fires at TURN_TIMEOUT_SECONDS
     playerTimers.timeoutTimer = setTimeout(() => {
-      this.logger.log(`Battle ${battleId}: ${player} turn timeout (60s)`);
+      this.logger.log(
+        `Battle ${battleId}: ${player} turn timeout (${TURN_TIMEOUT_SECONDS}s)`
+      );
 
       // Clear the warning timer reference
       playerTimers.warningTimer = null;

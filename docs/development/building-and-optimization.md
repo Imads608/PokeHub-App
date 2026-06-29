@@ -18,12 +18,11 @@ This guide covers how to build and run the PokeHub application in production mod
   - [Understanding the Output](#understanding-the-output)
   - [Optimization Tips](#optimization-tips)
   - [Target Bundle Sizes](#target-bundle-sizes)
-  - [Understanding First Load JS](#understanding-first-load-js)
-  - [What Determines First Load JS?](#what-determines-first-load-js)
+  - [What Determines Per-Route Bundle Size?](#what-determines-per-route-bundle-size)
   - [SSR vs Server Components (Important Distinction)](#ssr-vs-server-components-important-distinction)
-  - [Analyzing First Load JS with Bundle Analyzer](#analyzing-first-load-js-with-bundle-analyzer)
-  - [How to Reduce First Load JS](#how-to-reduce-first-load-js)
-  - [Decision Tree: Will This Add to First Load JS?](#decision-tree-will-this-add-to-first-load-js)
+  - [Analyzing Bundle Size with Bundle Analyzer](#analyzing-bundle-size-with-bundle-analyzer)
+  - [How to Reduce Bundle Size](#how-to-reduce-bundle-size)
+  - [Decision Tree: Will This Add to the Client Bundle?](#decision-tree-will-this-add-to-the-client-bundle)
   - [How App Router Handles Layout Client Components (Case Study: @pkmn/dex)](#how-app-router-handles-layout-client-components-case-study-pkmndex)
 - [Deployment Platforms](#deployment-platforms)
   - [Docker (Recommended)](#docker-recommended)
@@ -264,6 +263,26 @@ The bundle analyzer displays:
 - **Module relationships**: What's included in each chunk
 - **Large dependencies**: Identify heavy packages
 
+#### Statoscope "Initial Size" is Misleading for Next.js App Router
+
+Statoscope computes "initial size" for an entrypoint using the query `(data.chunks + data.chunks..children).[initial].files` — it **recursively walks all children** of the entry's chunks, includes every initial chunk in the tree, and sums their sizes.
+
+This affects **any entrypoint that has children** in webpack's chunk graph, not just the root layout:
+
+- **`app/layout`** (worst case): rolls up every page's chunks across the entire app, since the root layout is the parent of all page chunks. Statoscope may report ~1.5 MB, but this includes chunks for `/pokedex`, `/battle`, `/team-builder`, and every other route.
+- **Nested layouts** (e.g., `app/pokedex/layout`): rolls up child pages like `app/pokedex/page` and `app/pokedex/[id]/page`. Less inflated than the root, but still overstated.
+- **Leaf pages** (e.g., `app/login/page`): no children, so the reported size is accurate.
+
+**This does not reflect what the browser actually downloads.** When a user visits a specific page, Next.js only loads:
+
+1. Framework chunks (`main`, `framework`, `webpack`)
+2. The layout entry chunks for the route's layout hierarchy
+3. The specific page's entry chunks (e.g., `app/pokedex/page`)
+
+The actual initial download for a layout is just its own chunks (items 1-2) — significantly smaller than what statoscope reports.
+
+**To get accurate per-route sizes**, check leaf page entrypoints in statoscope (e.g., `app/login/page`) rather than layout entrypoints. You can also inspect the actual network requests in the browser's DevTools Network tab to see exactly which chunks are downloaded for a given route.
+
 ### Optimization Tips
 
 Use the analyzer to:
@@ -283,49 +302,16 @@ Use the analyzer to:
 
 Aim for:
 
-- **First Load JS**: < 200 KB (ideal), < 300 KB (acceptable)
-- **Individual routes**: < 100 KB
+- **Per-route JS**: < 200 KB gzipped (ideal), < 300 KB gzipped (acceptable)
 - **Shared chunks**: Optimize for caching (stable naming)
 
-You can view bundle sizes in the build output:
+Use `ANALYZE=true nx build pokehub-app` and check individual page entrypoints in statoscope or the webpack bundle analyzer to measure per-route sizes.
 
-```bash
-nx build pokehub-app
-```
+### What Determines Per-Route Bundle Size?
 
-Look for the "First Load JS" column in the build output to see initial bundle sizes per route.
+Code is included in a route's initial bundle based on whether it runs on the **client** or **server**:
 
-### Understanding First Load JS
-
-When you run `nx build pokehub-app`, you'll see output like:
-
-```
-Route (app)                              Size     First Load JS
-┌ ○ /                                    5 kB        95 kB
-├ ○ /login                               9 kB        99 kB
-└ ○ /team-builder                        12 kB       102 kB
-
-+ First Load JS shared by all            90 kB
-  ├ chunks/framework-*.js                45 kB
-  ├ chunks/main-*.js                     32 kB
-  └ chunks/webpack-*.js                  13 kB
-```
-
-**Key metrics explained:**
-
-- **Size**: Route-specific JavaScript only (unique to that page)
-- **First Load JS**: Total JavaScript a user downloads on first visit to that route
-  - **Includes**: Route-specific code + shared chunks
-  - **Example**: `/login` = 9 kB (route) + 90 kB (shared) = 99 kB total
-- **Shared by all**: Framework code (React, Next.js) loaded once and cached across all routes
-
-**Important:** All sizes shown are **gzipped** (compressed for network transfer).
-
-### What Determines First Load JS?
-
-Code is included in First Load JS based on whether it runs on the **client** or **server**:
-
-#### ✅ Included (Adds to First Load JS):
+#### ✅ Included (Adds to Route's Initial Bundle):
 
 1. **Client Components** - Any component with `'use client'`:
 
@@ -391,21 +377,21 @@ Code is included in First Load JS based on whether it runs on the **client** or 
 3. **Dynamic Imports with `ssr: false`**:
    ```typescript
    const HeavyComponent = dynamic(() => import('./Heavy'), {
-     ssr: false, // ← Loaded on-demand, not in First Load JS
+     ssr: false, // ← Loaded on-demand, not in initial bundle
    });
    ```
 
 ### SSR vs Server Components (Important Distinction)
 
-**Client Components are still SSR'd by default**, but they add to First Load JS:
+**Client Components are still SSR'd by default**, but they add to the route's initial bundle:
 
-|                            | Server Component | Client Component      |
-| -------------------------- | ---------------- | --------------------- |
-| Rendered on server?        | Yes ✓            | Yes ✓ (SSR)           |
-| JavaScript sent to client? | **No**           | **Yes**               |
-| Adds to First Load JS?     | **No**           | **Yes**               |
-| Can use hooks/state?       | No               | Yes                   |
-| Interactive?               | No               | Yes (after hydration) |
+|                                    | Server Component | Client Component      |
+| ---------------------------------- | ---------------- | --------------------- |
+| Rendered on server?                | Yes ✓            | Yes ✓ (SSR)           |
+| JavaScript sent to client?         | **No**           | **Yes**               |
+| Adds to route's initial bundle?    | **No**           | **Yes**               |
+| Can use hooks/state?               | No               | Yes                   |
+| Interactive?                       | No               | Yes (after hydration) |
 
 **Example:**
 
@@ -420,37 +406,26 @@ export default function LoginForm() {
 This component:
 
 - **IS** Server-Side Rendered (HTML generated on server)
-- **DOES** add to First Load JS (JavaScript sent for hydration)
+- **DOES** add to route's initial bundle (JavaScript sent for hydration)
 - User sees HTML fast, then JavaScript downloads to make it interactive
 
-### Analyzing First Load JS with Bundle Analyzer
+### Analyzing Bundle Size with Bundle Analyzer
 
-When using the bundle analyzer, you may notice discrepancies between the build output and analyzer:
-
-**Build output shows 189 kB** → This is **gzipped** size
-**Bundle analyzer shows ~600 kB** → This is **parsed** (uncompressed) size
-
-To match the numbers:
-
-1. Look for the **gzipped size** in the bundle analyzer tooltip/sidebar
-2. The gzipped size should match the "First Load JS" from build output
-3. Parsed size is typically 3-4x larger than gzipped
+The bundle analyzer shows **parsed** (uncompressed) sizes by default. Look for the **gzipped size** in the tooltip/sidebar for a more realistic transfer size — parsed size is typically 3-4x larger than gzipped.
 
 **When filtering by a route** (e.g., filter by `app/login/page`):
 
-- The Bundle Analyzer displays the **complete First Load JS** for that route
+- The Bundle Analyzer displays the **complete initial bundle** for that route
 - You'll see the route-specific chunks **PLUS** all shared framework chunks
-- This total (gzipped) = First Load JS for that route
-- This is why filtering by `/login` shows more than just the 9 kB route-specific code
+- This is why filtering by `/login` shows more than just the route-specific code
 
 **Example workflow:**
 
 1. Run `ANALYZE=true nx build pokehub-app`
 2. In the analyzer, filter by `app/login/page`
-3. All chunks shown = what loads for `/login` route
-4. Check gzipped size in tooltip → should match build output's "First Load JS"
+3. All chunks shown = what loads for the `/login` route
 
-### How to Reduce First Load JS
+### How to Reduce Initial Bundle Size
 
 1. **Keep pages as Server Components** when possible:
 
@@ -518,24 +493,24 @@ To match the numbers:
    - ❌ Lodash (full) → ✅ Individual lodash methods
    - ❌ Entire icon packs → ✅ Specific icons
 
-### Decision Tree: Will This Add to First Load JS?
+### Decision Tree: Will This Add to the Route's Initial Bundle?
 
 ```
 Does the file have 'use client'?
 ├─ Yes → Is it imported by the route or layout?
-│   ├─ Yes → ✓ Adds to First Load JS
+│   ├─ Yes → ✓ Adds to route's initial bundle
 │   └─ No → ✗ Not included
 └─ No → Server Component
-    └─ ✗ Does NOT add to First Load JS
+    └─ ✗ Does NOT add to initial bundle
 
 Is it a dependency/import?
-├─ Imported by Client Component → ✓ Adds to First Load JS
+├─ Imported by Client Component → ✓ Adds to route's initial bundle
 └─ Imported by Server Component → ✗ Does NOT add
 ```
 
 ### How App Router Handles Layout Client Components (Case Study: @pkmn/dex)
 
-**Key Finding:** Client components in `app/layout.tsx` are NOT automatically included in every route's First Load JS. Next.js performs **per-route tree-shaking and optimization**.
+**Key Finding:** Client components in `app/layout.tsx` are NOT automatically included in every route's initial bundle. Next.js performs **per-route tree-shaking and optimization**.
 
 #### Real Example from PokeHub
 
@@ -572,12 +547,12 @@ export const AppBootstrapper = ({ children }) => {
 
 - AppBootstrapper wraps all routes
 - AppBootstrapper imports Dex (322 KB)
-- All routes should include Dex in First Load JS ❌
+- All routes should include Dex in their initial bundle ❌
 
 **What Actually Happens:**
 
-| Route           | Imports Dex Directly? | Dex in First Load JS? | Why?                                |
-| --------------- | --------------------- | --------------------- | ----------------------------------- |
+| Route           | Imports Dex Directly? | Dex in Initial Bundle? | Why?                                |
+| --------------- | --------------------- | ---------------------- | ----------------------------------- |
 | `/login`        | ❌ No                 | ❌ No                 | Tree-shaken - route doesn't need it |
 | `/pokedex/[id]` | ✅ Yes                | ✅ Yes                | Route imports it, so included       |
 | `/team-builder` | ❌ No                 | ❌ No                 | Tree-shaken - route doesn't need it |
@@ -610,7 +585,7 @@ export const AppBootstrapper = ({ children }) => {
 
 3. **Lazy/async chunk loading**
    - Non-critical dependencies loaded with `async` attribute
-   - They may load in parallel but aren't counted in First Load JS metric
+   - They may load in parallel but aren't part of the route's initial bundle
    - Dex chunks load asynchronously when needed
 
 #### Verification Steps
@@ -638,12 +613,12 @@ ANALYZE=true nx build pokehub-app
 Filter by `app/login/page`:
 
 - ❌ No `@pkmn/dex` in the bundle
-- ✅ First Load JS: ~189 KB (without 322 KB Dex)
+- ✅ Initial bundle: ~189 KB (without 322 KB Dex)
 
 Filter by `app/pokedex/[id]/page`:
 
 - ✅ `@pkmn/dex` appears in chunks
-- ✅ First Load JS: ~511 KB (includes 322 KB Dex)
+- ✅ Initial bundle: ~511 KB (includes 322 KB Dex)
 
 #### Key Differences from Pages Router
 
@@ -654,21 +629,21 @@ Filter by `app/pokedex/[id]/page`:
 | No tree-shaking across pages               | Aggressive per-route optimization                         |
 | Shared bundle strategy                     | Granular code splitting                                   |
 
-#### Script Tag Attributes Don't Determine First Load JS
+#### Script Tag Attributes Don't Determine the Initial Bundle
 
 **Common misconception:**
 
 ```html
-<!-- This has async, so it's not in First Load JS? WRONG! -->
+<!-- This has async, so it's not in the initial bundle? WRONG! -->
 <script src="/_next/static/chunks/framework.js" async=""></script>
 ```
 
 **Reality:**
 
-- Script loading attributes (`async`, `defer`) don't determine First Load JS
-- First Load JS is calculated from the **dependency graph**
+- Script loading attributes (`async`, `defer`) don't determine what's in the initial bundle
+- The initial bundle is determined by the **dependency graph**
 - Both critical and non-critical chunks may use `async`
-- The metric is based on what the route imports, not how it's loaded
+- What's included is based on what the route imports, not how it's loaded
 
 #### Implications for Optimization
 
@@ -700,7 +675,7 @@ export default function PokemonPage() {
 - ✅ Automatic tree-shaking for routes that don't need it
 - ✅ TypeScript type safety
 - ✅ Explicit dependencies (easier to track)
-- ✅ Optimal First Load JS for each route
+- ✅ Optimal initial bundle for each route
 - ✅ No need for global `window` objects
 
 **When to use layout-level imports:**
@@ -723,7 +698,7 @@ The App Router's per-route optimization means:
 2. **Each route gets its own optimized bundle**
 3. **Heavy dependencies are only included where needed**
 4. **Tree-shaking works per-route, even for layout code**
-5. **First Load JS accurately reflects what each route actually needs**
+5. **Each route's initial bundle accurately reflects what that route actually needs**
 
 This is a significant improvement over the Pages Router and results in much better bundle optimization out of the box.
 

@@ -143,7 +143,7 @@ describe('WsThrottlerGuard', () => {
         expect.stringContaining('MOVE'),
         1000,
         2,
-        0,
+        1000,
         'default'
       );
     });
@@ -238,7 +238,7 @@ describe('WsThrottlerGuard', () => {
         'throttle:default:user-123:FORFEIT',
         5000,
         1,
-        0,
+        5000,
         'default'
       );
     });
@@ -265,7 +265,7 @@ describe('WsThrottlerGuard', () => {
         expect.any(String),
         1000,
         2,
-        0,
+        1000,
         'default'
       );
     });
