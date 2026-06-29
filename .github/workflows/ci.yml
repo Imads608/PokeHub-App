@@ -682,8 +682,19 @@ jobs:
         # can come up. The separate top-level Build job runs on a
         # different runner, so its artifacts aren't visible here; rebuild
         # in-job. Nx caches keep this cheap on warm runs.
+        #
+        # NEXT_PUBLIC_POKEHUB_API_URL must point at the MSW proxy here.
+        # Next.js inlines NEXT_PUBLIC_* into the client bundle at BUILD
+        # time, so the runtime override in playwright.config.ts's
+        # webServer command does not reach client-side fetches under
+        # `next start`. Without this, TanStack Query mutations (delete
+        # team, duplicate team, battle queue join, etc.) hit the real
+        # NestJS backend on :3000 instead of the mock proxy on :9876
+        # and fail with 404.
         if: needs.setup.outputs.has-app-changes == 'true'
         run: npx nx build pokehub-app
+        env:
+          NEXT_PUBLIC_POKEHUB_API_URL: http://localhost:9876/api
 
       - name: Run frontend Playwright E2E tests
         id: e2e-frontend
