@@ -17,7 +17,7 @@ package/file names in this doc, which can drift:
 
 The rules below are the prescriptive part; graphify supplies the current locational facts.
 
-## Hard rules (from CLAUDE.md)
+## Hard rules (project conventions — see `AGENTS.md`)
 
 - **Never use raw HTML primitives** (`<button>`, `<input>`, `<dialog>`, `<select>`…) when a
   shared component exists. Import from `@pokehub/frontend/shared-ui-components` (Button, Card,
@@ -111,3 +111,11 @@ Use `@pokehub/frontend/shared-form-components` (`FormFieldInput`, etc.) wired wi
 Co-locate `<name>.spec.tsx` next to the component. Wrap renders in a `QueryClientProvider` with
 retries disabled. See `/ci-check` and the testing pattern in
 `apps/pokehub-app/app/create-profile/profile.spec.tsx`. Then run `npx nx test <project>`.
+
+## Update docs
+
+If the work introduces a new reusable pattern or changes how a feature behaves, reflect it:
+- New/changed pattern → `docs/development/common-patterns-and-recipes.md` or
+  `docs/development/code-style-and-patterns.md` (data hooks → `docs/development/data-fetching-patterns.md`).
+- Feature behavior → the matching `docs/features/<feature>.md`.
+- New shared component exported from `shared-ui-components` → note it where that library is documented.

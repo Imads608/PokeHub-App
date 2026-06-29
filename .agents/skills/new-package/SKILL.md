@@ -81,7 +81,10 @@ PokeHub libraries live under `packages/<category>/<dir-name>/` where `<category>
    npx nx typecheck <category>-<dir-name>
    ```
 
+6. **Document it.** Update the relevant docs so the package is discoverable:
+   - `CLAUDE.md` → "Key Shared Libraries" (and the package map in `docs/ARCHITECTURE.md`) if broadly reusable.
+   - Any `docs/development/*.md` or `docs/features/<feature>.md` whose guidance the package affects.
+
 ## Notes
 - Frontend packages with server-only entry points may add a `src/server.ts` and a
   `"@pokehub/<category>/<dir-name>/server"` alias — see `frontend/shared-utils` for the pattern.
-- Update `CLAUDE.md`'s "Key Shared Libraries" list if the package is broadly reusable.

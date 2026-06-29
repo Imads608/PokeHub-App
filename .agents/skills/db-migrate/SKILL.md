@@ -39,6 +39,8 @@ npx tsx --tsconfig tsconfig.base.json node_modules/drizzle-kit/bin.cjs migrate -
 2. Run **generate** to produce a new SQL migration; review the generated file — don't blindly trust it.
 3. Apply it (`push` for local dev, or `migrate` against a real DB) and verify.
 4. Commit the generated migration files alongside the schema change.
+5. **Update docs.** If the schema change alters the data model or backend behavior, update
+   `docs/development/backend-system.md` (and any relevant `docs/features/<feature>.md`).
 
 ## Notes
 - A `DATABASE_URL`-style connection env var must be set for `push`/`migrate` (see `docs/deployment/`).

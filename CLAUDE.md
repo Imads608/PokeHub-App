@@ -8,9 +8,15 @@ PokeHub is a Next.js Pokemon application built with an Nx monorepo architecture.
 
 ## Agent Harness
 
-This repo ships a Claude Code harness in `.claude/` that encodes how we build here. Use it:
+**Canonical, tool-agnostic conventions live in `AGENTS.md`** (read by every agent CLI — Copilot,
+OpenCode, Codex, Gemini, Cursor, Claude Code). It is the single source of truth for build/test/review
+conventions; the Claude-specific pieces below are a thin adapter over it. Imported here:
 
-- **Skills** (`.claude/skills/`) — invoke with `/<name>`:
+@AGENTS.md
+
+This repo also ships Claude Code mechanism in `.claude/`. Use it:
+
+- **Skills** (`.agents/skills/`, surfaced to Claude via the `.claude/skills` symlink) — invoke with `/<name>`:
   - `/new-package` — scaffold a shared Nx library (naming, project.json, tsconfig trio, path alias, `fix-path-aliases`).
   - `/new-component` — build a frontend component/hook (shadcn UI rule, `cn()`, TanStack Query keys, `'use client'` boundaries, theming).
   - `/db-migrate` — Drizzle migrations via the required `tsx --tsconfig tsconfig.base.json` invocation.
