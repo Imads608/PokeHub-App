@@ -25,7 +25,7 @@ PokeHub uses environment files to manage configuration across different environm
 project-root/
 ├── .env                    # Active environment (gitignored)
 ├── .env.local             # Local development config
-├── .env.production        # Production config (Supabase)
+├── .env.production        # Production config (Azure PostgreSQL)
 └── .env.template          # Template with all required variables
 ```
 
@@ -33,7 +33,7 @@ project-root/
 
 - **`.env.template`** - Template showing all required environment variables (committed to git)
 - **`.env.local`** - Local development configuration with PostgreSQL (gitignored)
-- **`.env.production`** - Production configuration with Supabase (gitignored)
+- **`.env.production`** - Production configuration with Azure PostgreSQL (gitignored)
 - **`.env`** - Active environment file used by the application (gitignored)
 
 ### Switching Environments
@@ -129,12 +129,12 @@ cp .env.template .env.production
 Edit `.env.production` with your production settings:
 
 ```bash
-# Database (Supabase)
-DB_HOST=aws-1-us-east-1.pooler.supabase.com
+# Database (Azure Database for PostgreSQL)
+DB_HOST=pokehub-pg-d65dd1.postgres.database.azure.com
 DB_PORT=5432
-DB_NAME=postgres
-DB_USER=postgres.wxrhnixjscveeamupgam
-DB_PASSWORD=your-supabase-password
+DB_NAME=pokehub
+DB_USER=pokehubadmin
+DB_PASSWORD=your-azure-postgres-password
 DB_SSL=true
 
 # API Configuration
@@ -171,7 +171,7 @@ For Azure Container Apps deployment, there's a separate `.env` file in `platform
 ACR_PASSWORD=your-acr-password
 
 # Database
-DB_PASSWORD=your-supabase-password
+DB_PASSWORD=your-azure-postgres-password
 
 # NextAuth
 NEXTAUTH_SECRET=your-nextauth-secret
@@ -191,7 +191,7 @@ See [deployment documentation](../deployment/README.md) for more details.
 
 ### Database Variables
 
-- `DB_HOST` - Database host (localhost or Supabase pooler)
+- `DB_HOST` - Database host (localhost or Azure PostgreSQL FQDN)
 - `DB_PORT` - Database port (usually 5432)
 - `DB_NAME` - Database name
 - `DB_USER` - Database user
@@ -260,7 +260,7 @@ az acr credential show --name pokehub --query "passwords[0].value" -o tsv
 1. Verify database is running (`docker ps`)
 2. Check environment variables are correct
 3. Ensure SSL setting matches your database configuration
-4. For Supabase, use connection pooler URL (not direct database URL)
+4. For Azure PostgreSQL, `DB_SSL=true` is required and the server firewall must allow your IP (see [database.md](../deployment/database.md))
 
 ### OAuth Not Working
 

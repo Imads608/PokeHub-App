@@ -32,7 +32,7 @@ cp .env.template .env
 ### 2. Fill in the secrets in `.env`
 
 - Get ACR password: `az acr credential show --name pokehub --query "passwords[0].value" -o tsv`
-- Set DB_PASSWORD to your Supabase password
+- Set DB_PASSWORD to your Azure PostgreSQL admin password (see [database.md](../database.md))
 - Generate NEXTAUTH_SECRET: `openssl rand -base64 32`
 - Get Google OAuth credentials from Google Cloud Console
 
@@ -118,15 +118,15 @@ rm pokehub-api.deploy.yaml
 - **Backend API**: `pokehub-api`
   - Custom domain: `api.pokehub.space` (SSL enabled)
   - Resources: 1-3 replicas, 1 CPU, 2 GB RAM
-  - Connected to Supabase via connection pooler (IPv4)
+  - Connected to Azure Database for PostgreSQL (SSL)
 - **Frontend**: `pokehub-app`
   - Custom domain: `pokehub.space`
   - Resources: 1-3 replicas, 1 CPU, 2 GB RAM
 
 ### Database
 
-- **Provider**: Supabase (500MB free tier)
-- **Connection**: IPv4-compatible pooler (`aws-1-us-east-1.pooler.supabase.com`)
+- **Provider**: Azure Database for PostgreSQL — Flexible Server (Burstable B1ms, Central US)
+- **Host**: `pokehub-pg-d65dd1.postgres.database.azure.com`
 - **SSL**: Required in production
 - **Migrations**: Managed via Drizzle ORM
 
@@ -153,13 +153,12 @@ See [database.md](../database.md) for switching between local and production dat
 
 | Resource | Monthly Cost |
 |----------|--------------|
-| Container Apps Environment | ~$25-35 |
-| Backend API (1-3 replicas) | ~$15-20 |
-| Frontend App (1-3 replicas) | ~$15-20 |
+| Container Apps (both apps, min 1 replica each) | ~$70-90 |
 | Azure Cache for Redis (Basic C0) | ~$16 |
-| Supabase Free Tier | $0 |
-| Azure DNS | ~$0.50 |
-| **Total** | **~$71-91/month** |
+| Azure Database for PostgreSQL (Burstable B1ms) | ~$12-15 |
+| Container Registry (Basic) | ~$5-17 |
+| Load Balancer + VNet + DNS | ~$20-25 |
+| **Total** | **~$150-160/month** |
 
 ## Next Steps
 

@@ -159,7 +159,7 @@ az containerapp update \
   --resource-group pokehub_group \
   --set-env-vars \
     "NODE_ENV=production" \
-    "DB_HOST=new-host.supabase.co"
+    "DB_HOST=pokehub-pg-d65dd1.postgres.database.azure.com"
 
 # Remove environment variable
 az containerapp update \

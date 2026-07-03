@@ -1,56 +1,45 @@
 # PokeHub Deployment Status
 
-**Last Updated:** 2025-11-29 08:17 UTC
+**Last Updated:** 2026-07-03
 
 ## Current Status
 
 ### Completed
 
 - [x] Azure Container Apps Environment (`pokehub-env`)
-- [x] Supabase Database (500MB free tier)
-- [x] Database migrations to Supabase
+- [x] Azure Database for PostgreSQL — Flexible Server (migrated off Supabase, July 2026)
+- [x] Database migrations applied to Azure Postgres
 - [x] Backend API Container App (`pokehub-api`)
-- [x] Custom domain DNS records for API (`api.pokehub.space`)
-- [x] SSL Certificate for `api.pokehub.space` (SNI enabled)
-- [x] Environment configuration system (`.env.local` and `.env.production`)
-- [x] Fixed IPv6 connectivity (using Supabase pooler with IPv4)
-- [x] Docker build configuration (excluded `.env` files from image)
-- [x] Backend successfully deployed and running
+- [x] Frontend Container App (`pokehub-app`)
+- [x] Custom domain DNS records for API (`api.pokehub.space`) and frontend (`www.pokehub.space`)
+- [x] SSL Certificates (SNI enabled)
 - [x] Azure Cache for Redis (`pokehub-cache`, Basic C0)
 - [x] Redis secrets added to GitHub Actions pipeline
-
-### In Progress
-
-- [ ] Testing Backend Endpoints
-
-### Pending
-
-- [ ] Frontend Container App deployment
-- [ ] Custom domain for frontend (`pokehub.space`)
-- [ ] End-to-end testing
-- [ ] GitHub Actions CI/CD workflow
+- [x] GitHub Actions CI/CD workflows (`ci.yml`, `release.yml`, `deploy.yml`)
 
 ## URLs
 
 | Service | Default URL | Custom Domain | Status |
 |---------|-------------|---------------|--------|
 | Backend API | https://pokehub-api.kindglacier-9db9a67b.eastus.azurecontainerapps.io | https://api.pokehub.space | Running |
-| Frontend | TBD | https://pokehub.space | Not deployed |
+| Frontend | https://pokehub-app.kindglacier-9db9a67b.eastus.azurecontainerapps.io | https://www.pokehub.space | Running |
 
 ## Database
 
-- **Provider:** Supabase (Connection Pooler)
-- **Host:** aws-1-us-east-1.pooler.supabase.com (IPv4 compatible)
-- **Database:** postgres
-- **User:** postgres.wxrhnixjscveeamupgam
+- **Provider:** Azure Database for PostgreSQL — Flexible Server (Burstable B1ms, Central US)
+- **Host:** pokehub-pg-d65dd1.postgres.database.azure.com
+- **Database:** pokehub
+- **User:** pokehubadmin
 - **Connection:** SSL required (production)
+
+See [database.md](./database.md) for full details.
 
 ## Container Registry
 
 - **Registry:** pokehub.azurecr.io
 - **Images:**
-  - `pokehub-api:dev` (Backend API)
-  - `pokehub-app:dev` (Frontend - to be built)
+  - `pokehub-api:<version>` (Backend API)
+  - `pokehub-app:<version>` (Frontend)
 
 ## Redis
 
@@ -64,17 +53,9 @@
 
 | Resource | Monthly Cost |
 |----------|--------------|
-| Container Apps Environment | ~$25-35 |
-| Backend API (1-3 replicas, 1 CPU, 2 GB) | ~$15-20 |
-| Frontend App (1-3 replicas, 1 CPU, 2 GB) | ~$15-20 |
+| Container Apps (both apps, min 1 replica each) | ~$70-90 |
 | Azure Cache for Redis (Basic C0) | ~$16 |
-| Supabase Free Tier | $0 |
-| Azure DNS | ~$0.50 |
-| **Total** | **~$71-91/month** |
-
-## Next Steps
-
-1. Test backend endpoints
-2. Build and deploy frontend
-3. Set up custom domain for frontend
-4. Configure GitHub Actions workflow
+| Azure Database for PostgreSQL (Burstable B1ms) | ~$12-15 |
+| Container Registry (Basic) | ~$5-17 |
+| Load Balancer + VNet + DNS | ~$20-25 |
+| **Total** | **~$150-160/month** |

@@ -33,14 +33,17 @@ This document outlines options for hosting PokeHub on the root domain (`pokehub.
 
 | Resource | Specification | Monthly Cost |
 |----------|---------------|--------------|
-| Container Apps Environment | East US | ~$25-35 |
-| Backend API (`pokehub-api`) | 1-3 replicas, 1 CPU, 2 GB | ~$15-20 |
-| Frontend App (`pokehub-app`) | 1-3 replicas, 1 CPU, 2 GB | ~$15-20 |
+| Container Apps (both apps, min 1 replica each) | East US, 1 CPU, 2 GB each | ~$70-90 |
 | Azure Cache for Redis | Basic C0 | ~$16 |
-| Supabase PostgreSQL | Free tier (500MB) | $0 |
+| Azure Database for PostgreSQL | Flexible Server, Burstable B1ms (Central US) | ~$12-15 |
+| Azure Container Registry | Basic tier | ~$5-17 |
+| Load Balancer + Virtual Network | | ~$20-25 |
 | Azure DNS Zone | pokehub.space | ~$0.50 |
-| Azure Container Registry | Basic tier | ~$5 |
-| **Total** | | **~$71-91/month** |
+| **Total** | | **~$150-160/month** |
+
+> Figures reflect actual observed spend. The dominant cost is always-on Container Apps compute
+> (`minReplicas: 1` on both apps). See [README.md](./README.md#cost-information) and
+> [database.md](./database.md) for detail.
 
 ### Current Domain Configuration
 
@@ -218,7 +221,7 @@ For deploying to multiple Azure regions (e.g., East US + West US).
                              │
                              ▼
                     ┌─────────────────┐
-                    │    Supabase     │
+                    │  Azure Postgres │
                     │    (Primary)    │
                     └─────────────────┘
 ```
@@ -400,11 +403,11 @@ For multi-region deployments, consider database replication:
 
 | Option | Description | Cost Impact |
 |--------|-------------|-------------|
-| Single Supabase (current) | All regions connect to one DB | Latency for distant regions |
-| Supabase Read Replicas | Read replicas in multiple regions | Supabase Pro ($25/month) + replica costs |
+| Single Azure Postgres (current) | All regions connect to one Flexible Server | Latency for distant regions |
+| Azure Postgres Read Replicas | Read replicas in multiple regions | Replica compute + storage per region |
 | Azure Cosmos DB | Global distribution built-in | Significantly higher cost |
 
-**Recommendation**: Start with single Supabase instance. Database latency is often acceptable for moderate traffic. Add read replicas only if latency becomes a measurable issue.
+**Recommendation**: Start with the single Azure Database for PostgreSQL Flexible Server. Database latency is often acceptable for moderate traffic. Add read replicas only if latency becomes a measurable issue.
 
 ---
 
@@ -437,14 +440,14 @@ For multi-region deployments, consider database replication:
 ### Current State
 ```
 Domain Registrar → Azure DNS → Azure Container Apps (East US)
-Cost: ~$71-91/month
+Cost: ~$150-160/month
 Apex domain: Not supported
 ```
 
 ### After Cloudflare Migration
 ```
 Domain Registrar → Cloudflare DNS → Azure Container Apps (East US)
-Cost: ~$71-91/month (same)
+Cost: ~$150-160/month (same)
 Apex domain: Supported
 Bonus: Free CDN, DDoS protection
 ```
