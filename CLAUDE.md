@@ -21,6 +21,7 @@ This repo also ships Claude Code mechanism in `.claude/`. Use it:
   - `/new-component` — build a frontend component/hook (shadcn UI rule, `cn()`, TanStack Query keys, `'use client'` boundaries, theming).
   - `/db-migrate` — Drizzle migrations via the required `tsx --tsconfig tsconfig.base.json` invocation.
   - `/ci-check` — run the CI gate locally (typecheck → lint → typecheck-spec → test → build on affected) before a PR.
+  - `/release-deploy` — ship a release: tag → build images (`release.yml`) → manual deploy (`deploy.yml`) to Azure Container Apps (see `docs/deployment/`).
 - **Reviewer subagent** (`.claude/agents/pokehub-reviewer.md`) — run after implementing a feature / before a PR to check the diff against project conventions. Spawn it via the Agent tool (`subagent_type: pokehub-reviewer`).
 - **Hooks** (`.claude/settings.json`) — every edited `.ts/.tsx` under `apps|packages|tools` is auto-formatted (Prettier) and auto-linted (ESLint `--fix`); remaining lint errors are surfaced so they get fixed immediately.
 - **Permissions** (`.claude/settings.json`) — safe `nx`, read-only `git`, and `gh` commands are pre-approved; force-push and hard-reset are denied.

@@ -97,8 +97,14 @@ Triggered when a semantic version tag (e.g., `v1.0.0`) is pushed.
 
 **What it does:**
 
-1. Builds Docker images for both `pokehub-api` and `pokehub-app`
-2. Pushes images to Azure Container Registry with both the version tag and `latest`
+1. Runs CI checks (lint, test, build across all projects)
+2. Builds Docker images for both `pokehub-api` and `pokehub-app`
+3. Pushes images to Azure Container Registry with both the version tag and `latest`
+4. Creates a GitHub Release with an auto-generated changelog
+
+> **Release does not deploy.** Building images and deploying them are deliberately separate steps.
+> `release.yml` only produces images; you deploy them afterward by manually running `deploy.yml`.
+> See the [Release & Deploy runbook](./release-and-deploy.md) for the end-to-end flow.
 
 **Key Design Decisions:**
 
@@ -115,31 +121,66 @@ Manually triggered to deploy to production.
 **Inputs:**
 
 - `version`: The version tag to deploy (default: `latest`)
-- `deploy_api`: Whether to deploy the API (default: true)
-- `deploy_app`: Whether to deploy the App (default: true)
+- `app`: Which app to deploy — `both`, `api`, or `app`
+
+**Jobs (in order):**
+
+1. **Run Database Migrations** — runs `drizzle-kit migrate` against the DB in the `DB_*` GitHub
+   secrets (only when deploying `api` or `both`). The API deploy is skipped if migrations fail.
+2. **Deploy API**, then **Deploy App** — verify the image tag exists in ACR, regenerate
+   `platform/container-apps/.env` from GitHub secrets, stamp the image tag into the manifest, and
+   apply via `deploy.sh`.
+3. **Deployment Summary** — reports per-step results.
 
 **Key Design Decisions:**
 
-- **Manual Trigger**: Deployments are intentional, not automatic. This provides a checkpoint before production changes.
+- **Manual Trigger**: Deployments are intentional, not automatic. This provides a checkpoint before
+  production changes.
 
-- **Environment Protection**: Uses GitHub's `production` environment which can be configured with required reviewers, adding an approval step before deployment.
+- **Config from secrets, every run**: `deploy.yml` rebuilds `.env` from GitHub secrets on each run,
+  so the **GitHub secrets are the source of truth for a deployment** — not the live Container App.
+  A stale `DB_*` secret will silently point production at the wrong database. See
+  [database.md](./database.md#keeping-credentials-in-sync--read-this).
 
-- **Sequential Deployment**: Deploys API first, then App. This ensures the API is available when the App starts, preventing connection errors during rollout.
+- **Environment Protection**: Uses GitHub's `production` environment which can be configured with
+  required reviewers, adding an approval step before deployment.
 
-- **Azure CLI Deployment**: Uses `az containerapp update` to update the running container apps with new image versions.
+- **Sequential Deployment**: Deploys API first, then App. This ensures the API is available when the
+  App starts, preventing connection errors during rollout.
+
+- **Azure CLI Deployment**: Uses `deploy.sh` (which runs `az containerapp update --yaml`) to apply
+  the full manifest with the new image tag.
 
 ## Required GitHub Secrets
 
-| Secret                 | Description                                                  |
-| ---------------------- | ------------------------------------------------------------ |
-| `ACR_REGISTRY`         | Azure Container Registry URL (e.g., `myregistry.azurecr.io`) |
-| `ACR_USERNAME`         | ACR username for pushing images                              |
-| `ACR_PASSWORD`         | ACR password for pushing images                              |
-| `AZURE_CREDENTIALS`    | Azure service principal credentials (JSON) for deployment    |
-| `AZURE_RESOURCE_GROUP` | Azure resource group containing the Container Apps           |
-| `REDIS_HOST`           | Azure Cache for Redis hostname                               |
-| `REDIS_PORT`           | Azure Cache for Redis port (6380 for SSL)                    |
-| `REDIS_PASSWORD`       | Azure Cache for Redis primary access key                     |
+Repository secrets used by `release.yml` and `deploy.yml`. `deploy.yml` reconstructs
+`platform/container-apps/.env` from these on every run, so they are the source of truth for a
+deployment.
+
+| Secret                      | Used by  | Description                                                  |
+| --------------------------- | -------- | ------------------------------------------------------------ |
+| `ACR_USERNAME`              | release  | ACR username for pushing images                              |
+| `ACR_PASSWORD`              | release, deploy | ACR password (also the Container App registry secret) |
+| `AZURE_CREDENTIALS`         | deploy   | Azure service principal credentials (JSON) for deployment    |
+| `DB_HOST`                   | deploy   | Postgres host (Azure Flexible Server FQDN)                   |
+| `DB_PORT`                   | deploy   | Postgres port (`5432`)                                       |
+| `DB_NAME`                   | deploy   | Database name (`pokehub`)                                    |
+| `DB_USER`                   | deploy   | Database user (`pokehubadmin`)                               |
+| `DB_PASSWORD`               | deploy   | Database password                                            |
+| `REDIS_HOST`                | deploy   | Azure Cache for Redis hostname                               |
+| `REDIS_PORT`                | deploy   | Azure Cache for Redis port (`6380` for SSL)                  |
+| `REDIS_PASSWORD`            | deploy   | Azure Cache for Redis primary access key                     |
+| `NEXTAUTH_SECRET`           | deploy   | NextAuth signing secret                                      |
+| `GOOGLE_CLIENT_ID`          | deploy   | Google OAuth client ID                                       |
+| `GOOGLE_CLIENT_SECRET`      | deploy   | Google OAuth client secret                                   |
+| `AZURE_STORAGE_ACCOUNT_KEY` | deploy   | Azure Blob Storage key (avatar uploads)                     |
+| `REFRESH_TOKEN_SECRET`      | deploy   | JWT refresh token signing secret                             |
+| `ACCESS_TOKEN_SECRET`       | deploy   | JWT access token signing secret                              |
+
+> ⚠️ **`DB_*` and `REDIS_*` are repository secrets, not environment secrets.** When the database or
+> cache changes, update these here **and** in the Container App secrets / `platform/container-apps/.env`
+> — see [database.md](./database.md#keeping-credentials-in-sync--read-this). A deploy run reverts to
+> whatever these secrets contain.
 
 ### Setting up AZURE_CREDENTIALS
 
@@ -232,10 +273,12 @@ This triggers the release workflow to build and push Docker images.
 
 ### Deploying to Production
 
-1. Go to Actions > "Deploy to Production"
+See the [Release & Deploy runbook](./release-and-deploy.md) for the full end-to-end flow. In short:
+
+1. Go to Actions > "Deploy to Azure Container Apps"
 2. Click "Run workflow"
 3. Enter the version to deploy (or leave as `latest`)
-4. Select which apps to deploy
+4. Select which apps to deploy (`both`, `api`, or `app`)
 5. Click "Run workflow"
 6. Approve the deployment if environment protection is enabled
 

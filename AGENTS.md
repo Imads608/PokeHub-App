@@ -14,7 +14,8 @@ Overview: `docs/ARCHITECTURE.md`. The CI gate is the source of truth: `.github/w
 
 - **`AGENTS.md`** (this file) — canonical conventions, read by every tool.
 - **`.agents/skills/<name>/SKILL.md`** — on-demand procedures; consult them for scaffolding
-  packages/components, Drizzle migrations, and running the CI gate.
+  packages/components, Drizzle migrations, running the CI gate, and releasing/deploying to production
+  (`release-deploy`, backed by `docs/deployment/`).
 - **`CLAUDE.md`** — Claude Code adapter (imports this file) + a format/lint hook and permission
   allowlist in `.claude/settings.json`; `.claude/agents/pokehub-reviewer.md` is the reviewer subagent.
 - **`.github/copilot-instructions.md`** — GitHub Copilot adapter. OpenCode reads this file natively.

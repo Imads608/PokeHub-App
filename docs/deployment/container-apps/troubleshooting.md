@@ -96,35 +96,114 @@ az containerapp logs show \
 - Application crashes on startup
 - Missing or incorrect environment variables
 - Port mismatch (app must listen on port 3000)
-- Database connection failure
+- Database connection failure (see below)
+- Redis connection failure (see below) — the API **requires** Redis for the battle system and
+  exits if it can't connect at boot
+
+> A crash-loop on one dependency (e.g. the database) can **mask** a second latent failure (e.g.
+> Redis), because the app never reaches the second dependency's initialization. After fixing one
+> boot error, re-check the logs — the next one may appear.
 
 ---
 
 ### Issue: Cannot connect to database
 
-**Symptoms**: App starts but database operations fail
+**Symptoms**: App logs `error: (ENOTFOUND) tenant/user ... not found` or a `pg-pool` failure at
+boot, then the container exits and restarts (crash-loop).
 
 **Checklist**:
-1. Verify environment variables are correct
-2. Check if using connection pooler (IPv4 compatible)
-3. Verify secrets are set correctly
-4. Check if SSL is properly configured
+1. Verify the `DB_*` environment variables / secrets are correct on the active revision.
+2. Confirm the database server exists and is reachable.
+3. Verify SSL is configured (`DB_SSL=true` / `NODE_ENV=production`).
+4. Confirm the Postgres firewall allows Azure resources (the `0.0.0.0` "allow Azure services" rule).
 
 **Debug commands**:
 
 ```bash
-# Verify DB environment variables
-az containerapp show \
-  --name pokehub-api \
-  --resource-group pokehub_group \
-  --query "properties.template.containers[0].env[?name=='DB_HOST']" \
-  -o json
+# Verify DB environment variables on the active revision
+az containerapp show --name pokehub-api --resource-group pokehub_group \
+  --query "properties.template.containers[0].env[?starts_with(name,'DB_')]" -o json
+
+# Check the Postgres server state and firewall
+az postgres flexible-server show -g pokehub_group -n pokehub-pg-d65dd1 \
+  --query "{state:state, fqdn:fullyQualifiedDomainName}" -o json
+az postgres flexible-server firewall-rule list -g pokehub_group -n pokehub-pg-d65dd1 -o table
 ```
 
 **Solutions**:
-- Ensure using Supabase connection pooler: `aws-1-us-east-1.pooler.supabase.com`
-- Verify DB_PASSWORD secret is set correctly
-- Check SSL is enabled for production: `DB_SSL=true`
+- Production runs on **Azure Database for PostgreSQL Flexible Server**
+  (`pokehub-pg-d65dd1.postgres.database.azure.com`) — see [database.md](../database.md).
+  The `tenant/user ... not found` error is the signature of a **deleted/paused Supabase project**;
+  if you see it, the old Supabase DB is gone and you must repoint at the Azure DB (or provision a
+  new one) and sync all three credential locations.
+- Verify the `db-password` secret is correct and that a **new revision** was created after changing
+  it (secret changes don't apply to a running revision).
+- Ensure SSL is enabled for production (`DB_SSL=true`).
+
+---
+
+### Issue: Redis connection fails fast
+
+**Symptoms**: DB connects (`Successfully connected to DB: ...`) but the API then logs repeated
+`Redis error:` (often with an empty message), `Redis connection failed after 4 attempts`, and
+`Error: Connection is closed`, then exits. The failures happen in well under a second (fast), unlike
+a network timeout.
+
+**Root causes seen in this project**:
+
+1. **The deployed revision has no `REDIS_*` env vars.** If the running Container App manifest
+   predates the battle/Redis infra, the API falls back to `localhost:6379` with no TLS and fails
+   instantly. Setting the `redis-*` secrets alone does **not** fix this — the manifest must map them
+   to env vars.
+
+   ```bash
+   # Does the active revision actually map REDIS_* ?
+   az containerapp revision show --name pokehub-api --resource-group pokehub_group \
+     --revision <active-revision> \
+     --query "properties.template.containers[0].env[?contains(name,'REDIS')].name" -o json
+   ```
+
+   **Fix:** redeploy the *current* manifest so the `REDIS_*` env block is wired in:
+   ```bash
+   cd platform/container-apps && ./deploy.sh pokehub-api
+   ```
+
+2. **The Redis firewall blocks the client.** Azure Cache for Redis firewall rules are **allowlists**
+   — once any rule exists, only those IP ranges may connect. Unlike Azure Postgres, a `0.0.0.0`
+   rule does **not** mean "allow Azure services" for Redis; it matches nothing and effectively
+   blocks everyone (fails with `ETIMEDOUT`, ~15s). Container Apps on a Consumption environment
+   without VNet integration have **no stable outbound IP** to allowlist, so the pragmatic fix is to
+   remove the firewall rules and rely on TLS + the access key:
+
+   ```bash
+   az redis firewall-rules list  --name pokehub-cache --resource-group pokehub_group -o table
+   az redis firewall-rules delete --name pokehub-cache --resource-group pokehub_group --rule-name <rule>
+   ```
+
+   Verify connectivity (requires TLS on port 6380 + the primary key):
+   ```bash
+   RKEY=$(az redis list-keys --name pokehub-cache --resource-group pokehub_group --query primaryKey -o tsv)
+   node -e "const R=require('ioredis');const r=new R({host:'pokehub-cache.redis.cache.windows.net',port:6380,password:process.env.RKEY,tls:{}});r.ping().then(x=>{console.log(x);process.exit(0)}).catch(e=>{console.log(e.message);process.exit(1)})"
+   ```
+
+The client is built in `packages/backend/pokehub-redis/src/lib/redis.service.ts` (TLS on when
+`REDIS_TLS=true`, fast fail after 3 retries).
+
+---
+
+### Issue: Image build fails with `NX Cannot find module '/app'`
+
+**Symptoms**: The **Release & Build Images** workflow (or a local `docker build`) fails inside the
+builder stage running `npx nx build ...` with `NX Cannot find module '/app'` and a
+`load-resolved-plugin` stack trace.
+
+**Cause**: `nx.json` registers the local Nx plugin `@pokehub/workspace-plugin`, which lives in
+`tools/workspace-plugin/`. Every `nx` command loads it, but the Dockerfiles must copy `tools/` into
+the build context. This regressed when the plugin was registered without updating the Docker setup.
+
+**Fix** (already applied): both Dockerfiles `COPY tools ./tools` in the builder stage, and `tools`
+is **not** listed in `.dockerignore`. If it recurs, confirm those two things. Host CI won't catch
+this because `nx` there runs against the full working tree, not the reduced Docker context.
 
 ---
 

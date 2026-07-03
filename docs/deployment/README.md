@@ -8,6 +8,8 @@ This directory contains all deployment-related documentation for the PokeHub app
 - **[Container Apps Operations](./container-apps/operations.md)** - Day-to-day management
 - **[Troubleshooting](./container-apps/troubleshooting.md)** - Common issues and solutions
 - **[Database Setup](./database.md)** - Database configuration guide
+- **[Release & Deploy Runbook](./release-and-deploy.md)** - How to ship: tag → images → deploy
+- **[CI/CD Workflows](./ci-cd-workflows.md)** - Workflow details and required secrets
 - **[Deployment Status](./status.md)** - Current deployment status
 - **[DNS & Multi-Region Options](./dns-and-multi-region.md)** - Apex domain support and multi-region deployment strategies
 
@@ -42,9 +44,10 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
        │         │
        ▼         ▼
 ┌───────────┐  ┌─────────────────┐
-│ Supabase  │  │ Azure Cache     │
+│  Azure    │  │ Azure Cache     │
 │ PostgreSQL│  │ for Redis       │
-│ Database  │  │ (pokehub-cache) │
+│ (Flexible │  │ (pokehub-cache) │
+│  Server)  │  │                 │
 └───────────┘  └─────────────────┘
 ```
 
@@ -52,20 +55,21 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
 
 - **Backend API** (`pokehub-api`)
   - Domain: `api.pokehub.space`
-  - Image: `pokehub.azurecr.io/pokehub-api:dev`
+  - Image: `pokehub.azurecr.io/pokehub-api:<version>`
   - Resources: 1 CPU, 2 GB RAM
   - Replicas: 1-3 (auto-scaling)
 
 - **Frontend** (`pokehub-app`)
   - Domain: `pokehub.space`
-  - Image: `pokehub.azurecr.io/pokehub-app:dev`
+  - Image: `pokehub.azurecr.io/pokehub-app:<version>`
   - Resources: 1 CPU, 2 GB RAM
   - Replicas: 1-3 (auto-scaling)
 
 - **Database**
-  - Provider: Supabase (500MB free tier)
-  - Connection: IPv4-compatible pooler
+  - Provider: Azure Database for PostgreSQL — Flexible Server (Burstable B1ms, Central US)
+  - Server: `pokehub-pg-d65dd1.postgres.database.azure.com`, database `pokehub`
   - SSL: Required in production
+  - Details: [database.md](./database.md)
 
 - **Redis** (`pokehub-cache`)
   - Provider: Azure Cache for Redis (Basic C0)
@@ -81,7 +85,7 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
 - Docker installed and running
 - Azure CLI installed (`az login`)
 - ACR credentials configured
-- Supabase account and database
+- Access to the Azure `pokehub_group` resource group (Container Apps, PostgreSQL, Redis)
 
 ### Deployment Steps
 
@@ -102,17 +106,19 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
 
 ### Deploy an Update
 
-```bash
-# 1. Build and push image
-docker build --no-cache -t pokehub-api -f apps/pokehub-api/Dockerfile .
-docker tag pokehub-api pokehub.azurecr.io/pokehub-api:dev
-docker push pokehub.azurecr.io/pokehub-api:dev
+The standard path is the GitHub Actions pipeline — tag a release to build images, then run the
+deploy workflow. See the **[Release & Deploy runbook](./release-and-deploy.md)**.
 
-# 2. Deploy
-cd platform/container-apps && ./deploy.sh pokehub-api
+```bash
+# 1. Cut a release (builds + pushes images to ACR)
+git tag v0.3.2 && git push origin v0.3.2
+
+# 2. Deploy it (manual, with approval)
+gh workflow run "Deploy to Azure Container Apps" -f version=v0.3.2 -f app=both
 ```
 
-See [operations.md](./container-apps/operations.md) for more details.
+For a manual (no-CI) deploy from `platform/container-apps/`, see
+[operations.md](./container-apps/operations.md).
 
 ### View Logs
 
@@ -132,18 +138,24 @@ Check the [troubleshooting guide](./container-apps/troubleshooting.md) for commo
 
 ## Cost Information
 
+Approximate monthly cost (see [dns-and-multi-region.md](./dns-and-multi-region.md) for the detailed
+breakdown; actual spend has run ~$150-160/month, driven mostly by always-on Container Apps replicas):
+
 | Resource | Monthly Cost |
 |----------|--------------|
-| Container Apps Environment | ~$25-35 |
-| Backend API (1-3 replicas) | ~$15-20 |
-| Frontend App (1-3 replicas) | ~$15-20 |
+| Container Apps (both apps, min 1 replica each) | ~$70-90 |
 | Azure Cache for Redis (Basic C0) | ~$16 |
-| Supabase Free Tier | $0 |
-| Azure DNS | ~$0.50 |
-| **Total** | **~$71-91/month** |
+| Azure Database for PostgreSQL (Burstable B1ms) | ~$12-15 |
+| Container Registry (Basic) | ~$5-17 |
+| Load Balancer + VNet + DNS | ~$20-25 |
+| **Total** | **~$150-160/month** |
+
+> **Cost lever:** the biggest driver is `minReplicas: 1` on both apps (always-on compute). Setting
+> `minReplicas: 0` lets idle apps scale to zero at the cost of cold starts. See
+> [operations.md](./container-apps/operations.md) for scaling commands.
 
 ## Additional Resources
 
 - [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
-- [Supabase Documentation](https://supabase.com/docs)
+- [Azure Database for PostgreSQL — Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/)
 - [Deployment Status](./status.md) - Track deployment progress
