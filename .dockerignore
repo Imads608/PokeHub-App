@@ -14,7 +14,6 @@ tmp
 build
 !build/apis
 platform
-tools
 .env
 .env.*
 
