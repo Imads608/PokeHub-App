@@ -142,7 +142,7 @@ NODE_ENV=production
 PORT=3000
 
 # Authentication
-NEXTAUTH_URL=https://pokehub.space
+NEXTAUTH_URL=https://www.pokehub.space
 NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
 
 # OAuth Credentials
@@ -151,7 +151,7 @@ GOOGLE_CLIENT_SECRET=your-production-google-client-secret
 
 # API URLs
 API_URL=https://api.pokehub.space
-APP_URL=https://pokehub.space
+APP_URL=https://www.pokehub.space
 ```
 
 ### 3. Activate Production Environment
@@ -180,7 +180,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # URLs
 API_URL=https://api.pokehub.space
-APP_URL=https://pokehub.space
+APP_URL=https://www.pokehub.space
 ```
 
 This file is used by the `deploy.sh` script to inject secrets into the YAML configuration files.
@@ -239,7 +239,7 @@ openssl rand -base64 32
 4. Create OAuth 2.0 credentials
 5. Add authorized redirect URIs:
    - Local: `http://localhost:4200/api/auth/callback/google`
-   - Production: `https://pokehub.space/api/auth/callback/google`
+   - Production: `https://www.pokehub.space/api/auth/callback/google`
 
 ### Azure Container Registry Password
 

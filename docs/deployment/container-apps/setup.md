@@ -120,7 +120,7 @@ rm pokehub-api.deploy.yaml
   - Resources: 1-3 replicas, 1 CPU, 2 GB RAM
   - Connected to Azure Database for PostgreSQL (SSL)
 - **Frontend**: `pokehub-app`
-  - Custom domain: `pokehub.space`
+  - Custom domain: `www.pokehub.space`
   - Resources: 1-3 replicas, 1 CPU, 2 GB RAM
 
 ### Database
@@ -159,6 +159,9 @@ See [database.md](../database.md) for switching between local and production dat
 | Container Registry (Basic) | ~$5-17 |
 | Load Balancer + VNet + DNS | ~$20-25 |
 | **Total** | **~$150-160/month** |
+
+> The total reflects actual observed spend rather than a strict sum of the per-line ranges (which
+> overlap and vary with usage). See [README.md](../README.md#cost-information) for detail.
 
 ## Next Steps
 

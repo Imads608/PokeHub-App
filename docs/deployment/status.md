@@ -59,3 +59,6 @@ See [database.md](./database.md) for full details.
 | Container Registry (Basic) | ~$5-17 |
 | Load Balancer + VNet + DNS | ~$20-25 |
 | **Total** | **~$150-160/month** |
+
+> The total reflects actual observed spend rather than a strict sum of the per-line ranges. See
+> [README.md](./README.md#cost-information) for detail.
