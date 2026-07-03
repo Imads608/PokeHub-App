@@ -13,6 +13,9 @@ COPY .eslintrc.json jest.preset.js jest.config.ts tailwind.config.js ./
 # Copy all source code
 COPY apps ./apps
 COPY packages ./packages
+# tools/ holds the local Nx plugin (@pokehub/workspace-plugin) registered in
+# nx.json; every nx command loads it, so it must be in the build context.
+COPY tools ./tools
 
 # Install dependencies
 RUN npm install
