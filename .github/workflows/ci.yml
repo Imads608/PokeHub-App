@@ -707,7 +707,7 @@ jobs:
               '',
               `**Authorized reviewers:** ${reviewerList}`,
               '',
-              'After approval, the CI workflow will automatically re-run.',
+              'After approval, the bundle size gate will automatically re-run (Build and E2E are reused, not rebuilt).',
               '',
               '> **Note:** Approvals are invalidated when new commits are pushed. You will need to re-approve after pushing changes.'
             ].join('\n');

@@ -1,0 +1,69 @@
+name: Bundle Size Approval
+
+# When an authorized reviewer comments "/approve-bundle-size <reason>" on a PR,
+# re-run ONLY the failed jobs of that PR's latest CI run (the bundle-size gate
+# and ci-success). Successful jobs — including Build and E2E — are reused, not
+# re-executed, so approval is cheap and never rebuilds the app.
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+jobs:
+  rerun-on-approval:
+    name: Re-run bundle-size gate on approval
+    runs-on: ubuntu-latest
+    # Only run for PR comments that start with the approval command.
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/approve-bundle-size')
+    steps:
+      - name: Checkout (reviewer config from base branch)
+        uses: actions/checkout@v4
+
+      - name: Verify commenter is an authorized reviewer
+        id: auth
+        env:
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          APPROVED_USERS=$(yq '.approvers | join(",")' .github/bundle-reviewers.yml)
+          echo "Authorized reviewers: $APPROVED_USERS"
+          if echo ",$APPROVED_USERS," | grep -qi ",$COMMENTER,"; then
+            echo "✅ $COMMENTER is authorized"
+            echo "authorized=true" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::$COMMENTER is not an authorized bundle-size reviewer; ignoring approval"
+            echo "authorized=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Re-run failed CI jobs for the PR
+        if: steps.auth.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          HEAD_BRANCH=$(gh pr view "$PR_NUMBER" \
+            --repo ${{ github.repository }} \
+            --json headRefName --jq '.headRefName')
+          echo "PR #$PR_NUMBER head branch: $HEAD_BRANCH"
+
+          # Most recent CI run on the PR's head branch (any conclusion).
+          RUN_ID=$(gh run list \
+            --repo ${{ github.repository }} \
+            --branch "$HEAD_BRANCH" \
+            --workflow "Continuous Integration" \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No Continuous Integration run found for branch $HEAD_BRANCH"
+            exit 1
+          fi
+
+          echo "Re-running failed jobs for run $RUN_ID (Build/E2E are reused, not rebuilt)"
+          gh run rerun "$RUN_ID" --failed
