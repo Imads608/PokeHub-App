@@ -7,7 +7,7 @@ Key pointers:
 - **Conventions & workflows:** see `AGENTS.md` (creating packages/components, Drizzle migrations,
   the CI quality gate, and the code-review checklist).
 - **Reusable skills:** `.agents/skills/<name>/SKILL.md` (`new-package`, `new-component`,
-  `db-migrate`, `ci-check`) — step-by-step procedures Copilot can discover and apply.
+  `db-migrate`, `ci-check`, `release-deploy`) — step-by-step procedures Copilot can discover and apply.
 - **Discovery:** a graphify knowledge graph lives in `graphify-out/`; prefer it for locating code
   and tracing change impact (see the graphify section in `AGENTS.md`).
 
