@@ -398,10 +398,12 @@ apps/pokehub-api/src/battle/
 
 1. Client connects to `/battle` namespace with JWT token
 2. `WsJwtGuard.validateClient()` extracts and validates JWT
-3. Single-socket-per-user enforcement: if the user already has an active socket, the server emits `SESSION_REPLACED` to the old socket and disconnects it (last-connection-wins)
+3. Single-socket-per-user enforcement: if the user already has an active socket, the server emits `SESSION_REPLACED` to the old socket and disconnects it (last-connection-wins). The bridge remaps `userToSocket[userId]` to the new socket; the old socket is now **stale**
 4. User is added to socket-to-user mapping
 5. Gateway subscribes to Redis `user:{userId}:battle-events` channel
 6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+
+> **Stale-socket disconnects.** Because the new socket is registered (and may `REJOIN`) before the old socket's `disconnect` event is detected, `handleDisconnect` guards on `bridge.getSocketId(userId) === client.id`. If the disconnecting socket is no longer the user's active socket it is stale: the battle disconnect, `leaveQueue`, and `unsubscribeUser` side-effects are skipped (the user is live on the new socket) and only that stale socket id is unregistered. Without this guard a stale disconnect would re-flag a reconnected player as disconnected and leave the opponent stuck on "opponent disconnected". See the [Disconnect & Reconnect Flow](#4-disconnect--reconnect-flow).
 
 ### Cross-Server Action Forwarding
 
@@ -602,6 +604,25 @@ Player 1      Player 2      BattleManager      Redis
                  |               |               |
    |<-- BATTLE_RESTORED ---------|               |
                  |<-- OPPONENT_RECONNECTED ------|
+```
+
+**Refresh (stale-socket) race.** A page refresh gives the player two sockets briefly — the dying old one and the reloaded page's new one. The new socket registers and `REJOIN`s (clearing the disconnect flag and notifying the opponent with `OPPONENT_RECONNECTED`) potentially *before* the old socket's `disconnect` is detected. `handleDisconnect` therefore ignores side-effects from a socket that is no longer the user's active socket, so the stale disconnect does not re-flag the player or re-notify the opponent:
+
+```
+P2 old socket   P2 new socket   Gateway/Bridge            P1
+   |                |                |                     |
+   |(refresh: close |                |                     |
+   | in flight)     |                |                     |
+   |                |-- connect ---->|-- registerSocket    |
+   |                |                |   userToSocket[P2]=new
+   |                |-- REJOIN ----->|-- handleReconnect -->| OPPONENT_RECONNECTED (✅ unblur)
+   |                |                |                     |
+   |-- (stale) disconnect fires ---->| getSocketId(P2)=new |
+   |                |                | != old  => STALE    |
+   |                |                | skip battle/queue   |
+   |                |                | side-effects;       |
+   |                |                | unregister old id   |
+   |                |                |  (no OPPONENT_DISCONNECTED to P1)
 ```
 
 ### 5. Crash Recovery Flow

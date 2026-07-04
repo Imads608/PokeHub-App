@@ -85,7 +85,7 @@ describe('BattleGateway', () => {
       unsubscribeUser: jest.fn(),
       subscribeBattle: jest.fn(),
       emitToUser: jest.fn(),
-      getSocketId: jest.fn(),
+      getSocketId: jest.fn((userId: string) => `socket-${userId}`),
       getServer: jest.fn().mockReturnValue(mockServer),
       destroy: jest.fn().mockResolvedValue(undefined),
     } as jest.Mocked<IBattleSocketBridgeService>;
@@ -234,6 +234,47 @@ describe('BattleGateway', () => {
       await gateway.handleDisconnect(client);
 
       expect(matchmaking.getQueueCounts).not.toHaveBeenCalled();
+    });
+
+    // Stale-socket race: on a refresh/reconnect the user's new socket registers
+    // (remapping userToSocket) and may REJOIN before this old socket's
+    // disconnect is detected. The stale disconnect must not run the battle or
+    // queue side-effects, or it re-flags the reconnected user as disconnected
+    // and leaves the opponent stuck on "opponent disconnected".
+    describe('stale socket (superseded by a newer connection)', () => {
+      it('skips battle disconnect side-effects when socket is no longer active', async () => {
+        const client = mockSocket('u1'); // id: socket-u1
+        redis.getUserBattle.mockResolvedValue('b1');
+        // A newer socket has taken over this user.
+        bridge.getSocketId.mockReturnValue('socket-u1-new');
+
+        await gateway.handleDisconnect(client);
+
+        expect(battleManager.handleDisconnect).not.toHaveBeenCalled();
+        expect(redis.publishBattleAction).not.toHaveBeenCalled();
+        expect(bridge.unsubscribeUser).not.toHaveBeenCalled();
+        expect(matchmaking.leaveQueue).not.toHaveBeenCalled();
+      });
+
+      it('still unregisters the stale socket id', async () => {
+        const client = mockSocket('u1');
+        bridge.getSocketId.mockReturnValue('socket-u1-new');
+
+        await gateway.handleDisconnect(client);
+
+        expect(bridge.unregisterSocket).toHaveBeenCalledWith('socket-u1', 'u1');
+      });
+
+      it('runs normal disconnect when this socket is still the active one', async () => {
+        const client = mockSocket('u1');
+        redis.getUserBattle.mockResolvedValue('b1');
+        // Default getSocketId returns socket-u1 (this socket is active).
+
+        await gateway.handleDisconnect(client);
+
+        expect(battleManager.handleDisconnect).toHaveBeenCalledWith('b1', 'u1');
+        expect(bridge.unsubscribeUser).toHaveBeenCalledWith('u1');
+      });
     });
   });
 

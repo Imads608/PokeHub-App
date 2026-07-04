@@ -168,6 +168,23 @@ export class BattleGateway
 
     this.logger.log(`User ${userId} disconnected (socket: ${client.id})`);
 
+    // Stale-socket guard: on a refresh/reconnect the user's new socket may
+    // register (and REJOIN) before this old socket's disconnect is detected.
+    // registerSocket has already remapped userToSocket to the new socket, so
+    // if this socket is no longer the user's active socket it is stale — its
+    // disconnect must NOT run the battle/queue side-effects, or it would
+    // re-flag the (now reconnected) user as disconnected, re-notify the
+    // opponent with OPPONENT_DISCONNECTED, and re-arm the forfeit timer.
+    // We still clean up this specific socket's own subscription/registration.
+    const activeSocketId = this.bridge.getSocketId(userId);
+    if (activeSocketId !== client.id) {
+      this.logger.log(
+        `Ignoring disconnect side-effects for stale socket ${client.id} (user ${userId} active on ${activeSocketId})`
+      );
+      this.bridge.unregisterSocket(client.id, userId);
+      return;
+    }
+
     this.bridge.unsubscribeUser(userId);
 
     const battleId = await this.redis.getUserBattle(userId);
