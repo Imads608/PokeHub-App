@@ -30,6 +30,29 @@ declare global {
 
 export const REDIS_SERVICE = 'REDIS_SERVICE';
 
+/**
+ * Atomically pop up to `count` entries from the tail of a list.
+ *
+ * Emulates `RPOP key count` (Redis >= 6.2) using repeated single-key RPOP so it
+ * works on Redis 6.0 (the production Azure Cache for Redis version). Running it
+ * inside a single EVAL keeps the multi-pop atomic — critical for matchmaking so
+ * two concurrent match attempts cannot pop overlapping entries.
+ *
+ * KEYS[1] = list key, ARGV[1] = max entries to pop. Returns the popped entries
+ * (tail-first), or an empty array if the list is empty.
+ */
+const POP_QUEUE_ENTRIES_LUA = `
+local result = {}
+for i = 1, tonumber(ARGV[1]) do
+  local value = redis.call('RPOP', KEYS[1])
+  if not value then
+    break
+  end
+  result[#result + 1] = value
+end
+return result
+`;
+
 export interface RedisConfiguration {
   redis: {
     host: string;
@@ -102,7 +125,16 @@ export class RedisBattleService {
     count: number
   ): Promise<QueueEntry[] | null> {
     const key = RedisKeys.matchmaking.queue(format);
-    const entries = await this.client.rpop(key, count);
+    // `RPOP key count` (multi-pop) requires Redis >= 6.2, but the production
+    // Azure Cache for Redis runs 6.0. Emulate it with an atomic EVAL that loops
+    // single-key RPOP server-side, keeping the pop atomic so concurrent
+    // matchmaker runs can't grab overlapping entries.
+    const entries = (await this.client.eval(
+      POP_QUEUE_ENTRIES_LUA,
+      1,
+      key,
+      count
+    )) as string[];
     if (!entries || entries.length < count) {
       // Put back any popped entries if we didn't get enough
       if (entries && entries.length > 0) {
