@@ -34,8 +34,8 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
 │  │   pokehub-api   │    │   pokehub-app    │  │
 │  │   (Backend)     │    │   (Frontend)     │  │
 │  │                 │    │                  │  │
-│  │ api.pokehub     │    │ pokehub.space    │  │
-│  │ .space          │    │                  │  │
+│  │ api.pokehub     │    │ www.pokehub      │  │
+│  │ .space          │    │ .space           │  │
 │  └────────┬────────┘    └──────────────────┘  │
 │           │                                     │
 └───────────┼─────────────────────────────────────┘
@@ -60,7 +60,7 @@ PokeHub is deployed on **Azure Container Apps**, a serverless container platform
   - Replicas: 1-3 (auto-scaling)
 
 - **Frontend** (`pokehub-app`)
-  - Domain: `pokehub.space`
+  - Domain: `www.pokehub.space`
   - Image: `pokehub.azurecr.io/pokehub-app:<version>`
   - Resources: 1 CPU, 2 GB RAM
   - Replicas: 1-3 (auto-scaling)

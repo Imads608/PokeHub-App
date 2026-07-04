@@ -253,7 +253,7 @@ Copy the entire JSON output from step 1 and add it as the `AZURE_CREDENTIALS` se
 Create a `production` environment in repository settings with:
 
 - Required reviewers (optional but recommended)
-- Environment URL: `https://pokehub.space` (for visibility in GitHub UI)
+- Environment URL: `https://www.pokehub.space` (for visibility in GitHub UI)
 
 ## Usage
 
