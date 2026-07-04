@@ -176,12 +176,10 @@ export class BattleGateway
     // re-flag the (now reconnected) user as disconnected, re-notify the
     // opponent with OPPONENT_DISCONNECTED, and re-arm the forfeit timer.
     // We still clean up this specific socket's own subscription/registration.
-    const isActiveSocket = this.bridge.getSocketId(userId) === client.id;
-    if (!isActiveSocket) {
+    const activeSocketId = this.bridge.getSocketId(userId);
+    if (activeSocketId !== client.id) {
       this.logger.log(
-        `Ignoring disconnect side-effects for stale socket ${client.id} (user ${userId} active on ${this.bridge.getSocketId(
-          userId
-        )})`
+        `Ignoring disconnect side-effects for stale socket ${client.id} (user ${userId} active on ${activeSocketId})`
       );
       this.bridge.unregisterSocket(client.id, userId);
       return;
