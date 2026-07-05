@@ -437,6 +437,13 @@ class BattleManagerService implements IBattleManagerService {
     return this.battles.has(battleId);
   }
 
+  getTurnTimeRemaining(
+    battleId: string,
+    player: 'p1' | 'p2'
+  ): number | null {
+    return this.turnTimer.getRemainingSeconds(battleId, player);
+  }
+
   /**
    * Handle player disconnect
    */

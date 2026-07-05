@@ -63,7 +63,12 @@ export const STATE_CHANGING_EVENTS = new Set([
 export type InternalEvent =
   | { type: '_BATTLE_INITIALIZED'; battleId: string; logLines: string[] }
   | { type: '_BATTLE_UPDATED'; logLines: string[]; turnProcessing?: boolean }
-  | { type: '_BATTLE_RESTORED'; battleId: string; logLines: string[] };
+  | {
+      type: '_BATTLE_RESTORED';
+      battleId: string;
+      logLines: string[];
+      turnTimeRemaining?: number;
+    };
 
 export type ReducerEvent = DirectServerEvent | LocalUIEvent | InternalEvent;
 
@@ -175,7 +180,7 @@ export function battleReducer(
         phase: 'battle',
         battleId: event.battleId,
         pendingChoice: null,
-        turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
+        turnTimer: newTimer(event.turnTimeRemaining ?? TURN_TIMEOUT_SECONDS),
         error: null,
         logEntries: event.logLines,
       };

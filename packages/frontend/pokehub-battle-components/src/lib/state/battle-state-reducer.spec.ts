@@ -143,6 +143,17 @@ describe('battleReducer', () => {
     });
   });
 
+  it('_BATTLE_RESTORED → honors server turnTimeRemaining so the timer stays in sync', () => {
+    const next = battleReducer(state, {
+      type: '_BATTLE_RESTORED',
+      battleId: 'b2',
+      logLines: [],
+      turnTimeRemaining: 42,
+    });
+    // Restored timer uses the server's remaining time, not a full fresh turn.
+    expect(next.turnTimer).toEqual({ totalSeconds: 42, startedAt: 1000 });
+  });
+
   // ── Battle end ─────────────────────────────────────────────────────
 
   it('BATTLE_END → phase=ended, sets winner & reason, clears timer & disconnect', () => {

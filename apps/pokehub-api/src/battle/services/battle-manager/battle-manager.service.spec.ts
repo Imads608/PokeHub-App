@@ -119,6 +119,7 @@ describe('BattleManagerService', () => {
     cancelPlayerTimer: jest.fn(),
     cancelBattleTimers: jest.fn(),
     hasActiveTimer: jest.fn(),
+    getRemainingSeconds: jest.fn().mockReturnValue(null),
   };
 
   const mockLogger = {

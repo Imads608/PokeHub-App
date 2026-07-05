@@ -146,6 +146,9 @@ export class BattleGateway
           battleId: activeBattleId,
           currentState: slot === 'p1' ? battle.p1State : battle.p2State,
           moveAnimConfigs,
+          turnTimeRemaining:
+            this.battleManager.getTurnTimeRemaining(activeBattleId, slot) ??
+            undefined,
         } satisfies ServerBattleEvent);
       } else {
         this.logger.log(
@@ -506,6 +509,8 @@ export class BattleGateway
         battleId: battle.id,
         currentState: slot === 'p1' ? battle.p1State : battle.p2State,
         moveAnimConfigs,
+        turnTimeRemaining:
+          this.battleManager.getTurnTimeRemaining(battle.id, slot) ?? undefined,
       } satisfies ServerBattleEvent);
 
       this.logger.log(`User ${userId} rejoined battle ${battleId}`);

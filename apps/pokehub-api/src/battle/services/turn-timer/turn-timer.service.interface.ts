@@ -67,6 +67,13 @@ export interface ITurnTimerService {
    * Check if a player has an active timer
    */
   hasActiveTimer(battleId: string, player: 'p1' | 'p2'): boolean;
+
+  /**
+   * Remaining seconds until the player's current turn times out, or null when
+   * no timer is running. Used to keep a reconnecting client's timer in sync
+   * with the server's real deadline instead of resetting to a full turn.
+   */
+  getRemainingSeconds(battleId: string, player: 'p1' | 'p2'): number | null;
 }
 
 export function createTurnTimerServiceProvider(

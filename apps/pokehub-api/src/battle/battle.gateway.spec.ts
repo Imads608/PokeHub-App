@@ -72,6 +72,7 @@ describe('BattleGateway', () => {
       recoverBattle: jest.fn(),
       getBattle: jest.fn().mockReturnValue(undefined),
       isHostedLocally: jest.fn().mockReturnValue(true),
+      getTurnTimeRemaining: jest.fn().mockReturnValue(null),
       handleDisconnect: jest.fn().mockResolvedValue(undefined),
       handleReconnect: jest.fn(),
       cancelBattle: jest.fn().mockResolvedValue(undefined),

@@ -189,6 +189,7 @@ export function useBattleState() {
           type: '_BATTLE_RESTORED',
           battleId: event.battleId,
           logLines,
+          turnTimeRemaining: event.turnTimeRemaining,
         });
         break;
       }

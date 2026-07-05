@@ -89,6 +89,12 @@ export interface BattleRestoredEvent {
   currentState: string;
   /** Animation configs for moves in this battle (keyed by normalized move name) */
   moveAnimConfigs: Record<string, MoveAnimConfig>;
+  /**
+   * Remaining seconds on the reconnecting player's turn timer, so the client
+   * restores the timer in sync with the server instead of resetting to a full
+   * turn. Omitted when the player has no active turn timer.
+   */
+  turnTimeRemaining?: number;
   /** Optional message about recovery */
   message?: string;
 }
