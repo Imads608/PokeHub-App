@@ -189,6 +189,8 @@ type ServerBattleEvent =
       battleId: string;
       currentState: string;
       moveAnimConfigs: Record<string, MoveAnimConfig>;
+      /** Remaining seconds on the reconnecting player's turn timer */
+      turnTimeRemaining?: number;
       message?: string;
     }
   | { type: 'MATCH_CANCELLED'; battleId: string; reason: string }
@@ -401,7 +403,7 @@ apps/pokehub-api/src/battle/
 3. Single-socket-per-user enforcement: if the user already has an active socket, the server emits `SESSION_REPLACED` to the old socket and disconnects it (last-connection-wins). The bridge remaps `userToSocket[userId]` to the new socket; the old socket is now **stale**
 4. User is added to socket-to-user mapping
 5. Gateway subscribes to Redis `user:{userId}:battle-events` channel
-6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists)
+6. Check for active battle to rejoin (send `BATTLE_RESTORED` if exists, including `turnTimeRemaining` so the restored turn timer stays in sync with the server)
 
 > **Stale-socket disconnects.** Because the new socket is registered (and may `REJOIN`) before the old socket's `disconnect` event is detected, `handleDisconnect` guards on `bridge.getSocketId(userId) === client.id`. If the disconnecting socket is no longer the user's active socket it is stale: the battle disconnect, `leaveQueue`, and `unsubscribeUser` side-effects are skipped (the user is live on the new socket) and only that stale socket id is unregistered. Without this guard a stale disconnect would re-flag a reconnected player as disconnected and leave the opponent stuck on "opponent disconnected". See the [Disconnect & Reconnect Flow](#4-disconnect--reconnect-flow).
 
@@ -482,7 +484,7 @@ const socket = io(`ws://api.pokehub.app/battle?token=${accessToken}`);
 | `TURN_WARNING`          | `{ battleId, secondsRemaining }`              | Timer warning (30s left)   |
 | `OPPONENT_DISCONNECTED` | `{ battleId, timeout }`                       | Player disconnected        |
 | `OPPONENT_RECONNECTED`  | `{ battleId }`                                | Player reconnected         |
-| `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, message? }` | Reconnection state         |
+| `BATTLE_RESTORED`       | `{ battleId, currentState, moveAnimConfigs, turnTimeRemaining?, message? }` | Reconnection state         |
 | `MATCH_CANCELLED`       | `{ battleId, reason }`                        | Match declined by opponent |
 | `QUEUE_COUNTS`          | `{ counts: Record<string, number> }`          | Queue player counts per format |
 | `SERVER_STATUS`         | `{ status: 'unavailable' \| 'restored' }`     | Redis/server health change |
@@ -582,6 +584,12 @@ Player 1      Player 2      BattleManager      Redis
     TIMEOUT        |  <-- Auto-select move via side.autoChoose()
 ```
 
+The server is the source of truth for the timer: `TurnTimerService` records each
+player's wall-clock **deadline** when a turn starts and exposes
+`getRemainingSeconds(battleId, player)`. On reconnect this remaining time is sent
+to the client as `BATTLE_RESTORED.turnTimeRemaining` so the restored UI timer
+stays in sync with the server instead of resetting to a full turn.
+
 ### 4. Disconnect & Reconnect Flow
 
 ```
@@ -602,8 +610,9 @@ Player 1      Player 2      BattleManager      Redis
                  |               |-- HSET p1Disconnected=false
                  |               |-- PUB opponent_reconnected
                  |               |               |
-   |<-- BATTLE_RESTORED ---------|               |
-                 |<-- OPPONENT_RECONNECTED ------|
+   |<-- BATTLE_RESTORED ---------|               |  (turnTimeRemaining = server's
+   |    {turnTimeRemaining}      |               |   getRemainingSeconds — keeps
+                 |<-- OPPONENT_RECONNECTED ------|   the restored timer in sync)
 ```
 
 **Refresh (stale-socket) race.** A page refresh gives the player two sockets briefly — the dying old one and the reloaded page's new one. The new socket registers and `REJOIN`s (clearing the disconnect flag and notifying the opponent with `OPPONENT_RECONNECTED`) potentially *before* the old socket's `disconnect` is detected. `handleDisconnect` therefore ignores side-effects from a socket that is no longer the user's active socket, so the stale disconnect does not re-flag the player or re-notify the opponent:
