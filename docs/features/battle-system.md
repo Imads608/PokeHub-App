@@ -588,7 +588,10 @@ The server is the source of truth for the timer: `TurnTimerService` records each
 player's wall-clock **deadline** when a turn starts and exposes
 `getRemainingSeconds(battleId, player)`. On reconnect this remaining time is sent
 to the client as `BATTLE_RESTORED.turnTimeRemaining` so the restored UI timer
-stays in sync with the server instead of resetting to a full turn.
+stays in sync with the server instead of resetting to a full turn. When the
+reconnecting player has no active server-side timer (e.g. they've already acted
+this turn and are waiting on the opponent), `turnTimeRemaining` is omitted and
+the client shows no timer rather than a desynced fresh countdown.
 
 ### 4. Disconnect & Reconnect Flow
 

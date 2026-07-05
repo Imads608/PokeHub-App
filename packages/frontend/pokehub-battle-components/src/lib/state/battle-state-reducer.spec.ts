@@ -137,10 +137,9 @@ describe('battleReducer', () => {
     expect(next.pendingChoice).toBeNull();
     expect(next.error).toBeNull();
     expect(next.logEntries).toEqual(logs);
-    expect(next.turnTimer).toEqual({
-      totalSeconds: TURN_TIMEOUT_SECONDS,
-      startedAt: 1000,
-    });
+    // No turnTimeRemaining → the player has no active server-side timer, so no
+    // timer is shown (rather than a desynced fresh full countdown).
+    expect(next.turnTimer).toBeNull();
   });
 
   it('_BATTLE_RESTORED → honors server turnTimeRemaining so the timer stays in sync', () => {

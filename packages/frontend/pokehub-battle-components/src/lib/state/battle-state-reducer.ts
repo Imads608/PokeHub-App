@@ -180,7 +180,14 @@ export function battleReducer(
         phase: 'battle',
         battleId: event.battleId,
         pendingChoice: null,
-        turnTimer: newTimer(event.turnTimeRemaining ?? TURN_TIMEOUT_SECONDS),
+        // Only show a turn timer when the server reports one. `undefined` means
+        // the reconnecting player has no active server-side timer (e.g. they've
+        // no request this turn, waiting on the opponent), so a fresh full
+        // countdown would be a client/server desync — render no timer instead.
+        turnTimer:
+          event.turnTimeRemaining !== undefined
+            ? newTimer(event.turnTimeRemaining)
+            : null,
         error: null,
         logEntries: event.logLines,
       };

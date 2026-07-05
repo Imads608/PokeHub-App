@@ -501,6 +501,22 @@ describe('BattleManagerService', () => {
     });
   });
 
+  describe('getTurnTimeRemaining', () => {
+    it('delegates to the turn timer service', () => {
+      (
+        mockTurnTimerService.getRemainingSeconds as jest.Mock
+      ).mockReturnValue(48);
+
+      const result = service.getTurnTimeRemaining(testBattleId, 'p2');
+
+      expect(result).toBe(48);
+      expect(mockTurnTimerService.getRemainingSeconds).toHaveBeenCalledWith(
+        testBattleId,
+        'p2'
+      );
+    });
+  });
+
   describe('handleDisconnect', () => {
     beforeEach(async () => {
       const config = createMockBattleConfig();
