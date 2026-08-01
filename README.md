@@ -82,31 +82,33 @@ npm install
 
 ### Development
 
-Start Redis (required for battle system):
-
-```bash
-docker compose -f docker-compose.dev.yaml up -d redis
-```
-
-Start the frontend:
-
-```bash
-nx serve pokehub-app
-```
-
-Start the backend:
-
-```bash
-nx serve pokehub-api
-```
-
 Start both together:
 
 ```bash
 nx serve pokehub-app pokehub-api
 ```
 
+The backing services (Postgres, Redis, and admin UIs) run via Docker Compose:
+
+```bash
+docker compose -f docker-compose.dev.yaml up -d postgresdb redis
+```
+
 Navigate to <http://localhost:4200/> to see the app in action!
+
+#### Fully containerized development (optional)
+
+To run the frontend and backend inside Docker as well — with hot reload via
+bind-mounted source — start the whole stack:
+
+```bash
+docker compose -f docker-compose.dev.yaml up
+```
+
+This builds both apps from `Dockerfile.dev`, runs `nx serve` for each, and wires
+them to the `postgresdb` and `redis` services. The frontend is served on
+<http://localhost:4200/> and the API on <http://localhost:3000/api>.
+
 
 ## 🧪 Testing
 

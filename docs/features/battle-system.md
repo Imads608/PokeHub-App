@@ -292,6 +292,9 @@ queue:active-formats
   - Set of format strings currently with queued players (e.g., "gen9ou")
   - Populated via SADD when a player joins a queue
   - Lazily cleaned: formats with 0 queue length are removed when getQueueCounts() runs
+  - Safe because `popQueueEntries()` is atomic all-or-nothing (LLEN-guarded EVAL): it
+    never leaves the list transiently empty, so lazy cleanup can't drop a format that
+    still has a player waiting (which would show "no players in queue" for a queued player)
 
 # Server heartbeat (string with 10s TTL)
 server:{serverId}:heartbeat
@@ -502,6 +505,37 @@ When a player leaves the queue, `leaveQueue()` clears their `user:{userId}:queue
 `LREM` is O(n) but queue sizes are small, so this is negligible. The operation is also safe across multiple server instances — concurrent `LREM` calls for the same entry are idempotent (the second returns 0).
 
 As a fallback, `findMatch()` still validates popped entries against their status key, discarding any stale entries that weren't cleaned up (e.g. due to a partial failure where `clearUserQueueStatus` succeeded but `removeFromQueue` failed).
+
+#### Scalability limitation (future improvement)
+
+`removeFromQueue()` currently does `LRANGE key 0 -1` — it pulls the **entire** format
+queue into the Node process and `JSON.parse`s every entry to find the one matching
+`userId`, then issues `LREM`. This is **O(N)** in queue size (plus an O(N) list scan
+inside `LREM` itself), and it runs on the hottest churn paths: every `LEAVE_QUEUE`,
+every **disconnect while queued** (`handleDisconnect`), and every re-queue where the
+user was already queued (`joinQueue`'s "already in queue, removing first" guard). The
+matching path (`popQueueEntries` → guarded `RPOP`) is O(1) and fine — only removal
+scales poorly. At small queue sizes this is negligible, but with **thousands of players
+queued in one format** the repeated full-queue transfer + parse becomes the first
+bottleneck (bulk network transfer and event-loop parsing on every leave/disconnect).
+
+**Planned fix — make removal O(log N)** by replacing the per-format Redis **list** with
+a **sorted set** (member = `userId`, score = `joinedAt` for FIFO) plus a companion hash
+(`queue:{format}:entries`, field `userId` → payload JSON):
+
+- **Remove:** `ZREM` + `HDEL` on `userId` — targeted, no scan, no bulk transfer.
+- **Pop (FIFO):** `ZPOPMIN key count` (Redis ≥ 5.0, safe on production's 6.0), wrapped in
+  the same `ZCARD`-guarded all-or-nothing EVAL as today's list pop, so accurate queue
+  counts (the `active-formats` lazy-cleanup invariant) are preserved.
+- **Length:** `ZCARD` (O(1)).
+- Bonus: keying on `userId` naturally dedupes double-joins, and requeue-after-failed-match
+  can restore the original `joinedAt` score instead of sending the player to the back.
+
+Callers in `matchmaking.service.ts` keep the same method signatures. Cutover requires
+draining/flushing queues on deploy since the Redis structure changes (queues are
+ephemeral). Note the separate rating-based matchmaking plan
+(`docs/plans/rating-matchmaking-system.md`) also moves to a sorted set (score = rating);
+these can converge.
 
 ### 1. Matchmaking Flow
 

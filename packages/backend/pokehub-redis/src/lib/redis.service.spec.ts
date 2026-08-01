@@ -38,9 +38,16 @@ describe('RedisBattleService.popQueueEntries', () => {
     const result = await service.popQueueEntries('gen9ou', 2);
 
     expect(result).toEqual(entries);
-    // Uses EVAL (not the 6.2-only `RPOP key count`) against the format queue key.
+    // Uses EVAL (not the 6.2-only `RPOP key count`) against the format queue key,
+    // guarded by an LLEN check so it pops all-or-nothing.
     expect(client.eval).toHaveBeenCalledWith(
       expect.stringContaining('RPOP'),
+      1,
+      'queue:gen9ou',
+      2
+    );
+    expect(client.eval).toHaveBeenCalledWith(
+      expect.stringContaining('LLEN'),
       1,
       'queue:gen9ou',
       2
@@ -48,17 +55,16 @@ describe('RedisBattleService.popQueueEntries', () => {
     expect(client.rpush).not.toHaveBeenCalled();
   });
 
-  it('returns null and puts popped entries back when fewer than requested', async () => {
-    const only = makeEntry('a');
-    client.eval.mockResolvedValue([JSON.stringify(only)]);
+  it('returns null and leaves the queue intact when fewer than requested are waiting', async () => {
+    // Atomic script pops nothing when there are fewer than `count` entries
+    // (e.g. a single player waiting), so there is nothing to push back. This
+    // avoids a transient-empty window that getQueueCounts() could misread.
+    client.eval.mockResolvedValue([]);
 
     const result = await service.popQueueEntries('gen9ou', 2);
 
     expect(result).toBeNull();
-    expect(client.rpush).toHaveBeenCalledWith(
-      'queue:gen9ou',
-      JSON.stringify(only)
-    );
+    expect(client.rpush).not.toHaveBeenCalled();
   });
 
   it('returns null without pushing back when the queue is empty', async () => {

@@ -10,12 +10,20 @@ Nx monorepo — **Next.js 14 (App Router)** frontend + **NestJS** backend, **Pos
 **npm**, **Node 20**. Apps in `apps/`; shared libraries in `packages/{frontend,backend,shared}`.
 Overview: `docs/ARCHITECTURE.md`. The CI gate is the source of truth: `.github/workflows/ci.yml`.
 
+**Local dev:** run apps with `nx serve pokehub-app pokehub-api` (frontend `:4200`, API `:3000/api`)
+against the backing services in `docker-compose.dev.yaml`
+(`docker compose -f docker-compose.dev.yaml up -d postgresdb redis`). To run the apps in Docker too
+(hot reload via bind-mounted source, built from `Dockerfile.dev`), `up` the whole stack — the
+`pokehub-app`/`pokehub-api` services are wired to `postgresdb`/`redis` via env. Also up: `pgAdmin`
+`:5050`, `redis-commander` `:8081`.
+
 ## Harness map
 
 - **`AGENTS.md`** (this file) — canonical conventions, read by every tool.
 - **`.agents/skills/<name>/SKILL.md`** — on-demand procedures; consult them for scaffolding
-  packages/components, Drizzle migrations, running the CI gate, and releasing/deploying to production
-  (`release-deploy`, backed by `docs/deployment/`).
+  packages/components, Drizzle migrations, running the CI gate, working in the battle system
+  (`battle-system`), and releasing/deploying to production (`release-deploy`, backed by
+  `docs/deployment/`).
 - **`CLAUDE.md`** — Claude Code adapter (imports this file) + a format/lint hook and permission
   allowlist in `.claude/settings.json`; `.claude/agents/pokehub-reviewer.md` is the reviewer subagent.
 - **`.github/copilot-instructions.md`** — GitHub Copilot adapter. OpenCode reads this file natively.

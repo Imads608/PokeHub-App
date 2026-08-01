@@ -1,0 +1,20 @@
+# Development image for the PokeHub Nx workspace.
+#
+# Unlike the per-app production Dockerfiles (apps/*/Dockerfile), this image is
+# NOT a compiled artifact. It only installs the workspace dependencies; the
+# source tree is bind-mounted at runtime (see docker-compose.dev.yaml) so that
+# `nx serve` provides hot reload for both the frontend and the backend.
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first so this layer is cached across source changes.
+# The source itself is provided by the bind mount at runtime.
+COPY package.json package-lock.json ./
+RUN npm install
+
+# pokehub-app (Next.js dev) and pokehub-api (NestJS) dev ports.
+EXPOSE 4200 3000
+
+# Overridden per-service in docker-compose.dev.yaml.
+CMD ["npx", "nx", "serve", "pokehub-api"]

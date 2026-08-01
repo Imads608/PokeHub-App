@@ -31,24 +31,31 @@ declare global {
 export const REDIS_SERVICE = 'REDIS_SERVICE';
 
 /**
- * Atomically pop up to `count` entries from the tail of a list.
+ * Atomically pop exactly `count` entries from the tail of a list, or nothing.
  *
  * Emulates `RPOP key count` (Redis >= 6.2) using repeated single-key RPOP so it
  * works on Redis 6.0 (the production Azure Cache for Redis version). Running it
  * inside a single EVAL keeps the multi-pop atomic — critical for matchmaking so
  * two concurrent match attempts cannot pop overlapping entries.
  *
- * KEYS[1] = list key, ARGV[1] = max entries to pop. Returns the popped entries
- * (tail-first), or an empty array if the list is empty.
+ * It first checks LLEN and pops **only** when at least `count` entries exist;
+ * otherwise it pops nothing and returns an empty array. This all-or-nothing
+ * behaviour matters because a partial pop-then-push-back would briefly leave the
+ * queue empty, and getQueueCounts()'s lazy cleanup could read that transient 0
+ * and drop the format from the active-formats set while a player is still
+ * waiting — making a queued player appear as "no players in queue".
+ *
+ * KEYS[1] = list key, ARGV[1] = number of entries to pop. Returns the popped
+ * entries (tail-first), or an empty array if fewer than `count` are available.
  */
 const POP_QUEUE_ENTRIES_LUA = `
+local count = tonumber(ARGV[1])
+if redis.call('LLEN', KEYS[1]) < count then
+  return {}
+end
 local result = {}
-for i = 1, tonumber(ARGV[1]) do
-  local value = redis.call('RPOP', KEYS[1])
-  if not value then
-    break
-  end
-  result[#result + 1] = value
+for i = 1, count do
+  result[#result + 1] = redis.call('RPOP', KEYS[1])
 end
 return result
 `;
@@ -126,9 +133,11 @@ export class RedisBattleService {
   ): Promise<QueueEntry[] | null> {
     const key = RedisKeys.matchmaking.queue(format);
     // `RPOP key count` (multi-pop) requires Redis >= 6.2, but the production
-    // Azure Cache for Redis runs 6.0. Emulate it with an atomic EVAL that loops
-    // single-key RPOP server-side, keeping the pop atomic so concurrent
-    // matchmaker runs can't grab overlapping entries.
+    // Azure Cache for Redis runs 6.0. Emulate it with an atomic EVAL that pops
+    // exactly `count` entries or nothing at all (see POP_QUEUE_ENTRIES_LUA).
+    // The all-or-nothing guarantee means we never have to push partial pops
+    // back — which previously left the queue transiently empty and let
+    // getQueueCounts() drop a format that still had a player waiting.
     const entries = (await this.client.eval(
       POP_QUEUE_ENTRIES_LUA,
       1,
@@ -136,13 +145,8 @@ export class RedisBattleService {
       count
     )) as string[];
     if (!entries || entries.length < count) {
-      // Put back any popped entries if we didn't get enough
-      if (entries && entries.length > 0) {
-        await this.client.rpush(key, ...entries);
-        this.logger.debug(
-          `Not enough players in ${format} queue, returned ${entries.length} entries`
-        );
-      }
+      // Not enough players: the script popped nothing, so the queue is intact.
+      this.logger.debug(`Not enough players in ${format} queue`);
       return null;
     }
     const parsed = entries.map((e) => parseQueueEntry(e));
