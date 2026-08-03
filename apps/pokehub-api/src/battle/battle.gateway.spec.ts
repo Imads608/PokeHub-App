@@ -465,6 +465,35 @@ describe('BattleGateway', () => {
         battleId: 'b1',
       }));
     });
+
+    it('should include turnTimeRemaining on BATTLE_RESTORED when a timer is active', async () => {
+      const client = mockSocket('u1');
+      battleManager.handleReconnect.mockResolvedValue({
+        id: 'b1',
+        config: {
+          id: 'b1',
+          format: 'gen9ou',
+          player1: { id: 'u1', name: 'Ash', teamId: 't1', packedTeam: 'Pikachu|||Thunderbolt' },
+          player2: { id: 'u2', name: 'Gary', teamId: 't2', packedTeam: 'Charizard|||Flamethrower' },
+          seed: '1,2,3,4',
+        },
+        currentState: 'state',
+        p1State: 'p1-state',
+        p2State: 'p2-state',
+      });
+      battleManager.getTurnTimeRemaining.mockReturnValue(37);
+
+      await gateway.handleRejoin(client, { battleId: 'b1' });
+
+      expect(battleManager.getTurnTimeRemaining).toHaveBeenCalledWith('b1', 'p1');
+      expect(client.emit).toHaveBeenCalledWith(
+        BATTLE_EVENT,
+        expect.objectContaining({
+          type: 'BATTLE_RESTORED',
+          turnTimeRemaining: 37,
+        })
+      );
+    });
   });
 
   // ── handleObserveQueue / handleUnobserveQueue ────────────────────

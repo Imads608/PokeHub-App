@@ -20,10 +20,14 @@ services:
     ports:
       - 3000:3000
     volumes:
-      # Bind-mount the workspace for hot reload, but keep the image's installed
-      # dependencies by shadowing node_modules with an anonymous volume.
+      # Bind-mount the workspace for hot reload, but keep container-managed
+      # directories in anonymous volumes so the root-owned files the container
+      # writes (installed deps, Nx cache, build output) don't leak onto the
+      # host tree and break host-side `nx`/`ci-check`.
       - .:/app
       - /app/node_modules
+      - /app/.nx
+      - /app/dist
     depends_on:
       - postgresdb
       - redis
@@ -46,6 +50,8 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - /app/.nx
+      - /app/dist
     depends_on:
       - pokehub-api
 
