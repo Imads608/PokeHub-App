@@ -1,2 +1,7 @@
-export { createClientLogger } from './lib/client-logger';
-export type { ClientLogger, LogLevel } from './lib/client-logger';
+export { createClientLogger, clearLogBuffer } from './lib/client-logger';
+export type {
+  ClientLogger,
+  LogLevel,
+  LogEntry,
+  LogInspector,
+} from './lib/client-logger';

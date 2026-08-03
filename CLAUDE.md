@@ -20,6 +20,7 @@ This repo also ships Claude Code mechanism in `.claude/`. Use it:
   - `/new-package` — scaffold a shared Nx library (naming, project.json, tsconfig trio, path alias, `fix-path-aliases`).
   - `/new-component` — build a frontend component/hook (shadcn UI rule, `cn()`, TanStack Query keys, `'use client'` boundaries, theming).
   - `/db-migrate` — Drizzle migrations via the required `tsx --tsconfig tsconfig.base.json` invocation.
+  - `/battle-system` — add/modify battle features while preserving its invariants (replay-log determinism, delta-vs-full-state, turn-timer re-arm on reconnect/recovery); routes into `docs/features/battle-*.md`.
   - `/ci-check` — run the CI gate locally (typecheck → lint → typecheck-spec → test → build on affected) before a PR.
   - `/release-deploy` — ship a release: tag → build images (`release.yml`) → manual deploy (`deploy.yml`) to Azure Container Apps (see `docs/deployment/`).
 - **Reviewer subagent** (`.claude/agents/pokehub-reviewer.md`) — run after implementing a feature / before a PR to check the diff against project conventions. Spawn it via the Agent tool (`subagent_type: pokehub-reviewer`).

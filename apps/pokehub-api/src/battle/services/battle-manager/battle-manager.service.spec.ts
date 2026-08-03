@@ -119,6 +119,7 @@ describe('BattleManagerService', () => {
     cancelPlayerTimer: jest.fn(),
     cancelBattleTimers: jest.fn(),
     hasActiveTimer: jest.fn(),
+    getRemainingSeconds: jest.fn().mockReturnValue(null),
   };
 
   const mockLogger = {
@@ -497,6 +498,22 @@ describe('BattleManagerService', () => {
 
     it('should return false when battle is not hosted locally', () => {
       expect(service.isHostedLocally('non-existent')).toBe(false);
+    });
+  });
+
+  describe('getTurnTimeRemaining', () => {
+    it('delegates to the turn timer service', () => {
+      (
+        mockTurnTimerService.getRemainingSeconds as jest.Mock
+      ).mockReturnValue(48);
+
+      const result = service.getTurnTimeRemaining(testBattleId, 'p2');
+
+      expect(result).toBe(48);
+      expect(mockTurnTimerService.getRemainingSeconds).toHaveBeenCalledWith(
+        testBattleId,
+        'p2'
+      );
     });
   });
 

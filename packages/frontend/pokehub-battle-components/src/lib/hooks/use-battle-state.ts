@@ -20,6 +20,7 @@ import { Generations } from '@pkmn/data';
 import { Dex } from '@pkmn/dex';
 import { Protocol } from '@pkmn/protocol';
 import { LogFormatter } from '@pkmn/view';
+import { clearLogBuffer } from '@pokehub/frontend/shared-logger';
 import { useCallback, useReducer, useRef, useMemo, useState } from 'react';
 
 export type { PlayAnimationFn } from '../state/process-pending-events';
@@ -101,6 +102,11 @@ export function useBattleState() {
   const dispatch = useCallback((event: BattleEvent) => {
     switch (event.type) {
       case 'BATTLE_START': {
+        // Fresh battle — reset the debug log buffer so pokehubLogs() is scoped
+        // to this battle. Reconnects (BATTLE_RESTORED) intentionally keep the
+        // buffer so pre-disconnect events remain available for debugging.
+        clearLogBuffer();
+
         const battle = new Battle(getGenerations());
         const formatter = new LogFormatter('p1', battle);
 
@@ -189,6 +195,7 @@ export function useBattleState() {
           type: '_BATTLE_RESTORED',
           battleId: event.battleId,
           logLines,
+          turnTimeRemaining: event.turnTimeRemaining,
         });
         break;
       }

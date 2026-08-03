@@ -63,7 +63,12 @@ export const STATE_CHANGING_EVENTS = new Set([
 export type InternalEvent =
   | { type: '_BATTLE_INITIALIZED'; battleId: string; logLines: string[] }
   | { type: '_BATTLE_UPDATED'; logLines: string[]; turnProcessing?: boolean }
-  | { type: '_BATTLE_RESTORED'; battleId: string; logLines: string[] };
+  | {
+      type: '_BATTLE_RESTORED';
+      battleId: string;
+      logLines: string[];
+      turnTimeRemaining?: number;
+    };
 
 export type ReducerEvent = DirectServerEvent | LocalUIEvent | InternalEvent;
 
@@ -175,7 +180,14 @@ export function battleReducer(
         phase: 'battle',
         battleId: event.battleId,
         pendingChoice: null,
-        turnTimer: newTimer(TURN_TIMEOUT_SECONDS),
+        // Only show a turn timer when the server reports one. `undefined` means
+        // the reconnecting player has no active server-side timer (e.g. they've
+        // no request this turn, waiting on the opponent), so a fresh full
+        // countdown would be a client/server desync — render no timer instead.
+        turnTimer:
+          event.turnTimeRemaining !== undefined
+            ? newTimer(event.turnTimeRemaining)
+            : null,
         error: null,
         logEntries: event.logLines,
       };

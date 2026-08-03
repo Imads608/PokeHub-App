@@ -1,7 +1,60 @@
 # Use postgres/example user/password credentials
-version: '3.9'
 
 services:
+  pokehub-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    command: npx nx serve pokehub-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgresdb
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: pokehub
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - 3000:3000
+    volumes:
+      # Bind-mount the workspace for hot reload, but keep container-managed
+      # directories in anonymous volumes so the root-owned files the container
+      # writes (installed deps, Nx cache, build output) don't leak onto the
+      # host tree and break host-side `nx`/`ci-check`.
+      - .:/app
+      - /app/node_modules
+      - /app/.nx
+      - /app/dist
+    depends_on:
+      - postgresdb
+      - redis
+
+  pokehub-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    command: npx nx serve pokehub-app
+    environment:
+      NODE_ENV: development
+      # Browser-facing URL (the API is published on the host at :3000).
+      NEXT_PUBLIC_POKEHUB_API_URL: http://localhost:3000/api
+      # Server-side URL used within the compose network (NextAuth JWT callback,
+      # RSC/route handlers). The shared fetch client reads `API_URL`.
+      API_URL: http://pokehub-api:3000/api
+    ports:
+      - 4200:4200
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.nx
+      - /app/dist
+    depends_on:
+      - pokehub-api
+
   postgresdb:
     image: postgres
     restart: always

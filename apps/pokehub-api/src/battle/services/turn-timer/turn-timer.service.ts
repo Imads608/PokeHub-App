@@ -15,6 +15,12 @@ interface PlayerTimers {
   warningTimer: ReturnType<typeof setTimeout> | null;
   timeoutTimer: ReturnType<typeof setTimeout> | null;
   playerId: string;
+  /**
+   * Wall-clock time (ms since epoch) at which this player's turn times out,
+   * or null when no timer is running. Used to report the real remaining time
+   * to a reconnecting client so its timer stays in sync with the server.
+   */
+  deadline: number | null;
 }
 
 interface BattleTimers {
@@ -57,8 +63,18 @@ class TurnTimerService implements ITurnTimerService {
     // Initialize battle timers if not exists
     if (!this.timers.has(battleId)) {
       this.timers.set(battleId, {
-        p1: { warningTimer: null, timeoutTimer: null, playerId: p1Id },
-        p2: { warningTimer: null, timeoutTimer: null, playerId: p2Id },
+        p1: {
+          warningTimer: null,
+          timeoutTimer: null,
+          playerId: p1Id,
+          deadline: null,
+        },
+        p2: {
+          warningTimer: null,
+          timeoutTimer: null,
+          playerId: p2Id,
+          deadline: null,
+        },
       });
     }
 
@@ -106,6 +122,17 @@ class TurnTimerService implements ITurnTimerService {
     );
   }
 
+  getRemainingSeconds(battleId: string, player: 'p1' | 'p2'): number | null {
+    const battleTimers = this.timers.get(battleId);
+    if (!battleTimers) return null;
+
+    const { deadline } = battleTimers[player];
+    if (deadline === null) return null;
+
+    // Round up so a client restoring mid-second doesn't show one second short.
+    return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  }
+
   // ==================== Private Helpers ====================
 
   private startPlayerTimer(
@@ -120,6 +147,10 @@ class TurnTimerService implements ITurnTimerService {
 
     const warningMs = TURN_TIMEOUT_MS / 2;
     const warningSecondsRemaining = TURN_TIMEOUT_SECONDS / 2;
+
+    // Record the wall-clock deadline so reconnecting clients can be told the
+    // real remaining time instead of assuming a full fresh turn.
+    playerTimers.deadline = Date.now() + TURN_TIMEOUT_MS;
 
     // Warning timer — fires at the halfway point of the turn
     playerTimers.warningTimer = setTimeout(() => {
@@ -141,6 +172,7 @@ class TurnTimerService implements ITurnTimerService {
       // Clear the warning timer reference
       playerTimers.warningTimer = null;
       playerTimers.timeoutTimer = null;
+      playerTimers.deadline = null;
 
       if (this.onTimeout) {
         void this.onTimeout(battleId, player, playerId);
@@ -159,6 +191,7 @@ class TurnTimerService implements ITurnTimerService {
       clearTimeout(playerTimers.timeoutTimer);
       playerTimers.timeoutTimer = null;
     }
+    playerTimers.deadline = null;
   }
 }
 

@@ -137,10 +137,20 @@ describe('battleReducer', () => {
     expect(next.pendingChoice).toBeNull();
     expect(next.error).toBeNull();
     expect(next.logEntries).toEqual(logs);
-    expect(next.turnTimer).toEqual({
-      totalSeconds: TURN_TIMEOUT_SECONDS,
-      startedAt: 1000,
+    // No turnTimeRemaining → the player has no active server-side timer, so no
+    // timer is shown (rather than a desynced fresh full countdown).
+    expect(next.turnTimer).toBeNull();
+  });
+
+  it('_BATTLE_RESTORED → honors server turnTimeRemaining so the timer stays in sync', () => {
+    const next = battleReducer(state, {
+      type: '_BATTLE_RESTORED',
+      battleId: 'b2',
+      logLines: [],
+      turnTimeRemaining: 42,
     });
+    // Restored timer uses the server's remaining time, not a full fresh turn.
+    expect(next.turnTimer).toEqual({ totalSeconds: 42, startedAt: 1000 });
   });
 
   // ── Battle end ─────────────────────────────────────────────────────

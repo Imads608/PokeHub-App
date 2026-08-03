@@ -72,6 +72,7 @@ describe('BattleGateway', () => {
       recoverBattle: jest.fn(),
       getBattle: jest.fn().mockReturnValue(undefined),
       isHostedLocally: jest.fn().mockReturnValue(true),
+      getTurnTimeRemaining: jest.fn().mockReturnValue(null),
       handleDisconnect: jest.fn().mockResolvedValue(undefined),
       handleReconnect: jest.fn(),
       cancelBattle: jest.fn().mockResolvedValue(undefined),
@@ -180,6 +181,36 @@ describe('BattleGateway', () => {
         battleId: 'b1',
         currentState: 'p1-state',
       }));
+    });
+
+    it('should include turnTimeRemaining on BATTLE_RESTORED when a timer is active', async () => {
+      const client = mockSocket('u1');
+      redis.getUserBattle.mockResolvedValue('b1');
+      battleManager.getBattle.mockReturnValue({
+        id: 'b1',
+        config: {
+          id: 'b1',
+          format: 'gen9ou',
+          player1: { id: 'u1', name: 'Ash', teamId: 't1', packedTeam: 'Pikachu|||Thunderbolt' },
+          player2: { id: 'u2', name: 'Gary', teamId: 't2', packedTeam: 'Charizard|||Flamethrower' },
+          seed: '1,2,3,4',
+        },
+        currentState: 'state',
+        p1State: 'p1-state',
+        p2State: 'p2-state',
+      });
+      battleManager.getTurnTimeRemaining.mockReturnValue(37);
+
+      await gateway.handleConnection(client);
+
+      expect(battleManager.getTurnTimeRemaining).toHaveBeenCalledWith('b1', 'p1');
+      expect(client.emit).toHaveBeenCalledWith(
+        BATTLE_EVENT,
+        expect.objectContaining({
+          type: 'BATTLE_RESTORED',
+          turnTimeRemaining: 37,
+        })
+      );
     });
   });
 
@@ -433,6 +464,35 @@ describe('BattleGateway', () => {
         type: 'BATTLE_RESTORED',
         battleId: 'b1',
       }));
+    });
+
+    it('should include turnTimeRemaining on BATTLE_RESTORED when a timer is active', async () => {
+      const client = mockSocket('u1');
+      battleManager.handleReconnect.mockResolvedValue({
+        id: 'b1',
+        config: {
+          id: 'b1',
+          format: 'gen9ou',
+          player1: { id: 'u1', name: 'Ash', teamId: 't1', packedTeam: 'Pikachu|||Thunderbolt' },
+          player2: { id: 'u2', name: 'Gary', teamId: 't2', packedTeam: 'Charizard|||Flamethrower' },
+          seed: '1,2,3,4',
+        },
+        currentState: 'state',
+        p1State: 'p1-state',
+        p2State: 'p2-state',
+      });
+      battleManager.getTurnTimeRemaining.mockReturnValue(37);
+
+      await gateway.handleRejoin(client, { battleId: 'b1' });
+
+      expect(battleManager.getTurnTimeRemaining).toHaveBeenCalledWith('b1', 'p1');
+      expect(client.emit).toHaveBeenCalledWith(
+        BATTLE_EVENT,
+        expect.objectContaining({
+          type: 'BATTLE_RESTORED',
+          turnTimeRemaining: 37,
+        })
+      );
     });
   });
 

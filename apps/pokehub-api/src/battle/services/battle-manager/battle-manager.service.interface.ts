@@ -54,6 +54,16 @@ export interface IBattleManagerService {
   isHostedLocally(battleId: string): boolean;
 
   /**
+   * Remaining seconds on a player's current turn timer, or null when they have
+   * no active timer. Used to keep a reconnecting client in sync with the
+   * server's real deadline.
+   */
+  getTurnTimeRemaining(
+    battleId: string,
+    player: 'p1' | 'p2'
+  ): number | null;
+
+  /**
    * Handle player disconnect
    */
   handleDisconnect(battleId: string, playerId: string): Promise<void>;

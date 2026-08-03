@@ -329,4 +329,45 @@ describe('TurnTimerService', () => {
       expect(mockTimeoutCallback).not.toHaveBeenCalled();
     });
   });
+
+  describe('getRemainingSeconds', () => {
+    it('returns null when the battle has no timers', () => {
+      expect(service.getRemainingSeconds('no-such-battle', 'p1')).toBeNull();
+    });
+
+    it('returns null for a player who has no active timer', () => {
+      // p2 already chose → no timer started for p2
+      service.startTimers(testBattleId, testP1Id, testP2Id, false, true);
+
+      expect(service.getRemainingSeconds(testBattleId, 'p2')).toBeNull();
+      expect(service.getRemainingSeconds(testBattleId, 'p1')).toBe(
+        TURN_TIMEOUT_SECONDS
+      );
+    });
+
+    it('counts down as wall-clock time elapses', () => {
+      service.startTimers(testBattleId, testP1Id, testP2Id, false, false);
+
+      jest.advanceTimersByTime(30_000);
+
+      expect(service.getRemainingSeconds(testBattleId, 'p1')).toBe(
+        TURN_TIMEOUT_SECONDS - 30
+      );
+    });
+
+    it('returns null after the timer fires (deadline cleared)', () => {
+      service.startTimers(testBattleId, testP1Id, testP2Id, false, false);
+
+      jest.advanceTimersByTime(TIMEOUT_MS);
+
+      expect(service.getRemainingSeconds(testBattleId, 'p1')).toBeNull();
+    });
+
+    it('returns null after a player timer is cancelled', () => {
+      service.startTimers(testBattleId, testP1Id, testP2Id, false, false);
+      service.cancelPlayerTimer(testBattleId, 'p1');
+
+      expect(service.getRemainingSeconds(testBattleId, 'p1')).toBeNull();
+    });
+  });
 });
